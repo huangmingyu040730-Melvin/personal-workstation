@@ -1,6 +1,8 @@
-import { Bell, Moon, Plus, Search } from "lucide-react";
+import { Bell, LogOut, Moon, Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { signOutAction } from "@/app/login/actions";
 import { profile, sidebarGroups } from "@/lib/mock-data";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export function Topbar() {
   return (
@@ -23,6 +25,21 @@ export function Topbar() {
           <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-blue-700">
             <Moon size={18} />
           </button>
+          {isSupabaseConfigured ? (
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-blue-700"
+                aria-label="退出登录"
+              >
+                <LogOut size={18} />
+              </button>
+            </form>
+          ) : (
+            <span className="hidden rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 md:inline">
+              Mock Preview
+            </span>
+          )}
           <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-violet-600 text-sm font-semibold text-white">
               {profile.avatarInitials}
