@@ -40,20 +40,80 @@
 - 新增示例内容时优先更新 `src/lib/mock-data.ts`。
 - 未来接入 Supabase 时应保持页面组件和数据访问层分离。
 
-## 2026-05-31 - Connect Supabase In Phase 2
+## 2026-06-01 - Add Supabase Auth And RLS Foundation In Phase 2A
 
 类型：decision
 
 决策：
 
-- 第二阶段再接入 Supabase Auth、数据库、Storage 和权限模型。
+- Phase 2A 接入 Supabase SSR/Auth 基础能力和数据库 RLS 权限框架。
+- 后台页面在 Supabase 配置后需要登录，并通过管理员白名单判断访问权限。
+- 未配置 Supabase 时保留 mock/development preview，避免本地构建被环境变量阻塞。
 
 原因：
 
-- 第一阶段不需要真实登录、数据库和上传能力。
-- 先完成前端 MVP 可以减少后端设计前的信息架构不确定性。
+- 项目需要先建立权限边界，再逐步接入真实数据写入。
+- Auth、RLS 和数据库 schema 是后续 CRUD、文件上传和 Skill 自动化记录的共同基础。
 
 影响：
 
-- 当前页面中的编辑、上传、日历和自动化能力只作为 UI 原型存在。
-- 第二阶段需要补充数据模型、权限边界、错误处理和真实保存逻辑。
+- 新增 `.env.example`、Supabase helper、登录页、路由保护和 SQL migration。
+- 页面展示仍读取 mock data，不在 Phase 2A 改成真实 CRUD。
+
+## 2026-06-01 - Use admin_users For Admin Access
+
+类型：decision
+
+决策：
+
+- 使用 `public.admin_users` 表保存管理员用户 ID。
+- 使用 `public.is_admin()` 函数集中判断管理员权限。
+- 不在代码中硬编码管理员邮箱、UUID、密码或其他身份信息。
+
+原因：
+
+- 管理员权限应由数据库控制，方便后续调整和审计。
+- 避免在前端仓库中暴露私人身份信息或敏感配置。
+
+影响：
+
+- Supabase Auth 创建用户后，需要手动将该用户 UUID 插入 `admin_users`。
+- RLS policy 使用 `public.is_admin()` 区分公开读取和管理员管理权限。
+
+## 2026-06-01 - Do Not Use service_role In Normal App Runtime
+
+类型：decision
+
+决策：
+
+- 普通 Next.js 应用运行时只使用 Supabase publishable key。
+- 不在 `.env.example`、README 或前端代码中引入 `service_role` key。
+
+原因：
+
+- `service_role` 会绕过 RLS，不适合暴露给浏览器或普通 SSR 运行时。
+- 当前阶段目标是验证 Auth 与 RLS 权限基础，而不是使用高权限密钥绕过策略。
+
+影响：
+
+- 数据访问必须符合 RLS policy。
+- 管理性操作通过已登录管理员身份执行，或在 Supabase Dashboard 手动完成初始化。
+
+## 2026-06-01 - Defer Real CRUD To Phase 2B
+
+类型：decision
+
+决策：
+
+- Phase 2A 不把现有页面改成真实数据库 CRUD。
+- Phase 2B 再逐步接入 projects、publications、knowledge_notes、skills、documents 等模块的数据读写。
+
+原因：
+
+- 先稳定 Auth、schema 和 RLS 能降低后续 CRUD 接入时的权限风险。
+- 保持当前页面视觉和 mock 体验不被后端配置影响。
+
+影响：
+
+- 当前页面仍以 `src/lib/mock-data.ts` 为展示来源。
+- 后续需要补数据访问层、表单保存、错误状态和加载状态。

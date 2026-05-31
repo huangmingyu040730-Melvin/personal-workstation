@@ -62,3 +62,27 @@ npm run build
 验证要求：
 
 - 更新后运行 `npm run lint` 和 `npm run build`。
+
+## Supabase Foundation Update
+
+日期：2026-06-01
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2A 的 Supabase Auth、RLS 和 schema 基础。
+
+步骤：
+
+1. 前端运行时只使用 publishable key，不引入 `service_role`。
+2. 环境变量只提交 `.env.example` 占位，不提交 `.env.local`。
+3. 数据库结构变更放入 `supabase/migrations/`。
+4. 后台权限通过 Supabase Auth、`admin_users` 和 `public.is_admin()` 控制。
+5. 页面数据接入真实 CRUD 前，保留 `src/lib/mock-data.ts` 作为展示来源。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 检查没有 `.env`、密钥、`node_modules` 或 `.next` 被加入提交。
