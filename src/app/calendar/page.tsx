@@ -3,7 +3,14 @@ import { Card, CardHeader } from "@/components/card";
 import { PageHeader } from "@/components/page-header";
 import { todayItems } from "@/lib/mock-data";
 
-const days = Array.from({ length: 35 }, (_, index) => index + 1);
+const calendarYear = 2026;
+const calendarMonthIndex = 4;
+const daysInMonth = new Date(calendarYear, calendarMonthIndex + 1, 0).getDate();
+const firstWeekdayOffset = (new Date(calendarYear, calendarMonthIndex, 1).getDay() + 6) % 7;
+const calendarCells: Array<number | null> = [
+  ...Array.from({ length: firstWeekdayOffset }, () => null),
+  ...Array.from({ length: daysInMonth }, (_, index) => index + 1)
+];
 
 export default function CalendarPage() {
   return (
@@ -20,16 +27,20 @@ export default function CalendarPage() {
             {["一", "二", "三", "四", "五", "六", "日"].map((day) => (
               <div key={day} className="py-2 font-medium text-slate-500">{day}</div>
             ))}
-            {days.map((day) => (
+            {calendarCells.map((day, index) => (
               <div
-                key={day}
+                key={`${day ?? "empty"}-${index}`}
                 className="min-h-24 rounded-2xl border border-slate-100 bg-slate-50 p-2 text-left"
               >
-                <span className={day === 31 ? "flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white" : "text-sm font-medium text-slate-700"}>
-                  {day}
-                </span>
-                {[12, 18, 24, 31].includes(day) ? (
-                  <div className="mt-3 rounded-lg bg-blue-100 px-2 py-1 text-xs text-blue-700">研究安排</div>
+                {day ? (
+                  <>
+                    <span className={day === 31 ? "flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white" : "text-sm font-medium text-slate-700"}>
+                      {day}
+                    </span>
+                    {[12, 18, 24, 31].includes(day) ? (
+                      <div className="mt-3 rounded-lg bg-blue-100 px-2 py-1 text-xs text-blue-700">研究安排</div>
+                    ) : null}
+                  </>
                 ) : null}
               </div>
             ))}

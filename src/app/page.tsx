@@ -4,7 +4,19 @@ import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { profile, projects, publications, skills } from "@/lib/mock-data";
 
+function EmptyPublicState() {
+  return (
+    <p className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-500">
+      暂无公开内容。
+    </p>
+  );
+}
+
 export default function HomePage() {
+  const publicProjects = projects.filter((project) => project.visibility === "public");
+  const publicPublications = publications.filter((publication) => publication.visibility === "public");
+  const publicSkills = skills.filter((skill) => skill.visibility === "public");
+
   return (
     <main className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden border-b border-slate-200 bg-white">
@@ -33,9 +45,9 @@ export default function HomePage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {[
-              { title: "研究项目", value: projects.length, icon: FolderKanban },
-              { title: "学术成果", value: publications.length, icon: BookOpen },
-              { title: "公开 Skill", value: skills.filter((skill) => skill.visibility !== "private").length, icon: Sparkles },
+              { title: "公开项目", value: publicProjects.length, icon: FolderKanban },
+              { title: "公开成果", value: publicPublications.length, icon: BookOpen },
+              { title: "公开 Skill", value: publicSkills.length, icon: Sparkles },
               { title: "AI 工作流", value: "Codex", icon: BrainCircuit }
             ].map((item) => (
               <Card key={item.title} className="p-5">
@@ -52,34 +64,46 @@ export default function HomePage() {
         <Card>
           <CardHeader title="精选项目" />
           <div className="space-y-4">
-            {projects.slice(0, 2).map((project) => (
-              <div key={project.id} className="rounded-2xl bg-slate-50 p-4">
-                <p className="font-semibold text-slate-900">{project.name}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{project.summary}</p>
-              </div>
-            ))}
+            {publicProjects.length > 0 ? (
+              publicProjects.slice(0, 2).map((project) => (
+                <div key={project.id} className="rounded-2xl bg-slate-50 p-4">
+                  <p className="font-semibold text-slate-900">{project.name}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{project.summary}</p>
+                </div>
+              ))
+            ) : (
+              <EmptyPublicState />
+            )}
           </div>
         </Card>
         <Card>
           <CardHeader title="精选学术成果" />
           <div className="space-y-4">
-            {publications.map((publication) => (
-              <div key={publication.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-                <p className="font-semibold text-slate-900">{publication.title}</p>
-                <p className="mt-1 text-sm text-slate-500">{publication.type} · {publication.date}</p>
-              </div>
-            ))}
+            {publicPublications.length > 0 ? (
+              publicPublications.map((publication) => (
+                <div key={publication.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                  <p className="font-semibold text-slate-900">{publication.title}</p>
+                  <p className="mt-1 text-sm text-slate-500">{publication.type} · {publication.date}</p>
+                </div>
+              ))
+            ) : (
+              <EmptyPublicState />
+            )}
           </div>
         </Card>
         <Card>
           <CardHeader title="精选公开 Skill" />
           <div className="space-y-4">
-            {skills.map((skill) => (
-              <div key={skill.id} className="rounded-2xl border border-slate-100 p-4">
-                <p className="font-semibold text-slate-900">{skill.name}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{skill.description}</p>
-              </div>
-            ))}
+            {publicSkills.length > 0 ? (
+              publicSkills.map((skill) => (
+                <div key={skill.id} className="rounded-2xl border border-slate-100 p-4">
+                  <p className="font-semibold text-slate-900">{skill.name}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{skill.description}</p>
+                </div>
+              ))
+            ) : (
+              <EmptyPublicState />
+            )}
           </div>
         </Card>
       </section>
