@@ -91,8 +91,23 @@ values ('00000000-0000-0000-0000-000000000000');
 
 - 未配置 Supabase 时，后台页面保持 mock data 开发预览，便于本地构建和视觉检查。
 - 配置 Supabase 后，后台页面会要求登录，并通过 `public.admin_users` + `public.is_admin()` 判断管理员权限。
+- 登录成功后的 `next` 跳转会经过内部后台路径白名单校验，不允许跳到外部 URL。
 - 公开首页只展示 `visibility = "public"` 的 mock 内容。
 - 当前页面仍使用 `src/lib/mock-data.ts`，尚未接入真实 CRUD、真实文件上传、真实登录后的数据写入或外部 API。
+- `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
+
+## 初始数据结构
+
+`supabase/migrations/0001_initial_schema.sql` 已为 Phase 2B 真实 CRUD 预留主要字段：
+
+- `profiles`：个人展示、邮箱、简历链接、联系方式、社交链接、研究兴趣与技能标签。
+- `projects`：使用 `title`、`slug`、背景、研究问题、方法论、进度、状态、精选标记与开始日期。
+- `publications`：成果标题、slug、摘要、封面、精选标记、附件路径与关联项目。
+- `knowledge_notes`：笔记标题、slug、分类、正文、精选标记与关联项目。
+- `skills`：Skill 名称、slug、说明、输入输出描述、使用指南、Skill.md 内容、仓库链接、版本、状态与精选标记。
+- `calendar_events`：日程时间、类型、可见性与关联项目。
+- `documents`：文件存储路径、分类、关联实体类型与关联 ID。
+- `activity_logs` 与 `skill_versions`：后续审计与 Skill 版本记录基础。
 
 ## 存储规划
 

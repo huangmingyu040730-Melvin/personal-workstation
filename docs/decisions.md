@@ -117,3 +117,42 @@
 
 - 当前页面仍以 `src/lib/mock-data.ts` 为展示来源。
 - 后续需要补数据访问层、表单保存、错误状态和加载状态。
+
+## 2026-06-01 - Whitelist Post Login Redirects
+
+类型：decision
+
+决策：
+
+- 登录后的 `next` 参数必须通过内部后台路径白名单校验。
+- 页面层和 Server Action 均使用同一套校验逻辑，Server Action 作为最终安全边界。
+- 非法路径、外部 URL、协议形式或 `//example.com` 统一回退到 `/dashboard`。
+
+原因：
+
+- 隐藏表单字段不能被信任。
+- 登录完成后的跳转不能成为站外跳转入口。
+
+影响：
+
+- 只允许跳转到 dashboard、projects、publications、knowledge、skills、calendar、documents、profile、settings、automations 及其子路径。
+
+## 2026-06-01 - Enrich Initial Schema Before Merge
+
+类型：decision
+
+决策：
+
+- 在 PR #3 合并前完善初始 Supabase migration，而不是等 Phase 2B 再大量补字段。
+- `projects` 使用 `title` 与唯一 `slug`，并补充研究背景、问题、方法论、精选标记和开始日期。
+- 其他核心表补充 slug、精选标记、项目关联、Skill 内容字段、文件关联字段和常用索引。
+
+原因：
+
+- migration 尚未合并，直接完善初始结构比后续追加大量修正 migration 更清晰。
+- Phase 2B 真实 CRUD 需要稳定的字段基础。
+
+影响：
+
+- 当前页面仍不接入真实 CRUD。
+- 后续 CRUD 实现应优先复用当前 schema，而不是重新定义实体字段。

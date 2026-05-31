@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getSafeDashboardRedirect } from "@/lib/safe-redirect";
 import { isSupabaseConfigured, missingSupabaseConfigMessage } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,7 +46,7 @@ export async function loginAction(_previousState: LoginState, formData: FormData
     return { error: "登录失败，请检查邮箱、密码或 Supabase Auth 配置。" };
   }
 
-  redirect(parsed.data.next || "/dashboard");
+  redirect(getSafeDashboardRedirect(parsed.data.next));
 }
 
 export async function signOutAction() {

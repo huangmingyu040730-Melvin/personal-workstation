@@ -54,13 +54,23 @@ supabase/migrations/0001_initial_schema.sql
 - `documents`
 - `activity_logs`
 
+主要字段包括：
+
+- `profiles`：`email`、`resume_url`、`contact`、`social_links`、研究兴趣、技能标签与头像链接。只有希望公开展示的联系方式才应进入 public profile 记录。
+- `projects`：`title`、`slug`、`background`、`research_question`、`methodology`、`status`、`progress`、`is_featured`、`start_date`、标签与里程碑。
+- `publications`：`slug`、`abstract`、`cover_url`、`is_featured`、`project_id` 与附件路径。
+- `knowledge_notes`：`slug`、`content`、`is_featured`、`project_id` 与标签。
+- `skills`：`slug`、`content`、`input_description`、`output_description`、`usage_guide`、`skill_md_content`、`repository_url`、`is_featured` 与平台列表。
+- `calendar_events`：开始结束时间、事件类型、`project_id` 与可见性。
+- `documents`：Storage 路径、文件信息、`related_type` 与 `related_id`。
+
 同时会创建：
 
 - `public.is_admin()` 管理员判断函数
 - `public.set_updated_at()` 更新时间 trigger
 - `visibility` 约束
 - `projects.progress` 范围约束
-- 常用索引
+- `slug`、`project_id`、`is_featured`、`owner_id`、`updated_at`、`status` 等常用索引
 - RLS policies
 
 ## 创建管理员
@@ -113,8 +123,11 @@ values ('00000000-0000-0000-0000-000000000000');
 
 - 未配置 Supabase 时，后台页面保持 mock/development preview。
 - 配置 Supabase 后，访问后台页面会跳转到 `/login`。
+- 登录完成后的 `next` 参数使用内部后台路径白名单校验；非法路径、外部 URL、协议形式或 `//example.com` 都会回退到 `/dashboard`。
 - 登录用户若不在 `admin_users` 中，会进入无权限状态。
 - 公开首页 `/` 始终可访问，并只展示公开内容。
+- 当前真实 CRUD 仍未实现，页面仍从 `src/lib/mock-data.ts` 渲染。
+- Supabase 真实端到端登录验证需要配置项目 URL、publishable key、执行迁移并创建管理员后再进行。
 
 ## 验证命令
 

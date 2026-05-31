@@ -19,7 +19,7 @@ function isProtectedRoute(pathname: string) {
   return protectedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
-function redirectTo(request: NextRequest, pathname: string, params?: Record<string, string>) {
+function redirectTo(request: NextRequest, response: NextResponse, pathname: string, params?: Record<string, string>) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
   url.search = "";
@@ -30,7 +30,12 @@ function redirectTo(request: NextRequest, pathname: string, params?: Record<stri
     });
   }
 
-  return NextResponse.redirect(url);
+  const redirectResponse = NextResponse.redirect(url);
+  response.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie);
+  });
+
+  return redirectResponse;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -62,7 +67,7 @@ export async function updateSession(request: NextRequest) {
     const { data: isAdmin } = await supabase.rpc("is_admin");
 
     if (isAdmin) {
-      return redirectTo(request, "/dashboard");
+      return redirectTo(request, response, "/dashboard");
     }
   }
 
@@ -71,13 +76,13 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (error || !claims) {
-    return redirectTo(request, "/login", { next: request.nextUrl.pathname });
+    return redirectTo(request, response, "/login", { next: request.nextUrl.pathname });
   }
 
   const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
 
   if (adminError || !isAdmin) {
-    return redirectTo(request, "/no-access");
+    return redirectTo(request, response, "/no-access");
   }
 
   return response;

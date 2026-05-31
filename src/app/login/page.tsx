@@ -1,17 +1,18 @@
 import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { LoginForm } from "./login-form";
+import { getSafeDashboardRedirect } from "@/lib/safe-redirect";
 import { isSupabaseConfigured, missingSupabaseConfigMessage } from "@/lib/supabase/config";
 
 type LoginPageProps = {
   searchParams: Promise<{
-    next?: string;
+    next?: string | string[];
   }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const nextPath = params.next && params.next.startsWith("/") ? params.next : "/dashboard";
+  const nextPath = getSafeDashboardRedirect(params.next);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
