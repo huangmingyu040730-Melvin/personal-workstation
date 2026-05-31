@@ -38,6 +38,7 @@
 - 公开首页只展示 `visibility = "public"` 的公开内容。
 - Supabase 初始 schema 已补充 slug、精选标记、项目关联、Skill 详情字段、文件关联字段和常用索引，为 Phase 2B CRUD 做准备。
 - 登录完成后的 `next` 参数使用内部后台路径白名单校验，Server Action 是最终校验边界。
+- 公开可读取内容表不存储或暴露管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 
 尚未接入：
 
@@ -55,6 +56,7 @@
 - Supabase 未配置时，后台页面保持 mock/development preview，确保本地 lint/build 不因缺少环境变量阻塞。
 - Supabase 配置后，后台页面应通过 Auth 登录和 `admin_users` 管理员白名单保护。
 - profile 中的 `contact`、`social_links` 等联系方式只有在确实希望公开展示时才应放入 public profile 数据。
+- 公开访问通过 `visibility = "public"` 控制，后台写权限通过 `public.is_admin()` 控制。
 
 ## Recent Decisions
 
@@ -63,6 +65,7 @@
 - Phase 2A 只建立 Supabase Auth、数据库 schema、RLS 与文档基础，不做真实 CRUD 或上传。
 - 管理员权限由 `public.admin_users` 与 `public.is_admin()` 控制，不在代码中硬编码邮箱、UUID 或密码。
 - `projects` 表采用 `title` 作为项目标题字段，配合唯一 `slug` 支撑后续 CRUD 与公开 URL。
+- 单管理员个人工作站不在公开内容表保存 Auth 用户归属字段；私密后台表可保留 `owner_id` 或 `actor_id` 用于审计。
 
 ## Known Issues
 

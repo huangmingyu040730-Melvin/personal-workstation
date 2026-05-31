@@ -56,7 +56,7 @@ supabase/migrations/0001_initial_schema.sql
 
 主要字段包括：
 
-- `profiles`：`email`、`resume_url`、`contact`、`social_links`、研究兴趣、技能标签与头像链接。只有希望公开展示的联系方式才应进入 public profile 记录。
+- `profiles`：独立内容 ID、`email`、`resume_url`、`contact`、`social_links`、研究兴趣、技能标签与头像链接。只有希望公开展示的联系方式才应进入 public profile 记录。
 - `projects`：`title`、`slug`、`background`、`research_question`、`methodology`、`status`、`progress`、`is_featured`、`start_date`、标签与里程碑。
 - `publications`：`slug`、`abstract`、`cover_url`、`is_featured`、`project_id` 与附件路径。
 - `knowledge_notes`：`slug`、`content`、`is_featured`、`project_id` 与标签。
@@ -70,8 +70,16 @@ supabase/migrations/0001_initial_schema.sql
 - `public.set_updated_at()` 更新时间 trigger
 - `visibility` 约束
 - `projects.progress` 范围约束
-- `slug`、`project_id`、`is_featured`、`owner_id`、`updated_at`、`status` 等常用索引
+- `slug`、`project_id`、`is_featured`、`updated_at`、`status` 等常用索引；私密后台表保留 `owner_id` 或 `actor_id` 索引用于后续审计
 - RLS policies
+
+隐私边界：
+
+- 公开可读取内容表 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 不保存管理员 Supabase Auth UUID。
+- 管理员身份只在私密的 `admin_users` 表中管理。
+- 公开访问通过 `visibility = 'public'` 控制。
+- 管理写权限通过 `public.is_admin()` 控制。
+- `calendar_events`、`documents`、`activity_logs` 不向匿名访客开放读取，可保留 `owner_id` 或 `actor_id` 用于后续后台归属和审计。
 
 ## 创建管理员
 
@@ -91,6 +99,7 @@ values ('00000000-0000-0000-0000-000000000000');
 - 只能读取 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 中 `visibility = 'public'` 的记录。
 - 不能读取 `calendar_events`、`documents`、`activity_logs`、`skill_versions`、`admin_users`。
 - 不能写入任何业务表。
+- 公开可读记录不会携带管理员 Auth 用户 UUID 字段。
 
 普通已登录用户：
 
@@ -127,6 +136,7 @@ values ('00000000-0000-0000-0000-000000000000');
 - 登录用户若不在 `admin_users` 中，会进入无权限状态。
 - 公开首页 `/` 始终可访问，并只展示公开内容。
 - 当前真实 CRUD 仍未实现，页面仍从 `src/lib/mock-data.ts` 渲染。
+- 当前 Storage 上传仍未实现。
 - Supabase 真实端到端登录验证需要配置项目 URL、publishable key、执行迁移并创建管理员后再进行。
 
 ## 验证命令

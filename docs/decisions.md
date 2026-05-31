@@ -156,3 +156,26 @@
 
 - 当前页面仍不接入真实 CRUD。
 - 后续 CRUD 实现应优先复用当前 schema，而不是重新定义实体字段。
+
+## 2026-06-01 - Keep Auth UUID Out Of Public Content Tables
+
+类型：decision
+
+决策：
+
+- 公开可读取内容表不保存管理员 Supabase Auth UUID。
+- `profiles` 使用独立内容 ID，不引用 `auth.users(id)`。
+- `projects`、`publications`、`knowledge_notes`、`skills` 不保存 `owner_id`。
+- 管理员身份只在私密的 `admin_users` 表中管理。
+
+原因：
+
+- RLS 控制行可见性，不会自动隐藏列。
+- 当记录 `visibility = 'public'` 时，匿名访客可能读取该行的所有公开字段。
+- 单管理员个人工作站不需要在公开内容中携带后台登录身份标识。
+
+影响：
+
+- 公开访问继续通过 `visibility = 'public'` 控制。
+- 后台写入、更新和删除继续通过 `public.is_admin()` 控制。
+- `calendar_events`、`documents`、`activity_logs` 等私密后台表可保留 `owner_id` 或 `actor_id` 用于审计。

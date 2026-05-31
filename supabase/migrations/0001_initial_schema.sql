@@ -33,7 +33,7 @@ revoke all on function public.is_admin() from public;
 grant execute on function public.is_admin() to anon, authenticated;
 
 create table if not exists public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
   display_name text not null,
   email text,
   headline text,
@@ -65,7 +65,6 @@ create table if not exists public.projects (
   tags text[] not null default '{}',
   milestones text[] not null default '{}',
   visibility text not null default 'private' check (visibility in ('public', 'private', 'unlisted')),
-  owner_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -84,7 +83,6 @@ create table if not exists public.publications (
   is_featured boolean not null default false,
   project_id uuid references public.projects(id) on delete set null,
   visibility text not null default 'private' check (visibility in ('public', 'private', 'unlisted')),
-  owner_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -100,7 +98,6 @@ create table if not exists public.knowledge_notes (
   is_featured boolean not null default false,
   project_id uuid references public.projects(id) on delete set null,
   visibility text not null default 'private' check (visibility in ('public', 'private', 'unlisted')),
-  owner_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -122,7 +119,6 @@ create table if not exists public.skills (
   repository_url text,
   is_featured boolean not null default false,
   visibility text not null default 'private' check (visibility in ('public', 'private', 'unlisted')),
-  owner_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -181,23 +177,19 @@ create table if not exists public.activity_logs (
 create index if not exists profiles_visibility_idx on public.profiles(visibility);
 create index if not exists profiles_updated_at_idx on public.profiles(updated_at desc);
 create index if not exists projects_visibility_idx on public.projects(visibility);
-create index if not exists projects_owner_id_idx on public.projects(owner_id);
 create index if not exists projects_status_idx on public.projects(status);
 create index if not exists projects_is_featured_idx on public.projects(is_featured);
 create index if not exists projects_updated_at_idx on public.projects(updated_at desc);
 create index if not exists publications_visibility_idx on public.publications(visibility);
-create index if not exists publications_owner_id_idx on public.publications(owner_id);
 create index if not exists publications_project_id_idx on public.publications(project_id);
 create index if not exists publications_is_featured_idx on public.publications(is_featured);
 create index if not exists publications_published_on_idx on public.publications(published_on desc);
 create index if not exists publications_updated_at_idx on public.publications(updated_at desc);
 create index if not exists knowledge_notes_visibility_idx on public.knowledge_notes(visibility);
-create index if not exists knowledge_notes_owner_id_idx on public.knowledge_notes(owner_id);
 create index if not exists knowledge_notes_project_id_idx on public.knowledge_notes(project_id);
 create index if not exists knowledge_notes_is_featured_idx on public.knowledge_notes(is_featured);
 create index if not exists knowledge_notes_updated_at_idx on public.knowledge_notes(updated_at desc);
 create index if not exists skills_visibility_idx on public.skills(visibility);
-create index if not exists skills_owner_id_idx on public.skills(owner_id);
 create index if not exists skills_status_idx on public.skills(status);
 create index if not exists skills_is_featured_idx on public.skills(is_featured);
 create index if not exists skills_updated_at_idx on public.skills(updated_at desc);
