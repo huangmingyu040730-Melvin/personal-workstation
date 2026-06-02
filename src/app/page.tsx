@@ -2,7 +2,9 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, BrainCircuit, FolderKanban, Sparkles } from "lucide-react";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
-import { profile, projects, publications, skills } from "@/lib/mock-data";
+import { profile, publications } from "@/lib/mock-data";
+import { countPublicProjects, getFeaturedPublicProjects } from "@/lib/queries/projects";
+import { countPublicSkills, getFeaturedPublicSkills } from "@/lib/queries/skills";
 
 function EmptyPublicState() {
   return (
@@ -12,10 +14,14 @@ function EmptyPublicState() {
   );
 }
 
-export default function HomePage() {
-  const publicProjects = projects.filter((project) => project.visibility === "public");
+export default async function HomePage() {
+  const [publicProjectCount, publicSkillCount, featuredProjects, featuredSkills] = await Promise.all([
+    countPublicProjects(),
+    countPublicSkills(),
+    getFeaturedPublicProjects(2),
+    getFeaturedPublicSkills(3)
+  ]);
   const publicPublications = publications.filter((publication) => publication.visibility === "public");
-  const publicSkills = skills.filter((skill) => skill.visibility === "public");
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -45,9 +51,9 @@ export default function HomePage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {[
-              { title: "公开项目", value: publicProjects.length, icon: FolderKanban },
+              { title: "公开项目", value: publicProjectCount, icon: FolderKanban },
               { title: "公开成果", value: publicPublications.length, icon: BookOpen },
-              { title: "公开 Skill", value: publicSkills.length, icon: Sparkles },
+              { title: "公开 Skill", value: publicSkillCount, icon: Sparkles },
               { title: "AI 工作流", value: "Codex", icon: BrainCircuit }
             ].map((item) => (
               <Card key={item.title} className="p-5">
@@ -64,10 +70,10 @@ export default function HomePage() {
         <Card>
           <CardHeader title="精选项目" />
           <div className="space-y-4">
-            {publicProjects.length > 0 ? (
-              publicProjects.slice(0, 2).map((project) => (
+            {featuredProjects.length > 0 ? (
+              featuredProjects.map((project) => (
                 <div key={project.id} className="rounded-2xl bg-slate-50 p-4">
-                  <p className="font-semibold text-slate-900">{project.name}</p>
+                  <p className="font-semibold text-slate-900">{project.title}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{project.summary}</p>
                 </div>
               ))
@@ -77,7 +83,7 @@ export default function HomePage() {
           </div>
         </Card>
         <Card>
-          <CardHeader title="精选学术成果" />
+          <CardHeader title="精选学术成果" description="Publications 真实数据接入将在下一阶段完成" />
           <div className="space-y-4">
             {publicPublications.length > 0 ? (
               publicPublications.map((publication) => (
@@ -94,8 +100,8 @@ export default function HomePage() {
         <Card>
           <CardHeader title="精选公开 Skill" />
           <div className="space-y-4">
-            {publicSkills.length > 0 ? (
-              publicSkills.map((skill) => (
+            {featuredSkills.length > 0 ? (
+              featuredSkills.map((skill) => (
                 <div key={skill.id} className="rounded-2xl border border-slate-100 p-4">
                   <p className="font-semibold text-slate-900">{skill.name}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{skill.description}</p>

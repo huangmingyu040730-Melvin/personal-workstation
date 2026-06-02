@@ -1,5 +1,5 @@
 import type { Status, Visibility } from "@/lib/types";
-import { cn, statusTone, visibilityLabel, visibilityTone } from "@/lib/utils";
+import { cn, statusLabel, statusTone, visibilityLabel, visibilityTone } from "@/lib/utils";
 
 type BadgeProps = {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ export function Badge({ children, className }: BadgeProps) {
 }
 
 export function StatusBadge({ status }: { status: Status }) {
-  return <Badge className={statusTone(status)}>{status}</Badge>;
+  return <Badge className={statusTone(status)}>{statusLabel(status)}</Badge>;
 }
 
 export function VisibilityBadge({ visibility }: { visibility: Visibility }) {

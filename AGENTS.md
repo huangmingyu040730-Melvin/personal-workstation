@@ -8,7 +8,7 @@
 
 - 面向个人展示、学术研究项目管理、知识积累和 AI Skill 工作流管理的网站。
 - 网站默认语言为中文。
-- 第一阶段是本地可运行的前端 MVP，后续逐步接入真实数据和权限系统。
+- Phase 2B 开始接入 Projects、Knowledge Base、Skills Library 的真实 Supabase CRUD。
 
 ## Tech Stack
 
@@ -40,8 +40,9 @@ npm run build
 ## Working Rules
 
 - 保持组件可复用，页面优先组合基础组件，不在页面中堆重复样式。
-- 示例数据集中维护在 `src/lib/mock-data.ts`，类型集中维护在 `src/lib/types.ts`。
-- 后续预留 Supabase 接入，但当前阶段不要因为数据库配置阻塞页面开发。
+- 示例数据集中维护在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的页面或未配置 Supabase 时的开发预览。
+- Projects、Knowledge Base、Skills Library 的查询逻辑集中在 `src/lib/queries/`，校验逻辑集中在 `src/lib/validations/`，写入逻辑集中在 `src/actions/`。
+- Supabase 写操作必须在 Server Action 中验证当前用户为管理员，并继续依赖 RLS 作为数据库权限边界。
 - 不提交密钥、`.env`、API token、私钥或任何敏感文件。
 - 保留 `.gitignore` 对 `.env`、`node_modules`、`.next`、`dist`、`out` 等文件的忽略规则。
 - 每轮代码修改后运行 `npm run lint` 和 `npm run build`，并修复发现的问题。

@@ -2,9 +2,9 @@
 
 ## Current State
 
-日期：2026-06-01
+日期：2026-06-03
 
-第一阶段前端 MVP 与 Hotfix 已合并到 `main`。当前 Phase 2A 正在建立 Supabase Auth、数据库 schema 与 RLS 权限基础。
+Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础和线上后台路由保护 hotfix 均已合并到 `main`。
 
 已实现页面：
 
@@ -31,20 +31,23 @@
 
 当前数据状态：
 
-- 页面仍使用结构化 mock data。
-- mock data 集中在 `src/lib/mock-data.ts`。
+- Projects、Knowledge Base、Skills Library 已实现真实 Supabase 查询、创建、编辑、删除和详情页。
+- Dashboard 已开始读取真实 projects、knowledge_notes、skills 与 activity_logs。
+- 公开首页已开始读取真实 public + featured projects 与 skills。
+- mock data 集中在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的 Publications、Calendar、Documents、Profile 等页面和未配置 Supabase 的开发预览。
 - 类型定义集中在 `src/lib/types.ts`。
 - 核心实体保留 `visibility` 字段，取值为 `public`、`private` 或 `unlisted`。
-- 公开首页只展示 `visibility = "public"` 的公开内容。
+- 公开首页只展示数据库中 `visibility = "public"` 且符合展示条件的公开内容。
 - Supabase 初始 schema 已补充 slug、精选标记、项目关联、Skill 详情字段、文件关联字段和常用索引，为 Phase 2B CRUD 做准备。
 - 登录完成后的 `next` 参数使用内部后台路径白名单校验，Server Action 是最终校验边界。
 - 公开可读取内容表不存储或暴露管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 
 尚未接入：
 
-- 真实 CRUD
 - Supabase Storage 文件上传
-- 登录后的真实数据读写
+- Publications CRUD
+- Calendar CRUD
+- Documents 上传
 - 外部 API
 - Skill 自动化执行
 
@@ -69,18 +72,16 @@
 
 ## Known Issues
 
-- 当前所有页面数据仍为 mock data，不具备真实持久化能力。
+- Publications、Calendar、Documents、Profile 仍为 mock 或占位页面，不具备真实持久化能力。
 - 文件中心只有列表和上传按钮样式，不支持真实上传。
 - 日历为静态月历，不支持新增、编辑或提醒。
 - 个人信息页面只有前端编辑样式，不保存修改。
-- 真实登录端到端验证需要用户配置 Supabase 项目、环境变量、迁移和管理员账号。
-- Supabase Dashboard 中的 Auth、迁移执行、管理员 UUID 插入仍需用户手动完成。
+- 管理员真实 CRUD 端到端验证需要用户本人输入账号密码完成，Codex 不读取或记录密码。
 
 ## Next Steps
 
-- 在 Supabase Dashboard 配置 Auth、运行迁移并插入管理员 UUID。
-- 第二阶段后续接入 Supabase Auth 用户资料读取。
-- Phase 2B 开始将 projects、publications、knowledge_notes、skills 等模块逐步切换到真实 CRUD。
+- 用户手动验证管理员登录、新建 private/public featured 项目与 Skill、新建知识笔记、退出登录和公开首页过滤。
+- 后续接入 Publications CRUD。
 - 接入 Supabase Storage，用于文件上传、成果附件、Skill 附件和头像。
 - 完善 `public`、`private`、`unlisted` 对应的权限模型和前端提示。
 - 为 Skill 增加运行日志、版本记录、平台链接和自动化状态。
