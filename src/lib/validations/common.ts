@@ -14,8 +14,16 @@ export const visibilitySchema = z.enum(["public", "private", "unlisted"], {
 export const textArraySchema = z.array(z.string().trim().min(1)).default([]);
 
 export function optionalText() {
-  return z
-    .string()
-    .trim()
-    .transform((value) => (value.length > 0 ? value : null));
+  return z.preprocess((value) => {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }, z.string().nullable());
 }

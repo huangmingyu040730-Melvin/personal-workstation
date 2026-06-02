@@ -20,6 +20,25 @@ function mockKnowledgeFallback(): KnowledgeNoteRecord[] {
   }));
 }
 
+function normalizeSearchTerm(value: string) {
+  return value.trim().toLocaleLowerCase("zh-CN");
+}
+
+export function matchesKnowledgeSearch(note: KnowledgeNoteRecord, q: string) {
+  const keyword = normalizeSearchTerm(q);
+
+  if (!keyword) {
+    return true;
+  }
+
+  const searchableText = [note.title, note.excerpt, note.content, note.category, ...(note.tags ?? [])]
+    .filter(Boolean)
+    .join("\n")
+    .toLocaleLowerCase("zh-CN");
+
+  return searchableText.includes(keyword);
+}
+
 export async function getKnowledgeNotes(filters?: { category?: string; q?: string }) {
   const supabase = await createClient();
 
@@ -36,13 +55,6 @@ export async function getKnowledgeNotes(filters?: { category?: string; q?: strin
     query = query.eq("category", filters.category);
   }
 
-  if (filters?.q) {
-    const keyword = filters.q.trim();
-    if (keyword) {
-      query = query.or(`title.ilike.%${keyword}%,excerpt.ilike.%${keyword}%,content.ilike.%${keyword}%`);
-    }
-  }
-
   const { data, error } = await query;
 
   if (error) {
@@ -50,7 +62,13 @@ export async function getKnowledgeNotes(filters?: { category?: string; q?: strin
     return [];
   }
 
-  return (data ?? []) as KnowledgeNoteRecord[];
+  const notes = (data ?? []) as KnowledgeNoteRecord[];
+
+  if (filters?.q) {
+    return notes.filter((note) => matchesKnowledgeSearch(note, filters.q ?? ""));
+  }
+
+  return notes;
 }
 
 export async function getKnowledgeNoteById(id: string) {
