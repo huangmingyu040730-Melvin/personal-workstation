@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 只建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。当前页面仍使用 mock data，真实 CRUD、文件上传和外部 API 不在本阶段实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已开始接入 Projects、Knowledge Base、Skills Library 的真实 CRUD。文件上传、Publications CRUD、Calendar CRUD 和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -128,14 +128,24 @@ values ('00000000-0000-0000-0000-000000000000');
 - 私有文件通过 RLS、签名 URL 或受控下载接口访问。
 - 上传逻辑应校验当前用户是否为管理员。
 
+## Phase 2B 真实 CRUD
+
+- `projects`、`knowledge_notes`、`skills` 和 `skill_versions` 使用现有 `0001_initial_schema.sql` 字段实现 CRUD。
+- `activity_logs` 记录创建、更新、删除和 Skill 版本新增等核心操作。
+- 本轮没有新增 migration；真实 Supabase 项目已执行过 `0001_initial_schema.sql`，后续结构变更必须新建 `0002_*` 增量 migration。
+- Server Actions 使用登录管理员身份写入，不使用 `service_role`。
+- RLS 继续作为最终权限边界。
+- Markdown 内容以安全文本方式渲染，不允许原始 HTML 注入。
+
 ## 本地开发行为
 
-- 未配置 Supabase 时，后台页面保持 mock/development preview。
+- 未配置 Supabase 时，已接入页面保留 mock/development preview。
 - 配置 Supabase 后，访问后台页面会跳转到 `/login`。
 - 登录完成后的 `next` 参数使用内部后台路径白名单校验；非法路径、外部 URL、协议形式或 `//example.com` 都会回退到 `/dashboard`。
 - 登录用户若不在 `admin_users` 中，会进入无权限状态。
 - 公开首页 `/` 始终可访问，并只展示公开内容。
-- 当前真实 CRUD 仍未实现，页面仍从 `src/lib/mock-data.ts` 渲染。
+- Projects、Knowledge Base、Skills Library 已接入真实 CRUD。
+- Publications、Calendar、Documents、Profile 仍从 `src/lib/mock-data.ts` 或静态占位渲染。
 - 当前 Storage 上传仍未实现。
 - Supabase 真实端到端登录验证需要配置项目 URL、publishable key、执行迁移并创建管理员后再进行。
 

@@ -179,3 +179,26 @@
 - 公开访问继续通过 `visibility = 'public'` 控制。
 - 后台写入、更新和删除继续通过 `public.is_admin()` 控制。
 - `calendar_events`、`documents`、`activity_logs` 等私密后台表可保留 `owner_id` 或 `actor_id` 用于审计。
+
+## 2026-06-03 - Implement Core Content CRUD Before Storage
+
+类型：decision
+
+决策：
+
+- Phase 2B 优先实现 `projects`、`knowledge_notes`、`skills` 和 `skill_versions` 的真实 CRUD。
+- Dashboard 先接入真实项目、笔记、Skill 和 Activity Logs。
+- 公开首页先接入真实 public + featured 项目和 Skill。
+- Publications、Calendar、Documents、Storage、Notion、AI 自动化和多用户协作继续后延。
+
+原因：
+
+- 核心内容管理能力是个人工作站第一次真正可用的后台基础。
+- 先验证 Auth + RLS + Server Actions 的最小闭环，再扩展文件上传和外部集成，风险更低。
+
+影响：
+
+- 查询集中在 `src/lib/queries/`。
+- 表单校验集中在 `src/lib/validations/`。
+- 写入集中在 `src/actions/`，每个写操作都在服务端验证管理员身份并依赖 RLS 兜底。
+- Markdown 展示使用安全的 React 文本渲染，不允许原始 HTML 注入。

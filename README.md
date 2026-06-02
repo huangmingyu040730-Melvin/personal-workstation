@@ -8,8 +8,8 @@
 - TypeScript
 - Tailwind CSS
 - Lucide React
-- Supabase Auth、Database、RLS 基础结构
-- Mock data first，真实 CRUD 与文件上传将在后续阶段接入
+- Supabase Auth、Database、RLS
+- Projects、Knowledge Base、Skills Library 真实 CRUD
 
 ## 本地启动
 
@@ -92,10 +92,12 @@ values ('00000000-0000-0000-0000-000000000000');
 - 未配置 Supabase 时，后台页面保持 mock data 开发预览，便于本地构建和视觉检查。
 - 配置 Supabase 后，后台页面会要求登录，并通过 `public.admin_users` + `public.is_admin()` 判断管理员权限。
 - 登录成功后的 `next` 跳转会经过内部后台路径白名单校验，不允许跳到外部 URL。
-- 公开首页只展示 `visibility = "public"` 的 mock 内容。
+- 公开首页从 Supabase 读取 `visibility = "public"` 且 `is_featured = true` 的公开项目与公开 Skill。
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制，后台写入、更新、删除权限通过 `public.is_admin()` 控制。
-- 当前页面仍使用 `src/lib/mock-data.ts`，尚未接入真实 CRUD、真实文件上传、真实登录后的数据写入或外部 API。
+- 当前 Projects、Knowledge Base、Skills Library 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
+- Dashboard 已读取真实项目、笔记、Skill 与 Activity Logs。
+- Publications、Calendar、Documents、Profile 仍为 mock 或占位展示，真实 CRUD、Storage 上传和外部 API 尚未实现。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
 
 ## 初始数据结构

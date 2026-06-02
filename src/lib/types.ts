@@ -1,6 +1,20 @@
 export type Visibility = "public" | "private" | "unlisted";
 
-export type Status = "进行中" | "规划中" | "可用" | "开发中" | "已发布" | "草稿";
+export type Status =
+  | "进行中"
+  | "规划中"
+  | "可用"
+  | "开发中"
+  | "已发布"
+  | "草稿"
+  | "planning"
+  | "in_progress"
+  | "completed"
+  | "archived"
+  | "idea"
+  | "developing"
+  | "testing"
+  | "available";
 
 export type Project = {
   id: string;
