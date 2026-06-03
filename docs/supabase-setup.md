@@ -35,7 +35,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 ## 数据库迁移
 
-运行或复制执行：
+先运行或复制执行：
 
 ```text
 supabase/migrations/0001_initial_schema.sql
@@ -81,6 +81,25 @@ supabase/migrations/0001_initial_schema.sql
 - 管理写权限通过 `public.is_admin()` 控制。
 - `calendar_events`、`documents`、`activity_logs` 不向匿名访客开放读取，可保留 `owner_id` 或 `actor_id` 用于后续后台归属和审计。
 
+再运行或复制执行：
+
+```text
+supabase/migrations/0002_grant_api_table_privileges.sql
+```
+
+`0002` 会为 Supabase API 使用的角色补充最小表级 privileges：
+
+- `anon` 仅获得 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 的 `select` 权限。
+- `authenticated` 获得 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills`、`skill_versions`、`calendar_events`、`documents`、`activity_logs` 的 `select`、`insert`、`update`、`delete` 权限。
+- 不向 `anon` 或 `authenticated` 授予 `admin_users` 的读取或写入权限。
+
+GRANT 与 RLS 是两层权限控制：
+
+- GRANT 决定 API 角色是否有资格访问某张表。
+- RLS policy 决定该角色能访问哪些记录、能否写入对应记录。
+- `0002` 只打开表级入口，不绕过 `visibility = 'public'` 或 `public.is_admin()`。
+- 普通已登录用户即使属于 `authenticated`，仍不能通过 RLS 写入后台内容。
+
 ## 创建管理员
 
 在 Supabase SQL Editor 中插入管理员 UUID：
@@ -100,6 +119,7 @@ values ('00000000-0000-0000-0000-000000000000');
 - 不能读取 `calendar_events`、`documents`、`activity_logs`、`skill_versions`、`admin_users`。
 - 不能写入任何业务表。
 - 公开可读记录不会携带管理员 Auth 用户 UUID 字段。
+- 表级访问需要执行 `0002_grant_api_table_privileges.sql`，RLS 才能在 API 请求中继续判断行级权限。
 
 普通已登录用户：
 
@@ -132,7 +152,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 - `projects`、`knowledge_notes`、`skills` 和 `skill_versions` 使用现有 `0001_initial_schema.sql` 字段实现 CRUD。
 - `activity_logs` 记录创建、更新、删除和 Skill 版本新增等核心操作。
-- 本轮没有新增 migration；真实 Supabase 项目已执行过 `0001_initial_schema.sql`，后续结构变更必须新建 `0002_*` 增量 migration。
+- 真实 Supabase 项目已执行过 `0001_initial_schema.sql`；`0002_grant_api_table_privileges.sql` 只补充 API 角色表级 GRANT，不新增业务字段或能力。
 - Server Actions 使用登录管理员身份写入，不使用 `service_role`。
 - RLS 继续作为最终权限边界。
 - Markdown 内容以安全文本方式渲染，不允许原始 HTML 注入。

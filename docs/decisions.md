@@ -202,3 +202,27 @@
 - 表单校验集中在 `src/lib/validations/`。
 - 写入集中在 `src/actions/`，每个写操作都在服务端验证管理员身份并依赖 RLS 兜底。
 - Markdown 展示使用安全的 React 文本渲染，不允许原始 HTML 注入。
+
+## 2026-06-03 - Add Explicit Supabase API Table Grants
+
+类型：decision
+
+决策：
+
+- 在 `0001_initial_schema.sql` 已执行的基础上，新增 `0002_grant_api_table_privileges.sql`。
+- `anon` 只获得公开内容表的 `select` 表级权限。
+- `authenticated` 获得后台业务表的 `select`、`insert`、`update`、`delete` 表级权限。
+- 不向 `anon` 或 `authenticated` 授予 `admin_users` 表权限。
+
+原因：
+
+- Supabase RLS policy 不能替代表级 GRANT。
+- 生产站点在进入 `/projects/new`、`/knowledge/new` 等页面时已出现 `permission denied for table ...`，说明 API 角色缺少表级访问入口。
+- 最小 GRANT 配合现有 RLS，才能同时允许管理员 CRUD 和限制普通访客/非管理员。
+
+影响：
+
+- 该迁移只修复数据库授权，不新增页面、业务能力、schema 字段或 Storage 配置。
+- `visibility = 'public'` 继续控制公开读取行。
+- `public.is_admin()` 继续控制后台管理写权限。
+- 真实 Supabase 项目需要在 PR 合并后执行 `0002_grant_api_table_privileges.sql`，然后重新验证后台 CRUD。

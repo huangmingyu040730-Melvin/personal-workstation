@@ -39,6 +39,7 @@ Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Sup
 - 核心实体保留 `visibility` 字段，取值为 `public`、`private` 或 `unlisted`。
 - 公开首页只展示数据库中 `visibility = "public"` 且符合展示条件的公开内容。
 - Supabase 初始 schema 已补充 slug、精选标记、项目关联、Skill 详情字段、文件关联字段和常用索引，为 Phase 2B CRUD 做准备。
+- Supabase 增量 migration `0002_grant_api_table_privileges.sql` 补充 API 角色的最小表级 privileges，让 RLS policies 能在 Supabase API 请求中实际生效。
 - 登录完成后的 `next` 参数使用内部后台路径白名单校验，Server Action 是最终校验边界。
 - 公开可读取内容表不存储或暴露管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 
@@ -60,6 +61,7 @@ Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Sup
 - Supabase 配置后，后台页面应通过 Auth 登录和 `admin_users` 管理员白名单保护。
 - profile 中的 `contact`、`social_links` 等联系方式只有在确实希望公开展示时才应放入 public profile 数据。
 - 公开访问通过 `visibility = "public"` 控制，后台写权限通过 `public.is_admin()` 控制。
+- 数据库权限分两层：GRANT 决定 `anon` / `authenticated` 是否能访问表，RLS 决定能访问哪些记录以及能否写入。
 
 ## Recent Decisions
 
@@ -69,6 +71,7 @@ Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Sup
 - 管理员权限由 `public.admin_users` 与 `public.is_admin()` 控制，不在代码中硬编码邮箱、UUID 或密码。
 - `projects` 表采用 `title` 作为项目标题字段，配合唯一 `slug` 支撑后续 CRUD 与公开 URL。
 - 单管理员个人工作站不在公开内容表保存 Auth 用户归属字段；私密后台表可保留 `owner_id` 或 `actor_id` 用于审计。
+- 已新增 `0002_grant_api_table_privileges.sql` 修复 Supabase API 表级授权缺失；该迁移只补 GRANT，不新增业务能力。
 
 ## Known Issues
 
@@ -77,9 +80,11 @@ Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Sup
 - 日历为静态月历，不支持新增、编辑或提醒。
 - 个人信息页面只有前端编辑样式，不保存修改。
 - 管理员真实 CRUD 端到端验证需要用户本人输入账号密码完成，Codex 不读取或记录密码。
+- 生产 Supabase 项目需要在 PR 合并后执行 `0002_grant_api_table_privileges.sql`，否则后台 CRUD 页面可能继续出现 `permission denied for table ...`。
 
 ## Next Steps
 
+- 合并并执行 `0002_grant_api_table_privileges.sql` 后，用户手动重新验证 `/projects/new`、`/knowledge/new`、`/skills/new` 不再出现表级 permission denied。
 - 用户手动验证管理员登录、新建 private/public featured 项目与 Skill、新建知识笔记、退出登录和公开首页过滤。
 - 后续接入 Publications CRUD。
 - 接入 Supabase Storage，用于文件上传、成果附件、Skill 附件和头像。
@@ -88,4 +93,5 @@ Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Sup
 
 ## Stale Or Superseded Notes
 
-- “第一阶段尚未接入 Supabase”已被 Phase 2A 的 Supabase 基础设施取代，但页面数据仍未切换到真实数据库。
+- “第一阶段尚未接入 Supabase”已被 Phase 2A 的 Supabase 基础设施取代。
+- “页面数据仍保持 mock data 预览”已被 Phase 2B 的 Projects、Knowledge、Skills 真实 CRUD 取代；Publications、Calendar、Documents、Profile 仍有 mock 或占位部分。
