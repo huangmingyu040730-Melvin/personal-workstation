@@ -24,7 +24,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <p className="mt-6 text-sm font-semibold text-blue-700">黄铭语个人数字工作站</p>
           <h1 className="mt-3 text-3xl font-semibold text-slate-950">管理员登录</h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">
-            工作台、研究中心、文件中心与系统设置属于后台区域。Phase 2A 使用 Supabase Auth 和 RLS 建立权限基础，页面数据仍保持 mock data 预览。
+            工作台、研究中心、文件中心与系统设置属于后台区域。本工作站使用 Supabase Auth 与 RLS 建立权限基础，Projects、Knowledge 与 Skills 已接入真实数据，其他模块将逐步完善。
           </p>
           {!isSupabaseConfigured ? (
             <p className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
