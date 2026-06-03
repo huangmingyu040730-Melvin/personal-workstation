@@ -34,6 +34,7 @@ Phase 2B 已通过生产站点真实验收。Phase 2C 分支正在接入 Publica
 - Projects、Knowledge Base、Skills Library 已实现真实 Supabase 查询、创建、编辑、删除和详情页，并通过生产验收。
 - Phase 2C 新增 Publications 真实查询、创建、编辑、删除和详情页。
 - Phase 2C 新增 Documents 真实列表、详情、上传、下载和删除流程，文件存储在私密 `workspace-files` bucket。
+- 文件上传架构已按 PR review 修正为浏览器直传 Supabase Storage：Server Actions 只负责 prepare/finalize，不承载文件二进制，避免 Vercel Function 4.5 MB payload 限制与 20 MB 上传目标冲突。
 - Dashboard 已开始读取真实 projects、knowledge_notes、skills、publications 与 activity_logs。
 - 公开首页已开始读取真实 public + featured projects、publications 与 skills。
 - mock data 集中在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的 Calendar、Profile 等页面和未配置 Supabase 的开发预览。
@@ -76,6 +77,7 @@ Phase 2B 已通过生产站点真实验收。Phase 2C 分支正在接入 Publica
 - Phase 2C 采用单一 private bucket `workspace-files`，不为公开页面提供附件下载入口。
 - Publication 删除采取保守策略：仍有关联 documents 时阻止删除，要求管理员先处理附件。
 - Document 下载采用 60 秒 signed URL，不保存到数据库，不输出到公开页面。
+- Document 上传采用两阶段流程：管理员 prepare -> 浏览器 direct upload -> 管理员 finalize；finalize 失败会尽力删除刚上传的对象。
 
 ## Known Issues
 

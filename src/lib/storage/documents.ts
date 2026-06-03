@@ -48,7 +48,7 @@ export function sanitizeFileName(fileName: string) {
   return extension ? `${safeBase}.${extension}` : safeBase;
 }
 
-export async function validateDocumentFile(file: File | null | undefined) {
+export function validateDocumentFileDescriptor(file: { name: string; type: string; size: number } | null | undefined) {
   if (!file || file.size === 0) {
     return { ok: false as const, message: "请选择需要上传的文件。" };
   }
@@ -74,6 +74,10 @@ export async function validateDocumentFile(file: File | null | undefined) {
     mimeType: file.type,
     safeFileName: sanitizeFileName(file.name)
   };
+}
+
+export function validateDocumentFile(file: File | null | undefined) {
+  return validateDocumentFileDescriptor(file);
 }
 
 export function buildDocumentStoragePath({

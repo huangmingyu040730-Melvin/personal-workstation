@@ -132,10 +132,11 @@ npm run build
 4. 文件类型、大小、文件名清理、Storage path 和 signed URL 配置集中在 `src/lib/storage/documents.ts`。
 5. Storage 变更必须新增 migration，不修改已在生产执行过的 0001/0002。
 6. 本轮使用 private bucket `workspace-files`，不创建 public bucket。
-7. 文件上传使用服务端生成路径和 `upsert: false`，失败时尽力清理已上传对象或异常记录。
-8. 文件下载只为管理员生成 60 秒 signed URL，不保存 signed URL，不输出到公开页面。
-9. Publication 删除前检查关联 documents；存在附件时阻止删除。
-10. Activity Logs 只记录后台摘要，不记录文件内容、signed URL、完整 Storage 路径、密码、密钥或 Auth UUID。
+7. 文件上传使用两阶段流程：Server Action 准备 metadata 和路径，浏览器直接上传到 Supabase Storage，Server Action 最终确认并写入数据库。
+8. 文件上传必须使用服务端生成路径和 `upsert: false`，失败时尽力清理已上传对象或异常记录。
+9. 文件下载只为管理员生成 60 秒 signed URL，不保存 signed URL，不输出到公开页面。
+10. Publication 删除前检查关联 documents；存在附件时阻止删除。
+11. Activity Logs 只记录后台摘要，不记录文件内容、signed URL、完整 Storage 路径、密码、密钥或 Auth UUID。
 
 验证要求：
 

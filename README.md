@@ -130,6 +130,7 @@ Phase 2C 使用 Supabase Storage bucket：
 - 匿名访客不能读取、上传、更新或删除文件。
 - 普通非管理员登录用户不能读取或修改文件。
 - 管理员通过 `public.is_admin()` 和 Storage policy 操作文件。
+- 上传采用两阶段流程：Server Actions 只验证管理员、校验 metadata、生成安全路径并最终写入数据库；文件二进制由浏览器直接上传到 Supabase Storage，不经过 Vercel Function。
 - 下载使用 60 秒短时 signed URL，不保存到数据库，也不在公开页面输出。
 - 文件上传限制为 20 MB，并同时校验扩展名与 MIME type。
 - 即使文件关联到 public Publication，附件本轮仍保持私密，仅管理员可下载。

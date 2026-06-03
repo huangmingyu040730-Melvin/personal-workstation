@@ -269,3 +269,25 @@
 
 - Publication 删除 action 会查询 documents 表。
 - 管理员需要先在文件中心处理附件，再删除成果。
+
+## 2026-06-03 - Upload Documents Directly From Browser To Supabase Storage
+
+类型：decision
+
+决策：
+
+- Documents 上传不通过 Server Action 或 Route Handler 传输文件二进制。
+- 采用两阶段流程：Server Action 准备上传 metadata 和安全路径，浏览器使用当前管理员 Supabase Auth 会话直接上传到 private bucket，Server Action 再最终确认并写入 documents 记录。
+- 文件上传仍使用 `upsert: false`，并继续依赖 Storage policy 中的 `public.is_admin()`。
+
+原因：
+
+- Next.js Server Actions 默认请求体限制约 1 MB。
+- Vercel Function request/response payload 限制无法可靠承载 20 MB 文件。
+- 浏览器直传 Supabase Storage 可以绕开 Vercel Function payload 限制，同时保持 Auth + RLS + Storage policy 的权限边界。
+
+影响：
+
+- Server Actions 只接收文件名、MIME type、大小和业务 metadata，不接收完整 File。
+- 20 MB 上限由客户端预检、服务端 metadata 校验、bucket 文件大小限制和 Storage policy 共同保障。
+- finalize 失败时会尽力删除刚上传的 Storage 对象，减少未登记对象残留。

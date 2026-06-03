@@ -7,13 +7,37 @@ import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getOptionalString, getString } from "@/lib/forms";
 import {
   buildDocumentStoragePath,
-  validateDocumentFile,
+  validateDocumentFileDescriptor,
   WORKSPACE_FILES_BUCKET
 } from "@/lib/storage/documents";
 import { documentMetadataSchema } from "@/lib/validations/document";
 
-function documentErrorRedirect(path: string, message: string): never {
-  redirect(`${path}?error=${encodeFormError(message)}`);
+export type PreparedDocumentUpload = {
+  documentId: string;
+  storageBucket: typeof WORKSPACE_FILES_BUCKET;
+  storagePath: string;
+  name: string;
+  category: string;
+  fileSize: number;
+  mimeType: string;
+  relatedType: DocumentRelatedType | null;
+  relatedId: string | null;
+};
+
+export type PrepareDocumentUploadResult =
+  | { ok: true; upload: PreparedDocumentUpload }
+  | { ok: false; message: string };
+
+export type FinalizeDocumentUploadResult =
+  | { ok: true; documentId: string }
+  | { ok: false; message: string };
+
+export type RollbackDocumentUploadResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
+function documentResultError(message: string): { ok: false; message: string } {
+  return { ok: false, message };
 }
 
 function getDocumentErrorMessage(error: { code?: string; message?: string }) {
@@ -50,36 +74,59 @@ async function ensureRelatedRecordExists(
   return Boolean(data);
 }
 
-export async function uploadDocumentAction(formData: FormData) {
-  const { supabase, isAdmin, actorId, error } = await getAdminClient();
+async function storageObjectExists(
+  supabase: NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>,
+  storagePath: string
+) {
+  const pathParts = storagePath.split("/");
+  const fileName = pathParts.pop();
+  const directory = pathParts.join("/");
+
+  if (!fileName || !directory || storagePath.includes("..") || storagePath.includes("\\")) {
+    return false;
+  }
+
+  const { data, error } = await supabase.storage.from(WORKSPACE_FILES_BUCKET).list(directory, {
+    limit: 100,
+    search: fileName
+  });
+
+  if (error) {
+    console.error("storage object existence check failed", { message: error.message });
+    return false;
+  }
+
+  return Boolean(data?.some((item) => item.name === fileName));
+}
+
+export async function prepareDocumentUploadAction(formData: FormData): Promise<PrepareDocumentUploadResult> {
+  const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    documentErrorRedirect("/documents/upload", error ?? "当前账号没有管理员权限。");
+    return documentResultError(error ?? "当前账号没有管理员权限。");
   }
 
-  const rawFile = formData.get("file");
-  const file = rawFile instanceof File ? rawFile : null;
-  const fileValidation = await validateDocumentFile(file);
+  const fileValidation = validateDocumentFileDescriptor({
+    name: getString(formData, "file_name"),
+    type: getString(formData, "file_type"),
+    size: Number(getString(formData, "file_size"))
+  });
 
   if (!fileValidation.ok) {
-    documentErrorRedirect("/documents/upload", fileValidation.message);
-  }
-
-  if (!file) {
-    documentErrorRedirect("/documents/upload", "请选择需要上传的文件。");
+    return documentResultError(fileValidation.message);
   }
 
   const metadata = documentMetadataFromForm(formData, fileValidation.safeFileName);
 
   if (!metadata.success) {
-    documentErrorRedirect("/documents/upload", metadata.error.issues[0]?.message ?? "请检查文件信息。");
+    return documentResultError(metadata.error.issues[0]?.message ?? "请检查文件信息。");
   }
 
   const relatedType = metadata.data.related_type as DocumentRelatedType | null;
   const relatedExists = await ensureRelatedRecordExists(supabase, relatedType, metadata.data.related_id);
 
   if (!relatedExists) {
-    documentErrorRedirect("/documents/upload", "关联对象不存在，请重新选择。");
+    return documentResultError("关联对象不存在，请重新选择。");
   }
 
   const documentId = crypto.randomUUID();
@@ -90,25 +137,78 @@ export async function uploadDocumentAction(formData: FormData) {
     relatedId: metadata.data.related_id
   });
 
-  const { error: uploadError } = await supabase.storage.from(WORKSPACE_FILES_BUCKET).upload(storagePath, file, {
-    contentType: fileValidation.mimeType,
-    upsert: false
+  return {
+    ok: true,
+    upload: {
+      documentId,
+      storageBucket: WORKSPACE_FILES_BUCKET,
+      storagePath,
+      name: metadata.data.name,
+      category: metadata.data.category,
+      fileSize: Number(getString(formData, "file_size")),
+      mimeType: fileValidation.mimeType,
+      relatedType,
+      relatedId: metadata.data.related_id
+    }
+  };
+}
+
+export async function finalizeDocumentUploadAction(upload: PreparedDocumentUpload): Promise<FinalizeDocumentUploadResult> {
+  const { supabase, isAdmin, actorId, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    return documentResultError(error ?? "当前账号没有管理员权限。");
+  }
+
+  if (upload.storageBucket !== WORKSPACE_FILES_BUCKET) {
+    return documentResultError("文件存储位置无效，请重新上传。");
+  }
+
+  const fileValidation = validateDocumentFileDescriptor({
+    name: upload.storagePath.split("/").pop() ?? upload.name,
+    type: upload.mimeType,
+    size: upload.fileSize
   });
 
-  if (uploadError) {
-    documentErrorRedirect("/documents/upload", uploadError.message || "文件上传失败，请稍后重试。");
+  if (!fileValidation.ok) {
+    return documentResultError(fileValidation.message);
+  }
+
+  const metadata = documentMetadataSchema.safeParse({
+    name: upload.name,
+    category: upload.category,
+    related_type: upload.relatedType,
+    related_id: upload.relatedId
+  });
+
+  if (!metadata.success) {
+    return documentResultError(metadata.error.issues[0]?.message ?? "请检查文件信息。");
+  }
+
+  const relatedType = metadata.data.related_type as DocumentRelatedType | null;
+  const relatedExists = await ensureRelatedRecordExists(supabase, relatedType, metadata.data.related_id);
+
+  if (!relatedExists) {
+    await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([upload.storagePath]);
+    return documentResultError("关联对象不存在，已尝试清理刚上传的文件。");
+  }
+
+  const exists = await storageObjectExists(supabase, upload.storagePath);
+
+  if (!exists) {
+    return documentResultError("文件对象不存在，请重新上传。");
   }
 
   const { data, error: insertError } = await supabase
     .from("documents")
     .insert({
-      id: documentId,
+      id: upload.documentId,
       name: metadata.data.name,
       category: metadata.data.category,
       storage_bucket: WORKSPACE_FILES_BUCKET,
-      storage_path: storagePath,
-      file_size: file.size,
-      mime_type: fileValidation.mimeType,
+      storage_path: upload.storagePath,
+      file_size: upload.fileSize,
+      mime_type: upload.mimeType,
       related_type: relatedType,
       related_id: metadata.data.related_id,
       visibility: "private",
@@ -118,13 +218,13 @@ export async function uploadDocumentAction(formData: FormData) {
     .single();
 
   if (insertError) {
-    const { error: cleanupError } = await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([storagePath]);
+    const { error: cleanupError } = await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([upload.storagePath]);
 
     if (cleanupError) {
-      console.error("document storage cleanup after insert failed", { code: cleanupError.name, message: cleanupError.message });
+      console.error("document storage cleanup after finalize failed", { message: cleanupError.message });
     }
 
-    documentErrorRedirect("/documents/upload", getDocumentErrorMessage(insertError));
+    return documentResultError(getDocumentErrorMessage(insertError));
   }
 
   await writeActivityLog({
@@ -143,7 +243,28 @@ export async function uploadDocumentAction(formData: FormData) {
   if (data.related_type === "publication" && data.related_id) {
     revalidatePath(`/publications/${data.related_id}`);
   }
-  redirect(`/documents/${data.id}`);
+
+  return { ok: true, documentId: data.id };
+}
+
+export async function rollbackPreparedDocumentUploadAction(upload: PreparedDocumentUpload): Promise<RollbackDocumentUploadResult> {
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    return documentResultError(error ?? "当前账号没有管理员权限。");
+  }
+
+  if (upload.storageBucket !== WORKSPACE_FILES_BUCKET) {
+    return documentResultError("文件存储位置无效。");
+  }
+
+  const { error: removeError } = await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([upload.storagePath]);
+
+  if (removeError) {
+    return documentResultError("清理已上传文件失败，请稍后在文件中心检查。");
+  }
+
+  return { ok: true };
 }
 
 export async function deleteDocumentAction(id: string) {
@@ -155,7 +276,7 @@ export async function deleteDocumentAction(id: string) {
 
   const { data: document, error: fetchError } = await supabase
     .from("documents")
-    .select("id,name,storage_bucket,storage_path,related_type,related_id")
+    .select("id,name,category,storage_bucket,storage_path,file_size,mime_type,related_type,related_id,visibility,owner_id,created_at")
     .eq("id", id)
     .maybeSingle();
 
@@ -163,16 +284,33 @@ export async function deleteDocumentAction(id: string) {
     redirect(`/documents/${id}?error=${encodeFormError(fetchError?.message || "文件记录不存在。")}`);
   }
 
+  const { error: deleteRecordError } = await supabase.from("documents").delete().eq("id", id);
+
+  if (deleteRecordError) {
+    redirect(`/documents/${id}?error=${encodeFormError(deleteRecordError.message || "删除文件记录失败，尚未删除 Storage 对象。")}`);
+  }
+
   const { error: storageError } = await supabase.storage.from(document.storage_bucket).remove([document.storage_path]);
 
   if (storageError) {
-    redirect(`/documents/${id}?error=${encodeFormError(storageError.message || "删除文件对象失败，请稍后重试。")}`);
-  }
-
-  const { error: deleteError } = await supabase.from("documents").delete().eq("id", id);
-
-  if (deleteError) {
-    redirect(`/documents/${id}?error=${encodeFormError(deleteError.message || "删除文件记录失败。")}`);
+    console.error("document storage delete after record delete failed", { message: storageError.message });
+    await supabase
+      .from("documents")
+      .insert({
+        id: document.id,
+        name: document.name,
+        category: document.category,
+        storage_bucket: document.storage_bucket,
+        storage_path: document.storage_path,
+        file_size: document.file_size,
+        mime_type: document.mime_type,
+        related_type: document.related_type,
+        related_id: document.related_id,
+        visibility: document.visibility,
+        owner_id: document.owner_id,
+        created_at: document.created_at
+      });
+    redirect(`/documents/${id}?error=${encodeFormError("删除文件对象失败，已尝试恢复文件记录，请稍后重试。")}`);
   }
 
   await writeActivityLog({

@@ -171,6 +171,8 @@ Phase 2C 使用：
 
 - bucket 不公开。
 - 上传前 Server Action 必须验证登录与管理员权限。
+- 文件二进制不经过 Server Action 或 Vercel Function；浏览器使用当前管理员 Supabase Auth 会话直接上传到 private bucket。
+- Server Actions 只负责 prepare/finalize：校验 metadata、生成 UUID 路径、确认对象存在、写入 documents 与 activity_logs。
 - Storage policy 继续以 `public.is_admin()` 作为最终防线。
 - 文件路径由服务端生成，使用 document UUID 和清理后的文件名，避免路径穿越与同名覆盖。
 - 上传使用 `upsert: false`。
