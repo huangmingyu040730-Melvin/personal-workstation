@@ -4,8 +4,9 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader } from "@/components/card";
 import { Progress } from "@/components/progress";
 import { StatCard } from "@/components/stat-card";
+import { getPublicationTypeLabel } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
-import { profile, publications, quickActions, todayItems } from "@/lib/mock-data";
+import { profile, quickActions, todayItems } from "@/lib/mock-data";
 import { getDashboardData } from "@/lib/queries/dashboard";
 
 function activityTitle(metadata: Record<string, unknown>, fallback: string) {
@@ -21,14 +22,14 @@ export default async function DashboardPage() {
       <div className="mb-6 rounded-3xl border border-blue-100 bg-gradient-to-r from-white to-blue-50 p-6 shadow-soft">
         <p className="text-sm font-medium text-blue-700">个人研究与 AI 工作台</p>
         <h1 className="mt-2 text-3xl font-semibold text-slate-950">你好，{profile.name}</h1>
-        <p className="mt-2 text-sm text-slate-600">Projects、Knowledge 和 Skills 已接入 Supabase 真实数据。</p>
+        <p className="mt-2 text-sm text-slate-600">Projects、Knowledge、Skills 与 Publications 已接入 Supabase 真实数据。</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatCard label="今日待办" value="占位" helper="日历功能将在下一阶段接入" icon={CalendarCheck} />
         <StatCard label="今日日程" value="占位" helper="暂未接入真实 Calendar" icon={CalendarCheck} />
         <StatCard label="进行中项目" value={String(data.inProgressProjects.length)} helper={`项目总数 ${data.projects.length}`} icon={FolderKanban} />
-        <StatCard label="已发布成果" value={String(publications.length)} helper="Publications CRUD 下一阶段接入" icon={FileText} />
+        <StatCard label="已收录成果" value={String(data.publicationStats.total)} helper={`公开 ${data.publicationStats.publicCount} · 精选 ${data.publicationStats.featuredCount}`} icon={FileText} />
         <StatCard label="可用 Skill" value={String(data.availableSkillCount)} helper={`Skill 总数 ${data.skills.length}`} icon={Sparkles} />
       </div>
 
@@ -67,7 +68,7 @@ export default async function DashboardPage() {
           <CardHeader title="快速入口" />
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => (
-              <Link key={action.label} href={action.href === "/projects" ? "/projects/new" : action.href === "/knowledge" ? "/knowledge/new" : action.href === "/skills" ? "/skills/new" : action.href} className="rounded-2xl bg-blue-50 p-4 text-center text-sm font-medium text-blue-800 transition hover:bg-blue-100">
+              <Link key={action.label} href={action.href === "/projects" ? "/projects/new" : action.href === "/knowledge" ? "/knowledge/new" : action.href === "/skills" ? "/skills/new" : action.href === "/documents" ? "/documents/upload" : action.href} className="rounded-2xl bg-blue-50 p-4 text-center text-sm font-medium text-blue-800 transition hover:bg-blue-100">
                 <action.icon className="mx-auto mb-2" size={24} />
                 {action.label}
               </Link>
@@ -78,17 +79,17 @@ export default async function DashboardPage() {
 
       <div className="mt-6 grid gap-5 xl:grid-cols-4">
         <Card>
-          <CardHeader title="最新学术成果" description="占位数据：Publications CRUD 下一阶段接入" />
+          <CardHeader title="最新学术成果" action={<Link href="/publications" className="text-sm font-medium text-blue-700">查看全部</Link>} />
           <div className="space-y-4">
-            {publications.map((item) => (
-              <div key={item.id} className="flex gap-3">
+            {data.publications.length > 0 ? data.publications.map((item) => (
+              <Link key={item.id} href={`/publications/${item.id}`} className="flex gap-3">
                 <FileText className="mt-1 text-blue-700" size={18} />
                 <div>
                   <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">{item.date}</p>
+                  <p className="mt-1 text-xs text-slate-500">{getPublicationTypeLabel(item.publication_type)} · {formatRelative(item.updated_at)}</p>
                 </div>
-              </div>
-            ))}
+              </Link>
+            )) : <p className="text-sm text-slate-500">暂无真实成果。</p>}
           </div>
         </Card>
         <Card>

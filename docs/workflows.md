@@ -113,3 +113,36 @@ npm run build
 - 运行 `npm run build`。
 - 无密码验证公开首页可访问、后台路由未登录跳 `/login`。
 - 管理员 CRUD 验证需要用户本人输入账号密码完成。
+
+## Publications And Documents Storage Update
+
+日期：2026-06-03
+
+类型：workflow
+
+用途：
+
+- 维护 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密文件能力。
+
+步骤：
+
+1. 查询逻辑放在 `src/lib/queries/publications.ts` 和 `src/lib/queries/documents.ts`。
+2. 表单校验放在 `src/lib/validations/publication.ts` 和 `src/lib/validations/document.ts`。
+3. 写入、更新、删除、上传放在 `src/actions/`，每个 Server Action 都必须验证登录与管理员权限。
+4. 文件类型、大小、文件名清理、Storage path 和 signed URL 配置集中在 `src/lib/storage/documents.ts`。
+5. Storage 变更必须新增 migration，不修改已在生产执行过的 0001/0002。
+6. 本轮使用 private bucket `workspace-files`，不创建 public bucket。
+7. 文件上传使用两阶段流程：Server Action 准备 metadata 和路径，浏览器直接上传到 Supabase Storage，Server Action 最终确认并写入数据库。
+8. 文件上传必须使用服务端生成路径和 `upsert: false`，失败时尽力清理已上传对象或异常记录。
+9. 文件下载只为管理员生成 60 秒 signed URL，不保存 signed URL，不输出到公开页面。
+10. Publication 删除前检查关联 documents；存在附件时阻止删除。
+11. Activity Logs 只记录后台摘要，不记录文件内容、signed URL、完整 Storage 路径、密码、密钥或 Auth UUID。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 检查 0003 migration 只包含 private bucket 和最小 Storage policies。
+- 检查公开首页不展示 private/unlisted Publications，也不展示任何附件下载入口。
+- PR 合并并执行生产 0003 前，不对生产 Supabase 做 Storage 写入测试。
+- 管理员真实上传、下载、关联和删除验收需要用户本人登录完成。

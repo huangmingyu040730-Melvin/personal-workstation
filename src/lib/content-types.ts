@@ -2,6 +2,9 @@ import type { Visibility } from "./types";
 
 export type ProjectStatus = "planning" | "in_progress" | "completed" | "archived";
 export type SkillStatus = "idea" | "developing" | "testing" | "available" | "archived";
+export type PublicationType = "research_report" | "academic_paper" | "strategy_report" | "market_analysis" | "data_analysis" | "meeting_notes" | "reading_review" | "other";
+export type DocumentCategory = "research_material" | "publication_attachment" | "data_file" | "final_report" | "meeting_material" | "skill_attachment" | "other";
+export type DocumentRelatedType = "publication" | "project" | "skill";
 
 export type ProjectRecord = {
   id: string;
@@ -67,6 +70,49 @@ export type SkillVersionRecord = {
   released_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type PublicationRecord = {
+  id: string;
+  slug: string;
+  title: string;
+  publication_type: PublicationType;
+  summary: string;
+  abstract: string | null;
+  published_on: string | null;
+  tags: string[];
+  cover_url: string | null;
+  file_path: string | null;
+  is_featured: boolean;
+  project_id: string | null;
+  visibility: Visibility;
+  created_at: string;
+  updated_at: string;
+  projects?: Pick<ProjectRecord, "id" | "title" | "slug"> | null;
+};
+
+export type DocumentRecord = {
+  id: string;
+  name: string;
+  category: DocumentCategory;
+  storage_bucket: string;
+  storage_path: string;
+  file_size: number;
+  mime_type: string;
+  related_type: DocumentRelatedType | null;
+  related_id: string | null;
+  visibility: Visibility;
+  owner_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DocumentWithRelation = DocumentRecord & {
+  related?: {
+    type: DocumentRelatedType;
+    title: string;
+    href: string;
+  } | null;
 };
 
 export type ActivityLogRecord = {

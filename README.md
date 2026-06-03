@@ -9,7 +9,8 @@
 - Tailwind CSS
 - Lucide React
 - Supabase Auth、Database、RLS
-- Projects、Knowledge Base、Skills Library 真实 CRUD
+- Projects、Knowledge Base、Skills Library、Publications 真实 CRUD
+- Supabase Storage 私密文件上传与下载
 
 ## 本地启动
 
@@ -60,8 +61,9 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 1. 在 Supabase Dashboard 创建项目。
 2. 启用 Email + Password Auth。
 3. 运行 `supabase/migrations/0001_initial_schema.sql`。
-4. 在 Auth 中创建管理员用户。
-5. 将该用户的 UUID 插入 `public.admin_users`：
+4. 运行 `supabase/migrations/0002_grant_api_table_privileges.sql`。
+5. 在 Auth 中创建管理员用户。
+6. 将该用户的 UUID 插入 `public.admin_users`：
 
 ```sql
 insert into public.admin_users (user_id)
@@ -70,7 +72,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 合并后，还需要运行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -92,12 +94,13 @@ values ('00000000-0000-0000-0000-000000000000');
 - 未配置 Supabase 时，后台页面保持 mock data 开发预览，便于本地构建和视觉检查。
 - 配置 Supabase 后，后台页面会要求登录，并通过 `public.admin_users` + `public.is_admin()` 判断管理员权限。
 - 登录成功后的 `next` 跳转会经过内部后台路径白名单校验，不允许跳到外部 URL。
-- 公开首页从 Supabase 读取 `visibility = "public"` 且 `is_featured = true` 的公开项目与公开 Skill。
+- 公开首页从 Supabase 读取 `visibility = "public"` 且 `is_featured = true` 的公开项目、公开成果与公开 Skill。
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制，后台写入、更新、删除权限通过 `public.is_admin()` 控制。
-- 当前 Projects、Knowledge Base、Skills Library 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
-- Dashboard 已读取真实项目、笔记、Skill 与 Activity Logs。
-- Publications、Calendar、Documents、Profile 仍为 mock 或占位展示，真实 CRUD、Storage 上传和外部 API 尚未实现。
+- 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
+- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；合并后需执行 0003 migration 才能在真实 Supabase 项目中使用上传能力。
+- Dashboard 已读取真实项目、笔记、Skill、Publications 与 Activity Logs。
+- Calendar、Profile 仍为 mock 或占位展示，真实 CRUD 和外部 API 尚未实现。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
 
 ## 初始数据结构
@@ -115,13 +118,19 @@ values ('00000000-0000-0000-0000-000000000000');
 
 公开可读表 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 不保存管理员 Auth UUID。私密后台表 `calendar_events`、`documents`、`activity_logs` 可保留 `owner_id` 或 `actor_id` 用于后续审计。
 
-## 存储规划
+## 存储与文件安全
 
-后续 Supabase Storage 计划使用以下 bucket：
+Phase 2C 使用 Supabase Storage bucket：
 
-- `documents`
-- `publication-files`
-- `skill-files`
-- `avatars`
+- `workspace-files`
 
-这些 bucket 不应默认公开，后续需要配合 RLS、签名 URL 或受控下载接口实现权限。
+安全边界：
+
+- bucket 必须为 private。
+- 匿名访客不能读取、上传、更新或删除文件。
+- 普通非管理员登录用户不能读取或修改文件。
+- 管理员通过 `public.is_admin()` 和 Storage policy 操作文件。
+- 上传采用两阶段流程：Server Actions 只验证管理员、校验 metadata、生成安全路径并最终写入数据库；文件二进制由浏览器直接上传到 Supabase Storage，不经过 Vercel Function。
+- 下载使用 60 秒短时 signed URL，不保存到数据库，也不在公开页面输出。
+- 文件上传限制为 20 MB，并同时校验扩展名与 MIME type。
+- 即使文件关联到 public Publication，附件本轮仍保持私密，仅管理员可下载。

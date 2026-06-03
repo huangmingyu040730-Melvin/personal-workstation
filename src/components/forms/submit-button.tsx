@@ -2,7 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 
-export function SubmitButton({ children = "保存" }: { children?: React.ReactNode }) {
+export function SubmitButton({ children = "保存", pendingLabel = "保存中..." }: { children?: React.ReactNode; pendingLabel?: string }) {
   const { pending } = useFormStatus();
 
   return (
@@ -11,7 +11,7 @@ export function SubmitButton({ children = "保存" }: { children?: React.ReactNo
       disabled={pending}
       className="inline-flex items-center justify-center rounded-2xl bg-navy-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? "保存中..." : children}
+      {pending ? pendingLabel : children}
     </button>
   );
 }
