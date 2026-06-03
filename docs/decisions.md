@@ -226,3 +226,46 @@
 - `visibility = 'public'` 继续控制公开读取行。
 - `public.is_admin()` 继续控制后台管理写权限。
 - 真实 Supabase 项目需要在 PR 合并后执行 `0002_grant_api_table_privileges.sql`，然后重新验证后台 CRUD。
+
+## 2026-06-03 - Use Private Workspace Storage For Documents
+
+类型：decision
+
+决策：
+
+- Phase 2C 使用单一私密 Supabase Storage bucket：`workspace-files`。
+- 文件上传、读取、更新和删除均通过 Storage policy 限定 `bucket_id = 'workspace-files'` 且 `public.is_admin()`。
+- 管理员下载文件时按需生成 60 秒 signed URL，不保存到数据库，不输出到公开页面。
+- 即使文件关联到 public Publication，附件本轮仍保持私密，仅管理员可下载。
+
+原因：
+
+- 文件中心管理的是研究资料、报告成稿、会议资料等默认私密内容。
+- 公开成果与私密附件需要分离，避免因为成果公开而意外公开内部文件。
+- 使用短时 signed URL 能减少长期链接泄露风险，同时保持实现简单。
+
+影响：
+
+- 新增 `supabase/migrations/0003_publications_documents_storage.sql` 创建 bucket 与 Storage policies。
+- 合并 PR 后必须由用户确认并执行 0003，真实上传/下载能力才会在生产 Supabase 项目生效。
+- 普通运行时继续使用 publishable key 和管理员登录身份，不使用 `service_role`。
+
+## 2026-06-03 - Prevent Publication Deletion While Attachments Exist
+
+类型：decision
+
+决策：
+
+- 删除 Publication 前先检查是否仍有关联 `documents.related_type = 'publication'` 且 `related_id = publication.id` 的附件。
+- 如果存在关联附件，阻止删除并显示中文提示，要求管理员先删除或解除关联附件。
+
+原因：
+
+- 真实文件删除不可轻易回滚。
+- 自动级联删除成果附件容易造成误删 Storage 对象。
+- Phase 2C 不实现复杂附件版本管理或批量迁移，保守策略更安全。
+
+影响：
+
+- Publication 删除 action 会查询 documents 表。
+- 管理员需要先在文件中心处理附件，再删除成果。

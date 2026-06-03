@@ -3,6 +3,7 @@ import { activityFeed } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 import { getRecentKnowledgeNotes } from "./knowledge";
 import { getProjects } from "./projects";
+import { getPublicationStats, getRecentPublications } from "./publications";
 import { countAvailableSkills, getSkills } from "./skills";
 
 function mockActivityFallback(): ActivityLogRecord[] {
@@ -17,11 +18,13 @@ function mockActivityFallback(): ActivityLogRecord[] {
 }
 
 export async function getDashboardData() {
-  const [projects, notes, skills, availableSkillCount, activityLogs] = await Promise.all([
+  const [projects, notes, skills, availableSkillCount, publications, publicationStats, activityLogs] = await Promise.all([
     getProjects(),
     getRecentKnowledgeNotes(4),
     getSkills(),
     countAvailableSkills(),
+    getRecentPublications(4),
+    getPublicationStats(),
     getRecentActivityLogs(6)
   ]);
 
@@ -33,6 +36,8 @@ export async function getDashboardData() {
     notes,
     skills: skills.slice(0, 4),
     availableSkillCount,
+    publications,
+    publicationStats,
     activityLogs
   };
 }

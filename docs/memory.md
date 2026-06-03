@@ -4,7 +4,7 @@
 
 日期：2026-06-03
 
-Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础和线上后台路由保护 hotfix 均已合并到 `main`。
+Phase 2B 已通过生产站点真实验收。Phase 2C 分支正在接入 Publications 学术成果管理、Documents 文件中心与 Supabase Storage 私密上传下载能力。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础、Phase 2B 核心内容 CRUD 与 Supabase API GRANT hotfix 均已合并到 `main`。
 
 已实现页面：
 
@@ -31,24 +31,25 @@ Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Sup
 
 当前数据状态：
 
-- Projects、Knowledge Base、Skills Library 已实现真实 Supabase 查询、创建、编辑、删除和详情页。
-- Dashboard 已开始读取真实 projects、knowledge_notes、skills 与 activity_logs。
-- 公开首页已开始读取真实 public + featured projects 与 skills。
-- mock data 集中在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的 Publications、Calendar、Documents、Profile 等页面和未配置 Supabase 的开发预览。
+- Projects、Knowledge Base、Skills Library 已实现真实 Supabase 查询、创建、编辑、删除和详情页，并通过生产验收。
+- Phase 2C 新增 Publications 真实查询、创建、编辑、删除和详情页。
+- Phase 2C 新增 Documents 真实列表、详情、上传、下载和删除流程，文件存储在私密 `workspace-files` bucket。
+- Dashboard 已开始读取真实 projects、knowledge_notes、skills、publications 与 activity_logs。
+- 公开首页已开始读取真实 public + featured projects、publications 与 skills。
+- mock data 集中在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的 Calendar、Profile 等页面和未配置 Supabase 的开发预览。
 - 类型定义集中在 `src/lib/types.ts`。
 - 核心实体保留 `visibility` 字段，取值为 `public`、`private` 或 `unlisted`。
 - 公开首页只展示数据库中 `visibility = "public"` 且符合展示条件的公开内容。
 - Supabase 初始 schema 已补充 slug、精选标记、项目关联、Skill 详情字段、文件关联字段和常用索引，为 Phase 2B CRUD 做准备。
-- Supabase 增量 migration `0002_grant_api_table_privileges.sql` 补充 API 角色的最小表级 privileges，让 RLS policies 能在 Supabase API 请求中实际生效。
+- Supabase 增量 migration `0002_grant_api_table_privileges.sql` 补充 API 角色的最小表级 privileges，让 RLS policies 能在 Supabase API 请求中实际生效；该 migration 已在生产 Supabase 执行并通过 Phase 2B 验收。
+- Phase 2C 新增 `0003_publications_documents_storage.sql`，创建私密 `workspace-files` bucket 并配置仅管理员可操作的 Storage policies。该 migration 在 PR 审核、合并和用户确认前不得执行到生产。
 - 登录完成后的 `next` 参数使用内部后台路径白名单校验，Server Action 是最终校验边界。
 - 公开可读取内容表不存储或暴露管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 
 尚未接入：
 
-- Supabase Storage 文件上传
-- Publications CRUD
+- Supabase Storage 生产 migration 执行与真实上传验收
 - Calendar CRUD
-- Documents 上传
 - 外部 API
 - Skill 自动化执行
 
@@ -72,26 +73,28 @@ Phase 2B 正在接入核心内容真实 CRUD。Phase 1 前端 MVP、Phase 2A Sup
 - `projects` 表采用 `title` 作为项目标题字段，配合唯一 `slug` 支撑后续 CRUD 与公开 URL。
 - 单管理员个人工作站不在公开内容表保存 Auth 用户归属字段；私密后台表可保留 `owner_id` 或 `actor_id` 用于审计。
 - 已新增 `0002_grant_api_table_privileges.sql` 修复 Supabase API 表级授权缺失；该迁移只补 GRANT，不新增业务能力。
+- Phase 2C 采用单一 private bucket `workspace-files`，不为公开页面提供附件下载入口。
+- Publication 删除采取保守策略：仍有关联 documents 时阻止删除，要求管理员先处理附件。
+- Document 下载采用 60 秒 signed URL，不保存到数据库，不输出到公开页面。
 
 ## Known Issues
 
-- Publications、Calendar、Documents、Profile 仍为 mock 或占位页面，不具备真实持久化能力。
-- 文件中心只有列表和上传按钮样式，不支持真实上传。
+- Calendar、Profile 仍为 mock 或占位页面，不具备真实持久化能力。
+- 未执行 `0003_publications_documents_storage.sql` 前，真实文件上传、下载和删除无法在 Supabase 生产项目中正常使用。
 - 日历为静态月历，不支持新增、编辑或提醒。
 - 个人信息页面只有前端编辑样式，不保存修改。
 - 管理员真实 CRUD 端到端验证需要用户本人输入账号密码完成，Codex 不读取或记录密码。
-- 生产 Supabase 项目需要在 PR 合并后执行 `0002_grant_api_table_privileges.sql`，否则后台 CRUD 页面可能继续出现 `permission denied for table ...`。
+- 生产 Supabase 项目执行 0003 前，不应测试真实文件上传；PR Preview 如未配置同等 Storage migration，只能完成页面与构建验证。
 
 ## Next Steps
 
-- 合并并执行 `0002_grant_api_table_privileges.sql` 后，用户手动重新验证 `/projects/new`、`/knowledge/new`、`/skills/new` 不再出现表级 permission denied。
-- 用户手动验证管理员登录、新建 private/public featured 项目与 Skill、新建知识笔记、退出登录和公开首页过滤。
-- 后续接入 Publications CRUD。
-- 接入 Supabase Storage，用于文件上传、成果附件、Skill 附件和头像。
+- 审核 Phase 2C PR，合并后由用户确认再执行 `0003_publications_documents_storage.sql`。
+- 用户手动验证 Publications 新建 private、public + featured、公开首页过滤与删除。
+- 用户手动验证 Documents 上传小于 20 MB 的 PDF、下载、关联 Publication、删除并确认 Storage 对象清理。
 - 完善 `public`、`private`、`unlisted` 对应的权限模型和前端提示。
 - 为 Skill 增加运行日志、版本记录、平台链接和自动化状态。
 
 ## Stale Or Superseded Notes
 
 - “第一阶段尚未接入 Supabase”已被 Phase 2A 的 Supabase 基础设施取代。
-- “页面数据仍保持 mock data 预览”已被 Phase 2B 的 Projects、Knowledge、Skills 真实 CRUD 取代；Publications、Calendar、Documents、Profile 仍有 mock 或占位部分。
+- “页面数据仍保持 mock data 预览”已被 Phase 2B 的 Projects、Knowledge、Skills 真实 CRUD 和 Phase 2C 的 Publications/Documents 接入取代；Calendar、Profile 仍有 mock 或占位部分。

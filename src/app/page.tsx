@@ -2,8 +2,10 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, BrainCircuit, FolderKanban, Sparkles } from "lucide-react";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
-import { profile, publications } from "@/lib/mock-data";
+import { getPublicationTypeLabel } from "@/lib/content-options";
+import { profile } from "@/lib/mock-data";
 import { countPublicProjects, getFeaturedPublicProjects } from "@/lib/queries/projects";
+import { countPublicPublications, getFeaturedPublicPublications } from "@/lib/queries/publications";
 import { countPublicSkills, getFeaturedPublicSkills } from "@/lib/queries/skills";
 
 function EmptyPublicState() {
@@ -15,13 +17,14 @@ function EmptyPublicState() {
 }
 
 export default async function HomePage() {
-  const [publicProjectCount, publicSkillCount, featuredProjects, featuredSkills] = await Promise.all([
+  const [publicProjectCount, publicPublicationCount, publicSkillCount, featuredProjects, featuredPublications, featuredSkills] = await Promise.all([
     countPublicProjects(),
+    countPublicPublications(),
     countPublicSkills(),
     getFeaturedPublicProjects(2),
+    getFeaturedPublicPublications(3),
     getFeaturedPublicSkills(3)
   ]);
-  const publicPublications = publications.filter((publication) => publication.visibility === "public");
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -52,7 +55,7 @@ export default async function HomePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {[
               { title: "公开项目", value: publicProjectCount, icon: FolderKanban },
-              { title: "公开成果", value: publicPublications.length, icon: BookOpen },
+              { title: "公开成果", value: publicPublicationCount, icon: BookOpen },
               { title: "公开 Skill", value: publicSkillCount, icon: Sparkles },
               { title: "AI 工作流", value: "Codex", icon: BrainCircuit }
             ].map((item) => (
@@ -83,13 +86,14 @@ export default async function HomePage() {
           </div>
         </Card>
         <Card>
-          <CardHeader title="精选学术成果" description="Publications 真实数据接入将在下一阶段完成" />
+          <CardHeader title="精选学术成果" />
           <div className="space-y-4">
-            {publicPublications.length > 0 ? (
-              publicPublications.map((publication) => (
+            {featuredPublications.length > 0 ? (
+              featuredPublications.map((publication) => (
                 <div key={publication.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
                   <p className="font-semibold text-slate-900">{publication.title}</p>
-                  <p className="mt-1 text-sm text-slate-500">{publication.type} · {publication.date}</p>
+                  <p className="mt-1 text-sm text-slate-500">{getPublicationTypeLabel(publication.publication_type)}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{publication.summary}</p>
                 </div>
               ))
             ) : (

@@ -1,4 +1,4 @@
-import type { ProjectStatus, SkillStatus } from "./content-types";
+import type { DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -34,3 +34,42 @@ export const knowledgeCategories = [
 export const skillCategories = ["研究", "投资", "写作", "自动化", "数据分析", "知识管理"];
 
 export const skillPlatforms = ["ChatGPT", "Codex", "GitHub Actions", "Notion", "n8n"];
+
+export const publicationTypes: Array<{ value: PublicationType; label: string }> = [
+  { value: "research_report", label: "研究报告" },
+  { value: "academic_paper", label: "学术论文" },
+  { value: "strategy_report", label: "策略报告" },
+  { value: "market_analysis", label: "市场分析" },
+  { value: "data_analysis", label: "数据分析" },
+  { value: "meeting_notes", label: "会议纪要" },
+  { value: "reading_review", label: "阅读综述" },
+  { value: "other", label: "其他" }
+];
+
+export const documentCategories: Array<{ value: DocumentCategory; label: string }> = [
+  { value: "research_material", label: "研究资料" },
+  { value: "publication_attachment", label: "学术成果附件" },
+  { value: "data_file", label: "数据文件" },
+  { value: "final_report", label: "报告成稿" },
+  { value: "meeting_material", label: "会议资料" },
+  { value: "skill_attachment", label: "Skill 附件" },
+  { value: "other", label: "其他" }
+];
+
+export const documentRelatedTypes: Array<{ value: DocumentRelatedType; label: string }> = [
+  { value: "publication", label: "学术成果" },
+  { value: "project", label: "研究项目" },
+  { value: "skill", label: "Skill" }
+];
+
+export function getPublicationTypeLabel(value: string | null | undefined) {
+  return publicationTypes.find((item) => item.value === value)?.label ?? "其他";
+}
+
+export function getDocumentCategoryLabel(value: string | null | undefined) {
+  return documentCategories.find((item) => item.value === value)?.label ?? "其他";
+}
+
+export function getDocumentRelatedTypeLabel(value: string | null | undefined) {
+  return documentRelatedTypes.find((item) => item.value === value)?.label ?? "未关联";
+}
