@@ -66,7 +66,7 @@ export function KnowledgeForm({
       </div>
       <div className="flex flex-wrap gap-3 pt-2">
         <SubmitButton />
-        <Link href={note ? `/knowledge/${note.id}` : "/knowledge"} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+        <Link href={note ? `/dashboard/knowledge/${note.id}` : "/dashboard/knowledge"} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
           取消
         </Link>
       </div>

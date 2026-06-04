@@ -37,13 +37,13 @@ export async function createPublicationAction(formData: FormData) {
   const parsed = publicationPayloadFromForm(formData);
 
   if (!parsed.success) {
-    publicationErrorRedirect("/publications/new", parsed.error.issues[0]?.message ?? "请检查成果表单。");
+    publicationErrorRedirect("/dashboard/publications/new", parsed.error.issues[0]?.message ?? "请检查成果表单。");
   }
 
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    publicationErrorRedirect("/publications/new", error ?? "当前账号没有管理员权限。");
+    publicationErrorRedirect("/dashboard/publications/new", error ?? "当前账号没有管理员权限。");
   }
 
   const { data, error: insertError } = await supabase
@@ -53,7 +53,7 @@ export async function createPublicationAction(formData: FormData) {
     .single();
 
   if (insertError) {
-    publicationErrorRedirect("/publications/new", getPublicationErrorMessage(insertError));
+    publicationErrorRedirect("/dashboard/publications/new", getPublicationErrorMessage(insertError));
   }
 
   await writeActivityLog({
@@ -66,12 +66,14 @@ export async function createPublicationAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/publications");
-  redirect(`/publications/${data.id}`);
+  revalidatePath("/dashboard/publications");
+  revalidatePath(`/publications/${data.slug}`);
+  redirect(`/dashboard/publications/${data.id}`);
 }
 
 export async function updatePublicationAction(id: string, formData: FormData) {
   const parsed = publicationPayloadFromForm(formData);
-  const editPath = `/publications/${id}/edit`;
+  const editPath = `/dashboard/publications/${id}/edit`;
 
   if (!parsed.success) {
     publicationErrorRedirect(editPath, parsed.error.issues[0]?.message ?? "请检查成果表单。");
@@ -104,15 +106,17 @@ export async function updatePublicationAction(id: string, formData: FormData) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/publications");
-  revalidatePath(`/publications/${id}`);
-  redirect(`/publications/${id}`);
+  revalidatePath("/dashboard/publications");
+  revalidatePath(`/publications/${data.slug}`);
+  revalidatePath(`/dashboard/publications/${id}`);
+  redirect(`/dashboard/publications/${id}`);
 }
 
 export async function deletePublicationAction(id: string) {
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    redirect(`/publications/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+    redirect(`/dashboard/publications/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
   }
 
   const { count, error: countError } = await supabase
@@ -122,18 +126,18 @@ export async function deletePublicationAction(id: string) {
     .eq("related_id", id);
 
   if (countError) {
-    redirect(`/publications/${id}?error=${encodeFormError(countError.message || "检查关联附件失败。")}`);
+    redirect(`/dashboard/publications/${id}?error=${encodeFormError(countError.message || "检查关联附件失败。")}`);
   }
 
   if ((count ?? 0) > 0) {
-    redirect(`/publications/${id}?error=${encodeFormError("该成果仍有关联附件，请先删除或解除关联附件后再删除成果。")}`);
+    redirect(`/dashboard/publications/${id}?error=${encodeFormError("该成果仍有关联附件，请先删除或解除关联附件后再删除成果。")}`);
   }
 
   const { data: existing } = await supabase.from("publications").select("title,slug").eq("id", id).maybeSingle();
   const { error: deleteError } = await supabase.from("publications").delete().eq("id", id);
 
   if (deleteError) {
-    redirect(`/publications/${id}?error=${encodeFormError(deleteError.message || "删除成果失败。")}`);
+    redirect(`/dashboard/publications/${id}?error=${encodeFormError(deleteError.message || "删除成果失败。")}`);
   }
 
   await writeActivityLog({
@@ -146,5 +150,9 @@ export async function deletePublicationAction(id: string) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/publications");
-  redirect("/publications");
+  if (existing?.slug) {
+    revalidatePath(`/publications/${existing.slug}`);
+  }
+  revalidatePath("/dashboard/publications");
+  redirect("/dashboard/publications");
 }

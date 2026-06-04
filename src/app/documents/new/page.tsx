@@ -1,1 +1,5 @@
-export { default } from "../upload/page";
+import { redirect } from "next/navigation";
+
+export default function NewDocumentCompatPage() {
+  redirect("/dashboard/documents/upload");
+}

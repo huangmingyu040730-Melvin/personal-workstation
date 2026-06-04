@@ -65,13 +65,13 @@ export async function createSkillAction(formData: FormData) {
   const parsed = skillPayloadFromForm(formData);
 
   if (!parsed.success) {
-    skillErrorRedirect("/skills/new", parsed.error.issues[0]?.message ?? "请检查 Skill 表单。");
+    skillErrorRedirect("/dashboard/skills/new", parsed.error.issues[0]?.message ?? "请检查 Skill 表单。");
   }
 
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    skillErrorRedirect("/skills/new", error ?? "当前账号没有管理员权限。");
+    skillErrorRedirect("/dashboard/skills/new", error ?? "当前账号没有管理员权限。");
   }
 
   const { data, error: insertError } = await supabase
@@ -81,7 +81,7 @@ export async function createSkillAction(formData: FormData) {
     .single();
 
   if (insertError) {
-    skillErrorRedirect("/skills/new", getSkillErrorMessage(insertError));
+    skillErrorRedirect("/dashboard/skills/new", getSkillErrorMessage(insertError));
   }
 
   await writeActivityLog({
@@ -114,12 +114,14 @@ export async function createSkillAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/skills");
-  redirect(`/skills/${data.id}`);
+  revalidatePath("/dashboard/skills");
+  revalidatePath(`/skills/${data.slug}`);
+  redirect(`/dashboard/skills/${data.id}`);
 }
 
 export async function updateSkillAction(id: string, formData: FormData) {
   const parsed = skillPayloadFromForm(formData);
-  const editPath = `/skills/${id}/edit`;
+  const editPath = `/dashboard/skills/${id}/edit`;
 
   if (!parsed.success) {
     skillErrorRedirect(editPath, parsed.error.issues[0]?.message ?? "请检查 Skill 表单。");
@@ -152,22 +154,24 @@ export async function updateSkillAction(id: string, formData: FormData) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/skills");
-  revalidatePath(`/skills/${id}`);
-  redirect(`/skills/${id}`);
+  revalidatePath("/dashboard/skills");
+  revalidatePath(`/skills/${data.slug}`);
+  revalidatePath(`/dashboard/skills/${id}`);
+  redirect(`/dashboard/skills/${id}`);
 }
 
 export async function deleteSkillAction(id: string) {
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    redirect(`/skills/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+    redirect(`/dashboard/skills/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
   }
 
   const { data: existing } = await supabase.from("skills").select("name,slug").eq("id", id).maybeSingle();
   const { error: deleteError } = await supabase.from("skills").delete().eq("id", id);
 
   if (deleteError) {
-    redirect(`/skills/${id}?error=${encodeFormError(deleteError.message || "删除 Skill 失败。")}`);
+    redirect(`/dashboard/skills/${id}?error=${encodeFormError(deleteError.message || "删除 Skill 失败。")}`);
   }
 
   await writeActivityLog({
@@ -180,7 +184,11 @@ export async function deleteSkillAction(id: string) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/skills");
-  redirect("/skills");
+  if (existing?.slug) {
+    revalidatePath(`/skills/${existing.slug}`);
+  }
+  revalidatePath("/dashboard/skills");
+  redirect("/dashboard/skills");
 }
 
 export async function createSkillVersionAction(skillId: string, formData: FormData) {
@@ -191,13 +199,13 @@ export async function createSkillVersionAction(skillId: string, formData: FormDa
   });
 
   if (!parsed.success) {
-    skillErrorRedirect(`/skills/${skillId}`, parsed.error.issues[0]?.message ?? "请检查版本记录。");
+    skillErrorRedirect(`/dashboard/skills/${skillId}`, parsed.error.issues[0]?.message ?? "请检查版本记录。");
   }
 
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    skillErrorRedirect(`/skills/${skillId}`, error ?? "当前账号没有管理员权限。");
+    skillErrorRedirect(`/dashboard/skills/${skillId}`, error ?? "当前账号没有管理员权限。");
   }
 
   const { error: insertError } = await supabase.from("skill_versions").insert({
@@ -206,7 +214,7 @@ export async function createSkillVersionAction(skillId: string, formData: FormDa
   });
 
   if (insertError) {
-    skillErrorRedirect(`/skills/${skillId}`, getSkillErrorMessage(insertError));
+    skillErrorRedirect(`/dashboard/skills/${skillId}`, getSkillErrorMessage(insertError));
   }
 
   const { data: skill } = await supabase.from("skills").select("name").eq("id", skillId).maybeSingle();
@@ -220,6 +228,7 @@ export async function createSkillVersionAction(skillId: string, formData: FormDa
 
   revalidatePath("/dashboard");
   revalidatePath("/skills");
-  revalidatePath(`/skills/${skillId}`);
-  redirect(`/skills/${skillId}`);
+  revalidatePath("/dashboard/skills");
+  revalidatePath(`/dashboard/skills/${skillId}`);
+  redirect(`/dashboard/skills/${skillId}`);
 }

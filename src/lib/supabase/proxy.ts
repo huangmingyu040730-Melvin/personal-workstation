@@ -4,10 +4,6 @@ import { isSupabaseConfigured, supabaseConfig } from "./config";
 
 const protectedRoutes = [
   "/dashboard",
-  "/projects",
-  "/publications",
-  "/knowledge",
-  "/skills",
   "/calendar",
   "/documents",
   "/profile",

@@ -36,7 +36,7 @@ export default async function SkillDetailPage({
         description={skill.description}
         action={
           <div className="flex flex-wrap gap-2">
-            <Link href={`/skills/${skill.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
+            <Link href={`/dashboard/skills/${skill.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
             <form action={deleteSkillAction.bind(null, skill.id)}>
               <DeleteButton label="删除 Skill" />
             </form>

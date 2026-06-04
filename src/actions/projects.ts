@@ -40,19 +40,19 @@ export async function createProjectAction(formData: FormData) {
   const parsed = projectPayloadFromForm(formData);
 
   if (!parsed.success) {
-    projectErrorRedirect("/projects/new", parsed.error.issues[0]?.message ?? "请检查项目表单。");
+    projectErrorRedirect("/dashboard/projects/new", parsed.error.issues[0]?.message ?? "请检查项目表单。");
   }
 
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    projectErrorRedirect("/projects/new", error ?? "当前账号没有管理员权限。");
+    projectErrorRedirect("/dashboard/projects/new", error ?? "当前账号没有管理员权限。");
   }
 
   const { data, error: insertError } = await supabase.from("projects").insert(parsed.data).select("id,title,slug").single();
 
   if (insertError) {
-    projectErrorRedirect("/projects/new", getProjectErrorMessage(insertError));
+    projectErrorRedirect("/dashboard/projects/new", getProjectErrorMessage(insertError));
   }
 
   await writeActivityLog({
@@ -65,12 +65,14 @@ export async function createProjectAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/projects");
-  redirect(`/projects/${data.id}`);
+  revalidatePath("/dashboard/projects");
+  revalidatePath(`/projects/${data.slug}`);
+  redirect(`/dashboard/projects/${data.id}`);
 }
 
 export async function updateProjectAction(id: string, formData: FormData) {
   const parsed = projectPayloadFromForm(formData);
-  const editPath = `/projects/${id}/edit`;
+  const editPath = `/dashboard/projects/${id}/edit`;
 
   if (!parsed.success) {
     projectErrorRedirect(editPath, parsed.error.issues[0]?.message ?? "请检查项目表单。");
@@ -98,22 +100,24 @@ export async function updateProjectAction(id: string, formData: FormData) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/projects");
-  revalidatePath(`/projects/${id}`);
-  redirect(`/projects/${id}`);
+  revalidatePath("/dashboard/projects");
+  revalidatePath(`/projects/${data.slug}`);
+  revalidatePath(`/dashboard/projects/${id}`);
+  redirect(`/dashboard/projects/${id}`);
 }
 
 export async function deleteProjectAction(id: string) {
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    redirect(`/projects/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+    redirect(`/dashboard/projects/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
   }
 
   const { data: existing } = await supabase.from("projects").select("title,slug").eq("id", id).maybeSingle();
   const { error: deleteError } = await supabase.from("projects").delete().eq("id", id);
 
   if (deleteError) {
-    redirect(`/projects/${id}?error=${encodeFormError(deleteError.message || "删除项目失败。")}`);
+    redirect(`/dashboard/projects/${id}?error=${encodeFormError(deleteError.message || "删除项目失败。")}`);
   }
 
   await writeActivityLog({
@@ -126,5 +130,9 @@ export async function deleteProjectAction(id: string) {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/projects");
-  redirect("/projects");
+  if (existing?.slug) {
+    revalidatePath(`/projects/${existing.slug}`);
+  }
+  revalidatePath("/dashboard/projects");
+  redirect("/dashboard/projects");
 }

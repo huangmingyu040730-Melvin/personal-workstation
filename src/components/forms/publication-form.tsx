@@ -69,7 +69,7 @@ export function PublicationForm({
       </div>
       <div className="flex flex-wrap gap-3 pt-2">
         <SubmitButton />
-        <Link href={publication ? `/publications/${publication.id}` : "/publications"} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+        <Link href={publication ? `/dashboard/publications/${publication.id}` : "/dashboard/publications"} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
           取消
         </Link>
       </div>

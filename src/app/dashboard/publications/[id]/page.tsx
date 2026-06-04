@@ -38,8 +38,8 @@ export default async function PublicationDetailPage({
         description={publication.summary}
         action={
           <div className="flex flex-wrap gap-2">
-            <Link href="/documents/upload" className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100">上传附件</Link>
-            <Link href={`/publications/${publication.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
+            <Link href="/dashboard/documents/upload" className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100">上传附件</Link>
+            <Link href={`/dashboard/publications/${publication.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
             <form action={deletePublicationAction.bind(null, publication.id)}>
               <DeleteButton label="删除成果" />
             </form>
@@ -64,11 +64,11 @@ export default async function PublicationDetailPage({
                     <div className="flex gap-3">
                       <FileText className="mt-1 shrink-0 text-blue-700" size={18} />
                       <div>
-                        <Link href={`/documents/${document.id}`} className="font-medium text-slate-900 hover:text-blue-700">{document.name}</Link>
+                        <Link href={`/dashboard/documents/${document.id}`} className="font-medium text-slate-900 hover:text-blue-700">{document.name}</Link>
                         <p className="mt-1 text-xs text-slate-500">{getDocumentCategoryLabel(document.category)} · {formatFileSize(document.file_size)}</p>
                       </div>
                     </div>
-                    <Link href={`/documents/${document.id}/download`} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:text-blue-700">
+                    <Link href={`/dashboard/documents/${document.id}/download`} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:text-blue-700">
                       <Download size={16} />
                       下载
                     </Link>

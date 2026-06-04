@@ -27,7 +27,7 @@ export function Sidebar() {
             <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-blue-200/80">{group.label}</p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const active = pathname === item.href;
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
                     key={item.href}

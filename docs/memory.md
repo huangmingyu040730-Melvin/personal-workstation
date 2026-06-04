@@ -2,23 +2,27 @@
 
 ## Current State
 
-日期：2026-06-04
+日期：2026-06-05
 
-Phase 2C 已通过生产站点真实验收。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础、Phase 2B 核心内容 CRUD 与 Supabase API GRANT hotfix、Phase 2C Publications / Documents / private Storage 均已合并并在生产环境完成关键链路验证。
+Phase 2D-A 分支正在建立公开研究工作站基础，并将后台管理页面迁移到 `/dashboard/...`。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础、Phase 2B 核心内容 CRUD 与 Supabase API GRANT hotfix、Phase 2C Publications / Documents / private Storage 均已合并并在生产环境完成关键链路验证。
 
 项目长期定位已更新为：黄铭语的公开研究工作站与私密数字资产后台。网站既要对外展示公开研究项目、学术成果、知识文章和 AI Skill，也要对内管理全部项目、知识、成果、文件、日历与自动化；未来还要支持经管理员审核后，按具体内容授权外部用户访问受限材料。
 
 已实现页面：
 
-- 公开首页 `/`
+- 公开研究工作站首页 `/`
 - 登录页 `/login`
 - 工作台 `/dashboard`
-- 研究项目 `/projects`
-- 学术成果 `/publications`
-- 知识库 `/knowledge`
-- Skill 库 `/skills`
+- 公开研究项目 `/projects`、`/projects/[slug]`
+- 公开学术成果 `/publications`、`/publications/[slug]`
+- 公开知识文章 `/knowledge`、`/knowledge/[slug]`
+- 公开 Skill `/skills`、`/skills/[slug]`
+- 后台研究项目 `/dashboard/projects`
+- 后台学术成果 `/dashboard/publications`
+- 后台知识库 `/dashboard/knowledge`
+- 后台 Skill 库 `/dashboard/skills`
+- 后台文件中心 `/dashboard/documents`
 - 日历 `/calendar`
-- 文件中心 `/documents`
 - 个人信息 `/profile`
 - 设置 `/settings`
 - 自动化占位页 `/automations`
@@ -39,11 +43,13 @@ Phase 2C 已通过生产站点真实验收。Phase 1 前端 MVP、Phase 2A Supab
 - 文件上传架构已按 PR review 修正为浏览器直传 Supabase Storage：Server Actions 只负责 prepare/finalize，不承载文件二进制，避免 Vercel Function 4.5 MB payload 限制与 20 MB 上传目标冲突。
 - 中文或其他非 ASCII 原文件名会被转换为 ASCII-safe Storage object key，数据库中的文件显示名称仍可保留中文。
 - Dashboard 已开始读取真实 projects、knowledge_notes、skills、publications 与 activity_logs。
-- 公开首页已开始读取真实 public + featured projects、publications 与 skills。
+- 公开首页已升级为只读版研究工作站，读取真实 public projects、publications、skills 与 knowledge_notes。
+- 公开 Projects、Publications、Knowledge、Skills 列表与 slug 详情页只读取 `visibility = "public"` 内容。
+- 后台 CRUD 页面已迁移到 `/dashboard/projects`、`/dashboard/publications`、`/dashboard/knowledge`、`/dashboard/skills`、`/dashboard/documents`，旧 `/documents` 作为受保护兼容路径重定向到后台文件中心。
 - mock data 集中在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的 Calendar、Profile 等页面和未配置 Supabase 的开发预览。
 - 类型定义集中在 `src/lib/types.ts`。
 - 核心实体保留 `visibility` 字段，当前生产取值为 `public`、`private` 或 `unlisted`；长期规划会扩展 `restricted`。
-- 公开首页只展示数据库中 `visibility = "public"` 且符合展示条件的公开内容。
+- 公开首页与公开详情页只展示数据库中 `visibility = "public"` 且符合展示条件的公开内容。
 - Supabase 初始 schema 已补充 slug、精选标记、项目关联、Skill 详情字段、文件关联字段和常用索引，为 Phase 2B CRUD 做准备。
 - Supabase 增量 migration `0002_grant_api_table_privileges.sql` 补充 API 角色的最小表级 privileges，让 RLS policies 能在 Supabase API 请求中实际生效；该 migration 已在生产 Supabase 执行并通过 Phase 2B 验收。
 - Phase 2C 新增 `0003_publications_documents_storage.sql`，创建私密 `workspace-files` bucket 并配置仅管理员可操作的 Storage policies；该 migration 已在生产 Supabase 执行并通过真实上传、下载、关联、删除保护和清理验收。
@@ -54,7 +60,6 @@ Phase 2C 已通过生产站点真实验收。Phase 1 前端 MVP、Phase 2A Supab
 
 - Calendar CRUD
 - Profile 真实编辑
-- 公开内容列表与公开详情页体系
 - restricted 受限访问与审批体系
 - 外部 API
 - Skill 自动化执行
@@ -69,7 +74,7 @@ Phase 2C 已通过生产站点真实验收。Phase 1 前端 MVP、Phase 2A Supab
 - profile 中的 `contact`、`social_links` 等联系方式只有在确实希望公开展示时才应放入 public profile 数据。
 - 公开访问通过 `visibility = "public"` 控制，后台写权限通过 `public.is_admin()` 控制。
 - 数据库权限分两层：GRANT 决定 `anon` / `authenticated` 是否能访问表，RLS 决定能访问哪些记录以及能否写入。
-- 公开页面和后台页面需要逐步分离。长期建议公开只读路由使用 `/projects`、`/publications`、`/skills`、`/knowledge` 及 slug 详情；后台管理路由逐步迁移到 `/dashboard/...`。
+- 公开页面和后台页面在 Phase 2D-A 中开始分离：公开只读路由使用 `/projects`、`/publications`、`/skills`、`/knowledge` 及 slug 详情；后台管理路由使用 `/dashboard/...`。
 - 文件附件默认比正文内容更严格：即使 Publication 公开，关联 Documents 默认仍保持私密，不在公开页面提供下载入口。
 - Notion 仅作为草稿、临时研究笔记、日常记录和协作辅助工具，不替代个人网站的正式公开门户、权限系统与私密资产库。
 
@@ -88,21 +93,20 @@ Phase 2C 已通过生产站点真实验收。Phase 1 前端 MVP、Phase 2A Supab
 - Document 上传采用两阶段流程：管理员 prepare -> 浏览器 direct upload -> 管理员 finalize；finalize 失败会尽力删除刚上传的对象。
 - Phase 2C 生产验收通过后，下一阶段优先级从 Calendar 调整为 Phase 2D：公开研究工作站体系升级。
 - Phase 2E 再实现 restricted 可见性、外部用户申请、管理员审批、按具体内容授权、有效期与撤销。
+- Phase 2D-A 不新增 migration，不实现 restricted、外部登录、访问申请、Calendar CRUD、Profile 编辑或自动化。
 
 ## Known Issues
 
 - Calendar、Profile 仍为 mock 或占位页面，不具备真实持久化能力。
-- 公开列表与详情页尚未从后台管理路径中分离；Phase 2D 需要优先设计兼容策略，避免破坏现有生产后台。
 - `restricted` 可见性尚未进入 schema、RLS 和 UI；当前只能作为长期规划记录，不能在生产功能中假装可用。
 - 日历为静态月历，不支持新增、编辑或提醒。
 - 个人信息页面只有前端编辑样式，不保存修改。
-- 管理员真实 CRUD 端到端验证需要用户本人输入账号密码完成，Codex 不读取或记录密码。
+- Phase 2D-A 的生产后台 CRUD、Documents 上传下载与路由迁移验收需要用户本人输入账号密码完成，Codex 不读取或记录密码。
 
 ## Next Steps
 
-- Phase 2D：建立公开研究工作站体系，新增公开 Projects、Publications、Skills、Knowledge 列表与 slug 详情页，只读取 `visibility = "public"` 内容。
-- Phase 2D：将公开首页升级为只读版个人研究工作台，展示公开统计、精选内容、最近公开知识文章和未来申请入口占位。
-- Phase 2D：制定后台管理路由迁移到 `/dashboard/...` 的安全方案，必要时保留旧后台路径的受保护 redirect 或过渡策略。
+- Phase 2D-A PR 审核后，由用户在生产环境验证新的后台 Projects、Publications、Knowledge、Skills、Documents 路由和原有 CRUD/文件能力。
+- Phase 2D 后续可继续优化公开详情内容、公开关联内容和路由兼容体验。
 - Phase 2E：实现 `restricted` 可见性、外部用户申请查看指定内容、管理员审批、只读授权、有效期、撤销与附件单独授权。
 - 后续再推进 Profile 真实编辑、Calendar CRUD、Google Calendar、Notion 辅助同步和自动化任务。
 

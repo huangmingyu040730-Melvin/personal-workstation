@@ -239,9 +239,9 @@ export async function finalizeDocumentUploadAction(upload: PreparedDocumentUploa
   });
 
   revalidatePath("/dashboard");
-  revalidatePath("/documents");
+  revalidatePath("/dashboard/documents");
   if (data.related_type === "publication" && data.related_id) {
-    revalidatePath(`/publications/${data.related_id}`);
+    revalidatePath(`/dashboard/publications/${data.related_id}`);
   }
 
   return { ok: true, documentId: data.id };
@@ -271,7 +271,7 @@ export async function deleteDocumentAction(id: string) {
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    redirect(`/documents/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+    redirect(`/dashboard/documents/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
   }
 
   const { data: document, error: fetchError } = await supabase
@@ -281,13 +281,13 @@ export async function deleteDocumentAction(id: string) {
     .maybeSingle();
 
   if (fetchError || !document) {
-    redirect(`/documents/${id}?error=${encodeFormError(fetchError?.message || "文件记录不存在。")}`);
+    redirect(`/dashboard/documents/${id}?error=${encodeFormError(fetchError?.message || "文件记录不存在。")}`);
   }
 
   const { error: deleteRecordError } = await supabase.from("documents").delete().eq("id", id);
 
   if (deleteRecordError) {
-    redirect(`/documents/${id}?error=${encodeFormError(deleteRecordError.message || "删除文件记录失败，尚未删除 Storage 对象。")}`);
+    redirect(`/dashboard/documents/${id}?error=${encodeFormError(deleteRecordError.message || "删除文件记录失败，尚未删除 Storage 对象。")}`);
   }
 
   const { error: storageError } = await supabase.storage.from(document.storage_bucket).remove([document.storage_path]);
@@ -310,7 +310,7 @@ export async function deleteDocumentAction(id: string) {
         owner_id: document.owner_id,
         created_at: document.created_at
       });
-    redirect(`/documents/${id}?error=${encodeFormError("删除文件对象失败，已尝试恢复文件记录，请稍后重试。")}`);
+    redirect(`/dashboard/documents/${id}?error=${encodeFormError("删除文件对象失败，已尝试恢复文件记录，请稍后重试。")}`);
   }
 
   await writeActivityLog({
@@ -325,9 +325,9 @@ export async function deleteDocumentAction(id: string) {
   });
 
   revalidatePath("/dashboard");
-  revalidatePath("/documents");
+  revalidatePath("/dashboard/documents");
   if (document.related_type === "publication" && document.related_id) {
-    revalidatePath(`/publications/${document.related_id}`);
+    revalidatePath(`/dashboard/publications/${document.related_id}`);
   }
-  redirect("/documents");
+  redirect("/dashboard/documents");
 }
