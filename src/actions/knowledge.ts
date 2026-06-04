@@ -36,19 +36,19 @@ export async function createKnowledgeAction(formData: FormData) {
   const parsed = knowledgePayloadFromForm(formData);
 
   if (!parsed.success) {
-    knowledgeErrorRedirect("/knowledge/new", parsed.error.issues[0]?.message ?? "请检查笔记表单。");
+    knowledgeErrorRedirect("/dashboard/knowledge/new", parsed.error.issues[0]?.message ?? "请检查笔记表单。");
   }
 
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    knowledgeErrorRedirect("/knowledge/new", error ?? "当前账号没有管理员权限。");
+    knowledgeErrorRedirect("/dashboard/knowledge/new", error ?? "当前账号没有管理员权限。");
   }
 
   const { data, error: insertError } = await supabase.from("knowledge_notes").insert(parsed.data).select("id,title,slug").single();
 
   if (insertError) {
-    knowledgeErrorRedirect("/knowledge/new", getKnowledgeErrorMessage(insertError));
+    knowledgeErrorRedirect("/dashboard/knowledge/new", getKnowledgeErrorMessage(insertError));
   }
 
   await writeActivityLog({
@@ -58,14 +58,17 @@ export async function createKnowledgeAction(formData: FormData) {
     metadata: { title: data.title, slug: data.slug }
   });
 
+  revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/knowledge");
-  redirect(`/knowledge/${data.id}`);
+  revalidatePath("/dashboard/knowledge");
+  revalidatePath(`/knowledge/${data.slug}`);
+  redirect(`/dashboard/knowledge/${data.id}`);
 }
 
 export async function updateKnowledgeAction(id: string, formData: FormData) {
   const parsed = knowledgePayloadFromForm(formData);
-  const editPath = `/knowledge/${id}/edit`;
+  const editPath = `/dashboard/knowledge/${id}/edit`;
 
   if (!parsed.success) {
     knowledgeErrorRedirect(editPath, parsed.error.issues[0]?.message ?? "请检查笔记表单。");
@@ -90,24 +93,27 @@ export async function updateKnowledgeAction(id: string, formData: FormData) {
     metadata: { title: data.title, slug: data.slug }
   });
 
+  revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/knowledge");
-  revalidatePath(`/knowledge/${id}`);
-  redirect(`/knowledge/${id}`);
+  revalidatePath("/dashboard/knowledge");
+  revalidatePath(`/knowledge/${data.slug}`);
+  revalidatePath(`/dashboard/knowledge/${id}`);
+  redirect(`/dashboard/knowledge/${id}`);
 }
 
 export async function deleteKnowledgeAction(id: string) {
   const { supabase, isAdmin, error } = await getAdminClient();
 
   if (!supabase || !isAdmin) {
-    redirect(`/knowledge/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+    redirect(`/dashboard/knowledge/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
   }
 
   const { data: existing } = await supabase.from("knowledge_notes").select("title,slug").eq("id", id).maybeSingle();
   const { error: deleteError } = await supabase.from("knowledge_notes").delete().eq("id", id);
 
   if (deleteError) {
-    redirect(`/knowledge/${id}?error=${encodeFormError(deleteError.message || "删除笔记失败。")}`);
+    redirect(`/dashboard/knowledge/${id}?error=${encodeFormError(deleteError.message || "删除笔记失败。")}`);
   }
 
   await writeActivityLog({
@@ -117,7 +123,12 @@ export async function deleteKnowledgeAction(id: string) {
     metadata: { title: existing?.title ?? "已删除笔记", slug: existing?.slug ?? null }
   });
 
+  revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/knowledge");
-  redirect("/knowledge");
+  if (existing?.slug) {
+    revalidatePath(`/knowledge/${existing.slug}`);
+  }
+  revalidatePath("/dashboard/knowledge");
+  redirect("/dashboard/knowledge");
 }

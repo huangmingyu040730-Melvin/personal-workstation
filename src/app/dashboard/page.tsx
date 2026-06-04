@@ -50,7 +50,7 @@ export default async function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader title="最近项目进展" action={<Link href="/projects" className="text-sm font-medium text-blue-700">查看全部</Link>} />
+          <CardHeader title="最近项目进展" action={<Link href="/dashboard/projects" className="text-sm font-medium text-blue-700">查看全部</Link>} />
           <div className="space-y-5">
             {data.projects.length > 0 ? data.projects.slice(0, 4).map((project) => (
               <div key={project.id}>
@@ -68,7 +68,7 @@ export default async function DashboardPage() {
           <CardHeader title="快速入口" />
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => (
-              <Link key={action.label} href={action.href === "/projects" ? "/projects/new" : action.href === "/knowledge" ? "/knowledge/new" : action.href === "/skills" ? "/skills/new" : action.href === "/documents" ? "/documents/upload" : action.href} className="rounded-2xl bg-blue-50 p-4 text-center text-sm font-medium text-blue-800 transition hover:bg-blue-100">
+              <Link key={action.label} href={action.href} className="rounded-2xl bg-blue-50 p-4 text-center text-sm font-medium text-blue-800 transition hover:bg-blue-100">
                 <action.icon className="mx-auto mb-2" size={24} />
                 {action.label}
               </Link>
@@ -79,10 +79,10 @@ export default async function DashboardPage() {
 
       <div className="mt-6 grid gap-5 xl:grid-cols-4">
         <Card>
-          <CardHeader title="最新学术成果" action={<Link href="/publications" className="text-sm font-medium text-blue-700">查看全部</Link>} />
+          <CardHeader title="最新学术成果" action={<Link href="/dashboard/publications" className="text-sm font-medium text-blue-700">查看全部</Link>} />
           <div className="space-y-4">
             {data.publications.length > 0 ? data.publications.map((item) => (
-              <Link key={item.id} href={`/publications/${item.id}`} className="flex gap-3">
+              <Link key={item.id} href={`/dashboard/publications/${item.id}`} className="flex gap-3">
                 <FileText className="mt-1 text-blue-700" size={18} />
                 <div>
                   <p className="text-sm font-medium text-slate-900">{item.title}</p>
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
           <CardHeader title="知识库最近笔记" />
           <div className="space-y-4">
             {data.notes.length > 0 ? data.notes.map((note) => (
-              <Link key={note.id} href={`/knowledge/${note.id}`} className="flex gap-3">
+              <Link key={note.id} href={`/dashboard/knowledge/${note.id}`} className="flex gap-3">
                 <BookOpen className="mt-1 text-emerald-600" size={18} />
                 <div>
                   <p className="text-sm font-medium text-slate-900">{note.title}</p>
@@ -110,7 +110,7 @@ export default async function DashboardPage() {
           <CardHeader title="Skill 库最近更新" />
           <div className="space-y-4">
             {data.skills.length > 0 ? data.skills.map((skill) => (
-              <Link key={skill.id} href={`/skills/${skill.id}`} className="block">
+              <Link key={skill.id} href={`/dashboard/skills/${skill.id}`} className="block">
                 <p className="text-sm font-medium text-slate-900">{skill.name}</p>
                 <p className="mt-1 text-xs text-slate-500">{skill.status} · {formatRelative(skill.updated_at)}</p>
               </Link>

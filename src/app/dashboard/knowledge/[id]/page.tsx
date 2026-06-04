@@ -35,7 +35,7 @@ export default async function KnowledgeDetailPage({
         description={note.excerpt ?? "暂无摘要"}
         action={
           <div className="flex flex-wrap gap-2">
-            <Link href={`/knowledge/${note.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
+            <Link href={`/dashboard/knowledge/${note.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
             <form action={deleteKnowledgeAction.bind(null, note.id)}>
               <DeleteButton />
             </form>

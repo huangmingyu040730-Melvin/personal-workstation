@@ -1,9 +1,5 @@
 const allowedDashboardRoutes = [
   "/dashboard",
-  "/projects",
-  "/publications",
-  "/knowledge",
-  "/skills",
   "/calendar",
   "/documents",
   "/profile",

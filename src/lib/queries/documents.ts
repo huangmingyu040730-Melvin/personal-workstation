@@ -55,9 +55,9 @@ async function resolveDocumentRelations(documents: DocumentRecord[]): Promise<Do
     });
   }
 
-  const publicationMap = new Map((publicationsResult.data ?? []).map((item) => [item.id, { title: item.title, href: `/publications/${item.id}` }]));
-  const projectMap = new Map((projectsResult.data ?? []).map((item) => [item.id, { title: item.title, href: `/projects/${item.id}` }]));
-  const skillMap = new Map((skillsResult.data ?? []).map((item) => [item.id, { title: item.name, href: `/skills/${item.id}` }]));
+  const publicationMap = new Map((publicationsResult.data ?? []).map((item) => [item.id, { title: item.title, href: `/dashboard/publications/${item.id}` }]));
+  const projectMap = new Map((projectsResult.data ?? []).map((item) => [item.id, { title: item.title, href: `/dashboard/projects/${item.id}` }]));
+  const skillMap = new Map((skillsResult.data ?? []).map((item) => [item.id, { title: item.name, href: `/dashboard/skills/${item.id}` }]));
 
   return documents.map((document) => {
     if (!document.related_type || !document.related_id) {

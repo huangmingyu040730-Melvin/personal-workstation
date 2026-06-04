@@ -1,61 +1,63 @@
 import Link from "next/link";
-import { BookOpen, Plus } from "lucide-react";
-import { AppShell } from "@/components/app-shell";
-import { VisibilityBadge } from "@/components/badge";
+import { ArrowRight, BookOpen, Search } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
-import { PageHeader } from "@/components/page-header";
+import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { knowledgeCategories } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
-import { getKnowledgeNotes } from "@/lib/queries/knowledge";
+import { getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 
-export default async function KnowledgePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function PublicKnowledgePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const category = params.category ?? "all";
   const q = params.q ?? "";
-  const notes = await getKnowledgeNotes({ category, q });
+  const notes = await getPublicKnowledgeNotes({ category, q });
 
   return (
-    <AppShell>
-      <PageHeader
+    <PublicShell>
+      <PublicPageHero
         eyebrow="Knowledge Base"
-        title="知识库"
-        description="从 Supabase 读取真实笔记，沉淀研究、工具方法与会议知识。"
-        action={<Link href="/knowledge/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800"><Plus size={16} />新建笔记</Link>}
+        title="公开知识文章"
+        description="浏览已公开的研究笔记、工具方法、阅读沉淀与知识工作流。这里只展示明确公开的文章。"
       />
-      <form className="mb-5 grid gap-3 md:grid-cols-[0.45fr_1fr_auto]">
-        <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
-          <option value="all">全部分类</option>
-          {knowledgeCategories.map((item) => <option key={item} value={item}>{item}</option>)}
-        </select>
-        <input name="q" defaultValue={q} placeholder="搜索标题、摘要或正文..." className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-300" />
-        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:text-blue-700">筛选</button>
-      </form>
-      <Card>
-        <CardHeader title="笔记列表" description="默认按最近更新时间排序" />
+      <section className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+        <form className="mb-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
+          <label className="relative">
+            <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
+            <input name="q" defaultValue={q} placeholder="搜索标题、摘要、正文或标签..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-300" />
+          </label>
+          <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+            <option value="all">全部分类</option>
+            {knowledgeCategories.map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
+          <button className="rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
+        </form>
+
         {notes.length === 0 ? (
-          <div className="rounded-2xl bg-slate-50 p-6 text-center">
-            <p className="font-semibold text-slate-900">还没有知识笔记</p>
-            <p className="mt-2 text-sm text-slate-500">创建第一条笔记后，Dashboard 会展示最近更新。</p>
-            <Link href="/knowledge/new" className="mt-4 inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建笔记</Link>
-          </div>
+          <PublicEmptyState title="暂无公开知识文章" description="当前没有符合条件的公开知识文章。" />
         ) : (
-          <div className="space-y-3">
-            {notes.map((note) => (
-              <Link key={note.id} href={`/knowledge/${note.id}`} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-4 transition hover:bg-blue-50">
-                <div className="flex gap-3">
-                  <BookOpen className="mt-1 text-emerald-600" size={18} />
-                  <div>
-                    <p className="font-medium text-slate-900">{note.title}</p>
-                    <p className="mt-1 text-sm text-slate-500">{note.category} · {formatRelative(note.updated_at)}</p>
-                    {note.excerpt ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
+          <Card>
+            <CardHeader title="公开文章列表" description="按更新时间倒序展示" />
+            <div className="space-y-3">
+              {notes.map((note) => (
+                <Link key={note.id} href={`/knowledge/${note.slug}`} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-4 transition hover:bg-emerald-50">
+                  <div className="flex min-w-0 gap-3">
+                    <BookOpen className="mt-1 shrink-0 text-emerald-600" size={18} />
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-900">{note.title}</p>
+                      <p className="mt-1 text-sm text-slate-500">{note.category} · 更新于 {formatRelative(note.updated_at)}</p>
+                      {note.excerpt ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {note.tags.map((tag) => <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-xs text-slate-600">{tag}</span>)}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <VisibilityBadge visibility={note.visibility} />
-              </Link>
-            ))}
-          </div>
+                  <span className="hidden shrink-0 items-center gap-1 text-sm font-semibold text-emerald-700 sm:inline-flex">阅读 <ArrowRight size={15} /></span>
+                </Link>
+              ))}
+            </div>
+          </Card>
         )}
-      </Card>
-    </AppShell>
+      </section>
+    </PublicShell>
   );
 }

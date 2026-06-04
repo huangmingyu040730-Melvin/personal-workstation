@@ -108,6 +108,62 @@ export async function getPublicationById(id: string) {
   return data as PublicationRecord | null;
 }
 
+export async function getPublicPublications(filters?: { publicationType?: string; q?: string }) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockPublicationFallback()
+      .filter((publication) => publication.visibility === "public")
+      .filter((publication) => !filters?.publicationType || filters.publicationType === "all" || publication.publication_type === filters.publicationType)
+      .filter((publication) => matchesPublicationSearch(publication, filters?.q ?? ""))
+      .sort((a, b) => Number(b.is_featured) - Number(a.is_featured) || (b.published_on ?? b.updated_at).localeCompare(a.published_on ?? a.updated_at));
+  }
+
+  let query = supabase
+    .from("publications")
+    .select("*, projects(id,title,slug)")
+    .eq("visibility", "public" satisfies Visibility)
+    .order("is_featured", { ascending: false })
+    .order("published_on", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false });
+
+  if (filters?.publicationType && filters.publicationType !== "all") {
+    query = query.eq("publication_type", filters.publicationType);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("getPublicPublications failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  const publications = (data ?? []) as PublicationRecord[];
+  return filters?.q ? publications.filter((publication) => matchesPublicationSearch(publication, filters.q ?? "")) : publications;
+}
+
+export async function getPublicPublicationBySlug(slug: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockPublicationFallback().find((publication) => publication.visibility === "public" && publication.slug === slug) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from("publications")
+    .select("*, projects(id,title,slug)")
+    .eq("visibility", "public" satisfies Visibility)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getPublicPublicationBySlug failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  return data as PublicationRecord | null;
+}
+
 export async function getPublicationOptions() {
   const publications = await getPublications();
   return publications.map((publication) => ({ id: publication.id, title: publication.title }));

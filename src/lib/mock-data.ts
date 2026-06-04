@@ -38,22 +38,22 @@ export const sidebarGroups = [
     label: "研究中心",
     items: [
       { label: "日历", href: "/calendar", icon: CalendarDays },
-      { label: "研究项目", href: "/projects", icon: FolderOpen },
-      { label: "学术成果", href: "/publications", icon: BarChart3 },
-      { label: "知识库", href: "/knowledge", icon: BookOpen }
+      { label: "研究项目", href: "/dashboard/projects", icon: FolderOpen },
+      { label: "学术成果", href: "/dashboard/publications", icon: BarChart3 },
+      { label: "知识库", href: "/dashboard/knowledge", icon: BookOpen }
     ]
   },
   {
     label: "AI 工作空间",
     items: [
-      { label: "Skill 库", href: "/skills", icon: WandSparkles },
+      { label: "Skill 库", href: "/dashboard/skills", icon: WandSparkles },
       { label: "自动化", href: "/automations", icon: Bot }
     ]
   },
   {
     label: "资源管理",
     items: [
-      { label: "文件中心", href: "/documents", icon: FileText }
+      { label: "文件中心", href: "/dashboard/documents", icon: FileText }
     ]
   },
   {
@@ -238,8 +238,8 @@ export const activityFeed = [
 ];
 
 export const quickActions = [
-  { label: "新建项目", icon: FolderOpen, href: "/projects" },
-  { label: "新增笔记", icon: Library, href: "/knowledge" },
-  { label: "新建 Skill", icon: WandSparkles, href: "/skills" },
-  { label: "上传文件", icon: FileText, href: "/documents" }
+  { label: "新建项目", icon: FolderOpen, href: "/dashboard/projects/new" },
+  { label: "新增笔记", icon: Library, href: "/dashboard/knowledge/new" },
+  { label: "新建 Skill", icon: WandSparkles, href: "/dashboard/skills/new" },
+  { label: "上传文件", icon: FileText, href: "/dashboard/documents/upload" }
 ];

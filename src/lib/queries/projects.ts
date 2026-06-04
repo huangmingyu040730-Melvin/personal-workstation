@@ -68,9 +68,91 @@ export async function getProjectById(id: string) {
   return data as ProjectRecord | null;
 }
 
+export async function getPublicProjects(filters?: { status?: string; q?: string }) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockProjectFallback()
+      .filter((project) => project.visibility === "public")
+      .filter((project) => !filters?.status || filters.status === "all" || project.status === filters.status)
+      .filter((project) => matchesProjectSearch(project, filters?.q ?? ""))
+      .sort((a, b) => Number(b.is_featured) - Number(a.is_featured) || b.updated_at.localeCompare(a.updated_at));
+  }
+
+  let query = supabase
+    .from("projects")
+    .select("*")
+    .eq("visibility", "public" satisfies Visibility)
+    .order("is_featured", { ascending: false })
+    .order("updated_at", { ascending: false });
+
+  if (filters?.status && filters.status !== "all") {
+    query = query.eq("status", filters.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("getPublicProjects failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  const projects = (data ?? []) as ProjectRecord[];
+  return filters?.q ? projects.filter((project) => matchesProjectSearch(project, filters.q ?? "")) : projects;
+}
+
+export async function getPublicProjectBySlug(slug: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockProjectFallback().find((project) => project.visibility === "public" && project.slug === slug) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("visibility", "public" satisfies Visibility)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getPublicProjectBySlug failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  return data as ProjectRecord | null;
+}
+
 export async function getProjectOptions() {
   const projects = await getProjects();
   return projects.map((project) => ({ id: project.id, title: project.title }));
+}
+
+function normalizeSearchTerm(value: string) {
+  return value.trim().toLocaleLowerCase("zh-CN");
+}
+
+function matchesProjectSearch(project: ProjectRecord, q: string) {
+  const keyword = normalizeSearchTerm(q);
+
+  if (!keyword) {
+    return true;
+  }
+
+  const searchableText = [
+    project.title,
+    project.summary,
+    project.background,
+    project.research_question,
+    project.methodology,
+    project.status,
+    ...(project.tags ?? [])
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .toLocaleLowerCase("zh-CN");
+
+  return searchableText.includes(keyword);
 }
 
 export async function getFeaturedPublicProjects(limit = 2) {

@@ -1,6 +1,7 @@
 import type { SkillRecord, SkillVersionRecord } from "@/lib/content-types";
 import { skills as mockSkills } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
+import type { Visibility } from "@/lib/types";
 
 function mockSkillFallback(): SkillRecord[] {
   return mockSkills.map((skill) => ({
@@ -63,6 +64,61 @@ export async function getSkillById(id: string) {
 
   if (error) {
     console.error("getSkillById failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  return data as SkillRecord | null;
+}
+
+export async function getPublicSkills(filters?: { status?: string; q?: string }) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockSkillFallback()
+      .filter((skill) => skill.visibility === "public")
+      .filter((skill) => !filters?.status || filters.status === "all" || skill.status === filters.status)
+      .filter((skill) => matchesSkillSearch(skill, filters?.q ?? ""))
+      .sort((a, b) => Number(b.is_featured) - Number(a.is_featured) || b.updated_at.localeCompare(a.updated_at));
+  }
+
+  let query = supabase
+    .from("skills")
+    .select("*")
+    .eq("visibility", "public" satisfies Visibility)
+    .order("is_featured", { ascending: false })
+    .order("updated_at", { ascending: false });
+
+  if (filters?.status && filters.status !== "all") {
+    query = query.eq("status", filters.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("getPublicSkills failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  const skills = (data ?? []) as SkillRecord[];
+  return filters?.q ? skills.filter((skill) => matchesSkillSearch(skill, filters.q ?? "")) : skills;
+}
+
+export async function getPublicSkillBySlug(slug: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockSkillFallback().find((skill) => skill.visibility === "public" && skill.slug === slug) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from("skills")
+    .select("*")
+    .eq("visibility", "public" satisfies Visibility)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getPublicSkillBySlug failed", { code: error.code, message: error.message });
     return null;
   }
 
@@ -146,4 +202,34 @@ export async function countAvailableSkills() {
   }
 
   return count ?? 0;
+}
+
+function normalizeSearchTerm(value: string) {
+  return value.trim().toLocaleLowerCase("zh-CN");
+}
+
+function matchesSkillSearch(skill: SkillRecord, q: string) {
+  const keyword = normalizeSearchTerm(q);
+
+  if (!keyword) {
+    return true;
+  }
+
+  const searchableText = [
+    skill.name,
+    skill.description,
+    skill.content,
+    skill.category,
+    skill.status,
+    skill.current_version,
+    skill.input_description,
+    skill.output_description,
+    skill.usage_guide,
+    ...(skill.platforms ?? [])
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .toLocaleLowerCase("zh-CN");
+
+  return searchableText.includes(keyword);
 }
