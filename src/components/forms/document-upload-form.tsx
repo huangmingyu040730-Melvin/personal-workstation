@@ -107,7 +107,7 @@ export function DocumentUploadForm({
 
     if (uploadError) {
       setPhase("idle");
-      setMessage(uploadError.message || "文件上传到 Supabase Storage 失败，请稍后重试。");
+      setMessage("文件上传到 Supabase Storage 失败，请确认文件类型与大小后重试。");
       return;
     }
 
