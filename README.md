@@ -1,6 +1,12 @@
 # 黄铭语个人数字工作站
 
-个人数字工作站网站，用于个人展示、学术研究项目管理、知识积累和 AI Skill 工作流管理。
+黄铭语的公开研究工作站与私密数字资产后台。
+
+项目长期定位：
+
+- 对外展示公开研究项目、学术成果、知识文章与 AI Skill。
+- 对内管理全部项目、知识、成果、文件、日历与自动化。
+- 未来支持经管理员审核后，按具体内容授权外部用户访问受限材料。
 
 ## 技术栈
 
@@ -72,7 +78,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 合并后，还需要运行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。新建环境仍需按顺序执行 0001、0002、0003。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -89,6 +95,24 @@ Phase 2C 合并后，还需要运行 `supabase/migrations/0003_publications_docu
 - `/settings` 设置
 - `/automations` 自动化占位
 
+## 产品路线图
+
+当前产品方向已升级为“公开研究工作站 + 私密管理后台 + 未来受限访问体系”。详细路线图见 `docs/roadmap.md`。
+
+长期访问层级：
+
+- `public`：所有访客可浏览，可出现在公开首页、公开列表和公开详情页。
+- `unlisted`：不公开列出，未来可通过链接访问。
+- `restricted`：未来仅允许经管理员审批授权的登录用户只读访问。
+- `private`：仅管理员本人在后台查看和管理。
+
+下一阶段优先级：
+
+- Phase 2C 已完成 Publications、Documents 与 private Storage 的生产真实验收。
+- Phase 2D 优先建设公开研究工作站体系，包括公开项目、成果、Skill、知识文章列表与详情页，并规划后台路由逐步迁移到 `/dashboard/...`。
+- Phase 2E 再实现受限内容申请、审批、授权有效期、撤销与附件单独下载权限。
+- Calendar、Profile、Notion、Google Calendar 与自动化任务在公开浏览和授权体系稳定后继续推进。
+
 ## 权限与数据状态
 
 - 未配置 Supabase 时，后台页面保持 mock data 开发预览，便于本地构建和视觉检查。
@@ -98,10 +122,12 @@ Phase 2C 合并后，还需要运行 `supabase/migrations/0003_publications_docu
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制，后台写入、更新、删除权限通过 `public.is_admin()` 控制。
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
-- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；合并后需执行 0003 migration 才能在真实 Supabase 项目中使用上传能力。
+- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；生产环境已执行 0003 migration 并通过真实上传、下载、关联、删除保护和清理验收。
 - Dashboard 已读取真实项目、笔记、Skill、Publications 与 Activity Logs。
 - Calendar、Profile 仍为 mock 或占位展示，真实 CRUD 和外部 API 尚未实现。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
+- 文件附件默认比正文内容更严格；即使 Publication 设置为 public，关联 Documents 仍保持 private，本阶段不会在公开页面提供下载入口。
+- Notion 的长期定位是草稿、临时研究笔记、日常记录和协作辅助，不替代个人网站的正式公开门户、权限系统与私密资产库。
 
 ## 初始数据结构
 

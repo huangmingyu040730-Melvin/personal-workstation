@@ -100,7 +100,7 @@ GRANT 与 RLS 是两层权限控制：
 - `0002` 只打开表级入口，不绕过 `visibility = 'public'` 或 `public.is_admin()`。
 - 普通已登录用户即使属于 `authenticated`，仍不能通过 RLS 写入后台内容。
 
-Phase 2C 合并并经用户确认后，再运行或复制执行：
+生产 Supabase 项目已在 Phase 2C 验收中执行 0003。新建环境、重建环境或 Preview 环境如需真实文件能力，需要再运行或复制执行：
 
 ```text
 supabase/migrations/0003_publications_documents_storage.sql
@@ -123,8 +123,8 @@ supabase/migrations/0003_publications_documents_storage.sql
 
 注意：
 
-- 0003 不应在 PR 审核通过、合并和用户明确确认前执行到生产。
-- 未执行 0003 前，Documents 页面可以构建和打开，但真实上传、下载、删除 Storage 对象会失败。
+- 0003 已在当前生产 Supabase 项目执行并通过真实上传、下载、关联、删除保护和清理验收。
+- 其他环境未执行 0003 前，Documents 页面可以构建和打开，但真实上传、下载、删除 Storage 对象会失败。
 - 0003 不向 `anon` 或 `authenticated` 授予 `admin_users` 权限。
 - 普通网页运行继续使用 publishable key 和登录管理员身份，不使用 `service_role`。
 
@@ -205,7 +205,7 @@ Phase 2C 使用：
 - Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD。
 - Documents 已接入真实文件记录、私密上传、短时签名下载和删除流程。
 - Calendar、Profile 仍从 `src/lib/mock-data.ts` 或静态占位渲染。
-- Storage 上传依赖 0003 migration；未执行 0003 时真实上传无法完成。
+- Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Supabase 真实端到端登录验证需要配置项目 URL、publishable key、执行迁移并创建管理员后再进行。
 
 ## 验证命令

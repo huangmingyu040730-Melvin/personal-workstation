@@ -144,5 +144,5 @@ npm run build
 - 运行 `npm run build`。
 - 检查 0003 migration 只包含 private bucket 和最小 Storage policies。
 - 检查公开首页不展示 private/unlisted Publications，也不展示任何附件下载入口。
-- PR 合并并执行生产 0003 前，不对生产 Supabase 做 Storage 写入测试。
+- 新建环境或 Preview 环境执行 0003 前，不对对应 Supabase 项目做 Storage 写入测试。
 - 管理员真实上传、下载、关联和删除验收需要用户本人登录完成。
