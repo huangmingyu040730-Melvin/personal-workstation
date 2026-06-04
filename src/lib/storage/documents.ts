@@ -40,12 +40,13 @@ export function sanitizeFileName(fileName: string) {
   const baseName = extension ? cleanName.slice(0, -(extension.length + 1)) : cleanName;
   const safeBase = baseName
     .normalize("NFKD")
-    .replace(/[^\w\u4e00-\u9fa5-]+/g, "-")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 80) || "document";
 
-  return extension ? `${safeBase}.${extension}` : safeBase;
+  return extension ? `${safeBase}.${extension.toLowerCase()}` : safeBase;
 }
 
 export function validateDocumentFileDescriptor(file: { name: string; type: string; size: number } | null | undefined) {
