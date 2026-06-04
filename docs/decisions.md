@@ -291,3 +291,73 @@
 - Server Actions 只接收文件名、MIME type、大小和业务 metadata，不接收完整 File。
 - 20 MB 上限由客户端预检、服务端 metadata 校验、bucket 文件大小限制和 Storage policy 共同保障。
 - finalize 失败时会尽力删除刚上传的 Storage 对象，减少未登记对象残留。
+
+## 2026-06-04 - Reposition As Public Research Workstation And Private Admin Backend
+
+类型：decision
+
+决策：
+
+- 项目长期定位升级为“公开研究工作站 + 私密管理后台 + 未来受限访问体系”。
+- 公开研究工作站面向所有访客展示 public 项目、成果、知识文章、Skill、个人介绍、精选内容和公开统计。
+- 私密管理后台仅管理员可进入，用于管理全部 public / unlisted / restricted / private 内容、文件、日历、自动化和访问申请。
+- 未来受限访问体系只按具体内容授权外部用户只读访问，不授予后台管理权限。
+
+原因：
+
+- 个人网站不仅是后台工具，也应成为外部可浏览的正式研究门户。
+- 公开展示、私密管理和未来审批访问的权限边界不同，必须在产品定位层先分清。
+- 后续路由、RLS、查询和页面体验都需要围绕这三层访问模型演进。
+
+影响：
+
+- 公开页面不得展示 private / restricted 内容、后台操作、私密文件入口、Activity Logs、signed URL 或 Storage 内部路径。
+- 管理员后台继续保留完整 CRUD 和文件管理能力。
+- Notion 仅作为草稿、临时记录和协作辅助工具，不替代正式网站。
+
+## 2026-06-04 - Plan Visibility Model Expansion
+
+类型：decision
+
+决策：
+
+- 当前生产继续使用 `public`、`unlisted`、`private`。
+- 长期权限模型规划增加 `restricted`。
+- `public` 对所有访客公开并可进入公开列表。
+- `unlisted` 不公开列出，未来可通过链接访问。
+- `restricted` 未来要求登录并经过管理员对具体内容审批授权。
+- `private` 仅管理员本人可查看。
+- 文件附件默认比正文内容更严格，即使正文 public，附件默认仍保持 private。
+
+原因：
+
+- 外部用户可能只应查看某一份成果、项目或材料，而不是整个后台。
+- 附件往往包含更敏感的研究资料和原始文件，需要独立于正文控制。
+
+影响：
+
+- Phase 2E 前不要在 UI 中假装 restricted 已可用。
+- 未来 schema、RLS 和 Server Actions 需要围绕“指定内容授权、只读、可撤回、可过期”设计。
+- 附件下载权限需要独立审批，不能因为内容公开而自动公开。
+
+## 2026-06-04 - Prioritize Public Browsing System In Phase 2D
+
+类型：decision
+
+决策：
+
+- Phase 2C 完成后，不立即进入 Calendar。
+- Phase 2D 优先建立公开研究工作站体系：公开项目、成果、Skill、知识文章列表与 slug 详情页，以及升级公开首页。
+- 后台管理路由应逐步迁移到 `/dashboard/...`，公开只读路由保留在 `/projects`、`/publications`、`/skills`、`/knowledge` 等路径。
+
+原因：
+
+- 当前后台管理页面占用了未来公开浏览路径。
+- 如果不先拆分公开页面与后台页面，后续 unlisted / restricted / 公开详情能力会与现有后台路由冲突。
+- 公开研究门户是新产品定位下的最高优先级基础设施。
+
+影响：
+
+- Phase 2D 初期可以先新增公开页面和兼容策略，不必一次性迁移全部后台路径。
+- 迁移必须保护现有生产后台能力，必要时使用受保护 redirect 或过渡路径。
+- Phase 2E 受限访问审批应等公开浏览体系稳定后再实现。
