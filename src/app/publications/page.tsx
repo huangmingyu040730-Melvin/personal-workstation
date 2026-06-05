@@ -1,10 +1,8 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, FileText, Search } from "lucide-react";
-import { Card, CardHeader } from "@/components/card";
-import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/public/public-shell";
-import { getPublicationTypeLabel, publicationTypes } from "@/lib/content-options";
-import { formatDate, formatRelative } from "@/lib/format";
+import { Search } from "lucide-react";
+import { PublicPublicationCard } from "@/components/public/public-content-cards";
+import { PublicEmptyState, PublicListToolbar, PublicPageHero, PublicShell } from "@/components/public/public-shell";
+import { publicationTypes } from "@/lib/content-options";
 import { getPublicPublications } from "@/lib/queries/publications";
 
 export const metadata: Metadata = {
@@ -17,6 +15,7 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
   const publicationType = params.type ?? "all";
   const q = params.q ?? "";
   const publications = await getPublicPublications({ publicationType, q });
+  const hasActiveFilters = Boolean(q.trim()) || publicationType !== "all";
 
   return (
     <PublicShell>
@@ -37,32 +36,14 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
           </select>
           <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
+        <PublicListToolbar count={publications.length} active={hasActiveFilters} clearHref="/publications" />
 
         {publications.length === 0 ? (
-          <PublicEmptyState title="暂无公开成果" description="当前没有符合条件的公开学术成果。" />
+          <PublicEmptyState title="暂无公开成果" description="正式报告与分析文章将在整理后发布。你也可以清空筛选后查看全部公开成果。" />
         ) : (
-          <Card>
-            <CardHeader title="公开成果列表" description="精选内容优先展示，其后按发布日期与更新时间排序" />
-            <div className="space-y-3">
-              {publications.map((publication) => (
-                <Link key={publication.id} href={`/publications/${publication.slug}`} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-4 transition hover:bg-blue-50">
-                  <div className="flex min-w-0 gap-3">
-                    <FileText className="mt-1 shrink-0 text-blue-700" size={18} />
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap gap-2">
-                        {publication.is_featured ? <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">精选</span> : null}
-                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">{getPublicationTypeLabel(publication.publication_type)}</span>
-                      </div>
-                      <p className="mt-2 font-medium text-slate-900">{publication.title}</p>
-                      <p className="mt-1 text-sm text-slate-500">{formatDate(publication.published_on)} · 更新于 {formatRelative(publication.updated_at)}</p>
-                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{publication.summary}</p>
-                    </div>
-                  </div>
-                  <span className="hidden shrink-0 items-center gap-1 text-sm font-semibold text-blue-700 sm:inline-flex">详情 <ArrowRight size={15} /></span>
-                </Link>
-              ))}
-            </div>
-          </Card>
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {publications.map((publication) => <PublicPublicationCard key={publication.id} publication={publication} />)}
+          </div>
         )}
       </section>
     </PublicShell>

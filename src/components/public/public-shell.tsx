@@ -103,3 +103,27 @@ export function PublicSectionHeader({
     </div>
   );
 }
+
+export function PublicListToolbar({
+  count,
+  active,
+  clearHref
+}: {
+  count: number;
+  active: boolean;
+  clearHref: string;
+}) {
+  return (
+    <div className="mb-5 flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+      <p>
+        共找到 <span className="font-semibold text-slate-900">{count}</span> 条公开内容
+        {active ? "，当前已应用筛选" : "，按精选优先与时间倒序展示"}
+      </p>
+      {active ? (
+        <Link href={clearHref} className="font-semibold text-blue-700 hover:text-blue-900">
+          清空筛选
+        </Link>
+      ) : null}
+    </div>
+  );
+}

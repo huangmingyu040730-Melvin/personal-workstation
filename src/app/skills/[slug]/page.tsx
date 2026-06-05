@@ -43,11 +43,17 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
             <ArrowLeft size={16} />
             返回公开 Skill
           </Link>
-          <Card><CardHeader title="详细说明" /><MarkdownPreview content={skill.content} /></Card>
-          <Card><CardHeader title="输入内容说明" /><MarkdownPreview content={skill.input_description} emptyText="暂无公开输入说明。" /></Card>
-          <Card><CardHeader title="输出内容说明" /><MarkdownPreview content={skill.output_description} emptyText="暂无公开输出说明。" /></Card>
-          <Card><CardHeader title="使用指南" /><MarkdownPreview content={skill.usage_guide} emptyText="暂无公开使用指南。" /></Card>
-          {skill.skill_md_content ? <Card><CardHeader title="SKILL.md" /><MarkdownPreview content={skill.skill_md_content} /></Card> : null}
+          {skill.content?.trim() ? <Card><CardHeader title="详细说明" /><MarkdownPreview content={skill.content} /></Card> : null}
+          {skill.input_description?.trim() ? <Card><CardHeader title="输入内容说明" /><MarkdownPreview content={skill.input_description} /></Card> : null}
+          {skill.output_description?.trim() ? <Card><CardHeader title="输出内容说明" /><MarkdownPreview content={skill.output_description} /></Card> : null}
+          {skill.usage_guide?.trim() ? <Card><CardHeader title="使用指南" /><MarkdownPreview content={skill.usage_guide} /></Card> : null}
+          {skill.skill_md_content?.trim() ? <Card><CardHeader title="SKILL.md" /><MarkdownPreview content={skill.skill_md_content} /></Card> : null}
+          {!skill.content?.trim() && !skill.input_description?.trim() && !skill.output_description?.trim() && !skill.usage_guide?.trim() && !skill.skill_md_content?.trim() ? (
+            <Card>
+              <CardHeader title="公开说明" />
+              <p className="text-sm leading-7 text-slate-600">该 Skill 的详细使用说明仍在整理中。当前页面先展示公开名称、简介、状态、平台和版本信息。</p>
+            </Card>
+          ) : null}
         </div>
         <div className="space-y-5">
           <Card>

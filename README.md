@@ -127,6 +127,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2C 已完成 Publications、Documents 与 private Storage 的生产真实验收。
 - Phase 2D-A 已完成公开项目、成果、Skill、知识文章列表与详情页，并将现有后台管理能力迁移到 `/dashboard/...`。
 - Phase 2D-B 继续优化公开研究工作站体验，包括统一公开导航、About 页面、公开详情关联浏览、SEO metadata 和移动端可读性。
+- Phase 2D-C 继续提升公开内容展示质量，包括统一公开卡片、列表结果提示、详情页空字段处理和后台公开内容运营提示。
 - Phase 2E 再实现受限内容申请、审批、授权有效期、撤销与附件单独下载权限。
 - Calendar、Profile、Notion、Google Calendar 与自动化任务在公开浏览和授权体系稳定后继续推进。
 
@@ -137,6 +138,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 登录成功后的 `next` 跳转会经过内部后台路径白名单校验，不允许跳到外部 URL。
 - 公开首页与公开列表/详情页只读取 `visibility = "public"` 的项目、成果、知识文章与 Skill；private / unlisted 不在公开页面返回或展示。
 - 公开 About 页面不硬编码管理员邮箱、Supabase 配置、Auth UUID 或其他敏感联系信息。
+- 后台 Projects、Publications、Skills、Knowledge 列表页提供轻量公开运营提示，帮助维护 public / featured 内容质量。
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制，后台写入、更新、删除权限通过 `public.is_admin()` 控制。
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。

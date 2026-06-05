@@ -1,12 +1,8 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Search } from "lucide-react";
-import { StatusBadge } from "@/components/badge";
-import { Card } from "@/components/card";
-import { Progress } from "@/components/progress";
-import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/public/public-shell";
+import { Search } from "lucide-react";
+import { PublicProjectCard } from "@/components/public/public-content-cards";
+import { PublicEmptyState, PublicListToolbar, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { projectStatuses } from "@/lib/content-options";
-import { formatRelative } from "@/lib/format";
 import { getPublicProjects } from "@/lib/queries/projects";
 
 export const metadata: Metadata = {
@@ -19,6 +15,7 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
   const status = params.status ?? "all";
   const q = params.q ?? "";
   const projects = await getPublicProjects({ status, q });
+  const hasActiveFilters = Boolean(q.trim()) || status !== "all";
 
   return (
     <PublicShell>
@@ -41,42 +38,14 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
           </select>
           <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
+        <PublicListToolbar count={projects.length} active={hasActiveFilters} clearHref="/projects" />
 
         {projects.length === 0 ? (
-          <PublicEmptyState title="暂无公开项目" description="当前没有符合条件的公开研究项目，后续公开内容会显示在这里。" />
+          <PublicEmptyState title="暂无公开研究项目" description="后续将逐步开放已整理完成的研究内容。你也可以清空筛选后查看全部公开项目。" />
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {projects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.slug}`} className="block">
-                <Card className="h-full transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="mb-2 flex flex-wrap gap-2">
-                        {project.is_featured ? <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">精选</span> : null}
-                        <StatusBadge status={project.status} />
-                      </div>
-                      <h2 className="text-lg font-semibold text-slate-950">{project.title}</h2>
-                      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{project.summary}</p>
-                    </div>
-                  </div>
-                  <div className="mt-5">
-                    <div className="mb-2 flex justify-between text-sm">
-                      <span className="text-slate-500">公开进度</span>
-                      <span className="font-semibold text-slate-900">{project.progress}%</span>
-                    </div>
-                    <Progress value={project.progress} />
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {project.tags.map((tag) => (
-                      <span key={tag} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{tag}</span>
-                    ))}
-                  </div>
-                  <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                    <span className="text-xs text-slate-500">更新于 {formatRelative(project.updated_at)}</span>
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">详情 <ArrowRight size={15} /></span>
-                  </div>
-                </Card>
-              </Link>
+              <PublicProjectCard key={project.id} project={project} />
             ))}
           </div>
         )}

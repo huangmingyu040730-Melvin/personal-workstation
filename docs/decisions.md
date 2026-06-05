@@ -383,3 +383,23 @@
 - 公开 Project 详情只展示 public Publications 与 public Knowledge。
 - 公开 Publication 与 Knowledge 详情只链接 public Project。
 - Documents、signed URL、Storage 路径和 Activity Logs 继续完全不进入公开页面。
+
+## 2026-06-06 - Use Public Content Quality Guidance Instead Of New Workflow Features
+
+类型：decision
+
+决策：
+
+- Phase 2D-C 只增加公开展示质量和后台运营提示，不新增数据字段、migration、审批、AI 或自动化能力。
+- 后台通过轻量提示说明 public / featured 对公开站点的影响。
+- Dashboard 只展示公开内容数量和维护建议，不做复杂质量评分系统。
+
+原因：
+
+- 当前阶段目标是把公开研究工作站打磨到适合分享，而不是扩展权限或工作流系统。
+- public 内容质量可以先通过文案、卡片、筛选和空状态引导提升，不需要新 schema。
+
+影响：
+
+- 后续如需要自动质量检查、缺字段提醒或发布流程，应另起阶段设计。
+- 本阶段不修改 RLS、Storage policies 或 Supabase migrations。

@@ -41,6 +41,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
     getPublicPublicationsByProjectId(project.id, 4),
     getPublicKnowledgeNotesByProjectId(project.id, { limit: 4 })
   ]);
+  const hasResearchDetails = Boolean(project.background?.trim() || project.research_question?.trim() || project.methodology?.trim());
 
   return (
     <PublicShell>
@@ -51,18 +52,15 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
             <ArrowLeft size={16} />
             返回公开项目
           </Link>
-          <Card>
-            <CardHeader title="研究背景" />
-            <MarkdownPreview content={project.background} emptyText="暂无公开研究背景。" />
-          </Card>
-          <Card>
-            <CardHeader title="研究问题" />
-            <MarkdownPreview content={project.research_question} emptyText="暂无公开研究问题。" />
-          </Card>
-          <Card>
-            <CardHeader title="研究方法" />
-            <MarkdownPreview content={project.methodology} emptyText="暂无公开研究方法。" />
-          </Card>
+          {project.background?.trim() ? <Card><CardHeader title="研究背景" /><MarkdownPreview content={project.background} /></Card> : null}
+          {project.research_question?.trim() ? <Card><CardHeader title="研究问题" /><MarkdownPreview content={project.research_question} /></Card> : null}
+          {project.methodology?.trim() ? <Card><CardHeader title="研究方法" /><MarkdownPreview content={project.methodology} /></Card> : null}
+          {!hasResearchDetails ? (
+            <Card>
+              <CardHeader title="项目说明" />
+              <p className="text-sm leading-7 text-slate-600">该项目的公开背景、问题和方法仍在整理中。当前页面先展示已公开的摘要、状态、进度和关联内容。</p>
+            </Card>
+          ) : null}
         </div>
         <div className="space-y-5">
           <Card>

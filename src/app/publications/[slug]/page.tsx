@@ -48,10 +48,13 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
             <ArrowLeft size={16} />
             返回公开成果
           </Link>
-          <Card>
-            <CardHeader title="摘要 / Abstract" />
-            <MarkdownPreview content={publication.abstract} emptyText="暂无公开摘要。" />
-          </Card>
+          {publication.abstract?.trim() ? <Card><CardHeader title="摘要 / Abstract" /><MarkdownPreview content={publication.abstract} /></Card> : null}
+          {!publication.abstract?.trim() ? (
+            <Card>
+              <CardHeader title="成果简介" />
+              <p className="text-sm leading-7 text-slate-600">{publication.summary}</p>
+            </Card>
+          ) : null}
           <Card>
             <CardHeader title="附件说明" />
             <p className="text-sm leading-7 text-slate-600">公开成果页面不提供附件下载。关联文件仍为私密资料，仅管理员可在后台通过短时链接访问。</p>

@@ -33,6 +33,24 @@ export default async function DashboardPage() {
         <StatCard label="可用 Skill" value={String(data.availableSkillCount)} helper={`Skill 总数 ${data.skills.length}`} icon={Sparkles} />
       </div>
 
+      <Card className="mt-6">
+        <CardHeader title="公开内容质量提示" description="公开内容越完整，公开研究工作站越适合分享给外部访客。" />
+        <div className="grid gap-3 text-sm md:grid-cols-4">
+          {[
+            { label: "公开项目", value: data.publicCounts.projects, href: "/dashboard/projects" },
+            { label: "公开成果", value: data.publicCounts.publications, href: "/dashboard/publications" },
+            { label: "公开 Skill", value: data.publicCounts.skills, href: "/dashboard/skills" },
+            { label: "公开文章", value: data.publicCounts.knowledge, href: "/dashboard/knowledge" }
+          ].map((item) => (
+            <Link key={item.label} href={item.href} className="rounded-2xl bg-slate-50 p-4 hover:bg-blue-50">
+              <p className="text-2xl font-semibold text-slate-950">{item.value}</p>
+              <p className="mt-1 text-slate-500">{item.label}</p>
+            </Link>
+          ))}
+        </div>
+        <p className="mt-4 text-sm leading-7 text-slate-600">建议优先补齐标题、简介、标签、正文摘要，并将适合展示的内容设为 public；精选内容会优先出现在公开首页。</p>
+      </Card>
+
       <div className="mt-6 grid gap-5 xl:grid-cols-[1.25fr_0.9fr_0.75fr]">
         <Card>
           <CardHeader title="今日安排" description="占位数据：Calendar CRUD 将在下一阶段接入" />
