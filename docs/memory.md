@@ -2,15 +2,16 @@
 
 ## Current State
 
-日期：2026-06-05
+日期：2026-06-06
 
-Phase 2D-A 分支正在建立公开研究工作站基础，并将后台管理页面迁移到 `/dashboard/...`。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础、Phase 2B 核心内容 CRUD 与 Supabase API GRANT hotfix、Phase 2C Publications / Documents / private Storage 均已合并并在生产环境完成关键链路验证。
+Phase 2D-B 分支正在打磨公开研究工作站体验。Phase 2D-A 已合并：公开 Projects、Publications、Knowledge、Skills 列表与 slug 详情页已经建立，后台管理页面已迁移到 `/dashboard/...`。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础、Phase 2B 核心内容 CRUD 与 Supabase API GRANT hotfix、Phase 2C Publications / Documents / private Storage 均已合并并在生产环境完成关键链路验证。
 
 项目长期定位已更新为：黄铭语的公开研究工作站与私密数字资产后台。网站既要对外展示公开研究项目、学术成果、知识文章和 AI Skill，也要对内管理全部项目、知识、成果、文件、日历与自动化；未来还要支持经管理员审核后，按具体内容授权外部用户访问受限材料。
 
 已实现页面：
 
 - 公开研究工作站首页 `/`
+- 关于我 `/about`
 - 登录页 `/login`
 - 工作台 `/dashboard`
 - 公开研究项目 `/projects`、`/projects/[slug]`
@@ -45,6 +46,8 @@ Phase 2D-A 分支正在建立公开研究工作站基础，并将后台管理页
 - Dashboard 已开始读取真实 projects、knowledge_notes、skills、publications 与 activity_logs。
 - 公开首页已升级为只读版研究工作站，读取真实 public projects、publications、skills 与 knowledge_notes。
 - 公开 Projects、Publications、Knowledge、Skills 列表与 slug 详情页只读取 `visibility = "public"` 内容。
+- Phase 2D-B 增加统一公开导航、About 页面、公开页面 metadata、公开详情关联浏览和移动端可读性优化；不新增 migration，不实现 restricted、外部用户登录、Calendar、Notion 或自动化。
+- 公开详情页的关联内容也必须限定为 public，避免管理员登录状态下浏览公开页时误展示 private / unlisted 关联标题。
 - 后台 CRUD 页面已迁移到 `/dashboard/projects`、`/dashboard/publications`、`/dashboard/knowledge`、`/dashboard/skills`、`/dashboard/documents`，旧 `/documents` 作为受保护兼容路径重定向到后台文件中心。
 - mock data 集中在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的 Calendar、Profile 等页面和未配置 Supabase 的开发预览。
 - 类型定义集中在 `src/lib/types.ts`。

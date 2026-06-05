@@ -123,6 +123,32 @@ export async function getPublicProjectBySlug(slug: string) {
   return data as ProjectRecord | null;
 }
 
+export async function getPublicProjectById(id: string | null | undefined) {
+  if (!id) {
+    return null;
+  }
+
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockProjectFallback().find((project) => project.visibility === "public" && project.id === id) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("visibility", "public" satisfies Visibility)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getPublicProjectById failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  return data as ProjectRecord | null;
+}
+
 export async function getProjectOptions() {
   const projects = await getProjects();
   return projects.map((project) => ({ id: project.id, title: project.title }));

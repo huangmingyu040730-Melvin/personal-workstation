@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, Bot, Layers3, Search } from "lucide-react";
 import { StatusBadge } from "@/components/badge";
 import { Card } from "@/components/card";
@@ -6,6 +7,11 @@ import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/publ
 import { skillStatuses } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
 import { getPublicSkills } from "@/lib/queries/skills";
+
+export const metadata: Metadata = {
+  title: "Skill 库 | 黄铭语",
+  description: "浏览黄铭语公开研究工作站中的公开 AI Skill 与研究、写作、数据分析工作流能力。"
+};
 
 export default async function PublicSkillsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -30,7 +36,7 @@ export default async function PublicSkillsPage({ searchParams }: { searchParams:
             <option value="all">全部状态</option>
             {skillStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
-          <button className="rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
+          <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
 
         {skills.length === 0 ? (

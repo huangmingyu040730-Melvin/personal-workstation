@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "黄铭语个人数字工作站",
-  description: "用于个人展示、学术研究项目管理、知识积累和 AI Skill 工作流管理。"
+  title: "黄铭语的公开研究工作站",
+  description: "黄铭语关于投资研究、量化分析、知识文章与 AI Skill 的公开研究工作站。"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

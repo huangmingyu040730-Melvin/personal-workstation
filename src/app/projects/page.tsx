@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, Search } from "lucide-react";
 import { StatusBadge } from "@/components/badge";
 import { Card } from "@/components/card";
@@ -7,6 +8,11 @@ import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/publ
 import { projectStatuses } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
 import { getPublicProjects } from "@/lib/queries/projects";
+
+export const metadata: Metadata = {
+  title: "研究项目 | 黄铭语",
+  description: "浏览黄铭语公开研究工作站中已公开的研究项目、研究问题、方法框架和阶段性进展。"
+};
 
 export default async function PublicProjectsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -33,7 +39,7 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
               <option key={item.value} value={item.value}>{item.label}</option>
             ))}
           </select>
-          <button className="rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
+          <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
 
         {projects.length === 0 ? (

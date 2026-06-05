@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
@@ -8,6 +9,25 @@ import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicProjectBySlug } from "@/lib/queries/projects";
+import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
+import { getPublicPublicationsByProjectId } from "@/lib/queries/publications";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const project = await getPublicProjectBySlug(slug);
+
+  if (!project) {
+    return {
+      title: "研究项目 | 黄铭语",
+      description: "公开研究项目不存在或未公开。"
+    };
+  }
+
+  return {
+    title: `${project.title} | 黄铭语`,
+    description: project.summary
+  };
+}
 
 export default async function PublicProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -16,6 +36,11 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
   if (!project) {
     notFound();
   }
+
+  const [relatedPublications, relatedKnowledge] = await Promise.all([
+    getPublicPublicationsByProjectId(project.id, 4),
+    getPublicKnowledgeNotesByProjectId(project.id, { limit: 4 })
+  ]);
 
   return (
     <PublicShell>
@@ -66,6 +91,36 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
             <p className="text-sm leading-7 text-slate-600">本页只展示公开项目字段，不包含私密笔记、内部日志或文件附件。</p>
           </Card>
         </div>
+      </section>
+      <section className="mx-auto grid max-w-7xl gap-5 px-6 pb-12 lg:grid-cols-2 lg:px-8">
+        <Card>
+          <CardHeader title="关联公开成果" description="仅展示同项目下已公开的 Publications" />
+          <div className="space-y-3">
+            {relatedPublications.length > 0 ? relatedPublications.map((publication) => (
+              <Link key={publication.id} href={`/publications/${publication.slug}`} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4 hover:bg-blue-50">
+                <div>
+                  <p className="font-semibold text-slate-900">{publication.title}</p>
+                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{publication.summary}</p>
+                </div>
+                <ArrowRight className="shrink-0 text-blue-700" size={16} />
+              </Link>
+            )) : <p className="text-sm leading-7 text-slate-500">暂无关联公开成果。</p>}
+          </div>
+        </Card>
+        <Card>
+          <CardHeader title="关联公开知识文章" description="仅展示同项目下已公开的 Knowledge" />
+          <div className="space-y-3">
+            {relatedKnowledge.length > 0 ? relatedKnowledge.map((note) => (
+              <Link key={note.id} href={`/knowledge/${note.slug}`} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4 hover:bg-emerald-50">
+                <div>
+                  <p className="font-semibold text-slate-900">{note.title}</p>
+                  <p className="mt-1 text-sm text-slate-500">{note.category}</p>
+                </div>
+                <ArrowRight className="shrink-0 text-emerald-700" size={16} />
+              </Link>
+            )) : <p className="text-sm leading-7 text-slate-500">暂无关联公开知识文章。</p>}
+          </div>
+        </Card>
       </section>
     </PublicShell>
   );

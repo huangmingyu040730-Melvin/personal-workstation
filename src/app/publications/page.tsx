@@ -1,10 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, FileText, Search } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
 import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { getPublicationTypeLabel, publicationTypes } from "@/lib/content-options";
 import { formatDate, formatRelative } from "@/lib/format";
 import { getPublicPublications } from "@/lib/queries/publications";
+
+export const metadata: Metadata = {
+  title: "学术成果 | 黄铭语",
+  description: "浏览黄铭语公开研究工作站中已公开的研究报告、策略分析、论文草稿与阅读综述。"
+};
 
 export default async function PublicPublicationsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -29,7 +35,7 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
             <option value="all">全部类型</option>
             {publicationTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
           </select>
-          <button className="rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
+          <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
 
         {publications.length === 0 ? (
