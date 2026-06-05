@@ -2,6 +2,7 @@ import type { KnowledgeNoteRecord } from "@/lib/content-types";
 import { knowledgeNotes as mockNotes } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 import type { Visibility } from "@/lib/types";
+import { getPublicProjectById } from "./projects";
 
 function mockKnowledgeFallback(): KnowledgeNoteRecord[] {
   return mockNotes.map((note) => ({
@@ -140,7 +141,7 @@ export async function getPublicKnowledgeNoteBySlug(slug: string) {
 
   const { data, error } = await supabase
     .from("knowledge_notes")
-    .select("*, projects(id,title,slug)")
+    .select("*")
     .eq("visibility", "public" satisfies Visibility)
     .eq("slug", slug)
     .maybeSingle();
@@ -150,7 +151,59 @@ export async function getPublicKnowledgeNoteBySlug(slug: string) {
     return null;
   }
 
-  return data as KnowledgeNoteRecord | null;
+  const note = data as KnowledgeNoteRecord | null;
+
+  if (!note) {
+    return null;
+  }
+
+  const project = await getPublicProjectById(note.project_id);
+  return { ...note, projects: project ? { id: project.id, title: project.title, slug: project.slug } : null };
+}
+
+export async function getPublicKnowledgeNotesByProjectId(projectId: string, options?: { limit?: number; excludeSlug?: string }) {
+  const supabase = await createClient();
+  const limit = options?.limit ?? 4;
+
+  if (!supabase) {
+    return mockKnowledgeFallback()
+      .filter((note) => note.visibility === "public" && note.project_id === projectId && note.slug !== options?.excludeSlug)
+      .slice(0, limit);
+  }
+
+  let query = supabase
+    .from("knowledge_notes")
+    .select("*")
+    .eq("visibility", "public" satisfies Visibility)
+    .eq("project_id", projectId)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (options?.excludeSlug) {
+    query = query.neq("slug", options.excludeSlug);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("getPublicKnowledgeNotesByProjectId failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  return (data ?? []) as KnowledgeNoteRecord[];
+}
+
+export async function getRelatedPublicKnowledgeNotes(note: KnowledgeNoteRecord, limit = 3) {
+  if (note.project_id) {
+    const relatedByProject = await getPublicKnowledgeNotesByProjectId(note.project_id, { limit, excludeSlug: note.slug });
+
+    if (relatedByProject.length > 0) {
+      return relatedByProject;
+    }
+  }
+
+  const notes = await getPublicKnowledgeNotes({ category: note.category, limit: limit + 1 });
+  return notes.filter((item) => item.slug !== note.slug).slice(0, limit);
 }
 
 export async function countPublicKnowledgeNotes() {

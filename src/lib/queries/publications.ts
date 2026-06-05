@@ -2,6 +2,7 @@ import type { PublicationRecord } from "@/lib/content-types";
 import { publications as mockPublications } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 import type { Visibility } from "@/lib/types";
+import { getPublicProjectById } from "./projects";
 
 function mockPublicationFallback(): PublicationRecord[] {
   return mockPublications.map((publication) => ({
@@ -151,7 +152,7 @@ export async function getPublicPublicationBySlug(slug: string) {
 
   const { data, error } = await supabase
     .from("publications")
-    .select("*, projects(id,title,slug)")
+    .select("*")
     .eq("visibility", "public" satisfies Visibility)
     .eq("slug", slug)
     .maybeSingle();
@@ -161,7 +162,40 @@ export async function getPublicPublicationBySlug(slug: string) {
     return null;
   }
 
-  return data as PublicationRecord | null;
+  const publication = data as PublicationRecord | null;
+
+  if (!publication) {
+    return null;
+  }
+
+  const project = await getPublicProjectById(publication.project_id);
+  return { ...publication, projects: project ? { id: project.id, title: project.title, slug: project.slug } : null };
+}
+
+export async function getPublicPublicationsByProjectId(projectId: string, limit = 4) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockPublicationFallback()
+      .filter((publication) => publication.visibility === "public" && publication.project_id === projectId)
+      .slice(0, limit);
+  }
+
+  const { data, error } = await supabase
+    .from("publications")
+    .select("*")
+    .eq("visibility", "public" satisfies Visibility)
+    .eq("project_id", projectId)
+    .order("published_on", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("getPublicPublicationsByProjectId failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  return (data ?? []) as PublicationRecord[];
 }
 
 export async function getPublicationOptions() {

@@ -1,10 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, BookOpen, Search } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
 import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { knowledgeCategories } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
 import { getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
+
+export const metadata: Metadata = {
+  title: "知识文章 | 黄铭语",
+  description: "浏览黄铭语公开研究工作站中的公开知识文章、研究笔记、工具方法和阅读沉淀。"
+};
 
 export default async function PublicKnowledgePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -29,7 +35,7 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
             <option value="all">全部分类</option>
             {knowledgeCategories.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
-          <button className="rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
+          <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
 
         {notes.length === 0 ? (

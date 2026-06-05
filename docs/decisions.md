@@ -361,3 +361,25 @@
 - Phase 2D 初期可以先新增公开页面和兼容策略，不必一次性迁移全部后台路径。
 - 迁移必须保护现有生产后台能力，必要时使用受保护 redirect 或过渡路径。
 - Phase 2E 受限访问审批应等公开浏览体系稳定后再实现。
+
+## 2026-06-06 - Public Detail Relations Must Also Be Public
+
+类型：decision
+
+决策：
+
+- 公开详情页展示关联项目、成果或知识文章时，关联对象本身也必须通过 `visibility = "public"` 查询。
+- 不依赖嵌套关系查询在所有登录状态下自动隐藏私密关联。
+- 如果关联对象不是 public，公开页面统一显示为未公开关联或不展示该关联卡片。
+
+原因：
+
+- 管理员登录状态下访问公开页面时，RLS 可能允许读取 private / unlisted 关联对象。
+- 公开页面的安全边界不应随访问者是否为管理员而变化。
+- 访客视角页面不应泄露私密关联内容的标题、slug、ID 或存在状态。
+
+影响：
+
+- 公开 Project 详情只展示 public Publications 与 public Knowledge。
+- 公开 Publication 与 Knowledge 详情只链接 public Project。
+- Documents、signed URL、Storage 路径和 Activity Logs 继续完全不进入公开页面。

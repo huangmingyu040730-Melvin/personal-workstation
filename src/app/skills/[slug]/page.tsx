@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/badge";
@@ -7,6 +8,23 @@ import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicSkillBySlug } from "@/lib/queries/skills";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const skill = await getPublicSkillBySlug(slug);
+
+  if (!skill) {
+    return {
+      title: "Skill 库 | 黄铭语",
+      description: "公开 Skill 不存在或未公开。"
+    };
+  }
+
+  return {
+    title: `${skill.name} | 黄铭语`,
+    description: skill.description
+  };
+}
 
 export default async function PublicSkillDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -42,7 +60,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
               <div className="flex justify-between gap-4"><dt className="text-slate-500">精选</dt><dd className="font-medium text-slate-800">{skill.is_featured ? "是" : "否"}</dd></div>
               <div className="flex justify-between gap-4"><dt className="text-slate-500">更新</dt><dd className="font-medium text-slate-800">{formatDateTime(skill.updated_at)}</dd></div>
             </dl>
-            {skill.repository_url ? <Link href={skill.repository_url} className="mt-5 block text-sm font-medium text-blue-700">打开公开仓库</Link> : null}
+            {skill.repository_url ? <Link href={skill.repository_url} target="_blank" rel="noreferrer" className="mt-5 block text-sm font-medium text-blue-700">打开公开仓库</Link> : null}
           </Card>
           <Card>
             <CardHeader title="使用平台" />
