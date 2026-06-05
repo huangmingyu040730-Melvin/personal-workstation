@@ -44,10 +44,13 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
             <ArrowLeft size={16} />
             返回公开知识库
           </Link>
-          <Card>
-            <CardHeader title="正文" />
-            <MarkdownPreview content={note.content} />
-          </Card>
+          {note.content?.trim() ? <Card><CardHeader title="正文" /><MarkdownPreview content={note.content} /></Card> : null}
+          {!note.content?.trim() && note.excerpt?.trim() ? (
+            <Card>
+              <CardHeader title="摘要" />
+              <p className="text-sm leading-7 text-slate-600">{note.excerpt}</p>
+            </Card>
+          ) : null}
         </div>
         <div className="space-y-5">
           <Card>

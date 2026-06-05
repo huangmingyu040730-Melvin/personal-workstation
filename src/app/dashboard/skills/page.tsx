@@ -3,6 +3,7 @@ import { Bot, Layers3, Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card } from "@/components/card";
+import { PublicContentGuidance } from "@/components/dashboard/public-content-guidance";
 import { PageHeader } from "@/components/page-header";
 import { skillStatuses, visibilityOptions } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
@@ -22,6 +23,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
         description="从 Supabase 读取真实 Skill，管理研究、写作、自动化和知识工作流能力。"
         action={<Link href="/dashboard/skills/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800"><Plus size={16} />新建 Skill</Link>}
       />
+      <PublicContentGuidance />
       <form className="mb-5 flex flex-wrap gap-3">
         <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
           <option value="all">全部状态</option>

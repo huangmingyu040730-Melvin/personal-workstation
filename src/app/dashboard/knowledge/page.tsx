@@ -3,6 +3,7 @@ import { BookOpen, Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { PublicContentGuidance } from "@/components/dashboard/public-content-guidance";
 import { PageHeader } from "@/components/page-header";
 import { knowledgeCategories } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
@@ -22,6 +23,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
         description="从 Supabase 读取真实笔记，沉淀研究、工具方法与会议知识。"
         action={<Link href="/dashboard/knowledge/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800"><Plus size={16} />新建笔记</Link>}
       />
+      <PublicContentGuidance />
       <form className="mb-5 grid gap-3 md:grid-cols-[0.45fr_1fr_auto]">
         <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
           <option value="all">全部分类</option>

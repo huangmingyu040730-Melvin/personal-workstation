@@ -1,10 +1,10 @@
 import type { ActivityLogRecord } from "@/lib/content-types";
 import { activityFeed } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import { getRecentKnowledgeNotes } from "./knowledge";
-import { getProjects } from "./projects";
+import { countPublicKnowledgeNotes, getRecentKnowledgeNotes } from "./knowledge";
+import { countPublicProjects, getProjects } from "./projects";
 import { getPublicationStats, getRecentPublications } from "./publications";
-import { countAvailableSkills, getSkills } from "./skills";
+import { countAvailableSkills, countPublicSkills, getSkills } from "./skills";
 
 function mockActivityFallback(): ActivityLogRecord[] {
   return activityFeed.map((activity, index) => ({
@@ -18,14 +18,28 @@ function mockActivityFallback(): ActivityLogRecord[] {
 }
 
 export async function getDashboardData() {
-  const [projects, notes, skills, availableSkillCount, publications, publicationStats, activityLogs] = await Promise.all([
+  const [
+    projects,
+    notes,
+    skills,
+    availableSkillCount,
+    publications,
+    publicationStats,
+    activityLogs,
+    publicProjectCount,
+    publicSkillCount,
+    publicKnowledgeCount
+  ] = await Promise.all([
     getProjects(),
     getRecentKnowledgeNotes(4),
     getSkills(),
     countAvailableSkills(),
     getRecentPublications(4),
     getPublicationStats(),
-    getRecentActivityLogs(6)
+    getRecentActivityLogs(6),
+    countPublicProjects(),
+    countPublicSkills(),
+    countPublicKnowledgeNotes()
   ]);
 
   const inProgressProjects = projects.filter((project) => project.status === "in_progress");
@@ -38,6 +52,12 @@ export async function getDashboardData() {
     availableSkillCount,
     publications,
     publicationStats,
+    publicCounts: {
+      projects: publicProjectCount,
+      publications: publicationStats.publicCount,
+      skills: publicSkillCount,
+      knowledge: publicKnowledgeCount
+    },
     activityLogs
   };
 }

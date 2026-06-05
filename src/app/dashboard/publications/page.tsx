@@ -3,6 +3,7 @@ import { FileText, Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { PublicContentGuidance } from "@/components/dashboard/public-content-guidance";
 import { PageHeader } from "@/components/page-header";
 import { getPublicationTypeLabel, publicationTypes, visibilityOptions } from "@/lib/content-options";
 import { formatDate, formatRelative } from "@/lib/format";
@@ -23,6 +24,7 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
         description="从 Supabase 读取真实成果数据，管理研究报告、论文、策略报告与发布权限。"
         action={<Link href="/dashboard/publications/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800"><Plus size={16} />新建成果</Link>}
       />
+      <PublicContentGuidance variant="publication" />
       <form className="mb-5 grid gap-3 lg:grid-cols-[0.35fr_0.35fr_1fr_auto]">
         <select name="type" defaultValue={publicationType} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
           <option value="all">全部类型</option>

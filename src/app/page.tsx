@@ -3,9 +3,8 @@ import type { Metadata } from "next";
 import { ArrowRight, BookOpen, BrainCircuit, FileText, FolderKanban, Sparkles, UserRound } from "lucide-react";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { PublicKnowledgeCard, PublicProjectCard, PublicPublicationCard, PublicSkillCard } from "@/components/public/public-content-cards";
 import { PublicSectionHeader, PublicShell } from "@/components/public/public-shell";
-import { getPublicationTypeLabel } from "@/lib/content-options";
-import { formatRelative } from "@/lib/format";
 import { profile } from "@/lib/mock-data";
 import { countPublicKnowledgeNotes, getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 import { countPublicProjects, getFeaturedPublicProjects } from "@/lib/queries/projects";
@@ -20,7 +19,7 @@ export const metadata: Metadata = {
 function EmptyPublicState({ label }: { label: string }) {
   return (
     <p className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-500">
-      暂无{label}。
+      暂无{label}，后续会逐步开放已整理完成的公开内容。
     </p>
   );
 }
@@ -101,52 +100,9 @@ export default async function HomePage() {
           description="这些内容来自真实 Supabase 数据，只展示公开且适合对外浏览的记录。"
         />
         <div className="grid gap-5 lg:grid-cols-3">
-          <Card>
-          <CardHeader title="精选公开项目" action={<Link href="/projects" className="text-sm font-semibold text-blue-700">全部项目</Link>} />
-          <div className="space-y-4">
-            {featuredProjects.length > 0 ? (
-              featuredProjects.map((project) => (
-                <Link key={project.id} href={`/projects/${project.slug}`} className="block rounded-2xl bg-slate-50 p-4 hover:bg-blue-50">
-                  <p className="font-semibold text-slate-900">{project.title}</p>
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{project.summary}</p>
-                </Link>
-              ))
-            ) : (
-              <EmptyPublicState label="公开项目" />
-            )}
-          </div>
-          </Card>
-          <Card>
-          <CardHeader title="精选公开成果" action={<Link href="/publications" className="text-sm font-semibold text-blue-700">全部成果</Link>} />
-          <div className="space-y-4">
-            {featuredPublications.length > 0 ? (
-              featuredPublications.map((publication) => (
-                <Link key={publication.id} href={`/publications/${publication.slug}`} className="block border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-                  <p className="font-semibold text-slate-900">{publication.title}</p>
-                  <p className="mt-1 text-sm text-slate-500">{getPublicationTypeLabel(publication.publication_type)}</p>
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{publication.summary}</p>
-                </Link>
-              ))
-            ) : (
-              <EmptyPublicState label="公开成果" />
-            )}
-          </div>
-          </Card>
-          <Card>
-          <CardHeader title="精选公开 Skill" action={<Link href="/skills" className="text-sm font-semibold text-blue-700">全部 Skill</Link>} />
-          <div className="space-y-4">
-            {featuredSkills.length > 0 ? (
-              featuredSkills.map((skill) => (
-                <Link key={skill.id} href={`/skills/${skill.slug}`} className="block rounded-2xl border border-slate-100 p-4 hover:border-blue-200">
-                  <p className="font-semibold text-slate-900">{skill.name}</p>
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{skill.description}</p>
-                </Link>
-              ))
-            ) : (
-              <EmptyPublicState label="公开 Skill" />
-            )}
-          </div>
-          </Card>
+          {featuredProjects.length > 0 ? featuredProjects.map((project) => <PublicProjectCard key={project.id} project={project} />) : <Card><CardHeader title="精选公开项目" /><EmptyPublicState label="公开项目" /></Card>}
+          {featuredPublications.length > 0 ? featuredPublications.map((publication) => <PublicPublicationCard key={publication.id} publication={publication} />) : <Card><CardHeader title="精选公开成果" /><EmptyPublicState label="公开成果" /></Card>}
+          {featuredSkills.length > 0 ? featuredSkills.map((skill) => <PublicSkillCard key={skill.id} skill={skill} />) : <Card><CardHeader title="精选公开 Skill" /><EmptyPublicState label="公开 Skill" /></Card>}
         </div>
       </section>
 
@@ -155,11 +111,7 @@ export default async function HomePage() {
           <CardHeader title="最近公开知识文章" action={<Link href="/knowledge" className="text-sm font-semibold text-blue-700">进入知识库</Link>} />
           <div className="grid gap-3 md:grid-cols-3">
             {recentKnowledge.length > 0 ? recentKnowledge.map((note) => (
-              <Link key={note.id} href={`/knowledge/${note.slug}`} className="rounded-2xl bg-slate-50 p-4 hover:bg-emerald-50">
-                <p className="font-semibold text-slate-900">{note.title}</p>
-                <p className="mt-1 text-xs text-slate-500">{note.category} · {formatRelative(note.updated_at)}</p>
-                {note.excerpt ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
-              </Link>
+              <PublicKnowledgeCard key={note.id} note={note} />
             )) : <div className="md:col-span-3"><EmptyPublicState label="公开知识文章" /></div>}
           </div>
         </Card>

@@ -1,11 +1,8 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Bot, Layers3, Search } from "lucide-react";
-import { StatusBadge } from "@/components/badge";
-import { Card } from "@/components/card";
-import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/public/public-shell";
+import { Search } from "lucide-react";
+import { PublicSkillCard } from "@/components/public/public-content-cards";
+import { PublicEmptyState, PublicListToolbar, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { skillStatuses } from "@/lib/content-options";
-import { formatRelative } from "@/lib/format";
 import { getPublicSkills } from "@/lib/queries/skills";
 
 export const metadata: Metadata = {
@@ -18,6 +15,7 @@ export default async function PublicSkillsPage({ searchParams }: { searchParams:
   const status = params.status ?? "all";
   const q = params.q ?? "";
   const skills = await getPublicSkills({ status, q });
+  const hasActiveFilters = Boolean(q.trim()) || status !== "all";
 
   return (
     <PublicShell>
@@ -38,47 +36,14 @@ export default async function PublicSkillsPage({ searchParams }: { searchParams:
           </select>
           <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
+        <PublicListToolbar count={skills.length} active={hasActiveFilters} clearHref="/skills" />
 
         {skills.length === 0 ? (
-          <PublicEmptyState title="暂无公开 Skill" description="当前没有符合条件的公开 Skill。" />
+          <PublicEmptyState title="暂无公开 Skill" description="后续会逐步开放适合对外展示的 AI Skill 与研究工作流。" />
         ) : (
           <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
             {skills.map((skill) => (
-              <Link key={skill.id} href={`/skills/${skill.slug}`} className="block">
-                <Card className="relative h-full overflow-hidden transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg">
-                  <div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-gradient-to-br from-blue-100 to-violet-100" />
-                  <div className="relative">
-                    <div className="mb-5 flex items-start justify-between gap-4">
-                      <div className="flex gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-navy-900 text-white">
-                          <Bot size={22} />
-                        </div>
-                        <div>
-                          <div className="mb-2 flex flex-wrap gap-2">
-                            {skill.is_featured ? <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">精选</span> : null}
-                            <StatusBadge status={skill.status} />
-                          </div>
-                          <h2 className="text-lg font-semibold text-slate-950">{skill.name}</h2>
-                          <p className="mt-1 text-sm text-slate-500">{skill.category}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-sm leading-6 text-slate-600">{skill.description}</p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {skill.platforms.map((platform) => (
-                        <span key={platform} className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                          <Layers3 size={12} />
-                          {platform}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                      <span className="text-xs text-slate-500">{skill.current_version ?? "未设版本"} · {formatRelative(skill.updated_at)}</span>
-                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">详情 <ArrowRight size={15} /></span>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
+              <PublicSkillCard key={skill.id} skill={skill} />
             ))}
           </div>
         )}

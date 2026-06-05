@@ -1,10 +1,8 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, BookOpen, Search } from "lucide-react";
-import { Card, CardHeader } from "@/components/card";
-import { PublicEmptyState, PublicPageHero, PublicShell } from "@/components/public/public-shell";
+import { Search } from "lucide-react";
+import { PublicKnowledgeCard } from "@/components/public/public-content-cards";
+import { PublicEmptyState, PublicListToolbar, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { knowledgeCategories } from "@/lib/content-options";
-import { formatRelative } from "@/lib/format";
 import { getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 
 export const metadata: Metadata = {
@@ -17,6 +15,7 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
   const category = params.category ?? "all";
   const q = params.q ?? "";
   const notes = await getPublicKnowledgeNotes({ category, q });
+  const hasActiveFilters = Boolean(q.trim()) || category !== "all";
 
   return (
     <PublicShell>
@@ -37,31 +36,14 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
           </select>
           <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
+        <PublicListToolbar count={notes.length} active={hasActiveFilters} clearHref="/knowledge" />
 
         {notes.length === 0 ? (
-          <PublicEmptyState title="暂无公开知识文章" description="当前没有符合条件的公开知识文章。" />
+          <PublicEmptyState title="暂无公开知识文章" description="研究笔记、工具方法和阅读沉淀会在整理后逐步开放。" />
         ) : (
-          <Card>
-            <CardHeader title="公开文章列表" description="按更新时间倒序展示" />
-            <div className="space-y-3">
-              {notes.map((note) => (
-                <Link key={note.id} href={`/knowledge/${note.slug}`} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-4 transition hover:bg-emerald-50">
-                  <div className="flex min-w-0 gap-3">
-                    <BookOpen className="mt-1 shrink-0 text-emerald-600" size={18} />
-                    <div className="min-w-0">
-                      <p className="font-medium text-slate-900">{note.title}</p>
-                      <p className="mt-1 text-sm text-slate-500">{note.category} · 更新于 {formatRelative(note.updated_at)}</p>
-                      {note.excerpt ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {note.tags.map((tag) => <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-xs text-slate-600">{tag}</span>)}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="hidden shrink-0 items-center gap-1 text-sm font-semibold text-emerald-700 sm:inline-flex">阅读 <ArrowRight size={15} /></span>
-                </Link>
-              ))}
-            </div>
-          </Card>
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {notes.map((note) => <PublicKnowledgeCard key={note.id} note={note} />)}
+          </div>
         )}
       </section>
     </PublicShell>

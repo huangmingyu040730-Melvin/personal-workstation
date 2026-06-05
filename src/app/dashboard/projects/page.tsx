@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card } from "@/components/card";
+import { PublicContentGuidance } from "@/components/dashboard/public-content-guidance";
 import { PageHeader } from "@/components/page-header";
 import { Progress } from "@/components/progress";
 import { projectStatuses, visibilityOptions } from "@/lib/content-options";
@@ -28,6 +29,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
           </Link>
         }
       />
+      <PublicContentGuidance />
       <form className="mb-5 flex flex-wrap gap-3">
         <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
           <option value="all">全部状态</option>
