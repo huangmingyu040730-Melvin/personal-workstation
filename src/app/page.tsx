@@ -10,11 +10,13 @@ import { countPublicKnowledgeNotes, getPublicKnowledgeNotes } from "@/lib/querie
 import { countPublicProjects, getFeaturedPublicProjects } from "@/lib/queries/projects";
 import { countPublicPublications, getFeaturedPublicPublications } from "@/lib/queries/publications";
 import { countPublicSkills, getFeaturedPublicSkills } from "@/lib/queries/skills";
+import { publicPageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "黄铭语的公开研究工作站",
-  description: "黄铭语关于投资研究、量化分析、知识文章与 AI Skill 的公开只读研究工作站。"
-};
+  description: "黄铭语关于投资研究、量化分析、知识文章与 AI Skill 的公开只读研究工作站。",
+  path: "/"
+});
 
 function EmptyPublicState({ label }: { label: string }) {
   return (
@@ -23,6 +25,13 @@ function EmptyPublicState({ label }: { label: string }) {
     </p>
   );
 }
+
+const discoveryLinks = [
+  { title: "按研究主题浏览", description: "从项目进入，沿着关联成果和知识文章理解一个研究方向。", href: "/projects", icon: FolderKanban },
+  { title: "按成果类型浏览", description: "查看公开报告、策略分析、阅读综述和阶段性总结。", href: "/publications", icon: FileText },
+  { title: "按工作流浏览", description: "了解已经整理成公开说明的 AI Skill 与 Codex 工作流。", href: "/skills", icon: Sparkles },
+  { title: "按知识文章浏览", description: "阅读工具方法、研究框架和 AI 辅助研究边界。", href: "/knowledge", icon: BookOpen }
+];
 
 export default async function HomePage() {
   const [
@@ -103,6 +112,26 @@ export default async function HomePage() {
           {featuredProjects.length > 0 ? featuredProjects.map((project) => <PublicProjectCard key={project.id} project={project} />) : <Card><CardHeader title="精选公开项目" /><EmptyPublicState label="公开项目" /></Card>}
           {featuredPublications.length > 0 ? featuredPublications.map((publication) => <PublicPublicationCard key={publication.id} publication={publication} />) : <Card><CardHeader title="精选公开成果" /><EmptyPublicState label="公开成果" /></Card>}
           {featuredSkills.length > 0 ? featuredSkills.map((skill) => <PublicSkillCard key={skill.id} skill={skill} />) : <Card><CardHeader title="精选公开 Skill" /><EmptyPublicState label="公开 Skill" /></Card>}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
+        <PublicSectionHeader
+          eyebrow="Discover"
+          title="从哪里开始浏览"
+          description="公开站点按项目、成果、Skill 和知识文章组织，你可以根据当前关注的问题选择入口。"
+        />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {discoveryLinks.map((item) => (
+            <Link key={item.href} href={item.href} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg">
+              <item.icon className="text-blue-700" size={22} />
+              <p className="mt-4 font-semibold text-slate-950">{item.title}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+              <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
+                进入浏览 <ArrowRight className="transition group-hover:translate-x-0.5" size={15} />
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 

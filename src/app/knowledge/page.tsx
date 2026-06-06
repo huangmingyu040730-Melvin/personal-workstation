@@ -4,11 +4,13 @@ import { PublicKnowledgeCard } from "@/components/public/public-content-cards";
 import { PublicEmptyState, PublicListToolbar, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { knowledgeCategories } from "@/lib/content-options";
 import { getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
+import { publicPageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "知识文章 | 黄铭语",
-  description: "浏览黄铭语公开研究工作站中的公开知识文章、研究笔记、工具方法和阅读沉淀。"
-};
+  description: "浏览黄铭语公开研究工作站中的公开知识文章、研究笔记、工具方法和阅读沉淀。",
+  path: "/knowledge"
+});
 
 export default async function PublicKnowledgePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -36,7 +38,7 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
           </select>
           <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
-        <PublicListToolbar count={notes.length} active={hasActiveFilters} clearHref="/knowledge" />
+        <PublicListToolbar count={notes.length} active={hasActiveFilters} clearHref="/knowledge" label="公开文章" />
 
         {notes.length === 0 ? (
           <PublicEmptyState title="暂无公开知识文章" description="研究笔记、工具方法和阅读沉淀会在整理后逐步开放。" />

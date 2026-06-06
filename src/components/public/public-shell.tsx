@@ -114,20 +114,22 @@ export function PublicSectionHeader({
 export function PublicListToolbar({
   count,
   active,
-  clearHref
+  clearHref,
+  label = "公开内容"
 }: {
   count: number;
   active: boolean;
   clearHref: string;
+  label?: string;
 }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-      <p>
-        共找到 <span className="font-semibold text-slate-900">{count}</span> 条公开内容
-        {active ? "，当前已应用筛选" : "，按精选优先与时间倒序展示"}
+    <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+      <p className="leading-6">
+        共找到 <span className="font-semibold text-slate-900">{count}</span> 条{label}
+        {active ? "，当前已应用筛选条件" : "，默认按精选优先与更新时间展示"}
       </p>
       {active ? (
-        <Link href={clearHref} className="font-semibold text-blue-700 hover:text-blue-900">
+        <Link href={clearHref} className="inline-flex w-fit rounded-full bg-blue-50 px-3 py-1.5 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-900">
           清空筛选
         </Link>
       ) : null}

@@ -4,7 +4,7 @@
 
 日期：2026-06-06
 
-Phase 2E-B 分支正在实现受限内容授权查看最小闭环。Phase 2E-A 已完成生产验收：公开访客可提交访问申请，管理员可在后台查看申请并更新 pending / approved / rejected 状态。Phase 2D-A 已合并：公开 Projects、Publications、Knowledge、Skills 列表与 slug 详情页已经建立，后台管理页面已迁移到 `/dashboard/...`。Phase 2D-B 已合并：公开首页、统一公开导航、`/about`、metadata 和公开关联浏览已经建立。Phase 2D-C 已合并：公开内容展示质量和后台公开内容运营提示已经提升。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础、Phase 2B 核心内容 CRUD 与 Supabase API GRANT hotfix、Phase 2C Publications / Documents / private Storage 均已合并并在生产环境完成关键链路验证。
+Phase 2F 正在完善公开站点运营体验、基础 SEO、sitemap、robots、公开内容发现和 About 页面。Phase 2E-A 已完成生产验收：公开访客可提交访问申请，管理员可在后台查看申请并更新 pending / approved / rejected 状态。Phase 2E-B 已实现 restricted 内容授权基础代码，但 Viewer magic link 登录仍存在未解决问题，本阶段冻结继续排查。Phase 2D-A 已合并：公开 Projects、Publications、Knowledge、Skills 列表与 slug 详情页已经建立，后台管理页面已迁移到 `/dashboard/...`。Phase 2D-B 已合并：公开首页、统一公开导航、`/about`、metadata 和公开关联浏览已经建立。Phase 2D-C 已合并：公开内容展示质量和后台公开内容运营提示已经提升。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础、Phase 2B 核心内容 CRUD 与 Supabase API GRANT hotfix、Phase 2C Publications / Documents / private Storage 均已合并并在生产环境完成关键链路验证。
 
 项目长期定位已更新为：黄铭语的公开研究工作站与私密数字资产后台。网站既要对外展示公开研究项目、学术成果、知识文章和 AI Skill，也要对内管理全部项目、知识、成果、文件、日历与自动化；未来还要支持经管理员审核后，按具体内容授权外部用户访问受限材料。
 
@@ -53,7 +53,8 @@ Phase 2E-B 分支正在实现受限内容授权查看最小闭环。Phase 2E-A �
 - Phase 2D-B 增加统一公开导航、About 页面、公开页面 metadata、公开详情关联浏览和移动端可读性优化；不新增 migration，不实现 restricted、外部用户登录、Calendar、Notion 或自动化。
 - 公开详情页的关联内容也必须限定为 public，避免管理员登录状态下浏览公开页时误展示 private / unlisted 关联标题。
 - Phase 2D-C 增加统一公开内容卡片、公开列表结果数量与清空筛选入口、详情页空字段隐藏、Dashboard 公开内容质量卡片，以及后台内容列表页的 public / featured 运营提示。
-- Phase 2E-A 新增公开访问申请表单和后台访问申请列表/详情。Phase 2E-B 新增 `restricted` 可见性、`content_access_grants` 授权表、外部邮箱魔法链接登录、后台授权列表/创建/撤销，以及 public detail routes 的授权读取逻辑。
+- Phase 2E-A 新增公开访问申请表单和后台访问申请列表/详情。Phase 2E-B 新增 `restricted` 可见性、`content_access_grants` 授权表、外部邮箱魔法链接登录、后台授权列表/创建/撤销，以及 public detail routes 的授权读取逻辑；Viewer magic link 登录仍不稳定，后续需单独 Hotfix 排查。
+- Phase 2F 新增公开站点 SEO 与运营体验工作：动态 sitemap、robots、公开页面 metadata、内容发现入口、列表筛选提示和 About 页面轻微完善。
 - 后台 CRUD 页面已迁移到 `/dashboard/projects`、`/dashboard/publications`、`/dashboard/knowledge`、`/dashboard/skills`、`/dashboard/documents`，旧 `/documents` 作为受保护兼容路径重定向到后台文件中心。
 - mock data 集中在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的 Calendar、Profile 等页面和未配置 Supabase 的开发预览。
 - 类型定义集中在 `src/lib/types.ts`。
@@ -109,7 +110,8 @@ Phase 2E-B 分支正在实现受限内容授权查看最小闭环。Phase 2E-A �
 ## Known Issues
 
 - Calendar、Profile 仍为 mock 或占位页面，不具备真实持久化能力。
-- Phase 2E-B 合并后必须在生产 Supabase 手动执行 `0005_restricted_content_access.sql`，否则无法保存 restricted 内容或创建授权。
+- Viewer magic link 登录仍存在未解决问题：已授权邮箱在 `/viewer/login` 仍可能发送失败。当前不继续扩展 Viewer login、viewer callback、restricted grants、RLS、Supabase Auth 或 Storage；后续需单独 Hotfix。
+- Phase 2E-B 的 restricted 内容授权基础代码保留，但不作为 Phase 2F 验收依赖。
 - Phase 2E-B 的访问授权只开放内容详情，不开放 Documents、附件下载、Storage 路径或 signed URL。
 - 日历为静态月历，不支持新增、编辑或提醒。
 - 个人信息页面只有前端编辑样式，不保存修改。
@@ -120,7 +122,7 @@ Phase 2E-B 分支正在实现受限内容授权查看最小闭环。Phase 2E-A �
 - Phase 2D-A PR 审核后，由用户在生产环境验证新的后台 Projects、Publications、Knowledge、Skills、Documents 路由和原有 CRUD/文件能力。
 - Phase 2D 后续可继续优化公开详情内容、公开关联内容和路由兼容体验。
 - Phase 2E-A：合并后需要在生产 Supabase 执行 `0004_access_requests.sql`，再验证公开申请提交、后台查看和状态更新。
-- Phase 2E-B 合并后：在生产执行 0005，验证创建 restricted 内容、创建授权、外部邮箱登录、授权查看、撤销后失效。
+- 后续单独 Hotfix：结合 Supabase Auth 日志和 Vercel Function 日志继续排查 Viewer magic link 发送失败问题。
 - 后续阶段：设计附件单独授权下载、通知邮件、批量授权或组织权限。
 - 后续再推进 Profile 真实编辑、Calendar CRUD、Google Calendar、Notion 辅助同步和自动化任务。
 

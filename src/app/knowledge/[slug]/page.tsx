@@ -6,23 +6,30 @@ import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getViewableKnowledgeNoteBySlug, getRelatedPublicKnowledgeNotes } from "@/lib/queries/knowledge";
+import { getPublicKnowledgeNoteBySlug, getViewableKnowledgeNoteBySlug, getRelatedPublicKnowledgeNotes } from "@/lib/queries/knowledge";
+import { publicPageMetadata } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const note = await getViewableKnowledgeNoteBySlug(slug);
+  const note = await getPublicKnowledgeNoteBySlug(slug);
 
   if (!note) {
     return {
       title: "知识文章 | 黄铭语",
-      description: "公开知识文章不存在或未公开。"
+      description: "公开知识文章不存在或未公开。",
+      robots: {
+        index: false,
+        follow: false
+      }
     };
   }
 
-  return {
+  return publicPageMetadata({
     title: `${note.title} | 黄铭语`,
-    description: note.excerpt ?? "黄铭语公开研究工作站中的知识文章。"
-  };
+    description: note.excerpt ?? "黄铭语公开研究工作站中的知识文章。",
+    path: `/knowledge/${note.slug}`,
+    type: "article"
+  });
 }
 
 export default async function PublicKnowledgeDetailPage({ params }: { params: Promise<{ slug: string }> }) {

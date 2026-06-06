@@ -7,23 +7,30 @@ import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getViewableSkillBySlug } from "@/lib/queries/skills";
+import { getPublicSkillBySlug, getViewableSkillBySlug } from "@/lib/queries/skills";
+import { publicPageMetadata } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const skill = await getViewableSkillBySlug(slug);
+  const skill = await getPublicSkillBySlug(slug);
 
   if (!skill) {
     return {
       title: "Skill 库 | 黄铭语",
-      description: "公开 Skill 不存在或未公开。"
+      description: "公开 Skill 不存在或未公开。",
+      robots: {
+        index: false,
+        follow: false
+      }
     };
   }
 
-  return {
+  return publicPageMetadata({
     title: `${skill.name} | 黄铭语`,
-    description: skill.description
-  };
+    description: skill.description,
+    path: `/skills/${skill.slug}`,
+    type: "article"
+  });
 }
 
 export default async function PublicSkillDetailPage({ params }: { params: Promise<{ slug: string }> }) {

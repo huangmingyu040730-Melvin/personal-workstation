@@ -4,11 +4,13 @@ import { PublicPublicationCard } from "@/components/public/public-content-cards"
 import { PublicEmptyState, PublicListToolbar, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { publicationTypes } from "@/lib/content-options";
 import { getPublicPublications } from "@/lib/queries/publications";
+import { publicPageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "学术成果 | 黄铭语",
-  description: "浏览黄铭语公开研究工作站中已公开的研究报告、策略分析、论文草稿与阅读综述。"
-};
+  description: "浏览黄铭语公开研究工作站中已公开的研究报告、策略分析、论文草稿与阅读综述。",
+  path: "/publications"
+});
 
 export default async function PublicPublicationsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -36,7 +38,7 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
           </select>
           <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
-        <PublicListToolbar count={publications.length} active={hasActiveFilters} clearHref="/publications" />
+        <PublicListToolbar count={publications.length} active={hasActiveFilters} clearHref="/publications" label="公开成果" />
 
         {publications.length === 0 ? (
           <PublicEmptyState title="暂无公开成果" description="正式报告与分析文章将在整理后发布。你也可以清空筛选后查看全部公开成果。" />

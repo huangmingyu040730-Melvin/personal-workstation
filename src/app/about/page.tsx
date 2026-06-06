@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import { ArrowRight, BrainCircuit, Database, GraduationCap, ShieldCheck } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
 import { PublicPageHero, PublicSectionHeader, PublicShell } from "@/components/public/public-shell";
+import { publicPageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "关于我 | 黄铭语",
-  description: "了解黄铭语的研究方向、公开研究工作站定位，以及公开内容和私密后台的边界。"
-};
+  description: "了解黄铭语的研究方向、公开研究工作站定位，以及公开内容和私密后台的边界。",
+  path: "/about"
+});
 
 const researchDirections = [
   "投资研究与私募基金观察",
@@ -41,7 +43,7 @@ export default function AboutPage() {
               我关注资产管理、量化投资，以及人工智能在研究与知识工作流中的应用。公开站点会逐步沉淀适合对外分享的项目、成果、文章和 Skill。
             </p>
             <p>
-              当前联系方式暂不在公开页面硬编码展示。未来如接入公开 Profile 数据，也只会展示明确希望对外公开的社交链接或联系渠道。
+              如果希望沟通某条研究内容、申请查看受限材料，或了解工作站后续开放计划，可以通过访问申请表单留下必要信息。当前页面不编造或硬编码额外联系方式。
             </p>
           </div>
         </Card>
@@ -53,7 +55,7 @@ export default function AboutPage() {
               { icon: GraduationCap, title: "公开研究工作站", description: "对外展示公开项目、成果、知识文章和 Skill。" },
               { icon: Database, title: "私密数字资产后台", description: "管理员后台管理全部内容、文件和后续自动化。" },
               { icon: ShieldCheck, title: "清晰权限边界", description: "私密内容、文件入口与短时下载链接不进入公开页面。" },
-              { icon: BrainCircuit, title: "未来受限访问", description: "后续会支持特定内容的申请、审批与只读授权。" }
+              { icon: BrainCircuit, title: "受限访问规划", description: "部分内容会以申请和授权方式逐步开放，但不会开放私密文件和后台能力。" }
             ].map((item) => (
               <div key={item.title} className="rounded-2xl bg-slate-50 p-4">
                 <item.icon className="text-blue-700" size={22} />
