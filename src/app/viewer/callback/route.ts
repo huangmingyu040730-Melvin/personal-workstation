@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const authError = requestUrl.searchParams.get("error");
-  const next = getSafeViewerRedirect(requestUrl.searchParams.get("next"));
+  const next = getSafeViewerRedirect(requestUrl.searchParams.get("next") ?? request.cookies.get("viewer-next")?.value);
 
   if (authError) {
     return redirectToViewerLogin(request, next, "expired");
@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
   redirectUrl.search = "";
 
   const response = NextResponse.redirect(redirectUrl);
+  response.cookies.delete("viewer-next");
   const supabase = createServerClient(supabaseConfig.url, supabaseConfig.publishableKey, {
     cookies: {
       getAll() {

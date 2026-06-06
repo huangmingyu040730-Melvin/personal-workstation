@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { getSafeViewerRedirect } from "@/lib/safe-viewer-redirect";
 import { isSupabaseConfigured, missingSupabaseConfigMessage } from "@/lib/supabase/config";
@@ -39,7 +39,7 @@ export async function viewerLoginAction(_previousState: ViewerLoginState, formDa
   const headerStore = await headers();
   const origin = headerStore.get("origin") ?? "";
   const nextPath = getSafeViewerRedirect(parsed.data.next);
-  const emailRedirectTo = origin ? `${origin}/viewer/callback?next=${encodeURIComponent(nextPath)}` : undefined;
+  const emailRedirectTo = origin ? `${origin}/viewer/callback` : undefined;
   const normalizedEmail = parsed.data.email.trim().toLowerCase();
 
   const { data: canRequestLogin, error: grantCheckError } = await supabase.rpc("can_request_viewer_login", {
@@ -54,6 +54,15 @@ export async function viewerLoginAction(_previousState: ViewerLoginState, formDa
   if (!canRequestLogin) {
     return { error: "该邮箱暂无有效授权，请先提交访问申请或联系管理员。" };
   }
+
+  const cookieStore = await cookies();
+  cookieStore.set("viewer-next", nextPath, {
+    httpOnly: true,
+    maxAge: 10 * 60,
+    path: "/",
+    sameSite: "lax",
+    secure: origin.startsWith("https://")
+  });
 
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
