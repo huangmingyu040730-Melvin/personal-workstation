@@ -26,26 +26,26 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
         title="公开研究项目"
         description="浏览已公开的研究主题、进度、方法框架与阶段性沉淀。这里只展示明确设为公开的项目。"
       />
-      <section className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        <form className="mb-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft md:grid-cols-[1fr_220px_auto]">
+      <section className="mx-auto max-w-[1320px] px-5 py-10 lg:px-8">
+        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/82 p-4 shadow-soft md:grid-cols-[1fr_220px_auto]">
           <label className="relative">
-            <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
-            <input name="q" defaultValue={q} placeholder="搜索项目标题、简介、标签..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-300" />
+            <Search className="pointer-events-none absolute left-3 top-3 text-stone-400" size={16} />
+            <input name="q" defaultValue={q} placeholder="搜索项目标题、简介、标签..." className="h-10 w-full rounded-2xl border border-earth-100 bg-white pl-9 pr-3 text-sm text-earth-950 outline-none transition focus:border-earth-300" />
           </label>
-          <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+          <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-earth-100 bg-white px-3 text-sm text-earth-950">
             <option value="all">全部状态</option>
             {projectStatuses.map((item) => (
               <option key={item.value} value={item.value}>{item.label}</option>
             ))}
           </select>
-          <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
+          <button className="h-10 rounded-2xl bg-earth-900 px-5 text-sm font-semibold text-paper-50 transition hover:bg-earth-950">筛选</button>
         </form>
         <PublicListToolbar count={projects.length} active={hasActiveFilters} clearHref="/projects" label="公开项目" />
 
         {projects.length === 0 ? (
           <PublicEmptyState title="暂无公开研究项目" description="后续将逐步开放已整理完成的研究内容。你也可以清空筛选后查看全部公开项目。" />
         ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {projects.map((project) => (
               <PublicProjectCard key={project.id} project={project} />
             ))}

@@ -16,8 +16,8 @@ html {
 
 body {
   margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
+  background: #fbf7f0;
+  color: #24160f;
 }
 
 button,
@@ -25,4 +25,22 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-reveal {
+    animation: public-reveal 520ms ease-out both;
+  }
+
+  @keyframes public-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

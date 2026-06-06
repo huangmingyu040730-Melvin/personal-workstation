@@ -54,9 +54,9 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
   return (
     <PublicShell>
       <PublicPageHero eyebrow={getPublicationTypeLabel(publication.publication_type)} title={publication.title} description={publication.summary} />
-      <section className="mx-auto grid max-w-7xl gap-5 px-6 py-8 lg:grid-cols-[1fr_0.38fr] lg:px-8">
+      <section className="mx-auto grid max-w-[1320px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.38fr] lg:px-8">
         <div className="space-y-5">
-          <Link href="/publications" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900">
+          <Link href="/publications" className="inline-flex items-center gap-2 text-sm font-semibold text-earth-800 hover:text-earth-950">
             <ArrowLeft size={16} />
             返回公开成果
           </Link>
@@ -64,49 +64,49 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
           {!publication.abstract?.trim() ? (
             <Card>
               <CardHeader title="成果简介" />
-              <p className="text-sm leading-7 text-slate-600">{publication.summary}</p>
+              <p className="text-sm leading-7 text-stone-600">{publication.summary}</p>
             </Card>
           ) : null}
           <Card>
             <CardHeader title="附件说明" />
-            <p className="text-sm leading-7 text-slate-600">公开成果页面不提供附件下载。关联文件仍为私密资料，仅管理员可在后台通过短时链接访问。</p>
+            <p className="text-sm leading-7 text-stone-600">公开成果页面不提供附件下载。关联文件仍为私密资料，仅管理员可在后台通过短时链接访问。</p>
           </Card>
         </div>
         <div className="space-y-5">
           <Card>
             <CardHeader title="成果信息" />
             <dl className="space-y-3 text-sm">
-              <div className="flex justify-between gap-4"><dt className="text-slate-500">类型</dt><dd className="font-medium text-slate-800">{getPublicationTypeLabel(publication.publication_type)}</dd></div>
-              <div className="flex justify-between gap-4"><dt className="text-slate-500">发布日期</dt><dd className="font-medium text-slate-800">{formatDate(publication.published_on)}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-stone-500">类型</dt><dd className="font-medium text-stone-800">{getPublicationTypeLabel(publication.publication_type)}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-stone-500">发布日期</dt><dd className="font-medium text-stone-800">{formatDate(publication.published_on)}</dd></div>
               <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">关联项目</dt>
-                <dd className="text-right font-medium text-slate-800">
-                  {publication.projects ? <Link href={`/projects/${publication.projects.slug}`} className="text-blue-700 hover:text-blue-900">{publication.projects.title}</Link> : "未公开关联"}
+                <dt className="text-stone-500">关联项目</dt>
+                <dd className="text-right font-medium text-stone-800">
+                  {publication.projects ? <Link href={`/projects/${publication.projects.slug}`} className="text-earth-800 hover:text-earth-950">{publication.projects.title}</Link> : "未公开关联"}
                 </dd>
               </div>
-              <div className="flex justify-between gap-4"><dt className="text-slate-500">精选</dt><dd className="font-medium text-slate-800">{publication.is_featured ? "是" : "否"}</dd></div>
-              <div className="flex justify-between gap-4"><dt className="text-slate-500">更新</dt><dd className="font-medium text-slate-800">{formatDateTime(publication.updated_at)}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-stone-500">精选</dt><dd className="font-medium text-stone-800">{publication.is_featured ? "是" : "否"}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-stone-500">更新</dt><dd className="font-medium text-stone-800">{formatDateTime(publication.updated_at)}</dd></div>
             </dl>
           </Card>
           <Card>
             <CardHeader title="标签" />
             <div className="flex flex-wrap gap-2">
-              {publication.tags.length > 0 ? publication.tags.map((tag) => <span key={tag} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">{tag}</span>) : <p className="text-sm text-slate-500">暂无标签</p>}
+              {publication.tags.length > 0 ? publication.tags.map((tag) => <span key={tag} className="rounded-full bg-earth-50 px-2.5 py-1 text-xs font-medium text-earth-800">{tag}</span>) : <p className="text-sm text-stone-500">暂无标签</p>}
             </div>
           </Card>
         </div>
       </section>
       {relatedKnowledge.length > 0 ? (
-        <section className="mx-auto max-w-7xl px-6 pb-12 lg:px-8">
+        <section className="mx-auto max-w-[1320px] px-5 pb-14 lg:px-8">
           <Card>
             <CardHeader title="相关公开知识文章" description="基于同一公开关联项目展示，不包含私密或链接可见内容。" />
             <div className="grid gap-3 md:grid-cols-3">
               {relatedKnowledge.map((note) => (
-                <Link key={note.id} href={`/knowledge/${note.slug}`} className="rounded-2xl bg-slate-50 p-4 hover:bg-emerald-50">
-                  <p className="font-semibold text-slate-900">{note.title}</p>
-                  <p className="mt-1 text-sm text-slate-500">{note.category}</p>
-                  {note.excerpt ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">阅读 <ArrowRight size={15} /></span>
+                <Link key={note.id} href={`/knowledge/${note.slug}`} className="rounded-2xl bg-sage-50 p-4 transition hover:bg-sage-100">
+                  <p className="font-semibold text-earth-950">{note.title}</p>
+                  <p className="mt-1 text-sm text-stone-500">{note.category}</p>
+                  {note.excerpt ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{note.excerpt}</p> : null}
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-sage-700">阅读 <ArrowRight size={15} /></span>
                 </Link>
               ))}
             </div>
