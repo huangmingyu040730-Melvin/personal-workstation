@@ -8,23 +8,30 @@ import { getPublicationTypeLabel } from "@/lib/content-options";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
-import { getViewablePublicationBySlug } from "@/lib/queries/publications";
+import { getPublicPublicationBySlug, getViewablePublicationBySlug } from "@/lib/queries/publications";
+import { publicPageMetadata } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const publication = await getViewablePublicationBySlug(slug);
+  const publication = await getPublicPublicationBySlug(slug);
 
   if (!publication) {
     return {
       title: "学术成果 | 黄铭语",
-      description: "公开学术成果不存在或未公开。"
+      description: "公开学术成果不存在或未公开。",
+      robots: {
+        index: false,
+        follow: false
+      }
     };
   }
 
-  return {
+  return publicPageMetadata({
     title: `${publication.title} | 黄铭语`,
-    description: publication.summary
-  };
+    description: publication.summary,
+    path: `/publications/${publication.slug}`,
+    type: "article"
+  });
 }
 
 export default async function PublicPublicationDetailPage({ params }: { params: Promise<{ slug: string }> }) {

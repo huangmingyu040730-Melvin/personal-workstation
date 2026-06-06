@@ -1,9 +1,28 @@
 import type { Metadata } from "next";
+import { siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "黄铭语的公开研究工作站",
-  description: "黄铭语关于投资研究、量化分析、知识文章与 AI Skill 的公开研究工作站。"
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: siteName,
+    template: `%s | ${siteName}`
+  },
+  description: siteDescription,
+  applicationName: siteName,
+  openGraph: {
+    title: siteName,
+    description: siteDescription,
+    url: siteUrl,
+    siteName,
+    locale: "zh_CN",
+    type: "website"
+  },
+  twitter: {
+    card: "summary",
+    title: siteName,
+    description: siteDescription
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

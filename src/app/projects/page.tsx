@@ -4,11 +4,13 @@ import { PublicProjectCard } from "@/components/public/public-content-cards";
 import { PublicEmptyState, PublicListToolbar, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { projectStatuses } from "@/lib/content-options";
 import { getPublicProjects } from "@/lib/queries/projects";
+import { publicPageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "研究项目 | 黄铭语",
-  description: "浏览黄铭语公开研究工作站中已公开的研究项目、研究问题、方法框架和阶段性进展。"
-};
+  description: "浏览黄铭语公开研究工作站中已公开的研究项目、研究问题、方法框架和阶段性进展。",
+  path: "/projects"
+});
 
 export default async function PublicProjectsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -38,7 +40,7 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
           </select>
           <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
-        <PublicListToolbar count={projects.length} active={hasActiveFilters} clearHref="/projects" />
+        <PublicListToolbar count={projects.length} active={hasActiveFilters} clearHref="/projects" label="公开项目" />
 
         {projects.length === 0 ? (
           <PublicEmptyState title="暂无公开研究项目" description="后续将逐步开放已整理完成的研究内容。你也可以清空筛选后查看全部公开项目。" />

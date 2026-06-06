@@ -4,11 +4,13 @@ import { PublicSkillCard } from "@/components/public/public-content-cards";
 import { PublicEmptyState, PublicListToolbar, PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { skillStatuses } from "@/lib/content-options";
 import { getPublicSkills } from "@/lib/queries/skills";
+import { publicPageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Skill 库 | 黄铭语",
-  description: "浏览黄铭语公开研究工作站中的公开 AI Skill 与研究、写作、数据分析工作流能力。"
-};
+  description: "浏览黄铭语公开研究工作站中的公开 AI Skill 与研究、写作、数据分析工作流能力。",
+  path: "/skills"
+});
 
 export default async function PublicSkillsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -36,7 +38,7 @@ export default async function PublicSkillsPage({ searchParams }: { searchParams:
           </select>
           <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
         </form>
-        <PublicListToolbar count={skills.length} active={hasActiveFilters} clearHref="/skills" />
+        <PublicListToolbar count={skills.length} active={hasActiveFilters} clearHref="/skills" label="公开 Skill" />
 
         {skills.length === 0 ? (
           <PublicEmptyState title="暂无公开 Skill" description="后续会逐步开放适合对外展示的 AI Skill 与研究工作流。" />

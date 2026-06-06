@@ -453,3 +453,26 @@
 - Projects、Publications、Knowledge、Skills 表单增加 `restricted` 选项。
 - 后台新增访问授权列表和创建/撤销能力。
 - 公开详情页在无权限时显示授权申请入口，不展示正文、附件、Storage 路径或 signed URL。
+
+## 2026-06-06 - Phase 2F Focuses On Public SEO Without Expanding Viewer Access
+
+类型：decision
+
+决策：
+
+- Phase 2F 只完善公开站点运营体验、sitemap、robots、metadata、内容发现和 About 页面。
+- `/sitemap.xml` 只包含 public 页面和 `visibility = "public"` 的 Projects、Publications、Skills、Knowledge 详情页。
+- `/robots.txt` 允许公开页面抓取，禁止后台、登录、Documents、Viewer 和访问申请表单被抓取，并指向正式 sitemap。
+- Viewer magic link 登录仍作为已知问题记录，Phase 2F 不继续修改 Viewer login、viewer callback、restricted grants、RLS、Supabase Auth、Storage 或 migration。
+
+原因：
+
+- 当前公开站点已经具备真实 public 内容展示能力，适合先补齐可发现性、搜索引擎入口和个人主页运营体验。
+- Viewer 登录问题需要单独结合 Supabase Auth 和 Vercel Function 日志排查，不应阻塞 public-only SEO 工作。
+- sitemap 和 metadata 必须与公开隐私边界一致，避免 private、restricted、unlisted、dashboard、documents、viewer 或 Storage 路径被索引。
+
+影响：
+
+- public 内容更容易被搜索引擎发现，公开列表和详情页拥有更清晰的 canonical 与 Open Graph metadata。
+- restricted 内容仍可保留基础代码，但不会进入 sitemap，也不会生成可索引的具体 metadata。
+- 后续如继续修复 Viewer 登录，应另开 Hotfix，不与 Phase 2F 混合。
