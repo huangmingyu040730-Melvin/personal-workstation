@@ -125,6 +125,28 @@ export async function getPublicSkillBySlug(slug: string) {
   return data as SkillRecord | null;
 }
 
+export async function getViewableSkillBySlug(slug: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockSkillFallback().find((skill) => skill.visibility === "public" && skill.slug === slug) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from("skills")
+    .select("*")
+    .in("visibility", ["public", "restricted", "private"] satisfies Visibility[])
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getViewableSkillBySlug failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  return data as SkillRecord | null;
+}
+
 export async function getSkillVersions(skillId: string) {
   const supabase = await createClient();
 

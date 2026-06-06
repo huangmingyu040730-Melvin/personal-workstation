@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Calendar CRUD、Profile 真实编辑、真实外部账号授权和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问最小闭环。Calendar CRUD、Profile 真实编辑、附件对外授权下载和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -32,6 +32,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 3. 启用 Email + Password。
 4. 创建一个管理员用户。
 5. 复制该用户的 Auth UUID。
+6. 如需使用外部授权访问登录，在 Supabase Auth URL Configuration 中允许生产域名的 `/viewer/callback` 回调地址。
 
 ## 数据库迁移
 
@@ -150,7 +151,30 @@ supabase/migrations/0004_access_requests.sql
 - `authenticated` 仅获得 `select`、`update` 表级权限。
 - 管理员读取和更新申请仍由 RLS 中的 `public.is_admin()` 控制。
 - 不向 `anon` 或 `authenticated` 授予 `admin_users` 权限。
-- Phase 2E-A 只记录申请与后台处理状态，不创建外部账号，不开放受限内容，不生成邀请链接。
+- Phase 2E-A 只记录申请与后台处理状态，不自动开放受限内容，不生成邀请链接。
+
+Phase 2E-B 新增受限内容授权。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0005_restricted_content_access.sql
+```
+
+`0005` 会：
+
+- 将 `projects`、`publications`、`knowledge_notes`、`skills` 的 visibility check 扩展为 `public`、`unlisted`、`restricted`、`private`。
+- 创建 `public.content_access_grants`，记录被授权邮箱、内容类型、内容 ID、状态、可选有效期和管理员备注。
+- 创建 `public.has_content_access(content_type, content_id)`，由 RLS 判断当前登录邮箱是否拥有 active 且未过期的授权。
+- 允许管理员管理授权记录。
+- 允许 authenticated 用户只读取属于自己邮箱的 active grants。
+- 不向 anon 开放授权记录读取或写入。
+- 更新四类内容表的 select policy：public 对所有访客可读；restricted 仅管理员或匹配授权的登录邮箱可读；private 仍仅管理员可读；unlisted 本阶段不扩展公开访问。
+
+权限边界：
+
+- 0005 不向 `anon` 或 `authenticated` 授予 `admin_users` 权限。
+- 0005 不开放 Documents、Storage、附件下载或 signed URL。
+- 外部用户登录使用 Supabase 邮箱 OTP / magic link，只获得普通 authenticated session；后台 `/dashboard` 仍要求 `public.is_admin()`。
+- 普通未授权登录用户不能读取任意 restricted 内容，也不能新增、编辑、删除业务表。
 
 ## 创建管理员
 
@@ -178,12 +202,14 @@ values ('00000000-0000-0000-0000-000000000000');
 
 - 不会自动获得后台权限。
 - 不能读取 private/unlisted 内容。
+- 只有邮箱匹配 active 且未过期授权时，才能读取对应 restricted 内容详情。
 - 不能写入业务表。
 
 管理员：
 
 - 必须存在于 `public.admin_users`。
 - 可以读取 private/unlisted 内容。
+- 可以读取和管理 restricted 内容与访问授权。
 - 可以插入、更新、删除业务表数据。
 - 可以查看访问申请，并更新处理状态和管理员备注。
 
@@ -231,6 +257,7 @@ Phase 2C 使用：
 - Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD。
 - Documents 已接入真实文件记录、私密上传、短时签名下载和删除流程。
 - Access Requests 已接入真实提交、列表、详情与处理状态更新流程。
+- Restricted Access 依赖 0005 migration；未执行 0005 时无法保存 `restricted` visibility，也无法创建或读取访问授权。
 - Calendar、Profile 仍从 `src/lib/mock-data.ts` 或静态占位渲染。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。

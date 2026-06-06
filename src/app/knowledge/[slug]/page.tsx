@@ -1,16 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { notFound } from "next/navigation";
 import { Card, CardHeader } from "@/components/card";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
+import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getPublicKnowledgeNoteBySlug, getRelatedPublicKnowledgeNotes } from "@/lib/queries/knowledge";
+import { getViewableKnowledgeNoteBySlug, getRelatedPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const note = await getPublicKnowledgeNoteBySlug(slug);
+  const note = await getViewableKnowledgeNoteBySlug(slug);
 
   if (!note) {
     return {
@@ -27,10 +27,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PublicKnowledgeDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const note = await getPublicKnowledgeNoteBySlug(slug);
+  const note = await getViewableKnowledgeNoteBySlug(slug);
 
   if (!note) {
-    notFound();
+    return (
+      <PublicShell>
+        <PublicPageHero eyebrow="Restricted Access" title="知识文章需要授权访问" description="这篇知识文章可能尚未公开，或需要管理员按邮箱授权后才能查看。" />
+        <RestrictedAccessNotice loginHref={`/viewer/login?next=${encodeURIComponent(`/knowledge/${slug}`)}`} />
+      </PublicShell>
+    );
   }
 
   const relatedNotes = await getRelatedPublicKnowledgeNotes(note, 3);

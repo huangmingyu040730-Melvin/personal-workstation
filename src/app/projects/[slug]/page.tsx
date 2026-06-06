@@ -1,20 +1,20 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { Progress } from "@/components/progress";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
+import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getPublicProjectBySlug } from "@/lib/queries/projects";
+import { getViewableProjectBySlug } from "@/lib/queries/projects";
 import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
 import { getPublicPublicationsByProjectId } from "@/lib/queries/publications";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const project = await getPublicProjectBySlug(slug);
+  const project = await getViewableProjectBySlug(slug);
 
   if (!project) {
     return {
@@ -31,10 +31,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PublicProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const project = await getPublicProjectBySlug(slug);
+  const project = await getViewableProjectBySlug(slug);
 
   if (!project) {
-    notFound();
+    return (
+      <PublicShell>
+        <PublicPageHero eyebrow="Restricted Access" title="研究项目需要授权访问" description="这条研究项目可能尚未公开，或需要管理员按邮箱授权后才能查看。" />
+        <RestrictedAccessNotice loginHref={`/viewer/login?next=${encodeURIComponent(`/projects/${slug}`)}`} />
+      </PublicShell>
+    );
   }
 
   const [relatedPublications, relatedKnowledge] = await Promise.all([

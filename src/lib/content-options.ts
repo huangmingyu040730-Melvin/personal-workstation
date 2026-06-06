@@ -1,4 +1,4 @@
-import type { AccessRequestContentType, AccessRequestStatus, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, SkillStatus } from "./content-types";
+import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -18,6 +18,7 @@ export const skillStatuses: Array<{ value: SkillStatus; label: string }> = [
 
 export const visibilityOptions: Array<{ value: Visibility; label: string }> = [
   { value: "private", label: "私密" },
+  { value: "restricted", label: "授权可见" },
   { value: "public", label: "公开" },
   { value: "unlisted", label: "链接可见" }
 ];
@@ -76,6 +77,18 @@ export const accessRequestStatuses: Array<{ value: AccessRequestStatus; label: s
   { value: "rejected", label: "已拒绝" }
 ];
 
+export const accessGrantContentTypes: Array<{ value: AccessGrantContentType; label: string }> = [
+  { value: "project", label: "研究项目" },
+  { value: "publication", label: "学术成果" },
+  { value: "skill", label: "Skill" },
+  { value: "knowledge", label: "知识文章" }
+];
+
+export const accessGrantStatuses: Array<{ value: AccessGrantStatus; label: string }> = [
+  { value: "active", label: "有效" },
+  { value: "revoked", label: "已撤销" }
+];
+
 export function getPublicationTypeLabel(value: string | null | undefined) {
   return publicationTypes.find((item) => item.value === value)?.label ?? "其他";
 }
@@ -94,4 +107,12 @@ export function getAccessRequestContentTypeLabel(value: string | null | undefine
 
 export function getAccessRequestStatusLabel(value: string | null | undefined) {
   return accessRequestStatuses.find((item) => item.value === value)?.label ?? "待处理";
+}
+
+export function getAccessGrantContentTypeLabel(value: string | null | undefined) {
+  return accessGrantContentTypes.find((item) => item.value === value)?.label ?? "未知内容";
+}
+
+export function getAccessGrantStatusLabel(value: string | null | undefined) {
+  return accessGrantStatuses.find((item) => item.value === value)?.label ?? "未知状态";
 }

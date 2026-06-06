@@ -28,7 +28,7 @@ export default async function AccessRequestDetailPage({
       <PageHeader
         eyebrow="Access Request"
         title={`${request.requester_name} 的访问申请`}
-        description="当前审批仅用于记录处理状态，不会自动开放受限内容访问。"
+        description="审批用于记录处理状态；如需开放 restricted 内容，请基于申请创建访问授权。"
         action={<Link href="/dashboard/access-requests" className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">返回列表</Link>}
       />
       <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
@@ -55,8 +55,24 @@ export default async function AccessRequestDetailPage({
           </Card>
         </div>
         <Card>
-          <CardHeader title="处理申请" description="本阶段只记录审批状态和内部备注。" />
-          <AccessRequestReviewForm request={request} error={getFormError(query)} />
+          <CardHeader title="处理申请" description="保存审批状态后，可为已同意申请创建具体内容授权。" />
+          <div className="space-y-5">
+            <AccessRequestReviewForm request={request} error={getFormError(query)} />
+            {request.status === "approved" ? (
+              <div className="rounded-2xl bg-blue-50 p-4">
+                <p className="text-sm font-semibold text-blue-900">创建访问授权</p>
+                <p className="mt-2 text-sm leading-6 text-blue-800">授权会绑定到指定邮箱和单条内容。外部用户仍不能进入后台，也不能访问附件。</p>
+                <Link
+                  href={`/dashboard/access-grants/new?email=${encodeURIComponent(request.requester_email)}&content_type=${encodeURIComponent(request.requested_content_type ?? "")}&request_id=${request.id}`}
+                  className="mt-4 inline-flex rounded-2xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                >
+                  基于此申请创建授权
+                </Link>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">申请标记为“已同意”后，可以基于申请邮箱创建 restricted 内容授权。</div>
+            )}
+          </div>
         </Card>
       </div>
     </AppShell>

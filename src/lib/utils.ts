@@ -48,7 +48,8 @@ export function visibilityLabel(visibility: Visibility) {
   const labels = {
     public: "公开",
     private: "私密",
-    unlisted: "链接可见"
+    unlisted: "链接可见",
+    restricted: "授权可见"
   };
   return labels[visibility];
 }
@@ -57,7 +58,8 @@ export function visibilityTone(visibility: Visibility) {
   const tones = {
     public: "bg-sky-50 text-sky-700 ring-sky-200",
     private: "bg-slate-100 text-slate-700 ring-slate-200",
-    unlisted: "bg-indigo-50 text-indigo-700 ring-indigo-200"
+    unlisted: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+    restricted: "bg-amber-50 text-amber-700 ring-amber-200"
   };
   return tones[visibility];
 }

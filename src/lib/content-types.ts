@@ -7,6 +7,8 @@ export type DocumentCategory = "research_material" | "publication_attachment" | 
 export type DocumentRelatedType = "publication" | "project" | "skill";
 export type AccessRequestStatus = "pending" | "approved" | "rejected";
 export type AccessRequestContentType = "project" | "publication" | "skill" | "knowledge" | "other";
+export type AccessGrantStatus = "active" | "revoked";
+export type AccessGrantContentType = "project" | "publication" | "skill" | "knowledge";
 
 export type ProjectRecord = {
   id: string;
@@ -140,4 +142,24 @@ export type AccessRequestRecord = {
   reviewed_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ContentAccessGrantRecord = {
+  id: string;
+  grantee_email: string;
+  content_type: AccessGrantContentType;
+  content_id: string;
+  status: AccessGrantStatus;
+  expires_at: string | null;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ContentAccessGrantWithTarget = ContentAccessGrantRecord & {
+  target?: {
+    title: string;
+    href: string;
+    visibility: Visibility;
+  } | null;
 };
