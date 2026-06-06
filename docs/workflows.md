@@ -146,3 +146,31 @@ npm run build
 - 检查公开首页不展示 private/unlisted Publications，也不展示任何附件下载入口。
 - 新建环境或 Preview 环境执行 0003 前，不对对应 Supabase 项目做 Storage 写入测试。
 - 管理员真实上传、下载、关联和删除验收需要用户本人登录完成。
+
+## Access Request Workflow Update
+
+日期：2026-06-06
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2E-A 的访问申请提交与后台处理状态。
+
+步骤：
+
+1. 数据库变更必须新增增量 migration，不修改已在生产执行过的 0001/0002/0003。
+2. `access_requests` 表的公开写入只允许匿名访客 insert，不允许 anon select/update/delete。
+3. 后台读取和更新必须由管理员登录后通过 `public.is_admin()` 保护。
+4. Server Action 需要使用 Zod 校验姓名、邮箱、机构、申请内容和理由，并显示中文错误提示。
+5. 管理员处理状态仅包含 `pending`、`approved`、`rejected`，并可填写管理员备注。
+6. approved/rejected 当前只代表处理状态，不自动创建外部账号、不开放 restricted 内容、不生成邀请链接。
+7. 日志或后台展示不得记录密码、密钥、Auth UUID、Supabase URL/key 或其他敏感凭据。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 未登录可打开 `/access-request`，后台 `/dashboard/access-requests` 未登录应跳转 `/login`。
+- 执行 0004 migration 后，验证公开表单可提交、后台可查看详情并更新状态。
+- 不执行生产 migration，除非用户明确批准。

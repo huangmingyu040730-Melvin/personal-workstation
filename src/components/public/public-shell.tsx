@@ -8,7 +8,8 @@ const navItems = [
   { label: "学术成果", href: "/publications" },
   { label: "Skill 库", href: "/skills" },
   { label: "知识文章", href: "/knowledge" },
-  { label: "关于我", href: "/about" }
+  { label: "关于我", href: "/about" },
+  { label: "访问申请", href: "/access-request" }
 ];
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
@@ -44,6 +45,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           <p>黄铭语公开研究工作站 · 仅展示明确设为 public 的内容</p>
           <div className="flex flex-wrap gap-3">
             <Link href="/about" className="font-medium text-slate-600 hover:text-blue-700">关于我</Link>
+            <Link href="/access-request" className="font-medium text-slate-600 hover:text-blue-700">申请查看受限内容</Link>
             <Link href="/login" className="font-medium text-slate-600 hover:text-blue-700">管理员登录</Link>
           </div>
         </div>

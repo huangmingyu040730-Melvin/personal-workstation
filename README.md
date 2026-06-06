@@ -78,7 +78,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。新建环境仍需按顺序执行 0001、0002、0003。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。新建环境仍需按顺序执行 0001、0002、0003、0004。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -94,6 +94,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/knowledge/[slug]` 公开知识文章详情
 - `/skills` 公开 Skill 列表
 - `/skills/[slug]` 公开 Skill 详情
+- `/access-request` 访问申请表单
 - `/login` 管理员登录
 
 后台管理路由：
@@ -104,6 +105,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/knowledge` 知识库管理
 - `/dashboard/skills` Skill 库管理
 - `/dashboard/documents` 文件中心管理
+- `/dashboard/access-requests` 访问申请管理
 - `/calendar` 日历占位
 - `/profile` 个人信息占位
 - `/settings` 设置
@@ -128,7 +130,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2D-A 已完成公开项目、成果、Skill、知识文章列表与详情页，并将现有后台管理能力迁移到 `/dashboard/...`。
 - Phase 2D-B 继续优化公开研究工作站体验，包括统一公开导航、About 页面、公开详情关联浏览、SEO metadata 和移动端可读性。
 - Phase 2D-C 继续提升公开内容展示质量，包括统一公开卡片、列表结果提示、详情页空字段处理和后台公开内容运营提示。
-- Phase 2E 再实现受限内容申请、审批、授权有效期、撤销与附件单独下载权限。
+- Phase 2E-A 建立访问申请记录与后台处理状态；真实外部账号、受限内容授权、有效期、撤销与附件单独下载权限仍属后续阶段。
 - Calendar、Profile、Notion、Google Calendar 与自动化任务在公开浏览和授权体系稳定后继续推进。
 
 ## 权限与数据状态
@@ -137,12 +139,14 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 配置 Supabase 后，后台页面会要求登录，并通过 `public.admin_users` + `public.is_admin()` 判断管理员权限。
 - 登录成功后的 `next` 跳转会经过内部后台路径白名单校验，不允许跳到外部 URL。
 - 公开首页与公开列表/详情页只读取 `visibility = "public"` 的项目、成果、知识文章与 Skill；private / unlisted 不在公开页面返回或展示。
+- 公开访客可以在 `/access-request` 提交访问申请；该流程只记录申请与管理员处理状态，不会自动创建外部账号或开放受限内容。
 - 公开 About 页面不硬编码管理员邮箱、Supabase 配置、Auth UUID 或其他敏感联系信息。
 - 后台 Projects、Publications、Skills、Knowledge 列表页提供轻量公开运营提示，帮助维护 public / featured 内容质量。
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制，后台写入、更新、删除权限通过 `public.is_admin()` 控制。
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
 - Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；生产环境已执行 0003 migration 并通过真实上传、下载、关联、删除保护和清理验收。
+- Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
 - Dashboard 已读取真实项目、笔记、Skill、Publications 与 Activity Logs。
 - Calendar、Profile 仍为 mock 或占位展示，真实 CRUD 和外部 API 尚未实现。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
@@ -161,6 +165,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `calendar_events`：日程时间、类型、可见性与关联项目。
 - `documents`：文件存储路径、分类、关联实体类型与关联 ID。
 - `activity_logs` 与 `skill_versions`：后续审计与 Skill 版本记录基础。
+- `access_requests`：Phase 2E-A 访问申请记录，包括申请人姓名、邮箱、机构、申请内容、理由、处理状态与管理员备注。
 
 公开可读表 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 不保存管理员 Auth UUID。私密后台表 `calendar_events`、`documents`、`activity_logs` 可保留 `owner_id` 或 `actor_id` 用于后续审计。
 

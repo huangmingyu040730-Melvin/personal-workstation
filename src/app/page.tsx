@@ -120,7 +120,11 @@ export default async function HomePage() {
           <div className="space-y-4 text-sm leading-7 text-slate-600">
             <p className="flex gap-2"><BrainCircuit className="mt-1 shrink-0 text-blue-700" size={17} />公开页面只展示明确设为 public 的内容。</p>
             <p>私密文件、内部日志、管理设置和内部日历不会出现在公开页面。</p>
-            <p>未来会加入“申请查看受限内容”入口，但当前阶段不开放外部账号与审批。</p>
+            <p>如需查看未公开材料，可以提交访问申请；当前阶段仅记录申请和处理状态，不开放外部账号或自动授权。</p>
+            <Link href="/access-request" className="inline-flex w-fit items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
+              申请查看受限内容
+              <ArrowRight size={16} />
+            </Link>
           </div>
         </Card>
       </section>

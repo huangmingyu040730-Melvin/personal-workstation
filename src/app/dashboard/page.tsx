@@ -1,4 +1,4 @@
-import { BookOpen, CalendarCheck, FileText, FolderKanban, Sparkles } from "lucide-react";
+import { BookOpen, CalendarCheck, ClipboardCheck, FileText, FolderKanban, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader } from "@/components/card";
@@ -49,6 +49,22 @@ export default async function DashboardPage() {
           ))}
         </div>
         <p className="mt-4 text-sm leading-7 text-slate-600">建议优先补齐标题、简介、标签、正文摘要，并将适合展示的内容设为 public；精选内容会优先出现在公开首页。</p>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader title="访问申请" description="外部访客可以提交查看受限内容的申请；当前审批仅记录处理状态，不会自动开放访问权限。" />
+        <Link href="/dashboard/access-requests" className="flex items-center justify-between gap-4 rounded-2xl bg-blue-50 p-4 text-sm hover:bg-blue-100">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-700">
+              <ClipboardCheck size={20} />
+            </span>
+            <div>
+              <p className="font-semibold text-slate-950">待处理申请</p>
+              <p className="mt-1 text-slate-600">查看申请理由、更新处理状态并填写管理员备注。</p>
+            </div>
+          </div>
+          <span className="text-2xl font-semibold text-blue-800">{data.pendingAccessRequestCount}</span>
+        </Link>
       </Card>
 
       <div className="mt-6 grid gap-5 xl:grid-cols-[1.25fr_0.9fr_0.75fr]">
