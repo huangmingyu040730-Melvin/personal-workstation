@@ -40,11 +40,26 @@ export async function viewerLoginAction(_previousState: ViewerLoginState, formDa
   const origin = headerStore.get("origin") ?? "";
   const nextPath = getSafeViewerRedirect(parsed.data.next);
   const emailRedirectTo = origin ? `${origin}/viewer/callback?next=${encodeURIComponent(nextPath)}` : undefined;
+  const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
+  const { data: canRequestLogin, error: grantCheckError } = await supabase.rpc("can_request_viewer_login", {
+    viewer_email: normalizedEmail
+  });
+
+  if (grantCheckError) {
+    console.error("viewerLoginAction grant check failed", { code: grantCheckError.code, message: grantCheckError.message });
+    return { error: "授权检查失败，请稍后重试。" };
+  }
+
+  if (!canRequestLogin) {
+    return { error: "该邮箱暂无有效授权，请先提交访问申请或联系管理员。" };
+  }
 
   const { error } = await supabase.auth.signInWithOtp({
-    email: parsed.data.email,
+    email: normalizedEmail,
     options: {
-      emailRedirectTo
+      emailRedirectTo,
+      shouldCreateUser: true
     }
   });
 
