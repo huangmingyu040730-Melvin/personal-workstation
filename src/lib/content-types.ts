@@ -5,6 +5,8 @@ export type SkillStatus = "idea" | "developing" | "testing" | "available" | "arc
 export type PublicationType = "research_report" | "academic_paper" | "strategy_report" | "market_analysis" | "data_analysis" | "meeting_notes" | "reading_review" | "other";
 export type DocumentCategory = "research_material" | "publication_attachment" | "data_file" | "final_report" | "meeting_material" | "skill_attachment" | "other";
 export type DocumentRelatedType = "publication" | "project" | "skill";
+export type AccessRequestStatus = "pending" | "approved" | "rejected";
+export type AccessRequestContentType = "project" | "publication" | "skill" | "knowledge" | "other";
 
 export type ProjectRecord = {
   id: string;
@@ -122,4 +124,20 @@ export type ActivityLogRecord = {
   entity_id: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
+};
+
+export type AccessRequestRecord = {
+  id: string;
+  requester_name: string;
+  requester_email: string;
+  organization: string | null;
+  requested_content_type: AccessRequestContentType | null;
+  requested_content_title: string | null;
+  requested_content_url: string | null;
+  reason: string;
+  status: AccessRequestStatus;
+  admin_note: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
 };

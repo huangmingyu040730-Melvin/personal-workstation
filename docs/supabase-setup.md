@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Calendar CRUD、Profile 真实编辑和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Calendar CRUD、Profile 真实编辑、真实外部账号授权和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -128,6 +128,30 @@ supabase/migrations/0003_publications_documents_storage.sql
 - 0003 不向 `anon` 或 `authenticated` 授予 `admin_users` 权限。
 - 普通网页运行继续使用 publishable key 和登录管理员身份，不使用 `service_role`。
 
+Phase 2E-A 新增访问申请流程。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0004_access_requests.sql
+```
+
+`0004` 会创建：
+
+- `public.access_requests`
+- 状态字段 `pending`、`approved`、`rejected`
+- `created_at`、`updated_at`、`reviewed_at`
+- 按 `status`、`created_at`、`reviewed_at` 的常用索引
+- `updated_at` trigger
+- RLS policies 与最小 GRANT
+
+访问申请权限边界：
+
+- `anon` 仅获得 `insert` 表级权限，用于公开 `/access-request` 表单提交。
+- `anon` 不获得 `select`、`update`、`delete`，不能读取或修改已提交申请。
+- `authenticated` 仅获得 `select`、`update` 表级权限。
+- 管理员读取和更新申请仍由 RLS 中的 `public.is_admin()` 控制。
+- 不向 `anon` 或 `authenticated` 授予 `admin_users` 权限。
+- Phase 2E-A 只记录申请与后台处理状态，不创建外部账号，不开放受限内容，不生成邀请链接。
+
 ## 创建管理员
 
 在 Supabase SQL Editor 中插入管理员 UUID：
@@ -144,8 +168,9 @@ values ('00000000-0000-0000-0000-000000000000');
 公开访客：
 
 - 只能读取 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 中 `visibility = 'public'` 的记录。
+- 可以向 `access_requests` 提交访问申请。
 - 不能读取 `calendar_events`、`documents`、`activity_logs`、`skill_versions`、`admin_users`。
-- 不能写入任何业务表。
+- 不能读取、更新或删除访问申请记录；除访问申请提交外，不能写入任何业务表。
 - 公开可读记录不会携带管理员 Auth 用户 UUID 字段。
 - 表级访问需要执行 `0002_grant_api_table_privileges.sql`，RLS 才能在 API 请求中继续判断行级权限。
 
@@ -160,6 +185,7 @@ values ('00000000-0000-0000-0000-000000000000');
 - 必须存在于 `public.admin_users`。
 - 可以读取 private/unlisted 内容。
 - 可以插入、更新、删除业务表数据。
+- 可以查看访问申请，并更新处理状态和管理员备注。
 
 ## Storage 与文件安全
 
@@ -204,8 +230,10 @@ Phase 2C 使用：
 - 公开首页 `/` 始终可访问，并只展示公开内容。
 - Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD。
 - Documents 已接入真实文件记录、私密上传、短时签名下载和删除流程。
+- Access Requests 已接入真实提交、列表、详情与处理状态更新流程。
 - Calendar、Profile 仍从 `src/lib/mock-data.ts` 或静态占位渲染。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
+- Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Supabase 真实端到端登录验证需要配置项目 URL、publishable key、执行迁移并创建管理员后再进行。
 
 ## 验证命令

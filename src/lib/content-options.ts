@@ -1,4 +1,4 @@
-import type { DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, SkillStatus } from "./content-types";
+import type { AccessRequestContentType, AccessRequestStatus, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -62,6 +62,20 @@ export const documentRelatedTypes: Array<{ value: DocumentRelatedType; label: st
   { value: "skill", label: "Skill" }
 ];
 
+export const accessRequestContentTypes: Array<{ value: AccessRequestContentType; label: string }> = [
+  { value: "project", label: "研究项目" },
+  { value: "publication", label: "学术成果" },
+  { value: "skill", label: "Skill" },
+  { value: "knowledge", label: "知识文章" },
+  { value: "other", label: "其他" }
+];
+
+export const accessRequestStatuses: Array<{ value: AccessRequestStatus; label: string }> = [
+  { value: "pending", label: "待处理" },
+  { value: "approved", label: "已同意" },
+  { value: "rejected", label: "已拒绝" }
+];
+
 export function getPublicationTypeLabel(value: string | null | undefined) {
   return publicationTypes.find((item) => item.value === value)?.label ?? "其他";
 }
@@ -72,4 +86,12 @@ export function getDocumentCategoryLabel(value: string | null | undefined) {
 
 export function getDocumentRelatedTypeLabel(value: string | null | undefined) {
   return documentRelatedTypes.find((item) => item.value === value)?.label ?? "未关联";
+}
+
+export function getAccessRequestContentTypeLabel(value: string | null | undefined) {
+  return accessRequestContentTypes.find((item) => item.value === value)?.label ?? "未指定";
+}
+
+export function getAccessRequestStatusLabel(value: string | null | undefined) {
+  return accessRequestStatuses.find((item) => item.value === value)?.label ?? "待处理";
 }

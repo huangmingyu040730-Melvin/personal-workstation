@@ -403,3 +403,28 @@
 
 - 后续如需要自动质量检查、缺字段提醒或发布流程，应另起阶段设计。
 - 本阶段不修改 RLS、Storage policies 或 Supabase migrations。
+
+## 2026-06-06 - Implement Access Requests As Records Before Real Authorization
+
+类型：decision
+
+决策：
+
+- Phase 2E-A 只实现公开访问申请表单、后台申请列表/详情、处理状态和管理员备注。
+- 新增 `access_requests` 表和 `0004_access_requests.sql` 增量 migration。
+- 匿名访客只能提交申请，不能读取、更新或删除申请记录。
+- 管理员通过 `public.is_admin()` 查看申请并更新 `pending`、`approved`、`rejected` 状态。
+- 本阶段不创建外部账号，不开放 restricted 内容，不生成邀请链接，不实现授权有效期、撤销或附件下载权限。
+
+原因：
+
+- 在真正开放受限内容前，先收集外部访客需求和管理员处理记录，可以降低权限模型一次性上线的风险。
+- 申请内容可能包含联系方式和理由，必须避免被匿名访客读取。
+- approved/rejected 当前只代表内部处理状态，不应被误解为已经授予访问权限。
+
+影响：
+
+- 公开站点新增 `/access-request` 入口。
+- 后台新增 `/dashboard/access-requests` 管理页面。
+- 生产环境合并后必须执行 `0004_access_requests.sql`，否则公开表单和后台申请管理无法真实读写。
+- 后续 Phase 2E-B 如要实现真实受限访问，需要另行设计外部用户、内容授权、过期与撤销机制。

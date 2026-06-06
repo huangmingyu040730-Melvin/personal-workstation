@@ -3,6 +3,7 @@ import {
   BookOpen,
   Bot,
   CalendarDays,
+  ClipboardCheck,
   FileText,
   FolderOpen,
   Home,
@@ -59,6 +60,7 @@ export const sidebarGroups = [
   {
     label: "系统",
     items: [
+      { label: "访问申请", href: "/dashboard/access-requests", icon: ClipboardCheck },
       { label: "个人信息", href: "/profile", icon: UserRound },
       { label: "设置", href: "/settings", icon: Settings }
     ]
@@ -241,5 +243,6 @@ export const quickActions = [
   { label: "新建项目", icon: FolderOpen, href: "/dashboard/projects/new" },
   { label: "新增笔记", icon: Library, href: "/dashboard/knowledge/new" },
   { label: "新建 Skill", icon: WandSparkles, href: "/dashboard/skills/new" },
-  { label: "上传文件", icon: FileText, href: "/dashboard/documents/upload" }
+  { label: "上传文件", icon: FileText, href: "/dashboard/documents/upload" },
+  { label: "访问申请", icon: ClipboardCheck, href: "/dashboard/access-requests" }
 ];
