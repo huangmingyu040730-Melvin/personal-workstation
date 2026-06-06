@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   description: "使用邮箱魔法链接登录，查看已授权的 restricted 内容。"
 };
 
+const callbackErrorMessages: Record<string, string> = {
+  expired: "登录链接无效或已过期，请重新发送。",
+  missing_code: "登录链接缺少必要校验信息，请重新发送。",
+  not_configured: "当前尚未配置 Supabase 登录环境。",
+  exchange_failed: "登录链接验证失败，请重新发送。"
+};
+
 export default async function ViewerLoginPage({
   searchParams
 }: {
@@ -17,7 +24,9 @@ export default async function ViewerLoginPage({
 }) {
   const params = await searchParams;
   const rawNext = Array.isArray(params.next) ? params.next[0] : params.next;
+  const rawError = Array.isArray(params.error) ? params.error[0] : params.error;
   const nextPath = getSafeViewerRedirect(rawNext);
+  const errorMessage = typeof rawError === "string" ? callbackErrorMessages[rawError] ?? null : null;
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
@@ -44,6 +53,7 @@ export default async function ViewerLoginPage({
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft">
           <h2 className="text-xl font-semibold text-slate-950">邮箱魔法链接</h2>
           <p className="mt-2 text-sm leading-6 text-slate-500">请输入管理员授权时使用的邮箱。系统会发送一次性登录链接，不需要设置密码。</p>
+          {errorMessage ? <p className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{errorMessage}</p> : null}
           <ViewerLoginForm nextPath={nextPath} />
         </section>
       </div>
