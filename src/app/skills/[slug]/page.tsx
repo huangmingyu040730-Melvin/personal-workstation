@@ -1,17 +1,17 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
-import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
+import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getPublicSkillBySlug } from "@/lib/queries/skills";
+import { getViewableSkillBySlug } from "@/lib/queries/skills";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const skill = await getPublicSkillBySlug(slug);
+  const skill = await getViewableSkillBySlug(slug);
 
   if (!skill) {
     return {
@@ -28,10 +28,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PublicSkillDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const skill = await getPublicSkillBySlug(slug);
+  const skill = await getViewableSkillBySlug(slug);
 
   if (!skill) {
-    notFound();
+    return (
+      <PublicShell>
+        <PublicPageHero eyebrow="Restricted Access" title="Skill 需要授权访问" description="这条 Skill 可能尚未公开，或需要管理员按邮箱授权后才能查看。" />
+        <RestrictedAccessNotice loginHref={`/viewer/login?next=${encodeURIComponent(`/skills/${slug}`)}`} />
+      </PublicShell>
+    );
   }
 
   return (

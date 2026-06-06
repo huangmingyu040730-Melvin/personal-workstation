@@ -174,3 +174,32 @@ npm run build
 - 未登录可打开 `/access-request`，后台 `/dashboard/access-requests` 未登录应跳转 `/login`。
 - 执行 0004 migration 后，验证公开表单可提交、后台可查看详情并更新状态。
 - 不执行生产 migration，除非用户明确批准。
+
+## Restricted Content Grant Workflow
+
+日期：2026-06-06
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2E-B 的 restricted 内容与邮箱授权查看能力。
+
+步骤：
+
+1. 数据库变更必须新增增量 migration，不修改已在生产执行过的 0001/0002/0003/0004。
+2. `restricted` visibility 只用于 Projects、Publications、Knowledge、Skills 的详情页授权访问。
+3. 管理员在后台创建授权前，应先将内容设置为 `restricted`。
+4. 授权记录写入 `content_access_grants`，包括邮箱、内容类型、内容 ID、状态、可选有效期和备注。
+5. 外部用户通过 `/viewer/login` 使用邮箱魔法链接登录，不使用明文密码，不进入后台。
+6. 公开详情页读取受 RLS 保护的数据；未授权时只显示申请入口和授权登录入口，不展示正文。
+7. 撤销授权只更新授权状态为 `revoked`，RLS 会阻止后续读取。
+8. Documents、Storage、附件下载和 signed URL 不随 restricted 内容授权开放。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 合并后在生产 Supabase 手动执行 `0005_restricted_content_access.sql`。
+- 验证 public 内容仍所有访客可看，restricted 内容只有管理员或匹配邮箱授权用户可看，private 内容仅管理员可看。
+- 验证非管理员登录用户不能进入 `/dashboard`，不能访问 `/dashboard/access-grants` 或 Documents。

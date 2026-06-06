@@ -32,10 +32,10 @@ export default async function AccessRequestsPage({
       <PageHeader
         eyebrow="Access Requests"
         title="访问申请"
-        description="查看外部访客提交的受限内容访问申请，并记录审批状态。"
+        description="查看外部访客提交的受限内容访问申请，记录审批状态，并为已同意申请创建授权。"
       />
       <Card className="mb-5 border-blue-100 bg-blue-50/60">
-        <p className="text-sm leading-7 text-blue-800">当前审批仅用于记录处理状态，不会自动开放受限内容访问。</p>
+        <p className="text-sm leading-7 text-blue-800">审批状态不会自动开放访问；请在申请详情中为 approved 申请创建具体内容授权。</p>
       </Card>
       <form className="mb-5 flex flex-wrap gap-3">
         <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">

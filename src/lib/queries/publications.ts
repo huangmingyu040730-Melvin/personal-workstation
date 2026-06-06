@@ -172,6 +172,28 @@ export async function getPublicPublicationBySlug(slug: string) {
   return { ...publication, projects: project ? { id: project.id, title: project.title, slug: project.slug } : null };
 }
 
+export async function getViewablePublicationBySlug(slug: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockPublicationFallback().find((publication) => publication.visibility === "public" && publication.slug === slug) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from("publications")
+    .select("*, projects(id,title,slug)")
+    .in("visibility", ["public", "restricted", "private"] satisfies Visibility[])
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getViewablePublicationBySlug failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  return data as PublicationRecord | null;
+}
+
 export async function getPublicPublicationsByProjectId(projectId: string, limit = 4) {
   const supabase = await createClient();
 

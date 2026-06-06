@@ -52,7 +52,7 @@ export default async function DashboardPage() {
       </Card>
 
       <Card className="mt-6">
-        <CardHeader title="访问申请" description="外部访客可以提交查看受限内容的申请；当前审批仅记录处理状态，不会自动开放访问权限。" />
+        <CardHeader title="访问申请" description="外部访客可以提交查看受限内容的申请；管理员审批后可为指定邮箱创建访问授权。" />
         <Link href="/dashboard/access-requests" className="flex items-center justify-between gap-4 rounded-2xl bg-blue-50 p-4 text-sm hover:bg-blue-100">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-700">
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
             </span>
             <div>
               <p className="font-semibold text-slate-950">待处理申请</p>
-              <p className="mt-1 text-slate-600">查看申请理由、更新处理状态并填写管理员备注。</p>
+              <p className="mt-1 text-slate-600">查看申请理由、更新处理状态，并为 approved 申请创建访问授权。</p>
             </div>
           </div>
           <span className="text-2xl font-semibold text-blue-800">{data.pendingAccessRequestCount}</span>

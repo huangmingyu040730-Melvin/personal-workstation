@@ -36,6 +36,10 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               管理员登录
               <ArrowRight size={15} />
             </Link>
+            <Link href="/viewer/login" className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800">
+              授权登录
+              <ArrowRight size={15} />
+            </Link>
           </nav>
         </div>
       </header>
@@ -46,6 +50,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-wrap gap-3">
             <Link href="/about" className="font-medium text-slate-600 hover:text-blue-700">关于我</Link>
             <Link href="/access-request" className="font-medium text-slate-600 hover:text-blue-700">申请查看受限内容</Link>
+            <Link href="/viewer/login" className="font-medium text-slate-600 hover:text-blue-700">授权访问登录</Link>
             <Link href="/login" className="font-medium text-slate-600 hover:text-blue-700">管理员登录</Link>
           </div>
         </div>

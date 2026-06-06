@@ -428,3 +428,28 @@
 - 后台新增 `/dashboard/access-requests` 管理页面。
 - 生产环境合并后必须执行 `0004_access_requests.sql`，否则公开表单和后台申请管理无法真实读写。
 - 后续 Phase 2E-B 如要实现真实受限访问，需要另行设计外部用户、内容授权、过期与撤销机制。
+
+## 2026-06-06 - Add Email Scoped Restricted Content Grants
+
+类型：decision
+
+决策：
+
+- Phase 2E-B 使用 `restricted` visibility 表示需要授权查看的内容。
+- 受限访问通过 `content_access_grants` 按邮箱、内容类型和内容 ID 授权。
+- 外部用户使用 Supabase 邮箱 OTP / magic link 登录，只获得普通 authenticated session。
+- 内容表 RLS 通过 `public.has_content_access()` 判断当前登录邮箱是否拥有 active 且未过期授权。
+- Documents 与 Storage 不随内容授权开放；附件对外下载继续后延。
+
+原因：
+
+- 访问申请 approved 只是审批状态，必须有独立授权记录才能形成可撤销、可过期、可审计的访问边界。
+- 邮箱级授权是单管理员个人工作站的最小可用模型，避免引入团队、组织和复杂角色系统。
+- 继续依赖 Supabase Auth、RLS 和 publishable key，避免使用 service_role 绕过策略。
+
+影响：
+
+- 需要新增 `0005_restricted_content_access.sql` 并在生产合并后手动执行。
+- Projects、Publications、Knowledge、Skills 表单增加 `restricted` 选项。
+- 后台新增访问授权列表和创建/撤销能力。
+- 公开详情页在无权限时显示授权申请入口，不展示正文、附件、Storage 路径或 signed URL。
