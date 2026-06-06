@@ -6,6 +6,14 @@ import { GraduationCap } from "lucide-react";
 import { profile, sidebarGroups } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
+function isSidebarItemActive(pathname: string, href: string) {
+  if (href === "/dashboard") {
+    return pathname === href;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function Sidebar() {
   const pathname = usePathname();
 
@@ -27,7 +35,7 @@ export function Sidebar() {
             <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-blue-200/80">{group.label}</p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const active = isSidebarItemActive(pathname, item.href);
                 return (
                   <Link
                     key={item.href}
