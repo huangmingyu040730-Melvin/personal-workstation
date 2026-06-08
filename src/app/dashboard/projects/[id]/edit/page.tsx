@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { updateProjectAction } from "@/actions/projects";
 import { AppShell } from "@/components/app-shell";
-import { Card } from "@/components/card";
+import { AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
 import { ProjectForm } from "@/components/forms/project-form";
 import { PageHeader } from "@/components/page-header";
 import { getFormError } from "@/lib/forms";
@@ -23,10 +23,12 @@ export default async function EditProjectPage({
 
   return (
     <AppShell>
-      <PageHeader eyebrow="Projects" title="编辑研究项目" description="保存后会刷新项目详情、Dashboard 与公开首页数据。" />
-      <Card>
-        <ProjectForm action={updateProjectAction.bind(null, project.id)} project={project} error={getFormError(query)} />
-      </Card>
+      <AdminPageSurface>
+        <PageHeader eyebrow="Projects" title="编辑研究项目" description="保存后会刷新项目详情、Dashboard 与公开首页数据。" />
+        <AdminFormSurface>
+          <ProjectForm action={updateProjectAction.bind(null, project.id)} project={project} error={getFormError(query)} />
+        </AdminFormSurface>
+      </AdminPageSurface>
     </AppShell>
   );
 }

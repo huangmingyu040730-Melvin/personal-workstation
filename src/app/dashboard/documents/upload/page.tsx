@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { Card } from "@/components/card";
+import { AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
 import { DocumentUploadForm } from "@/components/forms/document-upload-form";
 import { PageHeader } from "@/components/page-header";
 import { getFormError } from "@/lib/forms";
@@ -17,15 +17,17 @@ export default async function UploadDocumentPage({ searchParams }: { searchParam
 
   return (
     <AppShell>
-      <PageHeader eyebrow="Documents" title="上传文件" description="上传到私密 workspace-files bucket，并创建真实 documents 记录。" />
-      <Card>
-        <DocumentUploadForm
-          projects={projects}
-          publications={publications}
-          skills={skills.map((skill) => ({ id: skill.id, name: skill.name }))}
-          error={getFormError(params)}
-        />
-      </Card>
+      <AdminPageSurface>
+        <PageHeader eyebrow="Documents" title="上传文件" description="上传到私密 workspace-files bucket，并创建真实 documents 记录。" />
+        <AdminFormSurface>
+          <DocumentUploadForm
+            projects={projects}
+            publications={publications}
+            skills={skills.map((skill) => ({ id: skill.id, name: skill.name }))}
+            error={getFormError(params)}
+          />
+        </AdminFormSurface>
+      </AdminPageSurface>
     </AppShell>
   );
 }

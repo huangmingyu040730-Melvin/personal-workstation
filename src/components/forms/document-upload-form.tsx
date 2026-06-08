@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AdminFormSection, AdminSecurityNote } from "@/components/admin-ui";
 import type { ProjectRecord, PublicationRecord, SkillRecord } from "@/lib/content-types";
 import { documentCategories, documentRelatedTypes } from "@/lib/content-options";
 import { formatFileSize } from "@/lib/format";
@@ -128,6 +129,7 @@ export function DocumentUploadForm({
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <ErrorNotice message={message} />
+      <AdminFormSection title="文件选择" description="浏览器会直接上传到私密 workspace-files bucket，文件二进制不经过 Vercel Function。">
       <Field label="选择文件" hint={`支持 PDF、Office、Markdown、文本、图片与 CSV，最大 ${formatFileSize(MAX_DOCUMENT_FILE_SIZE)}。`}>
         <input
           name="file"
@@ -138,6 +140,8 @@ export function DocumentUploadForm({
           className="block w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-navy-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:border-blue-200 disabled:cursor-not-allowed disabled:opacity-70"
         />
       </Field>
+      </AdminFormSection>
+      <AdminFormSection title="元数据" description="这些信息用于后台文件列表和关联内容展示。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="文件显示名称" hint="留空时将使用清理后的原文件名。">
           <TextInput name="name" placeholder="例如 私募产品比较报告.pdf" disabled={pending} />
@@ -150,6 +154,8 @@ export function DocumentUploadForm({
           </Select>
         </Field>
       </div>
+      </AdminFormSection>
+      <AdminFormSection title="关联对象" description="文件可关联到 Publication、Project 或 Skill；附件本轮仍保持私密。">
       <Field label="关联对象" hint="可选。关联类型与对象绑定在同一个选项中，避免误选。">
         <Select name="related_key" defaultValue="" disabled={pending}>
           <option value="">不关联对象</option>
@@ -170,14 +176,13 @@ export function DocumentUploadForm({
           </optgroup>
         </Select>
       </Field>
-      <div className="rounded-2xl bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
-        文件权限固定为私密。文件会由浏览器直接上传到 Supabase Storage，不经过 Vercel Function；即使关联到公开成果，附件也只允许管理员通过短时链接下载。
-      </div>
+      </AdminFormSection>
+      <AdminSecurityNote>文件权限固定为私密。即使关联到公开成果，附件也只允许管理员通过短时链接下载。</AdminSecurityNote>
       <div className="flex flex-wrap gap-3 pt-2">
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center rounded-2xl bg-navy-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-2xl bg-navy-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {phaseLabel(phase)}
         </button>

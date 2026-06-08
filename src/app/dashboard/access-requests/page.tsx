@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Eye } from "lucide-react";
+import { AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/card";
 import { PageHeader } from "@/components/page-header";
@@ -29,6 +30,7 @@ export default async function AccessRequestsPage({
 
   return (
     <AppShell>
+      <AdminPageSurface>
       <PageHeader
         eyebrow="Access Requests"
         title="访问申请"
@@ -37,15 +39,17 @@ export default async function AccessRequestsPage({
       <Card className="mb-5 border-blue-100 bg-blue-50/60">
         <p className="text-sm leading-7 text-blue-800">审批状态不会自动开放访问；请在申请详情中为 approved 申请创建具体内容授权。</p>
       </Card>
-      <form className="mb-5 flex flex-wrap gap-3">
-        <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+      <AdminSection>
+      <form className="flex flex-wrap gap-3">
+        <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
           <option value="all">全部状态</option>
           {accessRequestStatuses.map((item) => (
             <option key={item.value} value={item.value}>{item.label}</option>
           ))}
         </select>
-        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:text-blue-700">筛选</button>
+        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
       </form>
+      </AdminSection>
       <Card className="overflow-x-auto p-0">
         <div className="min-w-[980px]">
           <div className="grid grid-cols-[0.65fr_0.9fr_0.75fr_0.55fr_1fr_0.5fr_0.7fr_0.7fr_0.35fr] gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-500">
@@ -60,9 +64,9 @@ export default async function AccessRequestsPage({
             <span>操作</span>
           </div>
           {requests.length === 0 ? (
-            <div className="px-5 py-10 text-center text-sm text-slate-500">暂无访问申请。</div>
+            <div className="p-5"><AdminEmptyState title="暂无访问申请" description="外部访客提交申请后会显示在这里。" /></div>
           ) : requests.map((request) => (
-            <div key={request.id} className="grid grid-cols-[0.65fr_0.9fr_0.75fr_0.55fr_1fr_0.5fr_0.7fr_0.7fr_0.35fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm last:border-0">
+            <div key={request.id} className="grid grid-cols-[0.65fr_0.9fr_0.75fr_0.55fr_1fr_0.5fr_0.7fr_0.7fr_0.35fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50/60 last:border-0">
               <span className="font-medium text-slate-900">{request.requester_name}</span>
               <span className="truncate text-slate-600">{request.requester_email}</span>
               <span className="truncate text-slate-500">{request.organization ?? "未填写"}</span>
@@ -79,6 +83,7 @@ export default async function AccessRequestsPage({
           ))}
         </div>
       </Card>
+      </AdminPageSurface>
     </AppShell>
   );
 }

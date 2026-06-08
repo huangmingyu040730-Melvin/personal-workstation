@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { updateSkillAction } from "@/actions/skills";
 import { AppShell } from "@/components/app-shell";
-import { Card } from "@/components/card";
+import { AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
 import { SkillForm } from "@/components/forms/skill-form";
 import { PageHeader } from "@/components/page-header";
 import { getFormError } from "@/lib/forms";
@@ -23,10 +23,12 @@ export default async function EditSkillPage({
 
   return (
     <AppShell>
-      <PageHeader eyebrow="Skills Library" title="编辑 Skill" description="保存后会刷新 Skill 详情、Dashboard 与公开首页数据。" />
-      <Card>
-        <SkillForm action={updateSkillAction.bind(null, skill.id)} skill={skill} error={getFormError(query)} />
-      </Card>
+      <AdminPageSurface>
+        <PageHeader eyebrow="Skills Library" title="编辑 Skill" description="保存后会刷新 Skill 详情、Dashboard 与公开首页数据。" />
+        <AdminFormSurface>
+          <SkillForm action={updateSkillAction.bind(null, skill.id)} skill={skill} error={getFormError(query)} />
+        </AdminFormSurface>
+      </AdminPageSurface>
     </AppShell>
   );
 }

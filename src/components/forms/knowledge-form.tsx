@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminFormSection } from "@/components/admin-ui";
 import type { KnowledgeNoteRecord } from "@/lib/content-types";
 import { knowledgeCategories, visibilityOptions } from "@/lib/content-options";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
@@ -18,6 +19,7 @@ export function KnowledgeForm({
   return (
     <form action={action} className="space-y-5">
       <ErrorNotice message={error} />
+      <AdminFormSection title="基本信息" description="标题、slug、分类和关联项目用于组织知识库内容。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="标题">
           <TextInput name="title" defaultValue={note?.title} required />
@@ -43,15 +45,21 @@ export function KnowledgeForm({
           </Select>
         </Field>
       </div>
+      </AdminFormSection>
+      <AdminFormSection title="摘要与正文" description="正文支持安全 Markdown 文本，不渲染原始 HTML。">
       <Field label="摘要">
         <Textarea name="excerpt" defaultValue={note?.excerpt ?? ""} />
       </Field>
       <Field label="Markdown 正文">
         <Textarea name="content" className="min-h-72 font-mono" defaultValue={note?.content ?? ""} />
       </Field>
+      </AdminFormSection>
+      <AdminFormSection title="分类与标签" description="标签用于后续筛选、检索和公开卡片展示。">
       <Field label="标签" hint="用逗号或换行分隔">
         <Textarea name="tags" defaultValue={note?.tags.join("\n")} />
       </Field>
+      </AdminFormSection>
+      <AdminFormSection title="展示设置" description="控制文章的公开范围和首页精选展示。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="权限">
           <Select name="visibility" defaultValue={note?.visibility ?? "private"}>
@@ -64,6 +72,7 @@ export function KnowledgeForm({
           <Checkbox name="is_featured" label="设为精选内容" defaultChecked={note?.is_featured} />
         </div>
       </div>
+      </AdminFormSection>
       <div className="flex flex-wrap gap-3 pt-2">
         <SubmitButton />
         <Link href={note ? `/dashboard/knowledge/${note.id}` : "/dashboard/knowledge"} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">

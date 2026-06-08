@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { updatePublicationAction } from "@/actions/publications";
 import { AppShell } from "@/components/app-shell";
-import { Card } from "@/components/card";
+import { AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
 import { PublicationForm } from "@/components/forms/publication-form";
 import { PageHeader } from "@/components/page-header";
 import { getFormError } from "@/lib/forms";
@@ -24,10 +24,12 @@ export default async function EditPublicationPage({
 
   return (
     <AppShell>
-      <PageHeader eyebrow="Publications" title="编辑学术成果" description="保存后会刷新成果详情、Dashboard 与公开首页数据。" />
-      <Card>
-        <PublicationForm action={updatePublicationAction.bind(null, publication.id)} publication={publication} projects={projects} error={getFormError(query)} />
-      </Card>
+      <AdminPageSurface>
+        <PageHeader eyebrow="Publications" title="编辑学术成果" description="保存后会刷新成果详情、Dashboard 与公开首页数据。" />
+        <AdminFormSurface>
+          <PublicationForm action={updatePublicationAction.bind(null, publication.id)} publication={publication} projects={projects} error={getFormError(query)} />
+        </AdminFormSurface>
+      </AdminPageSurface>
     </AppShell>
   );
 }

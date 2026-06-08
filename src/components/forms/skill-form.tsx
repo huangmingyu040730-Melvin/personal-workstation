@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminFormSection } from "@/components/admin-ui";
 import type { SkillRecord } from "@/lib/content-types";
 import { skillCategories, skillPlatforms, skillStatuses, visibilityOptions } from "@/lib/content-options";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
@@ -16,6 +17,7 @@ export function SkillForm({
   return (
     <form action={action} className="space-y-5">
       <ErrorNotice message={error} />
+      <AdminFormSection title="基本信息" description="定义 Skill 名称、分类、状态、平台与简短描述。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Skill 名称">
           <TextInput name="name" defaultValue={skill?.name} required />
@@ -53,6 +55,8 @@ export function SkillForm({
           ))}
         </div>
       </Field>
+      </AdminFormSection>
+      <AdminFormSection title="输入 / 输出 / 使用指南" description="说明 Skill 适合接收什么材料、产出什么结果，以及如何使用。">
       <Field label="详细说明 Markdown">
         <Textarea name="content" className="min-h-44 font-mono" defaultValue={skill?.content ?? ""} />
       </Field>
@@ -67,12 +71,16 @@ export function SkillForm({
       <Field label="使用指南 Markdown">
         <Textarea name="usage_guide" className="min-h-44 font-mono" defaultValue={skill?.usage_guide ?? ""} />
       </Field>
+      </AdminFormSection>
+      <AdminFormSection title="SKILL.md 与仓库" description="沉淀可复用 Skill 文档或公开仓库链接。">
       <Field label="SKILL.md 文本内容">
         <Textarea name="skill_md_content" className="min-h-56 font-mono" defaultValue={skill?.skill_md_content ?? ""} />
       </Field>
       <Field label="GitHub 仓库链接">
         <TextInput name="repository_url" type="url" defaultValue={skill?.repository_url ?? ""} />
       </Field>
+      </AdminFormSection>
+      <AdminFormSection title="展示设置" description="控制 Skill 的公开范围和首页精选展示。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="权限">
           <Select name="visibility" defaultValue={skill?.visibility ?? "private"}>
@@ -85,8 +93,9 @@ export function SkillForm({
           <Checkbox name="is_featured" label="设为精选公开内容" defaultChecked={skill?.is_featured} />
         </div>
       </div>
+      </AdminFormSection>
       {!skill ? (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <AdminFormSection title="初始版本记录" description="创建 Skill 时可以同时生成第一条版本记录。">
           <Checkbox name="create_initial_version" label="创建 Skill 时同时生成第一条版本记录" />
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <Field label="版本说明">
@@ -96,7 +105,7 @@ export function SkillForm({
               <TextInput name="version_released_at" type="datetime-local" />
             </Field>
           </div>
-        </div>
+        </AdminFormSection>
       ) : null}
       <div className="flex flex-wrap gap-3 pt-2">
         <SubmitButton />

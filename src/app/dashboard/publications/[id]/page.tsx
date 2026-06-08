@@ -3,6 +3,7 @@ import { Download, FileText } from "lucide-react";
 import { notFound } from "next/navigation";
 import { deletePublicationAction } from "@/actions/publications";
 import { AppShell } from "@/components/app-shell";
+import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
@@ -32,22 +33,24 @@ export default async function PublicationDetailPage({
 
   return (
     <AppShell>
-      <PageHeader
-        eyebrow={getPublicationTypeLabel(publication.publication_type)}
-        title={publication.title}
-        description={publication.summary}
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Link href="/dashboard/documents/upload" className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100">上传附件</Link>
-            <Link href={`/dashboard/publications/${publication.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
-            <form action={deletePublicationAction.bind(null, publication.id)}>
-              <DeleteButton label="删除成果" />
-            </form>
-          </div>
-        }
-      />
-      {error ? <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-      <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
+      <AdminPageSurface>
+        <PageHeader
+          eyebrow={getPublicationTypeLabel(publication.publication_type)}
+          title={publication.title}
+          description={publication.summary}
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link href="/dashboard/documents/upload" className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100">上传附件</Link>
+              <Link href={`/dashboard/publications/${publication.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
+              <form action={deletePublicationAction.bind(null, publication.id)}>
+                <DeleteButton label="删除成果" />
+              </form>
+            </div>
+          }
+        />
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        <AdminSecurityNote>成果附件仍为私密文件，只允许管理员通过短时下载链接访问；公开页面不会展示附件下载入口。</AdminSecurityNote>
+        <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
         <div className="space-y-5">
           <Card>
             <CardHeader title="摘要 / Abstract" />
@@ -96,7 +99,8 @@ export default async function PublicationDetailPage({
             </div>
           </Card>
         </div>
-      </div>
+        </div>
+      </AdminPageSurface>
     </AppShell>
   );
 }
