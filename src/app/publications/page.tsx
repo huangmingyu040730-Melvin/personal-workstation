@@ -26,17 +26,17 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
         title="公开学术成果"
         description="浏览已公开的研究报告、论文草稿、策略分析与阅读综述。附件仍保持私密，不在公开页面提供下载。"
       />
-      <section className="mx-auto max-w-[1536px] px-5 py-10 lg:px-10 xl:px-12">
-        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/[.82] p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
+      <section className="mx-auto max-w-[1680px] px-5 py-10 lg:px-12 2xl:px-16">
+        <form className="mb-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
           <label className="relative">
-            <Search className="pointer-events-none absolute left-3 top-3 text-stone-400" size={16} />
-            <input name="q" defaultValue={q} placeholder="搜索成果标题、简介、摘要或标签..." className="h-10 w-full rounded-2xl border border-earth-100 bg-white pl-9 pr-3 text-sm text-earth-950 outline-none transition focus:border-earth-300" />
+            <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
+            <input name="q" defaultValue={q} placeholder="搜索成果标题、简介、摘要或标签..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-navy-950 outline-none transition focus:border-blue-300" />
           </label>
-          <select name="type" defaultValue={publicationType} className="h-10 rounded-2xl border border-earth-100 bg-white px-3 text-sm text-earth-950">
+          <select name="type" defaultValue={publicationType} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
             <option value="all">全部类型</option>
             {publicationTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
           </select>
-          <button className="h-10 rounded-2xl bg-earth-900 px-5 text-sm font-semibold text-paper-50 transition hover:bg-earth-950">筛选</button>
+          <button className="h-10 rounded-2xl bg-navy-950 px-5 text-sm font-semibold text-white transition hover:bg-blue-800">筛选</button>
         </form>
         <PublicListToolbar count={publications.length} active={hasActiveFilters} clearHref="/publications" label="公开成果" />
 

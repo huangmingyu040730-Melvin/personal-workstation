@@ -58,9 +58,9 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
   return (
     <PublicShell>
       <PublicPageHero eyebrow="Research Project" title={project.title} description={project.summary} />
-      <section className="mx-auto grid max-w-[1440px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.42fr] lg:px-8">
+      <section className="mx-auto grid max-w-[1680px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.42fr] lg:px-12 2xl:px-16">
         <div className="space-y-5">
-          <Link href="/projects" className="inline-flex items-center gap-2 text-sm font-semibold text-earth-800 hover:text-earth-950">
+          <Link href="/projects" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
             <ArrowLeft size={16} />
             返回公开项目
           </Link>
@@ -79,10 +79,10 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
             <CardHeader title="项目状态" />
             <div className="flex items-center justify-between">
               <StatusBadge status={project.status} />
-              <span className="text-sm font-semibold text-earth-950">{project.progress}%</span>
+              <span className="text-sm font-semibold text-navy-950">{project.progress}%</span>
             </div>
             <div className="mt-4">
-              <Progress value={project.progress} tone="earth" />
+              <Progress value={project.progress}  />
             </div>
             <dl className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between gap-4"><dt className="text-stone-500">开始日期</dt><dd className="font-medium text-stone-800">{formatDate(project.start_date)}</dd></div>
@@ -93,7 +93,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
           <Card>
             <CardHeader title="标签" />
             <div className="flex flex-wrap gap-2">
-              {project.tags.length > 0 ? project.tags.map((tag) => <span key={tag} className="rounded-full bg-earth-50 px-2.5 py-1 text-xs font-medium text-earth-800">{tag}</span>) : <p className="text-sm text-stone-500">暂无标签</p>}
+              {project.tags.length > 0 ? project.tags.map((tag) => <span key={tag} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">{tag}</span>) : <p className="text-sm text-stone-500">暂无标签</p>}
             </div>
           </Card>
           <Card>
@@ -102,17 +102,17 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
           </Card>
         </div>
       </section>
-      <section className="mx-auto grid max-w-[1440px] gap-6 px-5 pb-14 lg:grid-cols-2 lg:px-8">
+      <section className="mx-auto grid max-w-[1680px] gap-6 px-5 pb-14 lg:grid-cols-2 lg:px-12 2xl:px-16">
         <Card>
           <CardHeader title="关联公开成果" description="仅展示同项目下已公开的 Publications" />
           <div className="space-y-3">
             {relatedPublications.length > 0 ? relatedPublications.map((publication) => (
-              <Link key={publication.id} href={`/publications/${publication.slug}`} className="flex items-center justify-between gap-3 rounded-2xl bg-earth-50 p-4 transition hover:bg-earth-100">
+              <Link key={publication.id} href={`/publications/${publication.slug}`} className="flex items-center justify-between gap-3 rounded-2xl bg-blue-50 p-4 transition hover:bg-blue-100">
                 <div>
-                  <p className="font-semibold text-earth-950">{publication.title}</p>
+                  <p className="font-semibold text-navy-950">{publication.title}</p>
                   <p className="mt-1 line-clamp-2 text-sm leading-6 text-stone-600">{publication.summary}</p>
                 </div>
-                <ArrowRight className="shrink-0 text-earth-800" size={16} />
+                <ArrowRight className="shrink-0 text-blue-700" size={16} />
               </Link>
             )) : <p className="text-sm leading-7 text-stone-500">暂无关联公开成果。</p>}
           </div>
@@ -121,12 +121,12 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
           <CardHeader title="关联公开知识文章" description="仅展示同项目下已公开的 Knowledge" />
           <div className="space-y-3">
             {relatedKnowledge.length > 0 ? relatedKnowledge.map((note) => (
-              <Link key={note.id} href={`/knowledge/${note.slug}`} className="flex items-center justify-between gap-3 rounded-2xl bg-sage-50 p-4 transition hover:bg-sage-100">
+              <Link key={note.id} href={`/knowledge/${note.slug}`} className="flex items-center justify-between gap-3 rounded-2xl bg-blue-50 p-4 transition hover:bg-blue-100">
                 <div>
-                  <p className="font-semibold text-earth-950">{note.title}</p>
+                  <p className="font-semibold text-navy-950">{note.title}</p>
                   <p className="mt-1 text-sm text-stone-500">{note.category}</p>
                 </div>
-                <ArrowRight className="shrink-0 text-sage-700" size={16} />
+                <ArrowRight className="shrink-0 text-blue-700" size={16} />
               </Link>
             )) : <p className="text-sm leading-7 text-stone-500">暂无关联公开知识文章。</p>}
           </div>

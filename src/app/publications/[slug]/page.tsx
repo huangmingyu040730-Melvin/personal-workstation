@@ -54,9 +54,9 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
   return (
     <PublicShell>
       <PublicPageHero eyebrow={getPublicationTypeLabel(publication.publication_type)} title={publication.title} description={publication.summary} />
-      <section className="mx-auto grid max-w-[1440px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.38fr] lg:px-8">
+      <section className="mx-auto grid max-w-[1680px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.38fr] lg:px-12 2xl:px-16">
         <div className="space-y-5">
-          <Link href="/publications" className="inline-flex items-center gap-2 text-sm font-semibold text-earth-800 hover:text-earth-950">
+          <Link href="/publications" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
             <ArrowLeft size={16} />
             返回公开成果
           </Link>
@@ -81,7 +81,7 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
               <div className="flex justify-between gap-4">
                 <dt className="text-stone-500">关联项目</dt>
                 <dd className="text-right font-medium text-stone-800">
-                  {publication.projects ? <Link href={`/projects/${publication.projects.slug}`} className="text-earth-800 hover:text-earth-950">{publication.projects.title}</Link> : "未公开关联"}
+                  {publication.projects ? <Link href={`/projects/${publication.projects.slug}`} className="text-blue-700 hover:text-blue-800">{publication.projects.title}</Link> : "未公开关联"}
                 </dd>
               </div>
               <div className="flex justify-between gap-4"><dt className="text-stone-500">精选</dt><dd className="font-medium text-stone-800">{publication.is_featured ? "是" : "否"}</dd></div>
@@ -91,22 +91,22 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
           <Card>
             <CardHeader title="标签" />
             <div className="flex flex-wrap gap-2">
-              {publication.tags.length > 0 ? publication.tags.map((tag) => <span key={tag} className="rounded-full bg-earth-50 px-2.5 py-1 text-xs font-medium text-earth-800">{tag}</span>) : <p className="text-sm text-stone-500">暂无标签</p>}
+              {publication.tags.length > 0 ? publication.tags.map((tag) => <span key={tag} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">{tag}</span>) : <p className="text-sm text-stone-500">暂无标签</p>}
             </div>
           </Card>
         </div>
       </section>
       {relatedKnowledge.length > 0 ? (
-        <section className="mx-auto max-w-[1440px] px-5 pb-14 lg:px-8">
+        <section className="mx-auto max-w-[1680px] px-5 pb-14 lg:px-12 2xl:px-16">
           <Card>
             <CardHeader title="相关公开知识文章" description="基于同一公开关联项目展示，不包含私密或链接可见内容。" />
             <div className="grid gap-3 md:grid-cols-3">
               {relatedKnowledge.map((note) => (
-                <Link key={note.id} href={`/knowledge/${note.slug}`} className="rounded-2xl bg-sage-50 p-4 transition hover:bg-sage-100">
-                  <p className="font-semibold text-earth-950">{note.title}</p>
+                <Link key={note.id} href={`/knowledge/${note.slug}`} className="rounded-2xl bg-blue-50 p-4 transition hover:bg-blue-100">
+                  <p className="font-semibold text-navy-950">{note.title}</p>
                   <p className="mt-1 text-sm text-stone-500">{note.category}</p>
                   {note.excerpt ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{note.excerpt}</p> : null}
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-sage-700">阅读 <ArrowRight size={15} /></span>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">阅读 <ArrowRight size={15} /></span>
                 </Link>
               ))}
             </div>

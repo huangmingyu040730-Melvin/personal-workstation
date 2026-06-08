@@ -26,17 +26,17 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
         title="公开知识文章"
         description="浏览已公开的研究笔记、工具方法、阅读沉淀与知识工作流。这里只展示明确公开的文章。"
       />
-      <section className="mx-auto max-w-[1536px] px-5 py-10 lg:px-10 xl:px-12">
-        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/[.82] p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
+      <section className="mx-auto max-w-[1680px] px-5 py-10 lg:px-12 2xl:px-16">
+        <form className="mb-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
           <label className="relative">
-            <Search className="pointer-events-none absolute left-3 top-3 text-stone-400" size={16} />
-            <input name="q" defaultValue={q} placeholder="搜索标题、摘要、正文或标签..." className="h-10 w-full rounded-2xl border border-earth-100 bg-white pl-9 pr-3 text-sm text-earth-950 outline-none transition focus:border-earth-300" />
+            <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
+            <input name="q" defaultValue={q} placeholder="搜索标题、摘要、正文或标签..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-navy-950 outline-none transition focus:border-blue-300" />
           </label>
-          <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-earth-100 bg-white px-3 text-sm text-earth-950">
+          <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
             <option value="all">全部分类</option>
             {knowledgeCategories.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
-          <button className="h-10 rounded-2xl bg-earth-900 px-5 text-sm font-semibold text-paper-50 transition hover:bg-earth-950">筛选</button>
+          <button className="h-10 rounded-2xl bg-navy-950 px-5 text-sm font-semibold text-white transition hover:bg-blue-800">筛选</button>
         </form>
         <PublicListToolbar count={notes.length} active={hasActiveFilters} clearHref="/knowledge" label="公开文章" />
 
