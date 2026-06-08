@@ -26,8 +26,8 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
         title="公开知识文章"
         description="浏览已公开的研究笔记、工具方法、阅读沉淀与知识工作流。这里只展示明确公开的文章。"
       />
-      <section className="mx-auto max-w-[1320px] px-5 py-10 lg:px-8">
-        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/82 p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
+      <section className="mx-auto max-w-[1536px] px-5 py-10 lg:px-10 xl:px-12">
+        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/[.82] p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
           <label className="relative">
             <Search className="pointer-events-none absolute left-3 top-3 text-stone-400" size={16} />
             <input name="q" defaultValue={q} placeholder="搜索标题、摘要、正文或标签..." className="h-10 w-full rounded-2xl border border-earth-100 bg-white pl-9 pr-3 text-sm text-earth-950 outline-none transition focus:border-earth-300" />

@@ -50,7 +50,7 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
   return (
     <PublicShell>
       <PublicPageHero eyebrow={note.category} title={note.title} description={note.excerpt ?? "公开知识文章"} />
-      <section className="mx-auto grid max-w-[1320px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.35fr] lg:px-8">
+      <section className="mx-auto grid max-w-[1440px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.35fr] lg:px-8">
         <div className="space-y-5">
           <Link href="/knowledge" className="inline-flex items-center gap-2 text-sm font-semibold text-sage-700 hover:text-sage-900">
             <ArrowLeft size={16} />
@@ -87,7 +87,7 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
         </div>
       </section>
       {relatedNotes.length > 0 ? (
-        <section className="mx-auto max-w-[1320px] px-5 pb-14 lg:px-8">
+        <section className="mx-auto max-w-[1440px] px-5 pb-14 lg:px-8">
           <Card>
             <CardHeader title="相关公开知识文章" description="优先展示同项目或同分类的公开文章。" />
             <div className="grid gap-3 md:grid-cols-3">

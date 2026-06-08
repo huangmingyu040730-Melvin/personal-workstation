@@ -49,7 +49,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
   return (
     <PublicShell>
       <PublicPageHero eyebrow={skill.category} title={skill.name} description={skill.description} />
-      <section className="mx-auto grid max-w-[1320px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.38fr] lg:px-8">
+      <section className="mx-auto grid max-w-[1440px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.38fr] lg:px-8">
         <div className="space-y-5">
           <Link href="/skills" className="inline-flex items-center gap-2 text-sm font-semibold text-earth-800 hover:text-earth-950">
             <ArrowLeft size={16} />

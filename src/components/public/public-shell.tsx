@@ -15,8 +15,8 @@ const navItems = [
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-paper-50 text-earth-950">
-      <header className="sticky top-0 z-20 border-b border-earth-100 bg-paper-50/92 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1320px] flex-col gap-4 px-5 py-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+      <header className="sticky top-0 z-20 border-b border-earth-100 bg-paper-50/[.92] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1536px] flex-col gap-4 px-5 py-5 lg:flex-row lg:items-center lg:justify-between lg:px-10 xl:px-12">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-earth-900 text-sm font-semibold text-paper-50 shadow-sm">
               {profile.avatarInitials}
@@ -28,7 +28,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           </Link>
           <nav className="flex max-w-full flex-wrap items-center gap-2">
             {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className="rounded-full px-3 py-2 text-sm font-medium text-stone-600 transition hover:bg-earth-100/70 hover:text-earth-800">
+              <Link key={item.href} href={item.href} className="border-b border-transparent px-3 py-2 text-sm font-medium text-stone-600 transition hover:border-earth-700 hover:bg-earth-100/70 hover:text-earth-800">
                 {item.label}
               </Link>
             ))}
@@ -36,7 +36,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               管理员登录
               <ArrowRight size={15} />
             </Link>
-            <Link href="/viewer/login" className="inline-flex items-center gap-2 rounded-full bg-earth-800 px-3 py-2 text-sm font-semibold text-paper-50 shadow-sm transition hover:bg-earth-950">
+            <Link href="/viewer/login" className="inline-flex items-center gap-2 rounded-full bg-sage-900 px-3 py-2 text-sm font-semibold text-paper-50 shadow-sm transition hover:bg-earth-950">
               授权登录
               <ArrowRight size={15} />
             </Link>
@@ -45,7 +45,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       </header>
       {children}
       <footer className="border-t border-earth-100 bg-[#f6efe6]">
-        <div className="mx-auto flex max-w-[1320px] flex-col gap-4 px-5 py-9 text-sm text-stone-500 md:flex-row md:items-center md:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-[1536px] flex-col gap-4 px-5 py-9 text-sm text-stone-500 md:flex-row md:items-center md:justify-between lg:px-10 xl:px-12">
           <p>黄铭语公开研究工作站 · 仅展示明确设为 public 的研究内容</p>
           <div className="flex flex-wrap gap-3">
             <Link href="/about" className="font-medium text-stone-600 hover:text-earth-800">关于我</Link>
@@ -70,7 +70,7 @@ export function PublicPageHero({
 }) {
   return (
     <section className="border-b border-earth-100 bg-[#f8f0e7]">
-      <div className="public-reveal mx-auto max-w-[1320px] px-5 py-12 lg:px-8">
+      <div className="public-reveal mx-auto max-w-[1536px] px-5 py-12 lg:px-10 xl:px-12">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-earth-700">{eyebrow}</p>
         <h1 className="mt-3 max-w-5xl text-3xl font-semibold tracking-normal text-earth-950 md:text-5xl">{title}</h1>
         <p className="mt-4 max-w-3xl text-base leading-8 text-stone-600">{description}</p>

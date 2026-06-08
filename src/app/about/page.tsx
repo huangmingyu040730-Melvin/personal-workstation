@@ -35,8 +35,8 @@ export default function AboutPage() {
         description="学生，关注投资研究、量化策略、AI 辅助研究流程和个人知识系统。这个网站是我的公开研究工作站，也是私密数字资产后台的外部窗口。"
       />
 
-      <section className="mx-auto grid max-w-[1320px] gap-6 px-5 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-        <Card className="border-earth-100 bg-white/86 shadow-soft">
+      <section className="mx-auto grid max-w-[1536px] gap-6 px-5 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-10 xl:px-12">
+        <Card className="finance-card-pattern border-earth-100 bg-white/[.86] shadow-soft">
           <CardHeader title="个人定位" />
           <div className="space-y-4 text-sm leading-7 text-stone-600">
             <p>
@@ -48,7 +48,7 @@ export default function AboutPage() {
           </div>
         </Card>
 
-        <Card className="border-earth-100 bg-white/86 shadow-soft">
+        <Card className="finance-card-pattern border-earth-100 bg-white/[.86] shadow-soft">
           <CardHeader title="这个网站是什么" />
           <div className="grid gap-3 sm:grid-cols-2">
             {[
@@ -69,7 +69,7 @@ export default function AboutPage() {
         </Card>
       </section>
 
-      <section className="mx-auto max-w-[1320px] px-5 pb-10 lg:px-8">
+      <section className="mx-auto max-w-[1536px] px-5 pb-10 lg:px-10 xl:px-12">
         <PublicSectionHeader
           eyebrow="Research Focus"
           title="研究方向"
@@ -77,18 +77,18 @@ export default function AboutPage() {
         />
         <div className="grid gap-3 md:grid-cols-5">
           {researchDirections.map((direction) => (
-            <div key={direction} className="rounded-3xl border border-earth-100 bg-white/86 p-4 text-sm font-medium leading-6 text-stone-700 shadow-soft transition hover:-translate-y-0.5 hover:border-earth-300">
+            <div key={direction} className="finance-card-pattern rounded-3xl border border-earth-100 bg-white/[.86] p-4 text-sm font-medium leading-6 text-stone-700 shadow-soft transition hover:-translate-y-0.5 hover:border-earth-300">
               {direction}
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1320px] px-5 pb-14 lg:px-8">
+      <section className="mx-auto max-w-[1536px] px-5 pb-14 lg:px-10 xl:px-12">
         <PublicSectionHeader eyebrow="Explore" title="当前公开内容入口" />
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {publicEntrances.map((item) => (
-            <Link key={item.href} href={item.href} className="group rounded-3xl border border-earth-100 bg-white/86 p-5 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-earth-300 hover:shadow-warm">
+            <Link key={item.href} href={item.href} className="finance-card-pattern group rounded-3xl border border-earth-100 bg-white/[.86] p-5 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-earth-300 hover:shadow-warm">
               <p className="font-semibold text-earth-950">{item.title}</p>
               <p className="mt-2 text-sm leading-6 text-stone-600">{item.description}</p>
               <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-earth-800">

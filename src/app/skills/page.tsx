@@ -26,8 +26,8 @@ export default async function PublicSkillsPage({ searchParams }: { searchParams:
         title="公开 Skill 库"
         description="浏览已公开的 AI 辅助研究、写作、数据分析和知识工作流 Skill。这里只展示适合公开的 Skill 信息。"
       />
-      <section className="mx-auto max-w-[1320px] px-5 py-10 lg:px-8">
-        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/82 p-4 shadow-soft md:grid-cols-[1fr_220px_auto]">
+      <section className="mx-auto max-w-[1536px] px-5 py-10 lg:px-10 xl:px-12">
+        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/[.82] p-4 shadow-soft md:grid-cols-[1fr_220px_auto]">
           <label className="relative">
             <Search className="pointer-events-none absolute left-3 top-3 text-stone-400" size={16} />
             <input name="q" defaultValue={q} placeholder="搜索 Skill 名称、说明、平台..." className="h-10 w-full rounded-2xl border border-earth-100 bg-white pl-9 pr-3 text-sm text-earth-950 outline-none transition focus:border-earth-300" />

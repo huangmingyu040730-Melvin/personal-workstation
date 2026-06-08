@@ -35,7 +35,7 @@ function TagList({ tags, tone = "slate", limit = 4 }: { tags: string[]; tone?: "
 export function PublicProjectCard({ project }: { project: ProjectRecord }) {
   return (
     <Link href={`/projects/${project.slug}`} className="group block h-full">
-      <Card className="public-reveal flex h-full flex-col border-earth-100 bg-white/88 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-earth-300 hover:shadow-warm">
+      <Card className="finance-card-pattern public-reveal flex h-full flex-col border-earth-100 bg-white/[.88] shadow-soft transition duration-300 hover:-translate-y-1 hover:border-earth-300 hover:shadow-warm">
         <div className="mb-3 flex flex-wrap gap-2">
           {project.is_featured ? <FeaturedPill /> : null}
           <StatusBadge status={project.status} />
@@ -62,7 +62,7 @@ export function PublicProjectCard({ project }: { project: ProjectRecord }) {
 export function PublicPublicationCard({ publication }: { publication: PublicationRecord }) {
   return (
     <Link href={`/publications/${publication.slug}`} className="group block h-full">
-      <Card className="public-reveal flex h-full flex-col border-earth-100 bg-white/88 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-earth-300 hover:shadow-warm">
+      <Card className="finance-card-pattern public-reveal flex h-full flex-col border-earth-100 bg-white/[.88] shadow-soft transition duration-300 hover:-translate-y-1 hover:border-earth-300 hover:shadow-warm">
         <div className="mb-3 flex flex-wrap gap-2">
           {publication.is_featured ? <FeaturedPill /> : null}
           <span className="rounded-full bg-sage-50 px-2.5 py-1 text-xs font-medium text-sage-700">{getPublicationTypeLabel(publication.publication_type)}</span>
@@ -87,7 +87,7 @@ export function PublicPublicationCard({ publication }: { publication: Publicatio
 export function PublicSkillCard({ skill }: { skill: SkillRecord }) {
   return (
     <Link href={`/skills/${skill.slug}`} className="group block h-full">
-      <Card className="public-reveal relative flex h-full flex-col overflow-hidden border-earth-100 bg-white/88 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-sage-600/40 hover:shadow-warm">
+      <Card className="finance-card-pattern public-reveal relative flex h-full flex-col overflow-hidden border-earth-100 bg-white/[.88] shadow-soft transition duration-300 hover:-translate-y-1 hover:border-sage-600/40 hover:shadow-warm">
         <div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-sage-100/70" />
         <div className="relative">
           <div className="mb-4 flex flex-wrap gap-2">
@@ -126,7 +126,7 @@ export function PublicSkillCard({ skill }: { skill: SkillRecord }) {
 export function PublicKnowledgeCard({ note }: { note: KnowledgeNoteRecord }) {
   return (
     <Link href={`/knowledge/${note.slug}`} className="group block h-full">
-      <Card className="public-reveal flex h-full flex-col border-earth-100 bg-white/88 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-sage-600/40 hover:shadow-warm">
+      <Card className="finance-card-pattern public-reveal flex h-full flex-col border-earth-100 bg-white/[.88] shadow-soft transition duration-300 hover:-translate-y-1 hover:border-sage-600/40 hover:shadow-warm">
         <div className="flex gap-3">
           <BookOpen className="mt-1 shrink-0 text-sage-700" size={18} />
           <div className="min-w-0">

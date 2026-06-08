@@ -26,8 +26,8 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
         title="公开学术成果"
         description="浏览已公开的研究报告、论文草稿、策略分析与阅读综述。附件仍保持私密，不在公开页面提供下载。"
       />
-      <section className="mx-auto max-w-[1320px] px-5 py-10 lg:px-8">
-        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/82 p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
+      <section className="mx-auto max-w-[1536px] px-5 py-10 lg:px-10 xl:px-12">
+        <form className="mb-6 grid gap-3 rounded-3xl border border-earth-100 bg-white/[.82] p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
           <label className="relative">
             <Search className="pointer-events-none absolute left-3 top-3 text-stone-400" size={16} />
             <input name="q" defaultValue={q} placeholder="搜索成果标题、简介、摘要或标签..." className="h-10 w-full rounded-2xl border border-earth-100 bg-white pl-9 pr-3 text-sm text-earth-950 outline-none transition focus:border-earth-300" />

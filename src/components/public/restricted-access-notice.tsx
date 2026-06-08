@@ -13,7 +13,7 @@ export function RestrictedAccessNotice({
 }) {
   return (
     <section className="mx-auto max-w-3xl px-5 py-14 lg:px-8">
-      <Card className="border-earth-100 bg-white/86 text-center shadow-soft">
+      <Card className="border-earth-100 bg-white/[.86] text-center shadow-soft">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-earth-100 text-earth-800">
           <LockKeyhole size={24} />
         </div>

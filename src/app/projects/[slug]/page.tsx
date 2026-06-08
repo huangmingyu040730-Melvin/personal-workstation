@@ -58,7 +58,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
   return (
     <PublicShell>
       <PublicPageHero eyebrow="Research Project" title={project.title} description={project.summary} />
-      <section className="mx-auto grid max-w-[1320px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.42fr] lg:px-8">
+      <section className="mx-auto grid max-w-[1440px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.42fr] lg:px-8">
         <div className="space-y-5">
           <Link href="/projects" className="inline-flex items-center gap-2 text-sm font-semibold text-earth-800 hover:text-earth-950">
             <ArrowLeft size={16} />
@@ -102,7 +102,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
           </Card>
         </div>
       </section>
-      <section className="mx-auto grid max-w-[1320px] gap-6 px-5 pb-14 lg:grid-cols-2 lg:px-8">
+      <section className="mx-auto grid max-w-[1440px] gap-6 px-5 pb-14 lg:grid-cols-2 lg:px-8">
         <Card>
           <CardHeader title="关联公开成果" description="仅展示同项目下已公开的 Publications" />
           <div className="space-y-3">

@@ -54,7 +54,7 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
   return (
     <PublicShell>
       <PublicPageHero eyebrow={getPublicationTypeLabel(publication.publication_type)} title={publication.title} description={publication.summary} />
-      <section className="mx-auto grid max-w-[1320px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.38fr] lg:px-8">
+      <section className="mx-auto grid max-w-[1440px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.38fr] lg:px-8">
         <div className="space-y-5">
           <Link href="/publications" className="inline-flex items-center gap-2 text-sm font-semibold text-earth-800 hover:text-earth-950">
             <ArrowLeft size={16} />
@@ -97,7 +97,7 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
         </div>
       </section>
       {relatedKnowledge.length > 0 ? (
-        <section className="mx-auto max-w-[1320px] px-5 pb-14 lg:px-8">
+        <section className="mx-auto max-w-[1440px] px-5 pb-14 lg:px-8">
           <Card>
             <CardHeader title="相关公开知识文章" description="基于同一公开关联项目展示，不包含私密或链接可见内容。" />
             <div className="grid gap-3 md:grid-cols-3">
