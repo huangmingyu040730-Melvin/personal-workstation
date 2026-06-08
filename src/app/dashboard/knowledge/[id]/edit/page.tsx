@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { updateKnowledgeAction } from "@/actions/knowledge";
 import { AppShell } from "@/components/app-shell";
-import { AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
 import { KnowledgeForm } from "@/components/forms/knowledge-form";
 import { PageHeader } from "@/components/page-header";
 import { getFormError } from "@/lib/forms";
@@ -26,7 +26,22 @@ export default async function EditKnowledgePage({
     <AppShell>
       <AdminPageSurface>
         <PageHeader eyebrow="Knowledge Base" title="编辑知识笔记" description="保存后会刷新知识库列表与 Dashboard 最近笔记。" />
-        <AdminFormSurface>
+        <AdminFormSurface
+          sidebar={
+            <>
+              <AdminFormHelpCard
+                title="编辑知识笔记"
+                description="保存后会刷新知识库、Dashboard 最近笔记和公开内容。"
+                items={["更新分类和标签前先确认检索体验。", "公开文章建议保留清晰摘要。", "Markdown 会以安全文本方式展示。"]}
+              />
+              <AdminFormHelpCard
+                title="内容质量"
+                tone="emerald"
+                items={["一篇文章聚焦一个主题。", "优先沉淀可复用方法论。", "引用外部事实时保留来源意识。"]}
+              />
+            </>
+          }
+        >
           <KnowledgeForm action={updateKnowledgeAction.bind(null, note.id)} note={note} projects={projects} error={getFormError(query)} />
         </AdminFormSurface>
       </AdminPageSurface>

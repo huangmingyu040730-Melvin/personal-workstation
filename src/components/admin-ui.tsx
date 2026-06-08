@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Inbox, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Inbox, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function AdminPageSurface({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -53,8 +53,56 @@ export function AdminContentCard({ children, className, href }: { children: Reac
   return <div className={classes}>{children}</div>;
 }
 
-export function AdminFormSurface({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("max-w-5xl space-y-5", className)}>{children}</div>;
+export function AdminFormSurface({
+  children,
+  className,
+  sidebar
+}: {
+  children: React.ReactNode;
+  className?: string;
+  sidebar?: React.ReactNode;
+}) {
+  return (
+    <div className={cn("grid max-w-[1500px] gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start", className)}>
+      <div className="min-w-0 space-y-5">{children}</div>
+      {sidebar ? <aside className="hidden space-y-4 xl:sticky xl:top-24 xl:block">{sidebar}</aside> : null}
+    </div>
+  );
+}
+
+export function AdminFormHelpCard({
+  title,
+  description,
+  items,
+  tone = "blue"
+}: {
+  title: string;
+  description?: string;
+  items?: string[];
+  tone?: "blue" | "slate" | "emerald";
+}) {
+  const toneClass = {
+    blue: "border-blue-100 bg-blue-50/70 text-blue-800",
+    slate: "border-slate-200 bg-white text-slate-700",
+    emerald: "border-emerald-100 bg-emerald-50/70 text-emerald-800"
+  }[tone];
+
+  return (
+    <section className={cn("rounded-3xl border p-5 shadow-soft", toneClass)}>
+      <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
+      {description ? <p className="mt-2 text-sm leading-6">{description}</p> : null}
+      {items && items.length > 0 ? (
+        <ul className="mt-4 space-y-3 text-sm leading-6">
+          {items.map((item) => (
+            <li key={item} className="flex gap-2">
+              <CheckCircle2 className="mt-1 shrink-0" size={15} />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
 }
 
 export function AdminEmptyState({
