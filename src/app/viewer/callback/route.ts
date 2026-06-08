@@ -29,7 +29,11 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const authError = requestUrl.searchParams.get("error");
-  const next = getSafeViewerRedirect(requestUrl.searchParams.get("next") ?? request.cookies.get("viewer-next")?.value);
+  const urlNext = requestUrl.searchParams.get("next");
+  const cookieNext = request.cookies.get("viewer-next")?.value;
+  const next = getSafeViewerRedirect(urlNext ?? cookieNext);
+
+  console.info("viewer callback next path", { next, source: urlNext ? "url" : cookieNext ? "cookie" : "default" });
 
   if (authError) {
     return redirectToViewerLogin(request, next, "expired");

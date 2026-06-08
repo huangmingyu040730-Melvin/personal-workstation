@@ -37,10 +37,12 @@ export async function viewerLoginAction(_previousState: ViewerLoginState, formDa
   }
 
   const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? "";
+  const origin = getRequestOrigin(headerStore);
   const nextPath = getSafeViewerRedirect(parsed.data.next);
   const emailRedirectTo = origin ? buildViewerCallbackUrl(origin, nextPath) : undefined;
   const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
+  console.info("viewer login next path", { nextPath, hasRedirectOrigin: Boolean(origin) });
 
   const { data: canRequestLogin, error: grantCheckError } = await supabase.rpc("can_request_viewer_login", {
     viewer_email: normalizedEmail
@@ -84,4 +86,21 @@ function buildViewerCallbackUrl(origin: string, nextPath: string) {
   const callbackUrl = new URL("/viewer/callback", origin);
   callbackUrl.searchParams.set("next", nextPath);
   return callbackUrl.toString();
+}
+
+function getRequestOrigin(headerStore: Headers) {
+  const origin = headerStore.get("origin");
+
+  if (origin) {
+    return origin;
+  }
+
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+
+  if (!host) {
+    return "";
+  }
+
+  const protocol = headerStore.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${protocol}://${host}`;
 }
