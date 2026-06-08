@@ -107,10 +107,14 @@ Phase 2J-A 合并后需执行：
 
 - `0007_profile_public_fields.sql`
 
+Phase 2J-B 合并后需执行：
+
+- `0008_calendar_events.sql`
+
 规则：
 
 - 已执行 migration 不应修改或重跑。
-- 执行 0007 后，后续数据库变更应新增 `0008_*`。
+- 执行 0008 后，后续数据库变更应新增 `0009_*`。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Next Steps
@@ -118,13 +122,11 @@ Phase 2J-A 合并后需执行：
 建议顺序：
 
 1. Phase 2I：Viewer 登录与 restricted 访问专项修复。
-2. Phase 2J-A：Profile 真实编辑能力。
-3. Phase 2J-B：Calendar 基础能力。
-4. Phase 2K：自动化与市场简报。
-5. Phase 2L：Notion / Google Calendar / AI 辅助研究。
+2. Phase 2K：自动化与市场简报。
+3. Phase 2L：Notion / Google Calendar / AI 辅助研究。
 
 ## Stale Or Superseded Notes
 
-- “页面数据仍保持 mock data 预览”已过时。Projects、Knowledge、Skills、Publications、Documents、Access Requests 与 Access Grants 已使用真实 Supabase 数据或真实表结构；Profile 在 Phase 2J-A 接入真实编辑，Calendar 仍有占位或 mock 部分。
+- “页面数据仍保持 mock data 预览”已过时。Projects、Knowledge、Skills、Publications、Documents、Access Requests、Access Grants、Profile 与 Calendar 已使用真实 Supabase 数据或真实表结构；公开 `/calendar` 仍保留占位展示，真实管理入口为 `/dashboard/calendar`。
 - “restricted 属于后续规划，尚未进入 schema / RLS / UI”已过时。restricted 基础代码和 migration 已完成，但 viewer 登录链路仍待修。
 - “后台页面仍位于公开候选路径”已过时。主要后台管理页面已迁移到 `/dashboard/...`。

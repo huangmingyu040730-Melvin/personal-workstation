@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。Calendar CRUD、附件对外授权下载和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar 和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -45,7 +45,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 - `0005_restricted_content_access.sql`
 - `0006_viewer_login_grant_check.sql`
 
-Phase 2J-A 合并后还需要执行 `0007_profile_public_fields.sql`。已执行过的 migration 不应修改或重跑。执行 0007 后，后续数据库变更应新增 `0008_*`，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2J-B 合并后还需要执行 `0008_calendar_events.sql`。已执行过的 migration 不应修改或重跑。执行 0008 后，后续数据库变更应新增 `0009_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -91,7 +91,7 @@ supabase/migrations/0001_initial_schema.sql
 - 管理员身份只在私密的 `admin_users` 表中管理。
 - 公开访问通过 `visibility = 'public'` 控制。
 - 管理写权限通过 `public.is_admin()` 控制。
-- `calendar_events`、`documents`、`activity_logs` 不向匿名访客开放读取，可保留 `owner_id` 或 `actor_id` 用于后续后台归属和审计。
+- `calendar_events` 初始不向匿名访客开放读取；Phase 2J-B 的 0008 仅允许匿名读取 `visibility = 'public'` 的日程。`documents`、`activity_logs` 不向匿名访客开放读取，可保留 `owner_id` 或 `actor_id` 用于后续后台归属和审计。
 
 再运行或复制执行：
 
@@ -205,7 +205,7 @@ supabase/migrations/0006_viewer_login_grant_check.sql
 
 - 0006 已在当前生产 Supabase 项目执行。
 - 0006 只提供登录前授权检查 RPC，不修复全部 Viewer magic link/session 问题。
-- 后续如需数据库变更，必须新增新编号 migration，不得修改或重跑 0001-0006。
+- 后续如需数据库变更，必须新增新编号 migration，不得修改或重跑已执行过的旧 migration。
 
 Phase 2J-A 新增 Profile 真实编辑。合并对应代码后，新建环境或生产环境需要继续运行：
 
@@ -226,6 +226,28 @@ Profile 权限边界：
 - 管理员仍通过 `public.is_admin()` 写入 Profile。
 - `contact` 与 `social_links` 只应保存愿意公开展示的信息。
 - Profile 不保存或暴露管理员 Auth UUID。
+
+Phase 2J-B 新增站内 Calendar CRUD。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0008_calendar_events.sql
+```
+
+`0008` 会：
+
+- 为 `public.calendar_events` 补充 `location`、`publication_id`、`knowledge_note_id` 与 `skill_id` 字段。
+- 为 `event_type` 增加默认值与允许值约束：`general`、`meeting`、`research`、`deadline`、`review`、`reminder`。
+- 增加 publication、knowledge、skill、visibility 与 starts_at 相关索引。
+- 向 `anon` 授予 `calendar_events` 的 `select` 表级权限。
+- 增加 public 日程读取 policy：只有 `visibility = 'public'` 的日程可被公开读取。
+
+Calendar 权限边界：
+
+- 管理员仍通过 `public.is_admin()` 创建、编辑、删除所有日程。
+- 日程默认 `private`，公开页面本阶段不展示 Calendar 数据。
+- `private` 日程仍仅管理员可读。
+- `public` 日程可被 RLS 允许公开读取，但不会出现在 sitemap 或公开内容列表。
+- Calendar 不修改 Documents、Storage、Viewer、restricted grants 或 Profile 主流程。
 
 ## 创建管理员
 
@@ -310,10 +332,11 @@ Phase 2C 使用：
 - Access Requests 已接入真实提交、列表、详情与处理状态更新流程。
 - Restricted Access 依赖 0005 migration；未执行 0005 时无法保存 `restricted` visibility，也无法创建或读取访问授权。
 - Viewer login grant check 依赖 0006 migration；未执行 0006 时 `/viewer/login` 的授权检查 RPC 不存在。
-- Calendar 仍从 `src/lib/mock-data.ts` 或静态占位渲染；Profile 已由 `/dashboard/profile` 真实编辑并供 `/about` 读取公开字段。
+- Calendar 后台已由 `/dashboard/calendar` 接入真实 `calendar_events` CRUD；未执行 0008 时，新字段保存会失败，Dashboard 近期日程会降级为空或只读取旧字段。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。
+- Calendar 增强字段与 public 读取 policy 依赖 0008 migration；未执行 0008 时后台 Calendar 新建/编辑中的地点、成果/知识/Skill 关联与 event type 约束不可用。
 - Supabase 真实端到端登录验证需要配置项目 URL、publishable key、执行迁移并创建管理员后再进行。
 
 ## 验证命令

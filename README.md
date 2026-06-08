@@ -81,7 +81,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。新建环境仍需按顺序执行 0001 至 0007。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。新建环境仍需按顺序执行 0001 至 0008。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -112,7 +112,8 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/access-requests` 访问申请管理
 - `/dashboard/access-grants` 访问授权管理
 - `/dashboard/profile` 个人信息管理
-- `/calendar` 日历占位
+- `/dashboard/calendar` 站内日程管理
+- `/calendar` 公开日历占位
 - `/profile` 兼容跳转到 `/dashboard/profile`
 - `/settings` 设置
 - `/automations` 自动化占位
@@ -133,7 +134,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 下一阶段优先级：
 
 - Phase 2I：Viewer 登录与 restricted 访问专项修复。
-- Phase 2J：Calendar / Profile 基础能力。
+- Phase 2J：Profile 与站内 Calendar 基础能力。
 - Phase 2K：自动化与市场简报。
 - Phase 2L：Notion / Google Calendar / AI 辅助研究。
 
@@ -153,9 +154,10 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
+- Calendar 已接入站内 `calendar_events` CRUD；管理员可在 `/dashboard/calendar` 新建、编辑、删除日程，Dashboard 会展示近期日程。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化；管理后台 UI 已完成工作台式视觉优化。
-- Dashboard 已读取真实项目、笔记、Skill、Publications 与 Activity Logs。
-- Calendar 仍为 mock 或占位展示，真实 CRUD 和外部 API 尚未实现。
+- Dashboard 已读取真实项目、笔记、Skill、Publications、Calendar 与 Activity Logs。
+- Google Calendar、提醒系统和外部日历同步尚未实现。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
 - 文件附件默认比正文内容更严格；即使 Publication 设置为 public，关联 Documents 仍保持 private，本阶段不会在公开页面提供下载入口。
 - Notion 的长期定位是草稿、临时研究笔记、日常记录和协作辅助，不替代个人网站的正式公开门户、权限系统与私密资产库。
@@ -181,7 +183,7 @@ Viewer magic link 登录仍不稳定。Phase 2E-B 已实现 restricted 授权基
 - `publications`：成果标题、slug、摘要、封面、精选标记、附件路径与关联项目。
 - `knowledge_notes`：笔记标题、slug、分类、正文、精选标记与关联项目。
 - `skills`：Skill 名称、slug、说明、输入输出描述、使用指南、Skill.md 内容、仓库链接、版本、状态与精选标记。
-- `calendar_events`：日程时间、类型、可见性与关联项目。
+- `calendar_events`：日程时间、类型、地点、可见性与项目 / 成果 / 知识 / Skill 关联。
 - `documents`：文件存储路径、分类、关联实体类型与关联 ID。
 - `activity_logs` 与 `skill_versions`：后续审计与 Skill 版本记录基础。
 - `access_requests`：Phase 2E-A 访问申请记录，包括申请人姓名、邮箱、机构、申请内容、理由、处理状态与管理员备注。

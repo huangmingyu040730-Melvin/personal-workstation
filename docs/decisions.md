@@ -497,7 +497,7 @@
 
 - public 内容、管理员后台、Documents、访问申请与 SEO 不依赖 Viewer 登录。
 - 当前文档必须明确 restricted 基础代码已存在，但 viewer 体验仍是 known issue。
-- 后续如需数据库变更，应新增 `0007_*`，不得修改已执行过的 0001-0006。
+- 后续如需数据库变更，应使用当前最新编号之后的新 migration，不得修改已执行过的旧 migration。
 
 替代说明：
 
@@ -561,3 +561,27 @@
 
 - Phase 2H 只更新文档，不修改业务代码、migration、Auth、RLS、Storage 或 Viewer login。
 - 后续阶段开始前应先阅读 `docs/current-status.md`、`docs/known-issues.md` 和 `docs/roadmap.md`。
+
+## 2026-06-09 - Reuse Calendar Events For Site-Local CRUD
+
+类型：decision
+
+决策：
+
+- Phase 2J-B 复用 0001 中已存在的 `public.calendar_events` 表作为站内日程 CRUD 的基础。
+- 新增 `0008_calendar_events.sql` 只补足缺失字段、索引、event type 约束与 public 日程读取 policy。
+- 后台真实日程管理入口为 `/dashboard/calendar`，公开 `/calendar` 仍保留占位页面。
+- Dashboard 读取真实 `calendar_events` 展示近期日程。
+
+原因：
+
+- 既有 schema 已包含 `calendar_events`、管理员 RLS policy 与 0002 authenticated 表级 CRUD 权限，不需要重建表。
+- 当前目标是站内 Calendar，不接入 Google Calendar、不做提醒系统，也不公开展示私密日程。
+- 最小增量 migration 可以避免修改已执行过的 0001-0007，并保持权限边界清晰。
+
+影响：
+
+- 管理员可创建、编辑、删除日程；日程默认 `private`。
+- public 日程可被 RLS 允许公开读取，但本阶段不会进入公开列表、sitemap 或首页。
+- private 日程仍仅管理员可读。
+- 后续如接入 Google Calendar、提醒系统或公开日历展示，应另开阶段并新增 migration。

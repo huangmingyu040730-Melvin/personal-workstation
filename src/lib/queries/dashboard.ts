@@ -2,6 +2,7 @@ import type { ActivityLogRecord } from "@/lib/content-types";
 import { activityFeed } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 import { countPendingAccessRequests } from "./access-requests";
+import { getUpcomingCalendarEvents } from "./calendar";
 import { countPublicKnowledgeNotes, getRecentKnowledgeNotes } from "./knowledge";
 import { countPublicProjects, getProjects } from "./projects";
 import { getPublicationStats, getRecentPublications } from "./publications";
@@ -30,7 +31,8 @@ export async function getDashboardData() {
     publicProjectCount,
     publicSkillCount,
     publicKnowledgeCount,
-    pendingAccessRequestCount
+    pendingAccessRequestCount,
+    upcomingCalendarEvents
   ] = await Promise.all([
     getProjects(),
     getRecentKnowledgeNotes(4),
@@ -42,7 +44,8 @@ export async function getDashboardData() {
     countPublicProjects(),
     countPublicSkills(),
     countPublicKnowledgeNotes(),
-    countPendingAccessRequests()
+    countPendingAccessRequests(),
+    getUpcomingCalendarEvents(5)
   ]);
 
   const inProgressProjects = projects.filter((project) => project.status === "in_progress");
@@ -62,6 +65,7 @@ export async function getDashboardData() {
       knowledge: publicKnowledgeCount
     },
     pendingAccessRequestCount,
+    upcomingCalendarEvents,
     activityLogs
   };
 }

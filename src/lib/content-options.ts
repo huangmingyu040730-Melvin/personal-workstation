@@ -1,4 +1,4 @@
-import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, SkillStatus } from "./content-types";
+import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -89,6 +89,15 @@ export const accessGrantStatuses: Array<{ value: AccessGrantStatus; label: strin
   { value: "revoked", label: "已撤销" }
 ];
 
+export const calendarEventTypes: Array<{ value: CalendarEventType; label: string }> = [
+  { value: "general", label: "普通事项" },
+  { value: "meeting", label: "会议" },
+  { value: "research", label: "研究" },
+  { value: "deadline", label: "截止日期" },
+  { value: "review", label: "复盘" },
+  { value: "reminder", label: "提醒" }
+];
+
 export function getPublicationTypeLabel(value: string | null | undefined) {
   return publicationTypes.find((item) => item.value === value)?.label ?? "其他";
 }
@@ -115,4 +124,8 @@ export function getAccessGrantContentTypeLabel(value: string | null | undefined)
 
 export function getAccessGrantStatusLabel(value: string | null | undefined) {
   return accessGrantStatuses.find((item) => item.value === value)?.label ?? "未知状态";
+}
+
+export function getCalendarEventTypeLabel(value: string | null | undefined) {
+  return calendarEventTypes.find((item) => item.value === value)?.label ?? "普通事项";
 }

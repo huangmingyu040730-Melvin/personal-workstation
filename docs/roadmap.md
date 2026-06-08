@@ -136,10 +136,10 @@ Notion 可作为草稿、临时研究笔记、日常记录和自动化中间层�
 目标：
 
 - Profile 真实编辑与 About 公开读取。
-- Calendar CRUD。
-- Dashboard 展示近期日程。
+- Calendar 站内 CRUD。
+- Dashboard 近期日程。
 
-Phase 2J-A 聚焦 Profile 真实编辑：后台 `/dashboard/profile` 维护公开资料，公开 `/about` 只读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。Calendar CRUD 仍留在后续 Phase 2J 子阶段。
+Phase 2J-A 已完成 Profile 真实编辑：后台 `/dashboard/profile` 维护公开资料，公开 `/about` 只读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。Phase 2J-B 已完成站内 Calendar CRUD：后台 `/dashboard/calendar` 管理私密为默认的站内日程，Dashboard 展示近期日程。Google Calendar 同步与提醒系统仍留待后续阶段。
 
 ### Phase 2K - 自动化与市场简报
 
