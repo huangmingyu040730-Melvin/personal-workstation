@@ -17,7 +17,19 @@ html {
 body {
   margin: 0;
   background: #f8fafc;
-  color: #0f172a;
+  color: #07152f;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "PingFang SC",
+    "Microsoft YaHei",
+    sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -25,4 +37,71 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-reveal {
+    animation: public-reveal 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .public-reveal-slow {
+    animation: public-reveal 920ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes public-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(24px) scale(0.985);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+.public-display {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "PingFang SC",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+.public-soft-grid {
+  background:
+    radial-gradient(circle at 18% 16%, rgba(37, 99, 235, 0.08), transparent 28rem),
+    radial-gradient(circle at 82% 32%, rgba(99, 102, 241, 0.08), transparent 26rem),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 58%, #f1f5f9 100%);
+}
+
+.public-card-motion {
+  transition:
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 360ms ease,
+    background-color 360ms ease;
+}
+
+.public-card-motion:hover {
+  transform: translateY(-10px) scale(1.012);
+  box-shadow: 0 30px 90px rgba(15, 42, 88, 0.14);
+}
+
+.public-cta-motion {
+  transition:
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 260ms ease,
+    border-color 260ms ease;
+}
+
+.public-cta-motion:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.16);
 }

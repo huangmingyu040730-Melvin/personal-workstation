@@ -12,17 +12,17 @@ export function RestrictedAccessNotice({
   loginHref?: string;
 }) {
   return (
-    <section className="mx-auto max-w-3xl px-6 py-14 lg:px-8">
-      <Card className="text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+    <section className="mx-auto max-w-3xl px-5 py-14 lg:px-8">
+      <Card className="border-slate-200 bg-white text-center shadow-soft">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
           <LockKeyhole size={24} />
         </div>
         <CardHeader title={title} description={description} />
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/access-request" className="rounded-2xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800">
+          <Link href="/access-request" className="public-cta-motion rounded-2xl bg-navy-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-800">
             提交访问申请
           </Link>
-          <Link href={loginHref} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+          <Link href={loginHref} className="public-cta-motion rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700">
             已获授权，邮箱登录
           </Link>
         </div>

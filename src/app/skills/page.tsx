@@ -26,24 +26,24 @@ export default async function PublicSkillsPage({ searchParams }: { searchParams:
         title="公开 Skill 库"
         description="浏览已公开的 AI 辅助研究、写作、数据分析和知识工作流 Skill。这里只展示适合公开的 Skill 信息。"
       />
-      <section className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+      <section className="mx-auto max-w-[1680px] px-5 py-10 lg:px-12 2xl:px-16">
         <form className="mb-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft md:grid-cols-[1fr_220px_auto]">
           <label className="relative">
             <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
-            <input name="q" defaultValue={q} placeholder="搜索 Skill 名称、说明、平台..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-300" />
+            <input name="q" defaultValue={q} placeholder="搜索 Skill 名称、说明、平台..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-navy-950 outline-none transition focus:border-blue-300" />
           </label>
-          <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+          <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
             <option value="all">全部状态</option>
             {skillStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
-          <button className="h-10 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800">筛选</button>
+          <button className="h-10 rounded-2xl bg-navy-950 px-5 text-sm font-semibold text-white transition hover:bg-blue-800">筛选</button>
         </form>
         <PublicListToolbar count={skills.length} active={hasActiveFilters} clearHref="/skills" label="公开 Skill" />
 
         {skills.length === 0 ? (
           <PublicEmptyState title="暂无公开 Skill" description="后续会逐步开放适合对外展示的 AI Skill 与研究工作流。" />
         ) : (
-          <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">
             {skills.map((skill) => (
               <PublicSkillCard key={skill.id} skill={skill} />
             ))}

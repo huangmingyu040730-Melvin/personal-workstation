@@ -49,9 +49,9 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
   return (
     <PublicShell>
       <PublicPageHero eyebrow={skill.category} title={skill.name} description={skill.description} />
-      <section className="mx-auto grid max-w-7xl gap-5 px-6 py-8 lg:grid-cols-[1fr_0.38fr] lg:px-8">
+      <section className="mx-auto grid max-w-[1680px] gap-6 px-5 py-10 lg:grid-cols-[minmax(0,0.98fr)_0.38fr] lg:px-12 2xl:px-16">
         <div className="space-y-5">
-          <Link href="/skills" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900">
+          <Link href="/skills" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
             <ArrowLeft size={16} />
             返回公开 Skill
           </Link>
@@ -63,7 +63,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
           {!skill.content?.trim() && !skill.input_description?.trim() && !skill.output_description?.trim() && !skill.usage_guide?.trim() && !skill.skill_md_content?.trim() ? (
             <Card>
               <CardHeader title="公开说明" />
-              <p className="text-sm leading-7 text-slate-600">该 Skill 的详细使用说明仍在整理中。当前页面先展示公开名称、简介、状态、平台和版本信息。</p>
+              <p className="text-sm leading-7 text-stone-600">该 Skill 的详细使用说明仍在整理中。当前页面先展示公开名称、简介、状态、平台和版本信息。</p>
             </Card>
           ) : null}
         </div>
@@ -72,11 +72,11 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
             <CardHeader title="Skill 状态" />
             <div className="flex items-center justify-between">
               <StatusBadge status={skill.status} />
-              <span className="text-sm font-semibold text-slate-800">{skill.current_version ?? "未设版本"}</span>
+              <span className="text-sm font-semibold text-navy-950">{skill.current_version ?? "未设版本"}</span>
             </div>
             <dl className="mt-5 space-y-3 text-sm">
-              <div className="flex justify-between gap-4"><dt className="text-slate-500">精选</dt><dd className="font-medium text-slate-800">{skill.is_featured ? "是" : "否"}</dd></div>
-              <div className="flex justify-between gap-4"><dt className="text-slate-500">更新</dt><dd className="font-medium text-slate-800">{formatDateTime(skill.updated_at)}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-stone-500">精选</dt><dd className="font-medium text-stone-800">{skill.is_featured ? "是" : "否"}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-stone-500">更新</dt><dd className="font-medium text-stone-800">{formatDateTime(skill.updated_at)}</dd></div>
             </dl>
             {skill.repository_url ? <Link href={skill.repository_url} target="_blank" rel="noreferrer" className="mt-5 block text-sm font-medium text-blue-700">打开公开仓库</Link> : null}
           </Card>
@@ -88,7 +88,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
           </Card>
           <Card>
             <CardHeader title="公开边界" />
-            <p className="text-sm leading-7 text-slate-600">本页不展示后台版本记录、内部日志或私密附件。只有明确设置为公开的 Skill 字段会出现在这里。</p>
+            <p className="text-sm leading-7 text-stone-600">本页不展示后台版本记录、内部日志或私密附件。只有明确设置为公开的 Skill 字段会出现在这里。</p>
           </Card>
         </div>
       </section>
