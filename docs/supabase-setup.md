@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问最小闭环。Calendar CRUD、Profile 真实编辑、附件对外授权下载和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。Calendar CRUD、Profile 真实编辑、附件对外授权下载和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -35,6 +35,17 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 6. 如需使用外部授权访问登录，在 Supabase Auth URL Configuration 中允许生产域名的 `/viewer/callback` 回调地址。
 
 ## 数据库迁移
+
+当前生产 Supabase 项目已按顺序执行：
+
+- `0001_initial_schema.sql`
+- `0002_grant_api_table_privileges.sql`
+- `0003_publications_documents_storage.sql`
+- `0004_access_requests.sql`
+- `0005_restricted_content_access.sql`
+- `0006_viewer_login_grant_check.sql`
+
+已执行过的 migration 不应修改或重跑。后续数据库变更应新增 `0007_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -176,6 +187,26 @@ supabase/migrations/0005_restricted_content_access.sql
 - 外部用户登录使用 Supabase 邮箱 OTP / magic link，只获得普通 authenticated session；后台 `/dashboard` 仍要求 `public.is_admin()`。
 - 普通未授权登录用户不能读取任意 restricted 内容，也不能新增、编辑、删除业务表。
 
+Viewer 登录前授权检查需要继续运行：
+
+```text
+supabase/migrations/0006_viewer_login_grant_check.sql
+```
+
+`0006` 会：
+
+- 创建 `public.can_request_viewer_login(email text)`。
+- 只返回 boolean，不返回任何 grant 数据。
+- 用于 `/viewer/login` 在发送 magic link 前检查该邮箱是否存在 active 且未过期的授权。
+- 向 `anon` 授予执行该函数的权限。
+- 不向 `anon` 开放 `content_access_grants` 的读取权限。
+
+注意：
+
+- 0006 已在当前生产 Supabase 项目执行。
+- 0006 只提供登录前授权检查 RPC，不修复全部 Viewer magic link/session 问题。
+- 后续如需数据库变更，必须新增 `0007_*`，不得修改或重跑 0001-0006。
+
 ## 创建管理员
 
 在 Supabase SQL Editor 中插入管理员 UUID：
@@ -258,6 +289,7 @@ Phase 2C 使用：
 - Documents 已接入真实文件记录、私密上传、短时签名下载和删除流程。
 - Access Requests 已接入真实提交、列表、详情与处理状态更新流程。
 - Restricted Access 依赖 0005 migration；未执行 0005 时无法保存 `restricted` visibility，也无法创建或读取访问授权。
+- Viewer login grant check 依赖 0006 migration；未执行 0006 时 `/viewer/login` 的授权检查 RPC 不存在。
 - Calendar、Profile 仍从 `src/lib/mock-data.ts` 或静态占位渲染。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
@@ -277,4 +309,5 @@ npm run build
 - 查询不到 private 数据：确认当前登录用户是管理员，并确认 RLS migration 已执行。
 - 文件上传失败：确认生产 Supabase 已执行 `0003_publications_documents_storage.sql`，bucket 为 private，且当前用户在 `admin_users` 中。
 - 文件类型被拒绝：确认扩展名和 MIME type 都在白名单中，且文件不超过 20 MB。
+- Viewer 登录失败：已知问题，后续 Phase 2I 专项排查。先确认 0005、0006 已执行，Auth callback URL 已配置，再结合 Supabase Auth 日志与 Vercel Function 日志定位。
 - 本地构建没有 Supabase 环境变量：这是预期行为，未配置时会保留 mock preview。

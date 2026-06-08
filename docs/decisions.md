@@ -476,3 +476,88 @@
 - public 内容更容易被搜索引擎发现，公开列表和详情页拥有更清晰的 canonical 与 Open Graph metadata。
 - restricted 内容仍可保留基础代码，但不会进入 sitemap，也不会生成可索引的具体 metadata。
 - 后续如继续修复 Viewer 登录，应另开 Hotfix，不与 Phase 2F 混合。
+
+## 2026-06-09 - Treat Restricted Access As Foundation With Viewer Login Known Issue
+
+类型：decision
+
+决策：
+
+- Phase 2E-B 的 restricted 授权基础能力保留为当前代码基础。
+- `restricted` visibility、`content_access_grants`、`has_content_access()`、Access Grants、viewer login 和 viewer callback 已进入项目。
+- Viewer magic link 登录仍不稳定，当前冻结继续排查。
+- 后续以 Phase 2I 单独修复 Viewer 登录与 restricted 只读访问稳定性。
+
+原因：
+
+- restricted 权限模型已经具备数据库和页面基础，但真实 viewer 登录链路尚未通过稳定验收。
+- 继续在普通 UI/SEO/文档阶段扩展 viewer 能力会混淆已完成能力和已知问题。
+
+影响：
+
+- public 内容、管理员后台、Documents、访问申请与 SEO 不依赖 Viewer 登录。
+- 当前文档必须明确 restricted 基础代码已存在，但 viewer 体验仍是 known issue。
+- 后续如需数据库变更，应新增 `0007_*`，不得修改已执行过的 0001-0006。
+
+替代说明：
+
+- 本决策替代早期“restricted 仍属纯后续规划”的描述。
+
+## 2026-06-09 - Keep Documents Private Across Public And Restricted Views
+
+类型：decision
+
+决策：
+
+- Documents 和 Storage 附件不随 public 或 restricted 正文开放。
+- 文件下载只通过管理员后台流程生成短时 signed URL。
+- 公开页面、viewer 页面、sitemap 和 robots 不得输出 Storage 路径、signed URL 或附件下载入口。
+
+原因：
+
+- 文件往往比正文包含更多敏感资料。
+- restricted 正文只读授权不等同于附件授权。
+
+影响：
+
+- 即使 Publication 是 public，关联 Documents 仍保持 private。
+- 即使未来 Viewer 可以访问 restricted 正文，也不自动获得 Documents 权限。
+
+## 2026-06-09 - Complete Public And Admin UI Polish Before Next Functional Phase
+
+类型：decision
+
+决策：
+
+- Phase 2G-A 完成公开站点 UI 优化。
+- Phase 2G-B 完成管理后台 UI 优化。
+- 后台新建 / 编辑 / 上传 / 授权页采用更平衡的工作台式布局。
+
+原因：
+
+- 项目已具备核心内容和文件能力，需要在进入下一轮功能前先提升公开展示和后台操作体验。
+- UI polish 不应混入 Auth、RLS、Storage、migration 或 Viewer 登录修复。
+
+影响：
+
+- 后续功能开发应复用已抽取的后台 UI 组件和公开页视觉方向。
+- Phase 2H 只做文档收口，不继续修改业务代码。
+
+## 2026-06-09 - Use Current Status Documents As Handoff Source
+
+类型：decision
+
+决策：
+
+- 新增 `docs/current-status.md` 作为当前项目状态的主要交接文档。
+- `README.md`、`docs/memory.md`、`docs/roadmap.md`、`docs/known-issues.md` 和 `docs/supabase-setup.md` 应与该状态保持一致。
+
+原因：
+
+- 项目已经经历多个阶段，旧文档中存在“后续规划”和“已完成能力”混杂的问题。
+- 后续 Codex 接续开发需要快速区分已完成、已冻结、下一步和安全边界。
+
+影响：
+
+- Phase 2H 只更新文档，不修改业务代码、migration、Auth、RLS、Storage 或 Viewer login。
+- 后续阶段开始前应先阅读 `docs/current-status.md`、`docs/known-issues.md` 和 `docs/roadmap.md`。

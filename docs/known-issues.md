@@ -1,22 +1,44 @@
 # Known Issues
 
-## 2026-06-06 - Viewer Magic Link 登录仍不稳定
+## Viewer magic link 登录问题
 
-状态：待后续单独 Hotfix 排查。
+状态：冻结继续排查，后续单独 Hotfix。
 
-现象：
+当前状态：
 
-- Phase 2E-B 已实现 `restricted` visibility、`content_access_grants`、Viewer 邮箱 magic link 登录入口和受限内容读取基础代码。
-- 生产验证中，已授权邮箱在 `/viewer/login` 仍可能出现“发送登录链接失败”。
-- 已确认该问题不影响公开 public 内容展示、后台管理员 CRUD、Documents 私密文件中心或 Phase 2F 的 sitemap / robots / SEO 工作。
+- Phase 2E-B restricted 授权基础代码已实现。
+- 已实现 `restricted` visibility、`content_access_grants`、`has_content_access()`、后台 Access Grants、viewer login 和 viewer callback。
+- 已尝试 PR #19、PR #20 修复。
+- 目前仍可能出现：
+  - 授权邮箱无法发送 magic link。
+  - magic link 成功但 viewer session 未稳定建立。
+  - 已授权用户仍无法查看 restricted 内容。
+
+当前影响：
+
+- 不影响 public 内容浏览。
+- 不影响管理员后台。
+- 不影响 Documents 私密文件。
+- 不影响访问申请提交与审批。
+- 不影响公开站点 SEO 和 UI。
 
 当前边界：
 
 - 不继续扩展 Viewer login、viewer callback、restricted grants、RLS、Supabase Auth 或 Storage。
 - Documents、signed URL 和 Storage 路径仍不得对 Viewer 或公开访客开放。
-- 后续应单独开 Hotfix，通过 Supabase Auth 日志和 Vercel Function 日志定位 magic link 发送失败的真实原因。
+- restricted 内容基础代码保留，但不作为当前已验收稳定能力。
 
-临时处理：
+后续建议单独开启：
 
-- Phase 2F 继续推进公开站点运营体验、SEO 和内容发现。
-- restricted 内容授权功能保留基础代码，但不作为 Phase 2F 的验收依赖。
+```text
+Phase 2I: Viewer login and restricted access stabilization
+```
+
+该阶段应专项验证：
+
+- 已授权邮箱可以稳定收到 magic link。
+- magic link callback 可以稳定建立 viewer session。
+- 授权用户只能只读访问被授权 restricted 内容。
+- 撤销授权后访问失效。
+- viewer 不能进入后台。
+- viewer 不获得 Documents 或附件下载权限。
