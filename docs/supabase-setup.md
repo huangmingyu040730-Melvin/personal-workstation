@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。Calendar CRUD、Profile 真实编辑、附件对外授权下载和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。Calendar CRUD、附件对外授权下载和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -45,7 +45,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 - `0005_restricted_content_access.sql`
 - `0006_viewer_login_grant_check.sql`
 
-已执行过的 migration 不应修改或重跑。后续数据库变更应新增 `0007_*`，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2J-A 合并后还需要执行 `0007_profile_public_fields.sql`。已执行过的 migration 不应修改或重跑。执行 0007 后，后续数据库变更应新增 `0008_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -205,7 +205,27 @@ supabase/migrations/0006_viewer_login_grant_check.sql
 
 - 0006 已在当前生产 Supabase 项目执行。
 - 0006 只提供登录前授权检查 RPC，不修复全部 Viewer magic link/session 问题。
-- 后续如需数据库变更，必须新增 `0007_*`，不得修改或重跑 0001-0006。
+- 后续如需数据库变更，必须新增新编号 migration，不得修改或重跑 0001-0006。
+
+Phase 2J-A 新增 Profile 真实编辑。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0007_profile_public_fields.sql
+```
+
+`0007` 会：
+
+- 为 `public.profiles` 补充 `role_title`、`organization`、`location` 与 `is_public` 字段。
+- 将已有 `visibility = 'public'` 的 Profile 同步标记为 `is_public = true`。
+- 增加 `profiles_is_public_idx` 索引。
+
+Profile 权限边界：
+
+- 不修改 `profiles` 既有 RLS。
+- 公开 About 页面只读取 `visibility = 'public'` 且 `is_public = true` 的 Profile。
+- 管理员仍通过 `public.is_admin()` 写入 Profile。
+- `contact` 与 `social_links` 只应保存愿意公开展示的信息。
+- Profile 不保存或暴露管理员 Auth UUID。
 
 ## 创建管理员
 
@@ -290,9 +310,10 @@ Phase 2C 使用：
 - Access Requests 已接入真实提交、列表、详情与处理状态更新流程。
 - Restricted Access 依赖 0005 migration；未执行 0005 时无法保存 `restricted` visibility，也无法创建或读取访问授权。
 - Viewer login grant check 依赖 0006 migration；未执行 0006 时 `/viewer/login` 的授权检查 RPC 不存在。
-- Calendar、Profile 仍从 `src/lib/mock-data.ts` 或静态占位渲染。
+- Calendar 仍从 `src/lib/mock-data.ts` 或静态占位渲染；Profile 已由 `/dashboard/profile` 真实编辑并供 `/about` 读取公开字段。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
+- Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。
 - Supabase 真实端到端登录验证需要配置项目 URL、publishable key、执行迁移并创建管理员后再进行。
 
 ## 验证命令

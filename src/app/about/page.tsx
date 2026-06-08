@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ArrowRight, BrainCircuit, Database, GraduationCap, ShieldCheck } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
 import { PublicPageHero, PublicSectionHeader, PublicShell } from "@/components/public/public-shell";
+import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
 import { publicPageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = publicPageMetadata({
@@ -11,14 +12,6 @@ export const metadata: Metadata = publicPageMetadata({
   path: "/about"
 });
 
-const researchDirections = [
-  "投资研究与私募基金观察",
-  "量化策略与数据分析",
-  "AI 工具与自动化工作流",
-  "知识管理与研究方法",
-  "学术阅读、报告写作与长期沉淀"
-];
-
 const publicEntrances = [
   { title: "研究项目", description: "公开研究主题、研究问题、方法框架与阶段性进展。", href: "/projects" },
   { title: "学术成果", description: "公开研究报告、策略分析、论文草稿和阅读综述。", href: "/publications" },
@@ -26,22 +19,37 @@ const publicEntrances = [
   { title: "知识文章", description: "公开笔记、方法整理、工具使用和阅读沉淀。", href: "/knowledge" }
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const publicProfile = await getPublicProfile();
+  const fallbackProfile = getProfileFallback();
+  const profile = publicProfile ?? fallbackProfile;
+  const hasPublicProfile = Boolean(publicProfile);
+  const researchDirections = profile.research_interests.length > 0 ? profile.research_interests : fallbackProfile.research_interests;
+  const skillTags = profile.skill_tags.length > 0 ? profile.skill_tags : fallbackProfile.skill_tags;
+  const contactEntries = hasPublicProfile ? Object.entries(profile.contact ?? {}) : [];
+  const socialEntries = hasPublicProfile ? Object.entries(profile.social_links ?? {}) : [];
+
   return (
     <PublicShell>
       <PublicPageHero
         eyebrow="About"
-        title="关于黄铭语"
-        description="学生，关注投资研究、量化策略、AI 辅助研究流程和个人知识系统。这个网站是我的公开研究工作站，也是私密数字资产后台的外部窗口。"
+        title={`关于${profile.display_name}`}
+        description={profile.headline ?? profile.role_title ?? "关注投资研究、量化策略、AI 辅助研究流程和个人知识系统。这个网站是我的公开研究工作站，也是私密数字资产后台的外部窗口。"}
       />
 
       <section className="mx-auto grid max-w-[1680px] gap-6 px-5 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-12 2xl:px-16">
         <Card className="public-card-motion border-slate-200 bg-white shadow-soft">
           <CardHeader title="个人定位" />
           <div className="space-y-4 text-sm leading-7 text-slate-600">
-            <p>
-              我关注资产管理、量化投资，以及人工智能在研究与知识工作流中的应用。公开站点会逐步沉淀适合对外分享的项目、成果、文章和 Skill。
-            </p>
+            <p>{profile.bio ?? "我关注资产管理、量化投资，以及人工智能在研究与知识工作流中的应用。公开站点会逐步沉淀适合对外分享的项目、成果、文章和 Skill。"}</p>
+            {profile.role_title || profile.organization || profile.location ? (
+              <dl className="grid gap-3 rounded-3xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-3">
+                {profile.role_title ? <div><dt className="text-xs font-semibold text-slate-400">当前角色</dt><dd className="mt-1 font-medium text-slate-800">{profile.role_title}</dd></div> : null}
+                {profile.organization ? <div><dt className="text-xs font-semibold text-slate-400">组织 / 机构</dt><dd className="mt-1 font-medium text-slate-800">{profile.organization}</dd></div> : null}
+                {profile.location ? <div><dt className="text-xs font-semibold text-slate-400">所在地</dt><dd className="mt-1 font-medium text-slate-800">{profile.location}</dd></div> : null}
+              </dl>
+            ) : null}
+            {profile.education ? <p>{profile.education}</p> : null}
             <p>
               如果希望沟通某条研究内容、申请查看受限材料，或了解工作站后续开放计划，可以通过访问申请表单留下必要信息。当前页面不编造或硬编码额外联系方式。
             </p>
@@ -82,6 +90,32 @@ export default function AboutPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="mx-auto grid max-w-[1680px] gap-6 px-5 pb-10 lg:grid-cols-2 lg:px-12 2xl:px-16">
+        <Card className="public-card-motion border-slate-200 bg-white shadow-soft">
+          <CardHeader title="技能标签" description="公开 Profile 中维护的能力关键词。" />
+          <div className="flex flex-wrap gap-2">
+            {skillTags.map((tag) => (
+              <span key={tag} className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700">{tag}</span>
+            ))}
+          </div>
+        </Card>
+        <Card className="public-card-motion border-slate-200 bg-white shadow-soft">
+          <CardHeader title="公开联系与链接" description="只展示管理员明确设置为公开的联系方式和社交链接。" />
+          {contactEntries.length > 0 || socialEntries.length > 0 ? (
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              {[...contactEntries, ...socialEntries].map(([label, value]) => (
+                <div key={`${label}-${value}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-400">{label}</p>
+                  <p className="mt-1 break-words font-medium text-slate-800">{value}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm leading-7 text-slate-600">当前未公开展示联系方式。需要沟通时，可以通过访问申请表单留下必要信息。</p>
+          )}
+        </Card>
       </section>
 
       <section className="mx-auto max-w-[1680px] px-5 pb-14 lg:px-12 2xl:px-16">

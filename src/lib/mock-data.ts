@@ -63,7 +63,7 @@ export const sidebarGroups = [
     items: [
       { label: "访问申请", href: "/dashboard/access-requests", icon: ClipboardCheck },
       { label: "访问授权", href: "/dashboard/access-grants", icon: KeyRound },
-      { label: "个人信息", href: "/profile", icon: UserRound },
+      { label: "个人信息", href: "/dashboard/profile", icon: UserRound },
       { label: "设置", href: "/settings", icon: Settings }
     ]
   }
