@@ -13,7 +13,7 @@ export const visibilitySchema = z.enum(["public", "private", "unlisted", "restri
 
 export const textArraySchema = z.array(z.string().trim().min(1)).default([]);
 
-export function optionalText() {
+export function optionalText(maxLength?: number) {
   return z.preprocess((value) => {
     if (value === null || value === undefined) {
       return null;
@@ -25,5 +25,5 @@ export function optionalText() {
 
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;
-  }, z.string().nullable());
+  }, (typeof maxLength === "number" ? z.string().max(maxLength, `内容不能超过 ${maxLength} 个字符`) : z.string()).nullable());
 }

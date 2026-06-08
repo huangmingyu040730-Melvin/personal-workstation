@@ -81,7 +81,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。新建环境仍需按顺序执行 0001 至 0006。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。新建环境仍需按顺序执行 0001 至 0007。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -111,8 +111,9 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/documents` 文件中心管理
 - `/dashboard/access-requests` 访问申请管理
 - `/dashboard/access-grants` 访问授权管理
+- `/dashboard/profile` 个人信息管理
 - `/calendar` 日历占位
-- `/profile` 个人信息占位
+- `/profile` 兼容跳转到 `/dashboard/profile`
 - `/settings` 设置
 - `/automations` 自动化占位
 
@@ -151,9 +152,10 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；生产环境已执行 0003 migration 并通过真实上传、下载、关联、删除保护和清理验收。
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
+- Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化；管理后台 UI 已完成工作台式视觉优化。
 - Dashboard 已读取真实项目、笔记、Skill、Publications 与 Activity Logs。
-- Calendar、Profile 仍为 mock 或占位展示，真实 CRUD 和外部 API 尚未实现。
+- Calendar 仍为 mock 或占位展示，真实 CRUD 和外部 API 尚未实现。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
 - 文件附件默认比正文内容更严格；即使 Publication 设置为 public，关联 Documents 仍保持 private，本阶段不会在公开页面提供下载入口。
 - Notion 的长期定位是草稿、临时研究笔记、日常记录和协作辅助，不替代个人网站的正式公开门户、权限系统与私密资产库。
@@ -174,7 +176,7 @@ Viewer magic link 登录仍不稳定。Phase 2E-B 已实现 restricted 授权基
 
 `supabase/migrations/0001_initial_schema.sql` 已为 Phase 2B 真实 CRUD 预留主要字段：
 
-- `profiles`：独立内容 ID、个人展示、邮箱、简历链接、联系方式、社交链接、研究兴趣与技能标签，不引用 Auth 用户 ID。
+- `profiles`：独立内容 ID、个人展示、公开角色、组织、所在地、公开状态、邮箱、简历链接、联系方式、社交链接、研究兴趣与技能标签，不引用 Auth 用户 ID。
 - `projects`：使用 `title`、`slug`、背景、研究问题、方法论、进度、状态、精选标记与开始日期。
 - `publications`：成果标题、slug、摘要、封面、精选标记、附件路径与关联项目。
 - `knowledge_notes`：笔记标题、slug、分类、正文、精选标记与关联项目。

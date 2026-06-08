@@ -52,6 +52,7 @@
 - Documents 文件中心。
 - Access Requests 访问申请管理。
 - Access Grants 授权管理基础。
+- Profile 个人公开信息编辑基础。
 - 管理后台 UI 已优化。
 - 后台新建 / 编辑 / 上传 / 授权页已调整为更平衡的工作台布局。
 
@@ -135,10 +136,14 @@
 - `0005_restricted_content_access.sql`
 - `0006_viewer_login_grant_check.sql`
 
+Phase 2J-A 合并后需要继续执行：
+
+- `0007_profile_public_fields.sql`
+
 规则：
 
 - 已执行过的 migration 不应修改。
-- 后续数据库变更应新增 `0007_*`。
+- 执行 0007 后，后续数据库变更应新增 `0008_*`。
 - 不得重跑旧 migration。
 - 不得放宽 Storage / RLS。
 - 不得提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL 或 `service_role`。

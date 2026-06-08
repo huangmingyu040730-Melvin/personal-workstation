@@ -163,3 +163,25 @@ export type ContentAccessGrantWithTarget = ContentAccessGrantRecord & {
     visibility: Visibility;
   } | null;
 };
+
+export type ProfileRecord = {
+  id: string;
+  display_name: string;
+  email: string | null;
+  headline: string | null;
+  bio: string | null;
+  education: string | null;
+  role_title: string | null;
+  organization: string | null;
+  location: string | null;
+  research_interests: string[];
+  skill_tags: string[];
+  contact: Record<string, string>;
+  social_links: Record<string, string>;
+  avatar_url: string | null;
+  resume_url: string | null;
+  is_public: boolean;
+  visibility: Visibility;
+  created_at: string;
+  updated_at: string;
+};

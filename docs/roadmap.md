@@ -129,15 +129,17 @@ Notion 可作为草稿、临时研究笔记、日常记录和自动化中间层�
 
 - 可修复 viewer login / callback / grant check。
 - 不开放 Documents、Storage 或 signed URL 给外部用户。
-- 如需数据库变更，新增 `0007_*` migration，不修改已执行的 0001-0006。
+- 如需数据库变更，应使用当前最新编号之后的新 migration，不修改已执行的旧 migration。
 
 ### Phase 2J - Calendar / Profile 基础能力
 
 目标：
 
-- Profile 真实编辑。
+- Profile 真实编辑与 About 公开读取。
 - Calendar CRUD。
 - Dashboard 展示近期日程。
+
+Phase 2J-A 聚焦 Profile 真实编辑：后台 `/dashboard/profile` 维护公开资料，公开 `/about` 只读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。Calendar CRUD 仍留在后续 Phase 2J 子阶段。
 
 ### Phase 2K - 自动化与市场简报
 
