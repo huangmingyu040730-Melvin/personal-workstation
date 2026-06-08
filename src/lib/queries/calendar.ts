@@ -11,6 +11,8 @@ type CalendarFilters = {
   range?: "upcoming" | "30days" | "all";
   eventType?: string;
   visibility?: string;
+  startsAfter?: string;
+  startsBefore?: string;
 };
 
 export type CalendarEventRelationOptions = {
@@ -58,11 +60,19 @@ export async function getCalendarEvents(filters?: CalendarFilters) {
 
   const now = new Date();
 
-  if (!filters?.range || filters.range === "upcoming") {
+  if (filters?.startsAfter) {
+    query = query.gte("starts_at", filters.startsAfter);
+  }
+
+  if (filters?.startsBefore) {
+    query = query.lte("starts_at", filters.startsBefore);
+  }
+
+  if (!filters?.startsAfter && !filters?.startsBefore && (!filters?.range || filters.range === "upcoming")) {
     query = query.gte("starts_at", now.toISOString());
   }
 
-  if (filters?.range === "30days") {
+  if (!filters?.startsAfter && !filters?.startsBefore && filters?.range === "30days") {
     const end = new Date(now);
     end.setDate(end.getDate() + 30);
     query = query.gte("starts_at", now.toISOString()).lte("starts_at", end.toISOString());
