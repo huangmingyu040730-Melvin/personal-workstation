@@ -9,6 +9,7 @@ export type AccessRequestStatus = "pending" | "approved" | "rejected";
 export type AccessRequestContentType = "project" | "publication" | "skill" | "knowledge" | "other";
 export type AccessGrantStatus = "active" | "revoked";
 export type AccessGrantContentType = "project" | "publication" | "skill" | "knowledge";
+export type CalendarEventType = "general" | "meeting" | "research" | "deadline" | "review" | "reminder";
 
 export type ProjectRecord = {
   id: string;
@@ -126,6 +127,28 @@ export type ActivityLogRecord = {
   entity_id: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
+};
+
+export type CalendarEventRecord = {
+  id: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  event_type: CalendarEventType;
+  project_id: string | null;
+  publication_id: string | null;
+  knowledge_note_id: string | null;
+  skill_id: string | null;
+  visibility: "public" | "private";
+  owner_id: string | null;
+  created_at: string;
+  updated_at: string;
+  projects?: Pick<ProjectRecord, "id" | "title" | "slug"> | null;
+  publications?: Pick<PublicationRecord, "id" | "title" | "slug"> | null;
+  knowledge_notes?: Pick<KnowledgeNoteRecord, "id" | "title" | "slug"> | null;
+  skills?: Pick<SkillRecord, "id" | "name" | "slug"> | null;
 };
 
 export type AccessRequestRecord = {

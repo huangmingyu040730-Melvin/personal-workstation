@@ -169,6 +169,11 @@ export async function getSkillVersions(skillId: string) {
   return (data ?? []) as SkillVersionRecord[];
 }
 
+export async function getSkillOptions() {
+  const skills = await getSkills();
+  return skills.map((skill) => ({ id: skill.id, title: skill.name }));
+}
+
 export async function getFeaturedPublicSkills(limit = 3) {
   const supabase = await createClient();
 

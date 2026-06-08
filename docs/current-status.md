@@ -53,6 +53,7 @@
 - Access Requests 访问申请管理。
 - Access Grants 授权管理基础。
 - Profile 个人公开信息编辑基础。
+- Calendar 站内日程 CRUD。
 - 管理后台 UI 已优化。
 - 后台新建 / 编辑 / 上传 / 授权页已调整为更平衡的工作台布局。
 
@@ -140,10 +141,14 @@ Phase 2J-A 合并后需要继续执行：
 
 - `0007_profile_public_fields.sql`
 
+Phase 2J-B 合并后需要继续执行：
+
+- `0008_calendar_events.sql`
+
 规则：
 
 - 已执行过的 migration 不应修改。
-- 执行 0007 后，后续数据库变更应新增 `0008_*`。
+- 执行 0008 后，后续数据库变更应新增 `0009_*`。
 - 不得重跑旧 migration。
 - 不得放宽 Storage / RLS。
 - 不得提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL 或 `service_role`。
@@ -173,9 +178,10 @@ Viewer magic link 登录仍未稳定。Phase 2E-B restricted 授权基础代码�
 
 目标：
 
-- Profile 真实编辑。
-- Calendar CRUD。
-- Dashboard 展示近期日程。
+- Profile 真实编辑已完成。
+- Calendar 站内 CRUD 已完成。
+- Dashboard 近期日程已接入。
+- Google Calendar 同步与提醒系统尚未实现。
 
 ### Phase 2K - 自动化与市场简报
 

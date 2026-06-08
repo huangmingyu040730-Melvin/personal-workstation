@@ -18,7 +18,7 @@ export default function CalendarPage() {
       <PageHeader
         eyebrow="Calendar"
         title="日历"
-        description="静态月历和今日事项列表，后续可接入真实日程新增、编辑和提醒。"
+        description="公开占位月历。真实站内日程管理请在管理员后台 /dashboard/calendar 中维护。"
       />
       <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
         <Card>

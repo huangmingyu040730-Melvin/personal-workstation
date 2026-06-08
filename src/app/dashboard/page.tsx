@@ -5,9 +5,9 @@ import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Card, CardHeader } from "@/components/card";
 import { Progress } from "@/components/progress";
 import { StatCard } from "@/components/stat-card";
-import { getPublicationTypeLabel } from "@/lib/content-options";
-import { formatRelative } from "@/lib/format";
-import { profile, quickActions, todayItems } from "@/lib/mock-data";
+import { getCalendarEventTypeLabel, getPublicationTypeLabel } from "@/lib/content-options";
+import { formatDateTime, formatRelative } from "@/lib/format";
+import { profile, quickActions } from "@/lib/mock-data";
 import { getDashboardData } from "@/lib/queries/dashboard";
 
 function activityTitle(metadata: Record<string, unknown>, fallback: string) {
@@ -37,8 +37,8 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="今日待办" value="占位" helper="日历功能将在下一阶段接入" icon={CalendarCheck} />
-        <StatCard label="今日日程" value="占位" helper="暂未接入真实 Calendar" icon={CalendarCheck} />
+        <StatCard label="近期日程" value={String(data.upcomingCalendarEvents.length)} helper="未来即将开始的站内日程" icon={CalendarCheck} />
+        <StatCard label="今日日程" value={String(data.upcomingCalendarEvents.filter((event) => isToday(event.starts_at)).length)} helper="基于 calendar_events 真实数据" icon={CalendarCheck} />
         <StatCard label="进行中项目" value={String(data.inProgressProjects.length)} helper={`项目总数 ${data.projects.length}`} icon={FolderKanban} />
         <StatCard label="已收录成果" value={String(data.publicationStats.total)} helper={`公开 ${data.publicationStats.publicCount} · 精选 ${data.publicationStats.featuredCount}`} icon={FileText} />
         <StatCard label="可用 Skill" value={String(data.availableSkillCount)} helper={`Skill 总数 ${data.skills.length}`} icon={Sparkles} />
@@ -78,17 +78,26 @@ export default async function DashboardPage() {
 
       <div className="grid gap-5 xl:grid-cols-[1.25fr_0.9fr_0.75fr]">
         <Card>
-          <CardHeader title="今日安排" description="占位数据：Calendar CRUD 将在下一阶段接入" />
+          <CardHeader
+            title="近期日程"
+            description="来自 Supabase calendar_events 表"
+            action={<Link href="/dashboard/calendar" className="text-sm font-medium text-blue-700">查看全部</Link>}
+          />
           <div className="space-y-3">
-            {todayItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                <span className="w-14 text-sm font-semibold text-blue-700">{item.time}</span>
+            {data.upcomingCalendarEvents.length > 0 ? data.upcomingCalendarEvents.map((item) => (
+              <Link key={item.id} href={`/dashboard/calendar/${item.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50">
+                <span className="w-28 text-sm font-semibold text-blue-700">{formatDateTime(item.starts_at)}</span>
                 <div>
                   <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                  <p className="text-xs text-slate-500">{item.type}</p>
+                  <p className="text-xs text-slate-500">{getCalendarEventTypeLabel(item.event_type)} · {item.visibility === "public" ? "公开" : "私密"}</p>
                 </div>
+              </Link>
+            )) : (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                暂无即将到来的日程。
+                <Link href="/dashboard/calendar/new" className="ml-2 font-semibold text-blue-700">新建日程</Link>
               </div>
-            ))}
+            )}
           </div>
         </Card>
 
@@ -174,4 +183,15 @@ export default async function DashboardPage() {
       </AdminPageSurface>
     </AppShell>
   );
+}
+
+function isToday(value: string | null | undefined) {
+  if (!value) {
+    return false;
+  }
+
+  const date = new Date(value);
+  const now = new Date();
+
+  return date.toDateString() === now.toDateString();
 }

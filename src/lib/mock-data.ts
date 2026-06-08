@@ -39,7 +39,7 @@ export const sidebarGroups = [
   {
     label: "研究中心",
     items: [
-      { label: "日历", href: "/calendar", icon: CalendarDays },
+      { label: "日历", href: "/dashboard/calendar", icon: CalendarDays },
       { label: "研究项目", href: "/dashboard/projects", icon: FolderOpen },
       { label: "学术成果", href: "/dashboard/publications", icon: BarChart3 },
       { label: "知识库", href: "/dashboard/knowledge", icon: BookOpen }
@@ -243,6 +243,7 @@ export const activityFeed = [
 
 export const quickActions = [
   { label: "新建项目", icon: FolderOpen, href: "/dashboard/projects/new" },
+  { label: "新建日程", icon: CalendarDays, href: "/dashboard/calendar/new" },
   { label: "新增笔记", icon: Library, href: "/dashboard/knowledge/new" },
   { label: "新建 Skill", icon: WandSparkles, href: "/dashboard/skills/new" },
   { label: "上传文件", icon: FileText, href: "/dashboard/documents/upload" },

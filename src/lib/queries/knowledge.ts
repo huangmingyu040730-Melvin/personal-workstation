@@ -245,6 +245,11 @@ export async function countPublicKnowledgeNotes() {
   return count ?? 0;
 }
 
+export async function getKnowledgeNoteOptions() {
+  const notes = await getKnowledgeNotes();
+  return notes.map((note) => ({ id: note.id, title: note.title }));
+}
+
 export async function getRecentKnowledgeNotes(limit = 3) {
   const supabase = await createClient();
 
