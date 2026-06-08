@@ -8,6 +8,8 @@
 - 对内管理全部项目、知识、成果、文件、日历与自动化。
 - 未来支持经管理员审核后，按具体内容授权外部用户访问受限材料。
 
+当前项目状态详见 `docs/current-status.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
+
 ## 技术栈
 
 - Next.js App Router
@@ -16,6 +18,7 @@
 - Lucide React
 - Supabase Auth、Database、RLS
 - Projects、Knowledge Base、Skills Library、Publications 真实 CRUD
+- Access Requests 与 Access Grants 基础能力
 - Supabase Storage 私密文件上传与下载
 
 ## 本地启动
@@ -78,7 +81,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。新建环境仍需按顺序执行 0001、0002、0003、0004、0005。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。新建环境仍需按顺序执行 0001 至 0006。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -117,7 +120,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 
 ## 产品路线图
 
-当前产品方向已升级为“公开研究工作站 + 私密管理后台 + 未来受限访问体系”。详细路线图见 `docs/roadmap.md`。
+当前产品方向为“黄铭语的公开研究工作站与私密数字资产后台”。详细状态见 `docs/current-status.md`，路线图见 `docs/roadmap.md`。
 
 长期访问层级：
 
@@ -128,12 +131,10 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 
 下一阶段优先级：
 
-- Phase 2C 已完成 Publications、Documents 与 private Storage 的生产真实验收。
-- Phase 2D-A 已完成公开项目、成果、Skill、知识文章列表与详情页，并将现有后台管理能力迁移到 `/dashboard/...`。
-- Phase 2D-B 继续优化公开研究工作站体验，包括统一公开导航、About 页面、公开详情关联浏览、SEO metadata 和移动端可读性。
-- Phase 2D-C 继续提升公开内容展示质量，包括统一公开卡片、列表结果提示、详情页空字段处理和后台公开内容运营提示。
-- Phase 2E-A 建立访问申请记录与后台处理状态；Phase 2E-B 建立 restricted 内容、邮箱魔法链接登录、按内容授权和撤销的最小闭环。附件单独下载权限仍属后续阶段。
-- Calendar、Profile、Notion、Google Calendar 与自动化任务在公开浏览和授权体系稳定后继续推进。
+- Phase 2I：Viewer 登录与 restricted 访问专项修复。
+- Phase 2J：Calendar / Profile 基础能力。
+- Phase 2K：自动化与市场简报。
+- Phase 2L：Notion / Google Calendar / AI 辅助研究。
 
 ## 权限与数据状态
 
@@ -141,7 +142,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 配置 Supabase 后，后台页面会要求登录，并通过 `public.admin_users` + `public.is_admin()` 判断管理员权限。
 - 登录成功后的 `next` 跳转会经过内部后台路径白名单校验，不允许跳到外部 URL。
 - 公开首页与公开列表/详情页只读取 `visibility = "public"` 的项目、成果、知识文章与 Skill；private / unlisted 不在公开页面返回或展示。
-- 公开访客可以在 `/access-request` 提交访问申请；管理员可在后台将指定 restricted 内容授权给指定邮箱。外部用户通过 `/viewer/login` 邮箱魔法链接登录后，只能查看被授权的内容详情，不能进入后台。
+- 公开访客可以在 `/access-request` 提交访问申请；管理员可在后台将指定 restricted 内容授权给指定邮箱。Viewer 登录和 restricted 只读访问基础代码已实现，但 magic link 登录仍存在已知问题，详见 `docs/known-issues.md`。
 - 公开 About 页面不硬编码管理员邮箱、Supabase 配置、Auth UUID 或其他敏感联系信息。
 - 后台 Projects、Publications、Skills、Knowledge 列表页提供轻量公开运营提示，帮助维护 public / featured 内容质量。
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
@@ -149,11 +150,25 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
 - Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；生产环境已执行 0003 migration 并通过真实上传、下载、关联、删除保护和清理验收。
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
+- Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
+- 公共页 UI 已完成蓝白清爽研究工作站风格优化；管理后台 UI 已完成工作台式视觉优化。
 - Dashboard 已读取真实项目、笔记、Skill、Publications 与 Activity Logs。
 - Calendar、Profile 仍为 mock 或占位展示，真实 CRUD 和外部 API 尚未实现。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
 - 文件附件默认比正文内容更严格；即使 Publication 设置为 public，关联 Documents 仍保持 private，本阶段不会在公开页面提供下载入口。
 - Notion 的长期定位是草稿、临时研究笔记、日常记录和协作辅助，不替代个人网站的正式公开门户、权限系统与私密资产库。
+
+## 已知问题
+
+Viewer magic link 登录仍不稳定。Phase 2E-B 已实现 restricted 授权基础代码，但授权邮箱登录、viewer session 建立和 restricted 内容查看仍需后续 Phase 2I 专项修复。
+
+该问题不影响：
+
+- public 内容浏览；
+- 管理员后台；
+- Documents 私密文件中心；
+- 访问申请提交与审批；
+- 公开站点 SEO 和 UI。
 
 ## 初始数据结构
 

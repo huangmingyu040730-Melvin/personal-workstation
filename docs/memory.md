@@ -1,132 +1,125 @@
 # Project Memory
 
+日期：2026-06-09
+
 ## Current State
 
-日期：2026-06-06
+项目定位：
 
-Phase 2F 正在完善公开站点运营体验、基础 SEO、sitemap、robots、公开内容发现和 About 页面。Phase 2E-A 已完成生产验收：公开访客可提交访问申请，管理员可在后台查看申请并更新 pending / approved / rejected 状态。Phase 2E-B 已实现 restricted 内容授权基础代码，但 Viewer magic link 登录仍存在未解决问题，本阶段冻结继续排查。Phase 2D-A 已合并：公开 Projects、Publications、Knowledge、Skills 列表与 slug 详情页已经建立，后台管理页面已迁移到 `/dashboard/...`。Phase 2D-B 已合并：公开首页、统一公开导航、`/about`、metadata 和公开关联浏览已经建立。Phase 2D-C 已合并：公开内容展示质量和后台公开内容运营提示已经提升。Phase 1 前端 MVP、Phase 2A Supabase Auth/RLS 基础、Phase 2B 核心内容 CRUD 与 Supabase API GRANT hotfix、Phase 2C Publications / Documents / private Storage 均已合并并在生产环境完成关键链路验证。
+> 黄铭语的公开研究工作站与私密数字资产后台。
 
-项目长期定位已更新为：黄铭语的公开研究工作站与私密数字资产后台。网站既要对外展示公开研究项目、学术成果、知识文章和 AI Skill，也要对内管理全部项目、知识、成果、文件、日历与自动化；未来还要支持经管理员审核后，按具体内容授权外部用户访问受限材料。
+已完成阶段：
 
-已实现页面：
+- Phase 1：前端原型。
+- Phase 2A：Supabase Auth、RLS、管理员登录、后台保护。
+- Phase 2B：Projects / Knowledge / Skills 真实 CRUD。
+- Phase 2C：Publications / Documents / private Storage。
+- Phase 2D：公开研究工作站、公开内容路由、公开内容填充。
+- Phase 2E-A：访问申请表单与后台审批。
+- Phase 2E-B：restricted 授权基础能力已实现，但 viewer magic link 登录仍存在已知问题。
+- Phase 2F：SEO 基础、sitemap、robots、metadata。
+- Phase 2G-A：公共页 UI 优化。
+- Phase 2G-B：管理后台 UI 优化。
 
-- 公开研究工作站首页 `/`
-- 关于我 `/about`
-- 登录页 `/login`
-- 工作台 `/dashboard`
-- 公开研究项目 `/projects`、`/projects/[slug]`
-- 公开学术成果 `/publications`、`/publications/[slug]`
-- 公开知识文章 `/knowledge`、`/knowledge/[slug]`
-- 公开 Skill `/skills`、`/skills/[slug]`
-- 后台研究项目 `/dashboard/projects`
-- 后台学术成果 `/dashboard/publications`
-- 后台知识库 `/dashboard/knowledge`
-- 后台 Skill 库 `/dashboard/skills`
-- 后台文件中心 `/dashboard/documents`
-- 访问申请 `/access-request`
-- 后台访问申请 `/dashboard/access-requests`
-- 外部授权访问登录 `/viewer/login`
-- 后台访问授权 `/dashboard/access-grants`
-- 日历 `/calendar`
-- 个人信息 `/profile`
-- 设置 `/settings`
-- 自动化占位页 `/automations`
+当前网站包括：
 
-当前技术栈：
+- 面向外部访客的公开研究工作站。
+- 管理员本人使用的私密后台。
+- 私密文件中心。
+- 访问申请与审批。
+- restricted 内容授权基础。
 
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- Lucide React
-- Supabase SSR/Auth/RLS 基础设施
-
-当前数据状态：
-
-- Projects、Knowledge Base、Skills Library 已实现真实 Supabase 查询、创建、编辑、删除和详情页，并通过生产验收。
-- Publications 已实现真实查询、创建、编辑、删除和详情页，并通过生产验收。
-- Documents 已实现真实列表、详情、上传、下载和删除流程，文件存储在私密 `workspace-files` bucket，并通过生产验收。
-- 文件上传架构已按 PR review 修正为浏览器直传 Supabase Storage：Server Actions 只负责 prepare/finalize，不承载文件二进制，避免 Vercel Function 4.5 MB payload 限制与 20 MB 上传目标冲突。
-- 中文或其他非 ASCII 原文件名会被转换为 ASCII-safe Storage object key，数据库中的文件显示名称仍可保留中文。
-- Dashboard 已开始读取真实 projects、knowledge_notes、skills、publications 与 activity_logs。
-- 公开首页已升级为只读版研究工作站，读取真实 public projects、publications、skills 与 knowledge_notes。
-- 公开 Projects、Publications、Knowledge、Skills 列表与 slug 详情页只读取 `visibility = "public"` 内容。
-- Phase 2D-B 增加统一公开导航、About 页面、公开页面 metadata、公开详情关联浏览和移动端可读性优化；不新增 migration，不实现 restricted、外部用户登录、Calendar、Notion 或自动化。
-- 公开详情页的关联内容也必须限定为 public，避免管理员登录状态下浏览公开页时误展示 private / unlisted 关联标题。
-- Phase 2D-C 增加统一公开内容卡片、公开列表结果数量与清空筛选入口、详情页空字段隐藏、Dashboard 公开内容质量卡片，以及后台内容列表页的 public / featured 运营提示。
-- Phase 2E-A 新增公开访问申请表单和后台访问申请列表/详情。Phase 2E-B 新增 `restricted` 可见性、`content_access_grants` 授权表、外部邮箱魔法链接登录、后台授权列表/创建/撤销，以及 public detail routes 的授权读取逻辑；Viewer magic link 登录仍不稳定，后续需单独 Hotfix 排查。
-- Phase 2F 新增公开站点 SEO 与运营体验工作：动态 sitemap、robots、公开页面 metadata、内容发现入口、列表筛选提示和 About 页面轻微完善。
-- 后台 CRUD 页面已迁移到 `/dashboard/projects`、`/dashboard/publications`、`/dashboard/knowledge`、`/dashboard/skills`、`/dashboard/documents`，旧 `/documents` 作为受保护兼容路径重定向到后台文件中心。
-- mock data 集中在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的 Calendar、Profile 等页面和未配置 Supabase 的开发预览。
-- 类型定义集中在 `src/lib/types.ts`。
-- 核心实体保留 `visibility` 字段，Phase 2E-B 扩展为 `public`、`private`、`unlisted`、`restricted`。
-- 公开首页与公开详情页只展示数据库中 `visibility = "public"` 且符合展示条件的公开内容。
-- Supabase 初始 schema 已补充 slug、精选标记、项目关联、Skill 详情字段、文件关联字段和常用索引，为 Phase 2B CRUD 做准备。
-- Supabase 增量 migration `0002_grant_api_table_privileges.sql` 补充 API 角色的最小表级 privileges，让 RLS policies 能在 Supabase API 请求中实际生效；该 migration 已在生产 Supabase 执行并通过 Phase 2B 验收。
-- Phase 2C 新增 `0003_publications_documents_storage.sql`，创建私密 `workspace-files` bucket 并配置仅管理员可操作的 Storage policies；该 migration 已在生产 Supabase 执行并通过真实上传、下载、关联、删除保护和清理验收。
-- Phase 2E-A 新增 `0004_access_requests.sql`，创建 `access_requests` 表；`anon` 只能 insert，不能读取或修改申请；管理员通过 `public.is_admin()` 读取和更新申请状态。
-- Phase 2E-B 新增 `0005_restricted_content_access.sql`，扩展 visibility check、创建 `content_access_grants`、增加 `public.has_content_access()`，并更新四类内容表的 RLS select policy。
-- 登录完成后的 `next` 参数使用内部后台路径白名单校验，Server Action 是最终校验边界。
-- 公开可读取内容表不存储或暴露管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
-
-尚未接入：
-
-- Calendar CRUD
-- Profile 真实编辑
-- 附件对外授权下载
-- 外部 API
-- Skill 自动化执行
+详细当前状态见 `docs/current-status.md`。
 
 ## Important Context
 
 - 网站默认语言为中文。
-- 项目风格参考 `docs/mockups/dashboard-reference.png`。
-- 视觉方向为浅色背景、深蓝侧边栏、卡片化工作区、蓝紫强调色、专业克制的研究与 AI 工作台气质。
-- Supabase 未配置时，后台页面保持 mock/development preview，确保本地 lint/build 不因缺少环境变量阻塞。
-- Supabase 配置后，后台页面应通过 Auth 登录和 `admin_users` 管理员白名单保护。
-- profile 中的 `contact`、`social_links` 等联系方式只有在确实希望公开展示时才应放入 public profile 数据。
-- 公开访问通过 `visibility = "public"` 控制；restricted 详情访问通过登录邮箱与 active grant 匹配控制；后台写权限通过 `public.is_admin()` 控制。
-- 数据库权限分两层：GRANT 决定 `anon` / `authenticated` 是否能访问表，RLS 决定能访问哪些记录以及能否写入。
-- 公开页面和后台页面在 Phase 2D-A 中开始分离：公开只读路由使用 `/projects`、`/publications`、`/skills`、`/knowledge` 及 slug 详情；后台管理路由使用 `/dashboard/...`。
-- 文件附件默认比正文内容更严格：即使 Publication 公开，关联 Documents 默认仍保持私密，不在公开页面提供下载入口。
-- Notion 仅作为草稿、临时研究笔记、日常记录和协作辅助工具，不替代个人网站的正式公开门户、权限系统与私密资产库。
+- 技术栈：Next.js App Router、TypeScript、Tailwind CSS、Lucide React、Supabase Auth / Database / RLS / Storage。
+- 查询逻辑集中在 `src/lib/queries/`。
+- 校验逻辑集中在 `src/lib/validations/`。
+- 写入逻辑集中在 `src/actions/`。
+- 后台写操作必须在 Server Action 中验证登录和管理员身份，并继续依赖 RLS。
+- 公开页面只展示 `visibility = "public"` 的内容。
+- private / restricted / unlisted 内容不得进入公开列表、公开首页或 sitemap。
+- Documents 始终保持管理员私密文件，不对外开放。
+- signed URL 只由管理员流程短时生成，不保存到数据库，不输出到公开页面。
+- `robots.txt` 和 `sitemap.xml` 不是安全边界；真正安全边界依赖 Supabase Auth、RLS、Storage policy 和后台路由保护。
+- 不提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL、Storage 内部路径或 `service_role`。
 
 ## Recent Decisions
 
-- 第一阶段采用 mock data first 的 Next.js 前端原型。
-- Hotfix 修复了公开首页 private Skill 暴露风险和日历不存在日期问题。
-- Phase 2A 只建立 Supabase Auth、数据库 schema、RLS 与文档基础，不做真实 CRUD 或上传。
-- 管理员权限由 `public.admin_users` 与 `public.is_admin()` 控制，不在代码中硬编码邮箱、UUID 或密码。
-- `projects` 表采用 `title` 作为项目标题字段，配合唯一 `slug` 支撑后续 CRUD 与公开 URL。
-- 单管理员个人工作站不在公开内容表保存 Auth 用户归属字段；私密后台表可保留 `owner_id` 或 `actor_id` 用于审计。
-- 已新增 `0002_grant_api_table_privileges.sql` 修复 Supabase API 表级授权缺失；该迁移只补 GRANT，不新增业务能力。
-- Phase 2C 采用单一 private bucket `workspace-files`，不为公开页面提供附件下载入口。
-- Publication 删除采取保守策略：仍有关联 documents 时阻止删除，要求管理员先处理附件。
-- Document 下载采用 60 秒 signed URL，不保存到数据库，不输出到公开页面。
-- Document 上传采用两阶段流程：管理员 prepare -> 浏览器 direct upload -> 管理员 finalize；finalize 失败会尽力删除刚上传的对象。
-- Phase 2C 生产验收通过后，下一阶段优先级从 Calendar 调整为 Phase 2D：公开研究工作站体系升级。
-- Phase 2E-B 实现 restricted 可见性、外部邮箱登录、管理员按具体内容授权、有效期与撤销；附件对外授权下载继续后延。
-- Phase 2D-A 不新增 migration，不实现 restricted、外部登录、访问申请、Calendar CRUD、Profile 编辑或自动化。
+- 公开研究工作站与私密后台已经分离：公开只读路由为 `/projects`、`/publications`、`/skills`、`/knowledge`；后台管理路由为 `/dashboard/...`。
+- 文件附件默认比正文更严格。即使内容 public，关联 Documents 仍保持 private。
+- Publication 有关联附件时禁止直接删除，要求先处理附件。
+- Documents 上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。
+- Phase 2E-B 的 restricted 基础代码保留，但 Viewer 登录问题冻结，后续单独 Hotfix。
+- Phase 2F / 2G 只优化公开站点运营体验、SEO 和 UI，不扩展权限系统。
 
 ## Known Issues
 
-- Calendar、Profile 仍为 mock 或占位页面，不具备真实持久化能力。
-- Viewer magic link 登录仍存在未解决问题：已授权邮箱在 `/viewer/login` 仍可能发送失败。当前不继续扩展 Viewer login、viewer callback、restricted grants、RLS、Supabase Auth 或 Storage；后续需单独 Hotfix。
-- Phase 2E-B 的 restricted 内容授权基础代码保留，但不作为 Phase 2F 验收依赖。
-- Phase 2E-B 的访问授权只开放内容详情，不开放 Documents、附件下载、Storage 路径或 signed URL。
-- 日历为静态月历，不支持新增、编辑或提醒。
-- 个人信息页面只有前端编辑样式，不保存修改。
-- Phase 2D-A 的生产后台 CRUD、Documents 上传下载与路由迁移验收需要用户本人输入账号密码完成，Codex 不读取或记录密码。
+### Viewer magic link 登录问题
+
+状态：冻结继续排查。
+
+现象：
+
+- 已授权邮箱仍可能无法发送 magic link。
+- magic link 成功后 viewer session 可能未稳定建立。
+- 已授权用户仍可能无法查看 restricted 内容。
+
+影响：
+
+- 不影响 public 内容浏览。
+- 不影响管理员后台。
+- 不影响 Documents 私密文件。
+- 不影响访问申请提交与审批。
+- 不影响公开站点 SEO 和 UI。
+
+详见 `docs/known-issues.md`。
+
+## Permission Boundary
+
+| 区域 | 谁可访问 |
+| --- | --- |
+| public 内容 | 所有人 |
+| unlisted 内容 | 不出现在公开列表，当前能力保持保守 |
+| restricted 内容 | 管理员可见，viewer 授权基础已实现但登录链路待修 |
+| private 内容 | 仅管理员 |
+| dashboard | 仅管理员 |
+| documents | 仅管理员 |
+| signed URL | 仅管理员流程生成 |
+| access requests 提交 | 访客可提交 |
+| access requests 管理 | 仅管理员 |
+| access grants 管理 | 仅管理员 |
+
+## Migration State
+
+生产 Supabase 已执行：
+
+- `0001_initial_schema.sql`
+- `0002_grant_api_table_privileges.sql`
+- `0003_publications_documents_storage.sql`
+- `0004_access_requests.sql`
+- `0005_restricted_content_access.sql`
+- `0006_viewer_login_grant_check.sql`
+
+规则：
+
+- 已执行 migration 不应修改或重跑。
+- 后续数据库变更应新增 `0007_*`。
+- 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Next Steps
 
-- Phase 2D-A PR 审核后，由用户在生产环境验证新的后台 Projects、Publications、Knowledge、Skills、Documents 路由和原有 CRUD/文件能力。
-- Phase 2D 后续可继续优化公开详情内容、公开关联内容和路由兼容体验。
-- Phase 2E-A：合并后需要在生产 Supabase 执行 `0004_access_requests.sql`，再验证公开申请提交、后台查看和状态更新。
-- 后续单独 Hotfix：结合 Supabase Auth 日志和 Vercel Function 日志继续排查 Viewer magic link 发送失败问题。
-- 后续阶段：设计附件单独授权下载、通知邮件、批量授权或组织权限。
-- 后续再推进 Profile 真实编辑、Calendar CRUD、Google Calendar、Notion 辅助同步和自动化任务。
+建议顺序：
+
+1. Phase 2I：Viewer 登录与 restricted 访问专项修复。
+2. Phase 2J：Calendar / Profile 基础能力。
+3. Phase 2K：自动化与市场简报。
+4. Phase 2L：Notion / Google Calendar / AI 辅助研究。
 
 ## Stale Or Superseded Notes
 
-- “第一阶段尚未接入 Supabase”已被 Phase 2A 的 Supabase 基础设施取代。
-- “页面数据仍保持 mock data 预览”已被 Phase 2B 的 Projects、Knowledge、Skills 真实 CRUD 和 Phase 2C 的 Publications/Documents 接入取代；Calendar、Profile 仍有 mock 或占位部分。
+- “页面数据仍保持 mock data 预览”已过时。Projects、Knowledge、Skills、Publications、Documents、Access Requests 与 Access Grants 已使用真实 Supabase 数据或真实表结构；Calendar、Profile 仍有占位或 mock 部分。
+- “restricted 属于后续规划，尚未进入 schema / RLS / UI”已过时。restricted 基础代码和 migration 已完成，但 viewer 登录链路仍待修。
+- “后台页面仍位于公开候选路径”已过时。主要后台管理页面已迁移到 `/dashboard/...`。

@@ -183,7 +183,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2E-B 的 restricted 内容与邮箱授权查看能力。
+- 维护 Phase 2E-B 的 restricted 内容与邮箱授权基础能力。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。
 
 步骤：
 
@@ -191,10 +191,11 @@ npm run build
 2. `restricted` visibility 只用于 Projects、Publications、Knowledge、Skills 的详情页授权访问。
 3. 管理员在后台创建授权前，应先将内容设置为 `restricted`。
 4. 授权记录写入 `content_access_grants`，包括邮箱、内容类型、内容 ID、状态、可选有效期和备注。
-5. 外部用户通过 `/viewer/login` 使用邮箱魔法链接登录，不使用明文密码，不进入后台。
+5. 外部用户通过 `/viewer/login` 使用邮箱魔法链接登录，不使用明文密码，不进入后台；当前该链路仍不稳定，修复工作不得混入其他阶段。
 6. 公开详情页读取受 RLS 保护的数据；未授权时只显示申请入口和授权登录入口，不展示正文。
 7. 撤销授权只更新授权状态为 `revoked`，RLS 会阻止后续读取。
 8. Documents、Storage、附件下载和 signed URL 不随 restricted 内容授权开放。
+9. Viewer 登录前授权检查依赖 `0006_viewer_login_grant_check.sql`，但 0006 只提供 RPC，不代表 viewer 登录链路已稳定。
 
 验证要求：
 
@@ -203,3 +204,32 @@ npm run build
 - 合并后在生产 Supabase 手动执行 `0005_restricted_content_access.sql`。
 - 验证 public 内容仍所有访客可看，restricted 内容只有管理员或匹配邮箱授权用户可看，private 内容仅管理员可看。
 - 验证非管理员登录用户不能进入 `/dashboard`，不能访问 `/dashboard/access-grants` 或 Documents。
+
+## Project Documentation Wrap-up
+
+日期：2026-06-09
+
+类型：workflow
+
+用途：
+
+- 在功能阶段完成后同步项目文档，避免后续开发混淆已完成能力、已知问题、权限边界和下一阶段规划。
+
+步骤：
+
+1. 从最新 `main` 创建文档分支。
+2. 只修改文档文件，不修改业务代码、Server Actions、Auth、RLS、Storage、migration 或 Viewer login。
+3. 更新 `docs/current-status.md`，明确产品定位、已完成模块、权限边界、migration 状态和下一阶段。
+4. 更新 `docs/known-issues.md`，单独记录仍冻结的问题。
+5. 更新 `docs/roadmap.md`，把已完成阶段和下一阶段分开。
+6. 更新 `docs/memory.md`，保留后续 Codex 接续所需的事实、决策和边界。
+7. 更新 `docs/supabase-setup.md`，确保 migration 顺序和安全规则与生产状态一致。
+8. 更新 README，使入口文档指向当前状态和路线图。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 确认没有新增 migration。
+- 确认没有修改业务代码。
+- 确认没有提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL、Storage 内部路径或 `service_role`。
