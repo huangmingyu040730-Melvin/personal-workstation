@@ -2,14 +2,15 @@
 
 ## Viewer magic link 登录问题
 
-状态：冻结继续排查，后续单独 Hotfix。
+状态：Phase 2I 修复中，待 Preview 与生产真实验收。
 
 当前状态：
 
 - Phase 2E-B restricted 授权基础代码已实现。
 - 已实现 `restricted` visibility、`content_access_grants`、`has_content_access()`、后台 Access Grants、viewer login 和 viewer callback。
 - 已尝试 PR #19、PR #20 修复。
-- 目前仍可能出现：
+- Phase 2I 当前聚焦 magic link 回调路径、session cookie 写入和 restricted 只读访问闭环。
+- 在 Phase 2I 合并并完成生产验收前，仍可能出现：
   - 授权邮箱无法发送 magic link。
   - magic link 成功但 viewer session 未稳定建立。
   - 已授权用户仍无法查看 restricted 内容。
@@ -24,7 +25,8 @@
 
 当前边界：
 
-- 不继续扩展 Viewer login、viewer callback、restricted grants、RLS、Supabase Auth 或 Storage。
+- Phase 2I 只允许修复 Viewer login、viewer callback、viewer session 与 restricted 只读访问闭环。
+- 不扩展 restricted grants、RLS、Supabase Auth 或 Storage 的权限边界。
 - Documents、signed URL 和 Storage 路径仍不得对 Viewer 或公开访客开放。
 - restricted 内容基础代码保留，但不作为当前已验收稳定能力。
 

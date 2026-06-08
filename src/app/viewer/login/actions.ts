@@ -39,7 +39,7 @@ export async function viewerLoginAction(_previousState: ViewerLoginState, formDa
   const headerStore = await headers();
   const origin = headerStore.get("origin") ?? "";
   const nextPath = getSafeViewerRedirect(parsed.data.next);
-  const emailRedirectTo = origin ? `${origin}/viewer/callback` : undefined;
+  const emailRedirectTo = origin ? buildViewerCallbackUrl(origin, nextPath) : undefined;
   const normalizedEmail = parsed.data.email.trim().toLowerCase();
 
   const { data: canRequestLogin, error: grantCheckError } = await supabase.rpc("can_request_viewer_login", {
@@ -74,8 +74,14 @@ export async function viewerLoginAction(_previousState: ViewerLoginState, formDa
 
   if (error) {
     console.error("viewerLoginAction failed", { code: error.code, message: error.message });
-    return { error: "发送登录链接失败。请确认邮箱已被允许登录，或稍后重试。" };
+    return { error: "邮件登录链接发送失败，请稍后重试；如持续失败，请联系管理员检查登录邮件配置。" };
   }
 
   return { success: "登录链接已发送，请在邮箱中打开链接后回到对应内容页查看。" };
+}
+
+function buildViewerCallbackUrl(origin: string, nextPath: string) {
+  const callbackUrl = new URL("/viewer/callback", origin);
+  callbackUrl.searchParams.set("next", nextPath);
+  return callbackUrl.toString();
 }

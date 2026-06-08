@@ -3,13 +3,26 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSafeViewerRedirect } from "@/lib/safe-viewer-redirect";
 import { isSupabaseConfigured, supabaseConfig } from "@/lib/supabase/config";
 
-function redirectToViewerLogin(request: NextRequest, next: string, error: string) {
+function copyResponseCookies(source: NextResponse, target: NextResponse) {
+  source.cookies.getAll().forEach((cookie) => {
+    const { name, value, ...options } = cookie;
+    target.cookies.set(name, value, options);
+  });
+}
+
+function redirectToViewerLogin(request: NextRequest, next: string, error: string, cookieSource?: NextResponse) {
   const url = request.nextUrl.clone();
   url.pathname = "/viewer/login";
   url.search = "";
   url.searchParams.set("next", next);
   url.searchParams.set("error", error);
-  return NextResponse.redirect(url);
+  const response = NextResponse.redirect(url);
+
+  if (cookieSource) {
+    copyResponseCookies(cookieSource, response);
+  }
+
+  return response;
 }
 
 export async function GET(request: NextRequest) {
@@ -30,12 +43,7 @@ export async function GET(request: NextRequest) {
     return redirectToViewerLogin(request, next, "not_configured");
   }
 
-  const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = next;
-  redirectUrl.search = "";
-
-  const response = NextResponse.redirect(redirectUrl);
-  response.cookies.delete("viewer-next");
+  let sessionCookieResponse = NextResponse.next({ request });
   const supabase = createServerClient(supabaseConfig.url, supabaseConfig.publishableKey, {
     cookies: {
       getAll() {
@@ -43,7 +51,8 @@ export async function GET(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        sessionCookieResponse = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) => sessionCookieResponse.cookies.set(name, value, options));
       }
     }
   });
@@ -52,8 +61,15 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error("viewer callback exchange failed", { code: error.code, message: error.message });
-    return redirectToViewerLogin(request, next, "exchange_failed");
+    return redirectToViewerLogin(request, next, "exchange_failed", sessionCookieResponse);
   }
+
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.pathname = next;
+  redirectUrl.search = "";
+  const response = NextResponse.redirect(redirectUrl);
+  copyResponseCookies(sessionCookieResponse, response);
+  response.cookies.delete("viewer-next");
 
   return response;
 }
