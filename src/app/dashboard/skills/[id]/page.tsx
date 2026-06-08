@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSkillVersionAction, deleteSkillAction } from "@/actions/skills";
 import { AppShell } from "@/components/app-shell";
+import { AdminFormSection, AdminPageSurface } from "@/components/admin-ui";
 import { StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { Field, Textarea, TextInput } from "@/components/forms/form-fields";
@@ -30,21 +31,22 @@ export default async function SkillDetailPage({
 
   return (
     <AppShell>
-      <PageHeader
-        eyebrow={skill.category}
-        title={skill.name}
-        description={skill.description}
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/dashboard/skills/${skill.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
-            <form action={deleteSkillAction.bind(null, skill.id)}>
-              <DeleteButton label="删除 Skill" />
-            </form>
-          </div>
-        }
-      />
-      {error ? <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-      <div className="grid gap-5 xl:grid-cols-[1fr_0.4fr]">
+      <AdminPageSurface>
+        <PageHeader
+          eyebrow={skill.category}
+          title={skill.name}
+          description={skill.description}
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/dashboard/skills/${skill.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
+              <form action={deleteSkillAction.bind(null, skill.id)}>
+                <DeleteButton label="删除 Skill" />
+              </form>
+            </div>
+          }
+        />
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        <div className="grid gap-5 xl:grid-cols-[1fr_0.4fr]">
         <div className="space-y-5">
           <Card><CardHeader title="详细说明" /><MarkdownPreview content={skill.content} /></Card>
           <Card><CardHeader title="输入内容说明" /><MarkdownPreview content={skill.input_description} emptyText="尚未填写输入说明。" /></Card>
@@ -84,17 +86,17 @@ export default async function SkillDetailPage({
               )) : <p className="text-sm text-slate-500">暂无版本记录</p>}
             </div>
           </Card>
-          <Card>
-            <CardHeader title="新增版本记录" />
+          <AdminFormSection title="新增版本记录">
             <form action={createSkillVersionAction.bind(null, skill.id)} className="space-y-4">
               <Field label="版本号"><TextInput name="version" placeholder="v1.1.0" required /></Field>
               <Field label="更新说明"><Textarea name="notes" /></Field>
               <Field label="发布时间"><TextInput name="released_at" type="datetime-local" /></Field>
               <SubmitButton>新增版本</SubmitButton>
             </form>
-          </Card>
+          </AdminFormSection>
         </div>
-      </div>
+        </div>
+      </AdminPageSurface>
     </AppShell>
   );
 }

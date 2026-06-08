@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Download, FileText, Upload } from "lucide-react";
+import { AdminEmptyState, AdminPageSurface, AdminSection, AdminSecurityNote } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card } from "@/components/card";
@@ -16,34 +17,34 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
 
   return (
     <AppShell>
+      <AdminPageSurface>
       <PageHeader
         eyebrow="Documents"
         title="文件中心"
         description="从 Supabase 读取真实私密文件记录，上传、下载与删除均受管理员权限和 Storage policy 保护。"
         action={
-          <Link href="/dashboard/documents/upload" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">
+          <Link href="/dashboard/documents/upload" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
             <Upload size={18} />
             上传文件
           </Link>
         }
       />
-      <form className="mb-5 flex flex-wrap gap-3">
-        <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+      <AdminSecurityNote>文件中心只面向管理员后台。文件默认私密，公开页面不会展示下载入口、Storage 路径或 signed URL。</AdminSecurityNote>
+      <AdminSection>
+      <form className="flex flex-wrap gap-3">
+        <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
           <option value="all">全部分类</option>
           {documentCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
-        <select name="related_type" defaultValue={relatedType} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+        <select name="related_type" defaultValue={relatedType} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
           <option value="all">全部关联</option>
           {documentRelatedTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
-        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:text-blue-700">筛选</button>
+        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
       </form>
+      </AdminSection>
       {documents.length === 0 ? (
-        <Card className="text-center">
-          <p className="font-semibold text-slate-900">还没有文件记录</p>
-          <p className="mt-2 text-sm text-slate-500">上传第一个文件后，文件中心会显示真实 Storage 元数据。</p>
-          <Link href="/dashboard/documents/upload" className="mt-4 inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">上传文件</Link>
-        </Card>
+        <AdminEmptyState title="还没有文件记录" description="上传第一个文件后，文件中心会显示真实 Storage 元数据。" action={<Link href="/dashboard/documents/upload" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">上传文件</Link>} />
       ) : (
         <Card className="overflow-x-auto p-0">
           <div className="min-w-[860px]">
@@ -57,7 +58,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
               <span>操作</span>
             </div>
             {documents.map((document) => (
-              <div key={document.id} className="grid grid-cols-[1.25fr_0.5fr_0.45fr_0.65fr_0.6fr_0.4fr_0.45fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm last:border-0">
+              <div key={document.id} className="grid grid-cols-[1.25fr_0.5fr_0.45fr_0.65fr_0.6fr_0.4fr_0.45fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50/60 last:border-0">
                 <Link href={`/dashboard/documents/${document.id}`} className="flex min-w-0 gap-2 font-medium text-slate-900 hover:text-blue-700">
                   <FileText className="mt-0.5 shrink-0 text-blue-700" size={16} />
                   <span className="truncate">{document.name}</span>
@@ -76,6 +77,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           </div>
         </Card>
       )}
+      </AdminPageSurface>
     </AppShell>
   );
 }

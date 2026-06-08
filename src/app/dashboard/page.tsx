@@ -1,6 +1,7 @@
 import { BookOpen, CalendarCheck, ClipboardCheck, FileText, FolderKanban, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Card, CardHeader } from "@/components/card";
 import { Progress } from "@/components/progress";
 import { StatCard } from "@/components/stat-card";
@@ -19,10 +20,20 @@ export default async function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="mb-6 rounded-3xl border border-blue-100 bg-gradient-to-r from-white to-blue-50 p-6 shadow-soft">
-        <p className="text-sm font-medium text-blue-700">个人研究与 AI 工作台</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-950">你好，{profile.name}</h1>
-        <p className="mt-2 text-sm text-slate-600">Projects、Knowledge、Skills 与 Publications 已接入 Supabase 真实数据。</p>
+      <AdminPageSurface>
+      <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 p-6 shadow-soft">
+        <div className="flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+          <div>
+            <p className="text-sm font-semibold text-blue-700">个人研究与 AI 工作台</p>
+            <h1 className="mt-2 text-3xl font-semibold text-slate-950 md:text-4xl">你好，{profile.name}</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">维护公开研究主页、真实内容库、私密文件中心与访问审批。Projects、Knowledge、Skills 与 Publications 已接入 Supabase 真实数据。</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            <Link href="/dashboard/projects/new" className="rounded-2xl bg-navy-900 px-4 py-3 text-center font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-800">新建项目</Link>
+            <Link href="/dashboard/publications/new" className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center font-semibold text-blue-700 transition hover:-translate-y-0.5 hover:bg-blue-50">新建成果</Link>
+            <Link href="/dashboard/documents/upload" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">上传文件</Link>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -33,8 +44,7 @@ export default async function DashboardPage() {
         <StatCard label="可用 Skill" value={String(data.availableSkillCount)} helper={`Skill 总数 ${data.skills.length}`} icon={Sparkles} />
       </div>
 
-      <Card className="mt-6">
-        <CardHeader title="公开内容质量提示" description="公开内容越完整，公开研究工作站越适合分享给外部访客。" />
+      <AdminSection title="公开内容质量提示" description="公开内容越完整，公开研究工作站越适合分享给外部访客。">
         <div className="grid gap-3 text-sm md:grid-cols-4">
           {[
             { label: "公开项目", value: data.publicCounts.projects, href: "/dashboard/projects" },
@@ -42,18 +52,17 @@ export default async function DashboardPage() {
             { label: "公开 Skill", value: data.publicCounts.skills, href: "/dashboard/skills" },
             { label: "公开文章", value: data.publicCounts.knowledge, href: "/dashboard/knowledge" }
           ].map((item) => (
-            <Link key={item.label} href={item.href} className="rounded-2xl bg-slate-50 p-4 hover:bg-blue-50">
+            <Link key={item.label} href={item.href} className="admin-card-motion rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:border-blue-200 hover:bg-blue-50">
               <p className="text-2xl font-semibold text-slate-950">{item.value}</p>
               <p className="mt-1 text-slate-500">{item.label}</p>
             </Link>
           ))}
         </div>
         <p className="mt-4 text-sm leading-7 text-slate-600">建议优先补齐标题、简介、标签、正文摘要，并将适合展示的内容设为 public；精选内容会优先出现在公开首页。</p>
-      </Card>
+      </AdminSection>
 
-      <Card className="mt-6">
-        <CardHeader title="访问申请" description="外部访客可以提交查看受限内容的申请；管理员审批后可为指定邮箱创建访问授权。" />
-        <Link href="/dashboard/access-requests" className="flex items-center justify-between gap-4 rounded-2xl bg-blue-50 p-4 text-sm hover:bg-blue-100">
+      <AdminSection title="访问申请" description="外部访客可以提交查看受限内容的申请；管理员审批后可为指定邮箱创建访问授权。">
+        <Link href="/dashboard/access-requests" className="admin-card-motion flex items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm hover:bg-white">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-700">
               <ClipboardCheck size={20} />
@@ -65,14 +74,14 @@ export default async function DashboardPage() {
           </div>
           <span className="text-2xl font-semibold text-blue-800">{data.pendingAccessRequestCount}</span>
         </Link>
-      </Card>
+      </AdminSection>
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[1.25fr_0.9fr_0.75fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.25fr_0.9fr_0.75fr]">
         <Card>
           <CardHeader title="今日安排" description="占位数据：Calendar CRUD 将在下一阶段接入" />
           <div className="space-y-3">
             {todayItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 rounded-2xl bg-slate-50 p-3">
+              <div key={item.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-3">
                 <span className="w-14 text-sm font-semibold text-blue-700">{item.time}</span>
                 <div>
                   <p className="text-sm font-medium text-slate-900">{item.title}</p>
@@ -102,7 +111,7 @@ export default async function DashboardPage() {
           <CardHeader title="快速入口" />
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => (
-              <Link key={action.label} href={action.href} className="rounded-2xl bg-blue-50 p-4 text-center text-sm font-medium text-blue-800 transition hover:bg-blue-100">
+              <Link key={action.label} href={action.href} className="admin-card-motion rounded-2xl border border-blue-100 bg-blue-50 p-4 text-center text-sm font-medium text-blue-800 hover:bg-white">
                 <action.icon className="mx-auto mb-2" size={24} />
                 {action.label}
               </Link>
@@ -111,12 +120,12 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-4">
+      <div className="grid gap-5 xl:grid-cols-4">
         <Card>
           <CardHeader title="最新学术成果" action={<Link href="/dashboard/publications" className="text-sm font-medium text-blue-700">查看全部</Link>} />
           <div className="space-y-4">
             {data.publications.length > 0 ? data.publications.map((item) => (
-              <Link key={item.id} href={`/dashboard/publications/${item.id}`} className="flex gap-3">
+              <Link key={item.id} href={`/dashboard/publications/${item.id}`} className="rounded-2xl p-2 -m-2 flex gap-3 transition hover:bg-blue-50">
                 <FileText className="mt-1 text-blue-700" size={18} />
                 <div>
                   <p className="text-sm font-medium text-slate-900">{item.title}</p>
@@ -130,7 +139,7 @@ export default async function DashboardPage() {
           <CardHeader title="知识库最近笔记" />
           <div className="space-y-4">
             {data.notes.length > 0 ? data.notes.map((note) => (
-              <Link key={note.id} href={`/dashboard/knowledge/${note.id}`} className="flex gap-3">
+              <Link key={note.id} href={`/dashboard/knowledge/${note.id}`} className="rounded-2xl p-2 -m-2 flex gap-3 transition hover:bg-blue-50">
                 <BookOpen className="mt-1 text-emerald-600" size={18} />
                 <div>
                   <p className="text-sm font-medium text-slate-900">{note.title}</p>
@@ -144,7 +153,7 @@ export default async function DashboardPage() {
           <CardHeader title="Skill 库最近更新" />
           <div className="space-y-4">
             {data.skills.length > 0 ? data.skills.map((skill) => (
-              <Link key={skill.id} href={`/dashboard/skills/${skill.id}`} className="block">
+              <Link key={skill.id} href={`/dashboard/skills/${skill.id}`} className="block rounded-2xl p-2 -m-2 transition hover:bg-blue-50">
                 <p className="text-sm font-medium text-slate-900">{skill.name}</p>
                 <p className="mt-1 text-xs text-slate-500">{skill.status} · {formatRelative(skill.updated_at)}</p>
               </Link>
@@ -155,13 +164,14 @@ export default async function DashboardPage() {
           <CardHeader title="最近动态" />
           <div className="space-y-3">
             {data.activityLogs.length > 0 ? data.activityLogs.map((activity) => (
-              <p key={activity.id} className="rounded-2xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">
+              <p key={activity.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm leading-6 text-slate-600">
                 {activity.action}：{activityTitle(activity.metadata, activity.entity_type ?? "内容")} · {formatRelative(activity.created_at)}
               </p>
             )) : <p className="text-sm text-slate-500">暂无操作日志。</p>}
           </div>
         </Card>
       </div>
+      </AdminPageSurface>
     </AppShell>
   );
 }

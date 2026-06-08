@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteKnowledgeAction } from "@/actions/knowledge";
 import { AppShell } from "@/components/app-shell";
+import { AdminPageSurface } from "@/components/admin-ui";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
@@ -29,21 +30,22 @@ export default async function KnowledgeDetailPage({
 
   return (
     <AppShell>
-      <PageHeader
-        eyebrow={note.category}
-        title={note.title}
-        description={note.excerpt ?? "暂无摘要"}
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/dashboard/knowledge/${note.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
-            <form action={deleteKnowledgeAction.bind(null, note.id)}>
-              <DeleteButton />
-            </form>
-          </div>
-        }
-      />
-      {error ? <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-      <div className="grid gap-5 xl:grid-cols-[1fr_0.35fr]">
+      <AdminPageSurface>
+        <PageHeader
+          eyebrow={note.category}
+          title={note.title}
+          description={note.excerpt ?? "暂无摘要"}
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/dashboard/knowledge/${note.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
+              <form action={deleteKnowledgeAction.bind(null, note.id)}>
+                <DeleteButton />
+              </form>
+            </div>
+          }
+        />
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        <div className="grid gap-5 xl:grid-cols-[1fr_0.35fr]">
         <Card>
           <CardHeader title="正文" action={<VisibilityBadge visibility={note.visibility} />} />
           <MarkdownPreview content={note.content} />
@@ -65,7 +67,8 @@ export default async function KnowledgeDetailPage({
             </div>
           </Card>
         </div>
-      </div>
+        </div>
+      </AdminPageSurface>
     </AppShell>
   );
 }

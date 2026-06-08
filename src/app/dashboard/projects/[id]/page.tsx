@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteProjectAction } from "@/actions/projects";
 import { AppShell } from "@/components/app-shell";
+import { AdminPageSurface } from "@/components/admin-ui";
 import { StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
@@ -31,21 +32,22 @@ export default async function ProjectDetailPage({
 
   return (
     <AppShell>
-      <PageHeader
-        eyebrow="Project Detail"
-        title={project.title}
-        description={project.summary}
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/dashboard/projects/${project.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
-            <form action={deleteAction}>
-              <DeleteButton />
-            </form>
-          </div>
-        }
-      />
-      {error ? <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-      <div className="grid gap-5 xl:grid-cols-[1fr_0.45fr]">
+      <AdminPageSurface>
+        <PageHeader
+          eyebrow="Project Detail"
+          title={project.title}
+          description={project.summary}
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/dashboard/projects/${project.id}/edit`} className="rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">编辑</Link>
+              <form action={deleteAction}>
+                <DeleteButton />
+              </form>
+            </div>
+          }
+        />
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        <div className="grid gap-5 xl:grid-cols-[1fr_0.45fr]">
         <div className="space-y-5">
           <Card>
             <CardHeader title="研究背景" />
@@ -95,7 +97,8 @@ export default async function ProjectDetailPage({
             </div>
           </Card>
         </div>
-      </div>
+        </div>
+      </AdminPageSurface>
     </AppShell>
   );
 }

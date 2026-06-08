@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Card, CardHeader } from "@/components/card";
 import { AccessRequestReviewForm } from "@/components/forms/access-request-review-form";
 import { PageHeader } from "@/components/page-header";
@@ -25,13 +26,14 @@ export default async function AccessRequestDetailPage({
 
   return (
     <AppShell>
-      <PageHeader
-        eyebrow="Access Request"
-        title={`${request.requester_name} 的访问申请`}
-        description="审批用于记录处理状态；如需开放 restricted 内容，请基于申请创建访问授权。"
-        action={<Link href="/dashboard/access-requests" className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">返回列表</Link>}
-      />
-      <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
+      <AdminPageSurface>
+        <PageHeader
+          eyebrow="Access Request"
+          title={`${request.requester_name} 的访问申请`}
+          description="审批用于记录处理状态；如需开放 restricted 内容，请基于申请创建访问授权。"
+          action={<Link href="/dashboard/access-requests" className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">返回列表</Link>}
+        />
+        <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
         <div className="space-y-5">
           <Card>
             <CardHeader title="申请信息" />
@@ -54,8 +56,7 @@ export default async function AccessRequestDetailPage({
             </dl>
           </Card>
         </div>
-        <Card>
-          <CardHeader title="处理申请" description="保存审批状态后，可为已同意申请创建具体内容授权。" />
+        <AdminSection title="处理申请" description="保存审批状态后，可为已同意申请创建具体内容授权。">
           <div className="space-y-5">
             <AccessRequestReviewForm request={request} error={getFormError(query)} />
             {request.status === "approved" ? (
@@ -73,8 +74,9 @@ export default async function AccessRequestDetailPage({
               <div className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">申请标记为“已同意”后，可以基于申请邮箱创建 restricted 内容授权。</div>
             )}
           </div>
-        </Card>
-      </div>
+        </AdminSection>
+        </div>
+      </AdminPageSurface>
     </AppShell>
   );
 }
