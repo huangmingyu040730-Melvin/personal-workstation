@@ -754,3 +754,27 @@
 - 导出内容只包含当前版本已选且展示的素材，并尊重 `profile_fields` 与 `visible_fields`。
 - 官方 `resume_items.bullets` 数组会以 Word 原生 bullet list 逐条展示。
 - 不读取 Documents、Storage、Access Requests、Access Grants、viewer/restricted 内容或未选择的 Resume Items。
+
+## 2026-06-10 - Use A Shared Resume Template Model For Preview And Word
+
+类型：decision
+
+决策：
+
+- Phase 2K-G 新增 `src/lib/resume-template-model.ts`，将 Resume Version、Profile/basic 信息和已选 Resume Items 转成统一模板模型。
+- A4 Preview 和 Word `.docx` 导出都使用这套模型，不再各自维护独立字段拼接逻辑。
+- 模板结构对齐 20260523 Word 简历风格：顶部个人信息与照片位置、模块标题视觉符号、左侧时间列、右侧学校/公司/项目内容、正式技能条目。
+- 本阶段不提交用户原始 Word 模板、不提交照片或字体文件，不新增 migration。
+
+原因：
+
+- Preview 和 Word 之前分别维护结构，容易出现字体、字段顺序、布局和 bullet 展示不一致。
+- 统一模板模型能让后续多模板、照片上传、Word 样式增强或 PDF 导出更容易扩展。
+- 只调整模板渲染层可以避免影响 Resume CRUD、质量检查、AI JD 优化、RLS、Storage 或 Viewer。
+
+影响：
+
+- Preview 页面更接近正式中文金融简历，不再偏后台卡片式展示。
+- Word 导出补充照片占位、模块视觉符号和左右列经历布局。
+- 字段可见性仍由 `resume_versions.profile_fields` 和 `resume_version_items.visible_fields` 控制。
+- 相关技能按正式条目展示，不做标签墙。

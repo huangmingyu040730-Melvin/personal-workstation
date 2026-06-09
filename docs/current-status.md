@@ -60,6 +60,7 @@
 - Resume 简历质量检查、完整度评分和投递版本提示。
 - Resume AI JD 简历优化建议。
 - Resume Word `.docx` 即时导出。
+- Resume Preview 与 Word 导出共用 20260523 风格模板模型。
 - 管理后台 UI 已优化。
 - 后台新建 / 编辑 / 上传 / 授权页已调整为更平衡的工作台布局。
 
@@ -207,8 +208,9 @@ Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行�
 - Phase 2K-D：规则化简历质量检查、完整度评分、缺失项提示和投递方向提醒。
 - Phase 2K-E：AI JD 简历优化建议。
 - Phase 2K-F：Word `.docx` 即时导出。
+- Phase 2K-G：Preview 与 Word 导出对齐到 20260523 风格模板。
 
-Phase 2K-A 当前新增 `resume_items` 数据模型和后台 `/dashboard/resume` 管理入口。Phase 2K-B 新增 `resume_versions`、`resume_version_items` 和 `/dashboard/resume/versions` 管理入口，用于组合素材、排序、分区和后台预览。Phase 2K-C 进一步补充 `resume_items.details`、`resume_versions.profile_fields`、`resume_versions.section_order`、`resume_versions.template_options` 和 `resume_version_items.visible_fields`，把素材库从混合条目列表升级为按个人信息、教育、实习、在校、项目、研究、技能等区块维护，并将预览页调整为更接近上传 PDF 的中文 A4 简历排版。Phase 2K-D 新增基于规则的简历质量检查，检查姓名、联系方式、教育、实习、项目/研究、技能、目标岗位、bullet 数量、量化表达和一页过长风险。Phase 2K-E 新增 `/dashboard/resume/versions/[id]/jd-review`，管理员可粘贴目标岗位 JD 并获取 AI 生成的匹配摘要、关键词差距、经历强化建议和 bullet 改写草稿；该阶段需要服务端 `OPENAI_API_KEY`，只发送当前简历版本已选内容和 JD，不发送 Documents、Storage 路径、signed URL、Access Requests 或 Access Grants，也不会自动覆盖原始简历数据。Phase 2K-F 新增 `/dashboard/resume/versions/[id]/export/docx`，管理员可即时下载 Word `.docx` 简历；导出只包含当前版本已选并展示的素材，尊重顶部个人字段开关和逐条素材可见字段，不写入 Storage、不创建长期下载链接、不新增 migration。
+Phase 2K-A 当前新增 `resume_items` 数据模型和后台 `/dashboard/resume` 管理入口。Phase 2K-B 新增 `resume_versions`、`resume_version_items` 和 `/dashboard/resume/versions` 管理入口，用于组合素材、排序、分区和后台预览。Phase 2K-C 进一步补充 `resume_items.details`、`resume_versions.profile_fields`、`resume_versions.section_order`、`resume_versions.template_options` 和 `resume_version_items.visible_fields`，把素材库从混合条目列表升级为按个人信息、教育、实习、在校、项目、研究、技能等区块维护，并将预览页调整为更接近上传 PDF 的中文 A4 简历排版。Phase 2K-D 新增基于规则的简历质量检查，检查姓名、联系方式、教育、实习、项目/研究、技能、目标岗位、bullet 数量、量化表达和一页过长风险。Phase 2K-E 新增 `/dashboard/resume/versions/[id]/jd-review`，管理员可粘贴目标岗位 JD 并获取 AI 生成的匹配摘要、关键词差距、经历强化建议和 bullet 改写草稿；该阶段需要服务端 `OPENAI_API_KEY`，只发送当前简历版本已选内容和 JD，不发送 Documents、Storage 路径、signed URL、Access Requests 或 Access Grants，也不会自动覆盖原始简历数据。Phase 2K-F 新增 `/dashboard/resume/versions/[id]/export/docx`，管理员可即时下载 Word `.docx` 简历；导出只包含当前版本已选并展示的素材，尊重顶部个人字段开关和逐条素材可见字段，不写入 Storage、不创建长期下载链接、不新增 migration。Phase 2K-G 新增统一 `resume-template-model`，让 A4 Preview 和 Word 导出共享同一套 20260523 风格模板结构，包括照片位置、模块标题视觉符号、左侧时间列、右侧学校/公司/项目内容和正式技能条目布局。
 
 ### Phase 2K-G - 自动化与市场简报
 
