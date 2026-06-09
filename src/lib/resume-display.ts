@@ -234,7 +234,7 @@ function splitBulletText(value: unknown) {
 
   return value
     .replace(/\r\n/g, "\n")
-    .split(/\n+|(?=\s*[•·]\s+)|(?=\s+-\s+)|(?=\s*\d+[.、]\s*)/g);
+    .split(/\n+|(?=\s*[•·]\s*)|(?=\s+-\s*)|(?=\s*\d+[.、]\s*)/g);
 }
 
 function cleanBulletText(value: string) {

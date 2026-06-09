@@ -208,7 +208,7 @@ function ExperienceResumeItem({ versionItem, item, sectionKey }: { versionItem: 
       {role ? <div className="resume-entry-role">{[role, visible.show_location ? item.location : null].filter(Boolean).join(" ｜ ")}</div> : null}
       {visible.show_summary && item.summary ? <p className="resume-entry-summary">{item.summary}</p> : null}
       {detailLines.map((line) => (
-        <p key={line} className="resume-detail-line">{line}</p>
+        <ResumeTextBlock key={line} text={line} />
       ))}
       {visible.show_bullets ? <ResumeBullets item={item} /> : null}
       {visible.show_skills || visible.show_tools ? <ResumeTokens item={item} /> : null}
@@ -262,10 +262,27 @@ function CredentialResumeItem({ versionItem, item, sectionKey }: { versionItem: 
         {title ? <span className="resume-entry-org">{title}</span> : null}
       </div>
       {meta ? <div className="resume-entry-role">{meta}</div> : null}
-      {description ? <p className="resume-entry-summary">{description}</p> : null}
+      {description ? <ResumeTextBlock text={description} /> : null}
       {visible.show_bullets ? <ResumeBullets item={item} /> : null}
     </article>
   );
+}
+
+function ResumeTextBlock({ text }: { text: string }) {
+  const bullets = normalizeResumeBullets(text);
+  const looksLikeList = bullets.length > 1 || /^[\s]*(?:[•·-]|\d+[.、])/.test(text);
+
+  if (looksLikeList && bullets.length > 0) {
+    return (
+      <ul className="resume-bullets">
+        {bullets.map((bullet) => (
+          <li key={bullet}>{bullet}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  return <p className="resume-detail-line">{text}</p>;
 }
 
 function ResumeBullets({ item }: { item: ResumeItemRecord }) {
@@ -327,7 +344,7 @@ function getEntryDetailLines(item: ResumeItemRecord, details: Record<string, unk
   if (sectionKey === "experience" || sectionKey === "campus" || sectionKey === "other") {
     return [
       visible.show_achievements ? stringDetail(details, "achievements") || stringDetail(details, "results") : null
-    ].filter(Boolean);
+    ].filter(isNonEmptyString);
   }
 
   if (sectionKey === "projects") {
@@ -335,7 +352,7 @@ function getEntryDetailLines(item: ResumeItemRecord, details: Record<string, unk
       visible.show_background ? stringDetail(details, "background") : null,
       visible.show_methods ? stringDetail(details, "methods") : null,
       visible.show_results ? stringDetail(details, "results") || stringDetail(details, "achievements") : null
-    ].filter(Boolean);
+    ].filter(isNonEmptyString);
   }
 
   if (sectionKey === "research") {
@@ -344,10 +361,14 @@ function getEntryDetailLines(item: ResumeItemRecord, details: Record<string, unk
       visible.show_conclusion ? stringDetail(details, "conclusion") : null,
       visible.show_results ? stringDetail(details, "results") : null,
       visible.show_related_outputs ? stringDetail(details, "related_outputs") || stringDetail(details, "outputs") : null
-    ].filter(Boolean);
+    ].filter(isNonEmptyString);
   }
 
   return [];
+}
+
+function isNonEmptyString(value: string | null): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function groupVersionItems(items: ResumeVersionItemRecord[]) {
