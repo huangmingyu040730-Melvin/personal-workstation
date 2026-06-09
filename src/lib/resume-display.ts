@@ -185,6 +185,11 @@ export function arrayDetail(details: Record<string, unknown>, key: string) {
   return [];
 }
 
+export function normalizeResumeBullets(input: unknown): string[] {
+  const values = Array.isArray(input) ? input : [input];
+  return values.flatMap((value) => splitBulletText(value)).map(cleanBulletText).filter(Boolean);
+}
+
 export function formatResumeDateRange(item: Pick<ResumeItemRecord, "start_date" | "end_date" | "is_current">) {
   const start = formatResumeMonth(item.start_date);
   const end = item.is_current ? "至今" : formatResumeMonth(item.end_date);
@@ -220,6 +225,25 @@ function firstString(details: Record<string, unknown>, keys: string[]) {
 
 function joinParts(values: Array<string | null | undefined>) {
   return values.filter((value): value is string => Boolean(value && value.trim())).join("｜");
+}
+
+function splitBulletText(value: unknown) {
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  return value
+    .replace(/\r\n/g, "\n")
+    .split(/\n+|(?=\s*[•·]\s+)|(?=\s+-\s+)|(?=\s*\d+[.、]\s*)/g);
+}
+
+function cleanBulletText(value: string) {
+  return value
+    .trim()
+    .replace(/^[•·]\s*/, "")
+    .replace(/^-\s*/, "")
+    .replace(/^\d+[.、]\s*/, "")
+    .trim();
 }
 
 function stringValue(value: unknown) {

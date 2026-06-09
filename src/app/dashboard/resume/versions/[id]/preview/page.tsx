@@ -9,7 +9,7 @@ import { ResumePrintButton } from "@/components/resume-print-button";
 import type { ProfileRecord, ResumeItemRecord, ResumeVersionItemRecord } from "@/lib/content-types";
 import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
 import { getResumeItems, getResumeVersionWithItems } from "@/lib/queries/resume";
-import { arrayDetail, detailRecord, formatResumeDateRange, getResumeProfileData, stringDetail } from "@/lib/resume-display";
+import { arrayDetail, detailRecord, formatResumeDateRange, getResumeProfileData, normalizeResumeBullets, stringDetail } from "@/lib/resume-display";
 import { cn } from "@/lib/utils";
 
 type ResumePrintSection = "education" | "experience" | "campus" | "projects" | "research" | "skills" | "certifications" | "awards" | "other";
@@ -269,13 +269,15 @@ function CredentialResumeItem({ versionItem, item, sectionKey }: { versionItem: 
 }
 
 function ResumeBullets({ item }: { item: ResumeItemRecord }) {
-  if (item.bullets.length === 0) {
+  const bullets = normalizeResumeBullets(item.bullets);
+
+  if (bullets.length === 0) {
     return null;
   }
 
   return (
     <ul className="resume-bullets">
-      {item.bullets.map((bullet) => (
+      {bullets.map((bullet) => (
         <li key={bullet}>{bullet}</li>
       ))}
     </ul>

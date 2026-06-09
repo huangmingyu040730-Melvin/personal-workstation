@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { resumeItemSchema, resumeVersionSchema } from "@/lib/validations/resume";
+import { normalizeResumeBullets } from "@/lib/resume-display";
 
 const detailTextKeys = [
   "photo_url",
@@ -121,7 +122,7 @@ function resumePayloadFromForm(formData: FormData) {
     end_date: getOptionalString(formData, "end_date"),
     is_current: getBoolean(formData, "is_current"),
     summary: getOptionalString(formData, "summary"),
-    bullets: getArrayFromText(formData, "bullets"),
+    bullets: normalizeResumeBullets(getString(formData, "bullets")),
     skills: getArrayFromText(formData, "skills"),
     tags: getArrayFromText(formData, "tags"),
     details: buildResumeDetails(formData),
