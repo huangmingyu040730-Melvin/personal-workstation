@@ -138,90 +138,107 @@ select {
 .resume-paper-wrap {
   display: flex;
   justify-content: center;
-  padding: 10px 0 36px;
+  padding: 10px 0 40px;
 }
 
 .resume-paper {
+  box-sizing: border-box;
   width: min(100%, 210mm);
-  min-height: 297mm;
+  height: 297mm;
+  max-height: 297mm;
+  overflow: hidden;
   background: #ffffff;
-  color: #111827;
+  color: #20242a;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.14);
-  padding: 12mm 13mm 13mm;
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.12);
+  padding: 11mm 13mm 10mm;
   font-family:
-    "Microsoft YaHei",
     "SimSun",
     "Songti SC",
+    "Microsoft YaHei",
     "PingFang SC",
     sans-serif;
 }
 
 .resume-print-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 82px;
-  gap: 16px;
-  align-items: center;
-  margin-bottom: 10px;
+  grid-template-columns: 30mm minmax(0, 1fr);
+  grid-template-areas: "photo main";
+  gap: 16mm;
+  align-items: start;
+  min-height: 34mm;
+  margin-bottom: 3px;
+}
+
+.resume-print-header-no-photo {
+  grid-template-columns: 1fr;
+  grid-template-areas: "main";
+  min-height: auto;
 }
 
 .resume-photo-box {
+  grid-area: photo;
   display: flex;
-  height: 104px;
-  width: 82px;
+  height: 32mm;
+  width: 27mm;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
+  border: 1px solid #cfd6df;
+  background: #f8fafc;
   color: #9ca3af;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .resume-header-main {
+  grid-area: main;
   min-width: 0;
-  text-align: center;
+  padding-top: 3px;
+  text-align: left;
 }
 
 .resume-print-header h1 {
   margin: 0;
-  color: #111827;
-  font-size: 29px;
+  color: #111111;
+  font-family: "SimHei", "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 23.5px;
   font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: 0.14em;
+  line-height: 1.08;
+  letter-spacing: 0.12em;
 }
 
 .resume-headline,
 .resume-version-summary {
-  margin: 6px auto 0;
-  max-width: 650px;
+  margin: 4px auto 0;
+  max-width: 620px;
   color: #374151;
-  font-size: 11.5px;
-  line-height: 1.65;
-  text-align: center;
+  font-size: 9.4px;
+  line-height: 1.32;
+  text-align: left;
 }
 
 .resume-version-summary {
-  margin-bottom: 9px;
+  margin-bottom: 8px;
 }
 
 .resume-info-grid {
-  margin-top: 8px;
+  margin: 11px 0 0;
   display: grid;
+  max-width: 535px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 3px 16px;
-  text-align: left;
+  gap: 3px 28px;
   color: #1f2937;
-  font-size: 10.8px;
-  line-height: 1.45;
+  font-size: 10.6px;
+  line-height: 1.28;
+  text-align: left;
 }
 
 .resume-info-grid p {
   margin: 0;
   display: flex;
-  gap: 4px;
   min-width: 0;
+  gap: 4px;
+  white-space: normal;
 }
 
 .resume-info-grid strong {
@@ -235,39 +252,40 @@ select {
 }
 
 .resume-print-section {
-  margin-top: 8px;
+  margin-top: 5px;
   break-inside: avoid;
 }
 
 .resume-print-section-title {
   display: flex;
-  gap: 8px;
   align-items: center;
-  margin-bottom: 5px;
-  border-bottom: 1px solid #9ca3af;
-  padding-bottom: 2px;
+  gap: 5px;
+  margin-bottom: 3px;
+  border-bottom: 1px solid #a8b1bd;
+  padding-bottom: 1px;
 }
 
 .resume-print-section-icon {
   display: inline-flex;
-  height: 18px;
-  width: 18px;
+  height: 13px;
+  width: 13px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #111827;
-  border-radius: 4px;
-  color: #111827;
-  font-size: 10px;
+  border: 1px solid #20242a;
+  border-radius: 2px;
+  color: #20242a;
+  font-size: 7.5px;
   font-weight: 700;
   line-height: 1;
 }
 
 .resume-print-section h2 {
   margin: 0;
-  color: #111827;
-  font-size: 13.5px;
+  color: #111111;
+  font-family: "SimHei", "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 11.4px;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.28;
   letter-spacing: 0.04em;
 }
 
@@ -277,11 +295,11 @@ select {
 
 .resume-section-body {
   display: grid;
-  gap: 6px;
+  gap: 3px;
 }
 
 .resume-section-body-compact {
-  gap: 3px;
+  gap: 2px;
 }
 
 .resume-entry {
@@ -291,17 +309,17 @@ select {
 
 .resume-entry-grid {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  gap: 13px;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 10px;
   align-items: start;
 }
 
 .resume-entry-date {
   color: #374151;
-  font-size: 10.6px;
+  font-size: 8.8px;
   font-weight: 600;
+  line-height: 1.28;
   white-space: nowrap;
-  line-height: 1.5;
 }
 
 .resume-entry-content {
@@ -309,10 +327,10 @@ select {
 }
 
 .resume-entry-org {
-  color: #111827;
-  font-size: 12.2px;
+  color: #111111;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.26;
 }
 
 .resume-entry-role,
@@ -327,63 +345,63 @@ select {
 .resume-entry-role {
   margin-top: 0;
   color: #1f2937;
-  font-size: 11.2px;
+  font-size: 9.3px;
   font-weight: 600;
-  line-height: 1.42;
+  line-height: 1.26;
 }
 
 .resume-entry-summary,
 .resume-detail-line {
-  margin-top: 2px;
+  margin-top: 1px;
   margin-bottom: 0;
   color: #374151;
-  font-size: 10.8px;
-  line-height: 1.45;
+  font-size: 9.05px;
+  line-height: 1.28;
 }
 
 .resume-detail-line strong {
-  color: #111827;
+  color: #111111;
   font-weight: 700;
 }
 
 .resume-bullets {
-  margin-top: 2px;
+  margin-top: 1px;
   margin-bottom: 0;
   padding: 0;
   list-style: none;
   color: #1f2937;
-  font-size: 10.8px;
-  line-height: 1.45;
+  font-size: 9.05px;
+  line-height: 1.28;
 }
 
 .resume-bullets li {
   position: relative;
-  padding-left: 12px;
   margin: 0;
+  padding-left: 9px;
 }
 
 .resume-bullets li::before {
   content: "•";
   position: absolute;
   left: 0;
-  color: #111827;
+  color: #111111;
 }
 
 .resume-token-line,
 .resume-entry-note {
-  margin-top: 2px;
+  margin-top: 1px;
   color: #6b7280;
-  font-size: 10.2px;
-  line-height: 1.4;
+  font-size: 8.8px;
+  line-height: 1.25;
 }
 
 .resume-skill-entry {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-columns: 100px minmax(0, 1fr);
   gap: 8px;
   color: #1f2937;
-  font-size: 10.8px;
-  line-height: 1.45;
+  font-size: 9.05px;
+  line-height: 1.28;
   break-inside: avoid;
 }
 
@@ -439,7 +457,7 @@ select {
 @media print {
   @page {
     size: A4;
-    margin: 10mm 10mm;
+    margin: 0;
   }
 
   html,
@@ -473,11 +491,14 @@ select {
   }
 
   .resume-paper {
-    width: 100% !important;
-    min-height: auto !important;
+    box-sizing: border-box !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
     border: 0 !important;
     box-shadow: none !important;
-    padding: 0 !important;
+    padding: 11mm 13mm 10mm !important;
   }
 
   .resume-print-section,

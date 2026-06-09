@@ -24,8 +24,8 @@ type ResumeDocxInput = {
 
 const bulletReference = "resume-bullets";
 const font = "Microsoft YaHei";
-const dateColumnWidth = 1700;
-const contentColumnWidth = 7600;
+const dateColumnWidth = 1500;
+const contentColumnWidth = 7800;
 const noBorders = {
   top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
   bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -47,11 +47,11 @@ export async function buildResumeDocx({ version, profile, basicItem }: ResumeDoc
         document: {
           run: {
             font,
-            size: 20,
+            size: 18,
             color: "111827"
           },
           paragraph: {
-            spacing: { after: 50, line: 235 }
+            spacing: { after: 24, line: 205 }
           }
         }
       }
@@ -69,9 +69,9 @@ export async function buildResumeDocx({ version, profile, basicItem }: ResumeDoc
               style: {
                 paragraph: {
                   indent: { left: 260, hanging: 140 },
-                  spacing: { after: 18, line: 230 }
+                  spacing: { after: 8, line: 205 }
                 },
-                run: { font, size: 19 }
+                run: { font, size: 18 }
               }
             }
           ]
@@ -85,9 +85,9 @@ export async function buildResumeDocx({ version, profile, basicItem }: ResumeDoc
             size: { width: 11906, height: 16838 },
             margin: {
               top: 560,
-              right: 720,
-              bottom: 560,
-              left: 720
+              right: 560,
+              bottom: 420,
+              left: 560
             }
           }
         },
@@ -113,30 +113,33 @@ function buildHeaderTable(model: ResumeTemplateModel) {
   const contactItems = buildContactItems(model.profile);
   const children = [
     new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-      children: [new TextRun({ text: model.profile.name || "简历", bold: true, size: 40, font, color: "111827" })]
+      alignment: AlignmentType.LEFT,
+      spacing: { after: 48 },
+      children: [new TextRun({ text: model.profile.name || "简历", bold: true, size: 38, font, color: "111827" })]
     })
   ];
 
   if (model.profile.headline) {
     children.push(
       new Paragraph({
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 40 },
-        children: [new TextRun({ text: model.profile.headline, size: 20, color: "374151", font })]
+        alignment: AlignmentType.LEFT,
+        spacing: { after: 30 },
+        children: [new TextRun({ text: model.profile.headline, size: 18, color: "374151", font })]
       })
     );
   }
 
   if (contactItems.length > 0) {
-    children.push(
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 35 },
-        children: [new TextRun({ text: contactItems.join("  |  "), size: 19, color: "111827", font })]
-      })
-    );
+    const midpoint = Math.ceil(contactItems.length / 2);
+    [contactItems.slice(0, midpoint), contactItems.slice(midpoint)].filter((items) => items.length > 0).forEach((items) => {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.LEFT,
+          spacing: { after: 18, line: 205 },
+          children: [new TextRun({ text: items.join("    "), size: 20, color: "111827", font })]
+        })
+      );
+    });
   }
 
   return new Table({
@@ -147,16 +150,16 @@ function buildHeaderTable(model: ResumeTemplateModel) {
       new TableRow({
         children: [
           new TableCell({
-            width: { size: 8000, type: WidthType.DXA },
-            verticalAlign: VerticalAlign.CENTER,
-            borders: noBorders,
-            children
-          }),
-          new TableCell({
-            width: { size: 1200, type: WidthType.DXA },
+            width: { size: 1750, type: WidthType.DXA },
             verticalAlign: VerticalAlign.CENTER,
             borders: noBorders,
             children: model.profile.showPhoto ? [photoPlaceholder()] : [new Paragraph("")]
+          }),
+          new TableCell({
+            width: { size: 7600, type: WidthType.DXA },
+            verticalAlign: VerticalAlign.CENTER,
+            borders: noBorders,
+            children
           })
         ]
       })
@@ -173,7 +176,7 @@ function photoPlaceholder() {
       left: { style: BorderStyle.SINGLE, size: 6, color: "9CA3AF" },
       right: { style: BorderStyle.SINGLE, size: 6, color: "9CA3AF" }
     },
-    spacing: { before: 80, after: 80, line: 260 },
+    spacing: { before: 190, after: 190, line: 240 },
     children: [new TextRun({ text: "照片", size: 18, color: "6B7280", font })]
   });
 }
@@ -187,13 +190,13 @@ function buildSection(section: ResumeTemplateSection) {
 
 function sectionTitle(section: ResumeTemplateSection) {
   return new Paragraph({
-    spacing: { before: 120, after: 50, line: 230 },
+    spacing: { before: 72, after: 28, line: 205 },
     border: {
-      bottom: { color: "94A3B8", space: 3, style: BorderStyle.SINGLE, size: 6 }
+      bottom: { color: "94A3B8", space: 2, style: BorderStyle.SINGLE, size: 5 }
     },
     children: [
-      new TextRun({ text: `${section.icon} `, bold: true, size: 22, color: "111827", font }),
-      new TextRun({ text: section.label, bold: true, size: 24, color: "111827", font })
+      new TextRun({ text: `${section.icon} `, bold: true, size: 19, color: "111827", font }),
+      new TextRun({ text: section.label, bold: true, size: 22, color: "111827", font })
     ]
   });
 }
@@ -242,10 +245,10 @@ function buildTimelineEntry(entry: ResumeTemplateEntry) {
 function buildSkillEntry(entry: ResumeTemplateEntry) {
   return [
     new Paragraph({
-      spacing: { after: 35, line: 230 },
+      spacing: { after: 12, line: 205 },
       children: [
-        ...(entry.title ? [new TextRun({ text: `${entry.title}：`, bold: true, size: 20, color: "111827", font })] : []),
-        new TextRun({ text: entry.subtitle || entry.summary || "未填写技能描述", size: 20, color: "374151", font })
+        ...(entry.title ? [new TextRun({ text: `${entry.title}：`, bold: true, size: 18, color: "111827", font })] : []),
+        new TextRun({ text: entry.subtitle || entry.summary || "未填写技能描述", size: 18, color: "374151", font })
       ]
     }),
     ...entry.bullets.map((bullet) => bulletParagraph(bullet))
@@ -254,36 +257,36 @@ function buildSkillEntry(entry: ResumeTemplateEntry) {
 
 function dateParagraph(text: string) {
   return new Paragraph({
-    spacing: { after: 35, line: 230 },
-    children: [new TextRun({ text, size: 19, color: "374151", font })]
+    spacing: { after: 12, line: 205 },
+    children: [new TextRun({ text, size: 17, color: "374151", font })]
   });
 }
 
 function titleParagraph(text: string) {
   return new Paragraph({
-    spacing: { after: 20, line: 230 },
-    children: [new TextRun({ text: text || "未命名经历", bold: true, size: 21, color: "111827", font })]
+    spacing: { after: 8, line: 205 },
+    children: [new TextRun({ text: text || "未命名经历", bold: true, size: 19, color: "111827", font })]
   });
 }
 
 function subtitleParagraph(text: string) {
   return new Paragraph({
-    spacing: { after: 20, line: 230 },
-    children: [new TextRun({ text, size: 20, color: "111827", font })]
+    spacing: { after: 8, line: 205 },
+    children: [new TextRun({ text, size: 18, color: "111827", font })]
   });
 }
 
 function bodyParagraph(text: string) {
   return new Paragraph({
-    spacing: { after: 25, line: 230 },
-    children: [new TextRun({ text, size: 19, color: "374151", font })]
+    spacing: { after: 8, line: 205 },
+    children: [new TextRun({ text, size: 18, color: "374151", font })]
   });
 }
 
 function metaParagraph(text: string) {
   return new Paragraph({
-    spacing: { after: 25, line: 230 },
-    children: [new TextRun({ text, size: 18, color: "64748B", font })]
+    spacing: { after: 8, line: 200 },
+    children: [new TextRun({ text, size: 17, color: "64748B", font })]
   });
 }
 
@@ -293,8 +296,8 @@ function bulletParagraph(text: string) {
       reference: bulletReference,
       level: 0
     },
-    spacing: { after: 18, line: 230 },
-    children: [new TextRun({ text, size: 19, color: "111827", font })]
+    spacing: { after: 6, line: 205 },
+    children: [new TextRun({ text, size: 18, color: "111827", font })]
   });
 }
 

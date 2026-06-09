@@ -111,7 +111,7 @@ function ResumeHeader({ model }: { model: ResumeTemplateModel }) {
   const infoItems = buildResumeContactItems(data);
 
   return (
-    <header className="resume-print-header">
+    <header className={cn("resume-print-header", !data.showPhoto && "resume-print-header-no-photo")}>
       {data.showPhoto ? (
         <div className="resume-photo-box">
           {data.photoUrl ? (
