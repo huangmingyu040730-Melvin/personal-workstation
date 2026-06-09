@@ -648,13 +648,13 @@
 
 - Resume 模块应是个人履历数据库，不是单份静态简历。
 - 统一表能支持后续按岗位选择、组合和排序素材，避免早期拆多表带来过度复杂度。
-- 当前阶段只为后续简历版本组合、模板预览、浏览器打印和 AI JD 优化打基础。
+- 当前阶段只为后续简历版本组合、模板预览、浏览器打印、规则化质量检查和 AI JD 优化打基础。
 
 影响：
 
 - 合并后生产 Supabase 需要执行 `0009_resume_items.sql`。
 - Dashboard 可展示简历素材概览和最近更新素材。
-- 后续 Phase 2K-B 才做简历版本组合生成；Phase 2K-C 做分区式模板预览与浏览器打印；Phase 2K-D 才做 AI JD 优化。
+- 后续 Phase 2K-B 才做简历版本组合生成；Phase 2K-C 做分区式模板预览与浏览器打印；Phase 2K-D 已调整为规则化质量检查，AI JD 优化后移到后续阶段。
 - 不修改 Viewer、restricted grants、Documents、Storage、Calendar 或 Profile 主流程。
 
 ## 2026-06-09 - Keep Resume Template Rendering In Browser
@@ -681,3 +681,27 @@
 - 合并后生产 Supabase 需要执行 `0011_resume_template_fields.sql`。
 - 简历个人字段不会自动进入公开 About，也不会创建公开简历页面。
 - 后续如需 Word 导出、多个严格模板、照片上传或 AI JD 优化，应另开阶段并新增必要 migration。
+
+## 2026-06-09 - Keep Resume Quality Checks Rule-Based
+
+类型：decision
+
+决策：
+
+- Phase 2K-D 为 Resume Version 增加规则化质量检查，而不是 AI 评审。
+- 质量报告在页面渲染时根据版本、已选素材、Profile / 个人信息素材和目标岗位即时计算。
+- 评分结果不写入数据库，不新增 migration。
+- 目标关键词复用 `resume_versions.template_options.target_keywords`，不新增字段。
+
+原因：
+
+- 当前目标是帮助判断简历是否具备投递基础、缺少哪些关键信息，而不是自动生成或改写简历。
+- 纯规则检查更稳定、可解释，也不会引入 API key、AI 成本或隐私风险。
+- 使用现有 JSON 配置可以避免为了轻量提示增加 schema 复杂度。
+
+影响：
+
+- 版本列表、版本详情和预览页可以展示完整度、状态、风险项和建议项。
+- 编辑页突出目标岗位，并允许维护目标关键词。
+- 本阶段不修改 Resume 主数据结构、RLS、Storage、Documents、Viewer、restricted、Calendar 或 Profile 主流程。
+- 后续 Phase 2K-E 可在此基础上单独设计 AI JD 优化或自动改写能力。

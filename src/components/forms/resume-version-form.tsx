@@ -7,6 +7,7 @@ import {
 } from "@/lib/content-options";
 import type { ResumeItemRecord, ResumeSectionKey, ResumeVersionItemRecord, ResumeVersionRecord } from "@/lib/content-types";
 import { getResumeItemDisplay } from "@/lib/resume-display";
+import { getTargetKeywords } from "@/lib/resume-quality";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
@@ -145,6 +146,7 @@ export function ResumeVersionForm({
 }) {
   const selectedByItemId = new Map(versionItems.map((item) => [item.resume_item_id, item]));
   const profileFields = normalizeBooleanRecord(version?.profile_fields);
+  const targetKeywords = version ? getTargetKeywords(version) : [];
   const basicItems = resumeItems
     .filter((item) => item.item_type === "basic")
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
@@ -160,13 +162,22 @@ export function ResumeVersionForm({
           <Field label="版本名称">
             <TextInput name="title" defaultValue={version?.title} placeholder="例如 投研实习申请版、量化研究版" required />
           </Field>
-          <Field label="目标岗位 / 场景">
+          <Field label="目标岗位 / 投递方向">
             <TextInput name="target_role" defaultValue={version?.target_role ?? ""} placeholder="例如 量化研究实习、资产管理研究岗" />
           </Field>
         </div>
-        <div className="mt-5">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.75fr]">
           <Field label="版本摘要">
             <Textarea name="summary" defaultValue={version?.summary ?? ""} placeholder="概括这个版本的定位、重点能力和适用场景。" />
+          </Field>
+          <Field label="目标关键词">
+            <Textarea
+              name="target_keywords"
+              defaultValue={targetKeywords.join("、")}
+              placeholder="例如 投研、量化、Python、私募基金、AI 自动化"
+              className="min-h-28"
+            />
+            <p className="mt-2 text-xs leading-5 text-slate-500">用逗号、顿号或换行分隔。当前仅用于规则化质量检查，不调用 AI。</p>
           </Field>
         </div>
       </AdminFormSection>

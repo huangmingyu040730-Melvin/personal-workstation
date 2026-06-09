@@ -19,7 +19,7 @@ export default async function NewResumeVersionPage({ searchParams }: { searchPar
               <AdminFormHelpCard
                 title="版本组合建议"
                 description="版本适合对应一个明确岗位或申请场景。"
-                items={["先选核心经历，再补教育、技能和证书。", "排序值越小越靠前。", "同一素材可以出现在多个版本中。"]}
+                items={["先填写目标岗位和关键词，再选择核心经历。", "先选核心经历，再补教育、技能和证书。", "排序值越小越靠前。", "同一素材可以出现在多个版本中。"]}
               />
               <AdminFormHelpCard
                 title="本阶段边界"

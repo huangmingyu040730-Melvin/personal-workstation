@@ -33,7 +33,7 @@ export default async function EditResumeVersionPage({
               <AdminFormHelpCard
                 title="编辑提醒"
                 description="保存会覆盖当前版本的素材组合配置，但不会修改原始素材。"
-                items={["取消勾选会从当前版本移除素材。", "展示开关只影响当前版本预览。", "排序和区块可随时调整。"]}
+                items={["目标岗位越明确，质量检查越能提示投递适配问题。", "取消勾选会从当前版本移除素材。", "展示开关只影响当前版本预览。", "排序和区块可随时调整。"]}
               />
               <AdminFormHelpCard
                 title="隐私边界"

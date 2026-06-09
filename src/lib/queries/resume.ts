@@ -156,6 +156,35 @@ export async function getResumeVersionItemCounts() {
   }, new Map<string, number>());
 }
 
+type ResumeVersionItemWithResumeItem = ResumeVersionWithItems["resume_version_items"][number];
+
+export async function getResumeVersionItemsForQuality() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return new Map<string, ResumeVersionItemWithResumeItem[]>();
+  }
+
+  const { data, error } = await supabase
+    .from("resume_version_items")
+    .select("*, resume_items(*)")
+    .order("section_key", { ascending: true })
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("getResumeVersionItemsForQuality failed", { code: error.code, message: error.message });
+    return new Map<string, ResumeVersionItemWithResumeItem[]>();
+  }
+
+  return (data ?? []).reduce((itemsByVersion, item) => {
+    const versionId = item.resume_version_id as string;
+    const current = itemsByVersion.get(versionId) ?? [];
+    current.push(item as ResumeVersionItemWithResumeItem);
+    itemsByVersion.set(versionId, current);
+    return itemsByVersion;
+  }, new Map<string, ResumeVersionItemWithResumeItem[]>());
+}
+
 export async function getResumeVersionById(id: string) {
   const supabase = await createClient();
 

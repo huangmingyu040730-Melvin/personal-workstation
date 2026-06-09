@@ -57,6 +57,7 @@
 - Resume 履历素材库基础 CRUD。
 - Resume 简历版本组合与后台预览。
 - Resume 分区式素材管理、A4 中文简历模板化预览与浏览器打印 PDF。
+- Resume 简历质量检查、完整度评分和投递版本提示。
 - 管理后台 UI 已优化。
 - 后台新建 / 编辑 / 上传 / 授权页已调整为更平衡的工作台布局。
 
@@ -166,6 +167,8 @@ Phase 2K-C 本轮 PR 更新后需要继续执行：
 
 Viewer magic link 登录仍未稳定。Phase 2E-B restricted 授权基础代码保留，但当前不继续排查，不影响 public 内容浏览、管理员后台、Documents 私密文件、访问申请提交与审批、公开站点 SEO 和 UI。
 
+Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行仍有生产验收遗留问题。该问题当前冻结，不纳入 Phase 2K-D 的质量检查开发范围；后续如继续处理，应单独开 hotfix。
+
 建议后续单独开启：
 
 - Phase 2I: Viewer login and restricted access stabilization
@@ -199,9 +202,10 @@ Viewer magic link 登录仍未稳定。Phase 2E-B restricted 授权基础代码�
 - Phase 2K-A：Resume 履历素材库，维护教育、实习、项目、研究、Skill、证书和奖项等结构化素材。
 - Phase 2K-B：简历版本组合生成与后台预览。
 - Phase 2K-C：分区式素材管理、A4 中文简历模板化预览与浏览器打印 PDF。
-- Phase 2K-D：AI JD 优化。
+- Phase 2K-D：规则化简历质量检查、完整度评分、缺失项提示和投递方向提醒。
+- Phase 2K-E：AI JD 优化。
 
-Phase 2K-A 当前新增 `resume_items` 数据模型和后台 `/dashboard/resume` 管理入口。Phase 2K-B 新增 `resume_versions`、`resume_version_items` 和 `/dashboard/resume/versions` 管理入口，用于组合素材、排序、分区和后台预览。Phase 2K-C 进一步补充 `resume_items.details`、`resume_versions.profile_fields`、`resume_versions.section_order`、`resume_versions.template_options` 和 `resume_version_items.visible_fields`，把素材库从混合条目列表升级为按个人信息、教育、实习、在校、项目、研究、技能等区块维护，并将预览页调整为更接近上传 PDF 的中文 A4 简历排版；本阶段不做后端 PDF、Word 导出、AI 生成简历、公开简历页面或分享链接。
+Phase 2K-A 当前新增 `resume_items` 数据模型和后台 `/dashboard/resume` 管理入口。Phase 2K-B 新增 `resume_versions`、`resume_version_items` 和 `/dashboard/resume/versions` 管理入口，用于组合素材、排序、分区和后台预览。Phase 2K-C 进一步补充 `resume_items.details`、`resume_versions.profile_fields`、`resume_versions.section_order`、`resume_versions.template_options` 和 `resume_version_items.visible_fields`，把素材库从混合条目列表升级为按个人信息、教育、实习、在校、项目、研究、技能等区块维护，并将预览页调整为更接近上传 PDF 的中文 A4 简历排版。Phase 2K-D 新增基于规则的简历质量检查，检查姓名、联系方式、教育、实习、项目/研究、技能、目标岗位、bullet 数量、量化表达和一页过长风险；本阶段不调用 AI，不做后端 PDF、Word 导出、公开简历页面或分享链接。
 
 ### Phase 2K-E - 自动化与市场简报
 
