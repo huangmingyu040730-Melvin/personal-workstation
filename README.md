@@ -22,6 +22,7 @@
 - Resume 履历素材库基础能力
 - Resume 简历版本组合与后台预览
 - Resume 分区式素材管理、A4 中文模板化预览与浏览器打印 PDF
+- Resume 简历质量检查与投递版本完整度提示
 - Supabase Storage 私密文件上传与下载
 
 ## 本地启动
@@ -140,7 +141,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 
 - Phase 2I：Viewer 登录与 restricted 访问专项修复。
 - Phase 2J：Profile 与站内 Calendar 基础能力。
-- Phase 2K：Resume 简历素材库、简历版本组合、模板化预览、导出与 AI JD 优化。
+- Phase 2K：Resume 简历素材库、简历版本组合、模板化预览、质量检查与后续 AI JD 优化。
 - Phase 2L：Notion / Google Calendar / AI 辅助研究。
 
 ## 权限与数据状态
@@ -160,7 +161,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
 - Calendar 已接入站内 `calendar_events` CRUD；管理员可在 `/dashboard/calendar` 新建、编辑、删除日程，Dashboard 会展示近期日程。
-- Resume 已接入履历素材库与版本组合；管理员可在 `/dashboard/resume` 按个人信息、教育、实习、在校、项目、研究、技能、证书和奖项等区块维护结构化素材，并在 `/dashboard/resume/versions` 组合不同简历版本。版本编辑页可选择进入简历顶部的个人字段，并为每条素材控制日期、机构、角色、摘要、bullets、技能和核心课程等字段是否展示。版本预览页提供贴近中文金融简历 PDF 的 A4 样式和浏览器打印 / 另存为 PDF 能力。
+- Resume 已接入履历素材库与版本组合；管理员可在 `/dashboard/resume` 按个人信息、教育、实习、在校、项目、研究、技能、证书和奖项等区块维护结构化素材，并在 `/dashboard/resume/versions` 组合不同简历版本。版本编辑页可选择进入简历顶部的个人字段，并为每条素材控制日期、机构、角色、摘要、bullets、技能和核心课程等字段是否展示。版本详情、列表和预览页提供规则化简历质量检查、完整度评分、缺失项和投递方向提示；该检查不调用 AI。版本预览页提供贴近中文金融简历 PDF 的 A4 样式和浏览器打印 / 另存为 PDF 能力。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化；管理后台 UI 已完成工作台式视觉优化。
 - Dashboard 已读取真实项目、笔记、Skill、Publications、Calendar 与 Activity Logs。
 - Google Calendar、提醒系统和外部日历同步尚未实现。

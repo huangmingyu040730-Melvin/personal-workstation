@@ -4,12 +4,24 @@ import { AppShell } from "@/components/app-shell";
 import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Badge, VisibilityBadge } from "@/components/badge";
 import { PageHeader } from "@/components/page-header";
+import { ResumeQualityBadge } from "@/components/resume-quality";
 import { getResumeTemplateLabel, getResumeVersionLanguageLabel } from "@/lib/content-options";
+import type { ResumeVersionWithItems } from "@/lib/content-types";
 import { formatRelative } from "@/lib/format";
-import { getResumeVersionItemCounts, getResumeVersionStats, getResumeVersions } from "@/lib/queries/resume";
+import { getEditableProfile } from "@/lib/queries/profile";
+import { getResumeItems, getResumeVersionItemCounts, getResumeVersionItemsForQuality, getResumeVersionStats, getResumeVersions } from "@/lib/queries/resume";
+import { analyzeResumeVersionQuality } from "@/lib/resume-quality";
 
 export default async function ResumeVersionsPage() {
-  const [versions, stats, itemCounts] = await Promise.all([getResumeVersions(), getResumeVersionStats(), getResumeVersionItemCounts()]);
+  const [versions, stats, itemCounts, qualityItems, profile, basicItems] = await Promise.all([
+    getResumeVersions(),
+    getResumeVersionStats(),
+    getResumeVersionItemCounts(),
+    getResumeVersionItemsForQuality(),
+    getEditableProfile(),
+    getResumeItems({ itemType: "basic", visibility: "all" })
+  ]);
+  const latestBasicItem = [...basicItems].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0] ?? null;
 
   return (
     <AppShell>
@@ -57,6 +69,13 @@ export default async function ResumeVersionsPage() {
             <div className="grid gap-5 xl:grid-cols-2">
               {versions.map((version) => (
                 <AdminContentCard key={version.id} href={`/dashboard/resume/versions/${version.id}`} className="hover:border-blue-200">
+                  {(() => {
+                    const versionItems: ResumeVersionWithItems["resume_version_items"] = qualityItems.get(version.id) ?? [];
+                    const selectedBasicItem = versionItems.find((item) => item.resume_items?.item_type === "basic")?.resume_items ?? null;
+                    const quality = analyzeResumeVersionQuality({ version, versionItems, profile, basicItem: selectedBasicItem ?? latestBasicItem });
+
+                    return (
+                      <>
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <div className="mb-3 flex flex-wrap gap-2">
@@ -65,11 +84,20 @@ export default async function ResumeVersionsPage() {
                         {version.is_active ? <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-100">启用</Badge> : <Badge className="bg-slate-100 text-slate-500 ring-slate-100">停用</Badge>}
                         {version.is_featured ? <Badge className="bg-violet-50 text-violet-700 ring-violet-100">重点版本</Badge> : null}
                         <VisibilityBadge visibility={version.visibility} />
+                        <ResumeQualityBadge report={quality} />
                       </div>
                       <h2 className="text-lg font-semibold text-slate-950">{version.title}</h2>
                       <p className="mt-2 text-sm leading-6 text-slate-600">{version.target_role || version.summary || "尚未填写目标岗位或摘要。"}</p>
                     </div>
                     <span className="shrink-0 rounded-2xl bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{itemCounts.get(version.id) ?? 0} 条素材</span>
+                  </div>
+                  <div className="mt-4">
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-violet-600" style={{ width: `${quality.score}%` }} />
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">
+                      {quality.warnings[0] ?? quality.suggestions[0] ?? "核心信息较完整，可进入预览检查。"}
+                    </p>
                   </div>
                   <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-xs text-slate-500">
                     <span>更新于 {formatRelative(version.updated_at)}</span>
@@ -78,6 +106,9 @@ export default async function ResumeVersionsPage() {
                       查看组合
                     </span>
                   </div>
+                      </>
+                    );
+                  })()}
                 </AdminContentCard>
               ))}
             </div>

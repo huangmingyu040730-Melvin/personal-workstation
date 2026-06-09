@@ -8,13 +8,16 @@ import { Badge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
+import { ResumeQualityPanel } from "@/components/resume-quality";
 import { getResumeSectionLabel, getResumeTemplateLabel, getResumeVersionLanguageLabel } from "@/lib/content-options";
 import type { ResumeSectionKey, ResumeVersionItemRecord } from "@/lib/content-types";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getResumeVersionWithItems } from "@/lib/queries/resume";
+import { getEditableProfile } from "@/lib/queries/profile";
+import { getResumeItems, getResumeVersionWithItems } from "@/lib/queries/resume";
 import { getResumeItemDisplay } from "@/lib/resume-display";
+import { analyzeResumeVersionQuality, getTargetKeywords } from "@/lib/resume-quality";
 
 const sectionOrder: ResumeSectionKey[] = ["summary", "education", "experience", "projects", "research", "skills", "certifications", "awards", "other"];
 
@@ -26,7 +29,11 @@ export default async function ResumeVersionDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const version = await getResumeVersionWithItems(id);
+  const [version, profile, basicItems] = await Promise.all([
+    getResumeVersionWithItems(id),
+    getEditableProfile(),
+    getResumeItems({ itemType: "basic", visibility: "all" })
+  ]);
 
   if (!version) {
     notFound();
@@ -35,6 +42,10 @@ export default async function ResumeVersionDetailPage({
   const error = getFormError(query);
   const deleteAction = deleteResumeVersionAction.bind(null, version.id);
   const groupedItems = groupVersionItems(version.resume_version_items);
+  const selectedBasicItem = version.resume_version_items.find((item) => item.resume_items?.item_type === "basic")?.resume_items ?? null;
+  const latestBasicItem = [...basicItems].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0] ?? null;
+  const quality = analyzeResumeVersionQuality({ version, versionItems: version.resume_version_items, profile, basicItem: selectedBasicItem ?? latestBasicItem });
+  const targetKeywords = getTargetKeywords(version);
 
   return (
     <AppShell>
@@ -58,6 +69,8 @@ export default async function ResumeVersionDetailPage({
 
         <div className="grid gap-5 xl:grid-cols-[1fr_0.45fr]">
           <div className="space-y-5">
+            <ResumeQualityPanel report={quality} />
+
             <Card>
               <CardHeader title="版本摘要" />
               <MarkdownPreview content={version.summary} emptyText="尚未填写版本摘要。" />
@@ -126,6 +139,7 @@ export default async function ResumeVersionDetailPage({
               </div>
               <dl className="space-y-3 text-sm">
                 <InfoRow label="目标岗位" value={version.target_role || "未设置"} />
+                <InfoRow label="目标关键词" value={targetKeywords.length > 0 ? targetKeywords.join("、") : "未设置"} />
                 <InfoRow label="素材数量" value={`${version.resume_version_items.length} 条`} />
                 <InfoRow label="创建时间" value={formatDateTime(version.created_at)} />
                 <InfoRow label="更新时间" value={`${formatDateTime(version.updated_at)} · ${formatRelative(version.updated_at)}`} />

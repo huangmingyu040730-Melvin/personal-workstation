@@ -5,11 +5,13 @@ import { ArrowLeft, Award, BriefcaseBusiness, Edit, GraduationCap, Sparkles } fr
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { PageHeader } from "@/components/page-header";
+import { ResumeQualityPreviewNotice } from "@/components/resume-quality";
 import { ResumePrintButton } from "@/components/resume-print-button";
 import type { ProfileRecord, ResumeItemRecord, ResumeVersionItemRecord } from "@/lib/content-types";
 import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
 import { getResumeItems, getResumeVersionWithItems } from "@/lib/queries/resume";
 import { arrayDetail, detailRecord, formatResumeDateRange, getResumeProfileData, normalizeResumeBullets, stringDetail } from "@/lib/resume-display";
+import { analyzeResumeVersionQuality } from "@/lib/resume-quality";
 import { cn } from "@/lib/utils";
 
 type ResumePrintSection = "education" | "experience" | "campus" | "projects" | "research" | "skills" | "certifications" | "awards" | "other";
@@ -48,6 +50,7 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
   const profileFields = normalizeProfileFields(version.profile_fields);
   const sectionOrder = normalizeSectionOrder(version.section_order);
   const groupedItems = groupVersionItems(bodyItems);
+  const quality = analyzeResumeVersionQuality({ version, versionItems: version.resume_version_items, profile, basicItem });
 
   return (
     <AppShell>
@@ -75,6 +78,8 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
           <AdminSecurityNote>
             这是后台预览页，仅管理员可访问。打印导出由浏览器完成，不会创建公开简历页面、分享链接或后端 PDF / Word 文件。
           </AdminSecurityNote>
+
+          <ResumeQualityPreviewNotice report={quality} />
         </div>
 
         <div className="resume-paper-wrap">

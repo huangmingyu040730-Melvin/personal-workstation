@@ -168,6 +168,13 @@ function getProfileFields(formData: FormData) {
   return Object.fromEntries(profileFieldKeys.map((key) => [key, getBoolean(formData, key)]));
 }
 
+function getResumeTextArray(formData: FormData, key: string) {
+  return getString(formData, key)
+    .split(/[\n,，、;；]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function getVisibleFields(formData: FormData, itemId: string) {
   return Object.fromEntries(visibleFieldKeys.map((key) => [key, getBoolean(formData, `${key}_${itemId}`)]));
 }
@@ -190,7 +197,9 @@ function resumeVersionPayloadFromForm(formData: FormData) {
     notes: getOptionalString(formData, "notes"),
     profile_fields: getProfileFields(formData),
     section_order: defaultSectionOrder,
-    template_options: {},
+    template_options: {
+      target_keywords: getResumeTextArray(formData, "target_keywords")
+    },
     items: selectedItemIds.map((id) => ({
       resume_item_id: id,
       section_key: getString(formData, `section_key_${id}`),
