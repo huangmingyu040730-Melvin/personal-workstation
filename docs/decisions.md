@@ -262,6 +262,29 @@
 - Dashboard 可显示简历版本统计和最近版本。
 - 版本数据继续仅管理员管理，不向匿名访客开放读取。
 
+## 2026-06-09 - Use Browser Print For First Resume PDF Export
+
+类型：decision
+
+决策：
+
+- Phase 2K-C 先把 `/dashboard/resume/versions/[id]/preview` 优化为 A4 中文简历模板预览。
+- 使用浏览器 `window.print()` 支持管理员手动打印或另存为 PDF。
+- 打印 CSS 隐藏后台 Sidebar、Topbar、操作按钮和说明，只保留简历纸张内容。
+- 本阶段不引入 Puppeteer、PDFKit、LibreOffice、docx、LaTeX 或第三方导出服务。
+
+原因：
+
+- 当前目标是快速获得接近传统中文金融简历的可交付 PDF，而不是建立复杂文档生成系统。
+- 浏览器打印能复用现有 React 预览和 CSS，减少后端依赖、部署风险和文件存储风险。
+- 后端 PDF、Word 导出和 AI JD 优化应在简历内容结构稳定后再单独实现。
+
+影响：
+
+- 管理员在预览页点击“打印 / 导出 PDF”，再使用浏览器打印对话框保存 PDF。
+- PDF 质量依赖浏览器打印设置和 CSS print media。
+- 不创建公开简历页面、分享链接、后端 PDF 文件或新的数据库表。
+
 原因：
 
 - 文件中心管理的是研究资料、报告成稿、会议资料等默认私密内容。

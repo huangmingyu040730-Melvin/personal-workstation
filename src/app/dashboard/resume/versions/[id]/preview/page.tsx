@@ -3,14 +3,28 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Edit } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
-import { Badge } from "@/components/badge";
 import { PageHeader } from "@/components/page-header";
-import { getResumeSectionLabel, getResumeTemplateLabel, getResumeVersionLanguageLabel } from "@/lib/content-options";
-import type { ProfileRecord, ResumeItemRecord, ResumeSectionKey, ResumeVersionItemRecord } from "@/lib/content-types";
+import { ResumePrintButton } from "@/components/resume-print-button";
+import type { ProfileRecord, ResumeItemRecord, ResumeVersionItemRecord } from "@/lib/content-types";
 import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
 import { getResumeVersionWithItems } from "@/lib/queries/resume";
+import { cn } from "@/lib/utils";
 
-const sectionOrder: ResumeSectionKey[] = ["summary", "education", "experience", "projects", "research", "skills", "certifications", "awards", "other"];
+type ResumePrintSection = "education" | "experience" | "projects" | "research" | "campus" | "skills" | "certifications" | "awards" | "other";
+
+const printSectionOrder: ResumePrintSection[] = ["education", "experience", "projects", "research", "campus", "skills", "certifications", "awards", "other"];
+
+const printSectionLabels: Record<ResumePrintSection, string> = {
+  education: "教育经历",
+  experience: "实习经历",
+  projects: "项目经历",
+  research: "研究经历",
+  campus: "在校经历",
+  skills: "相关技能",
+  certifications: "证书",
+  awards: "荣誉奖项",
+  other: "其他经历"
+};
 
 export default async function ResumeVersionPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,145 +40,160 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
 
   return (
     <AppShell>
-      <AdminPageSurface>
-        <PageHeader
-          eyebrow="Resume Preview"
-          title={`${version.title} · 预览`}
-          description="后台预览只用于检查结构和内容取舍。本阶段不会生成 PDF / Word，也不会创建公开分享链接。"
-          action={
-            <div className="flex flex-wrap gap-2">
-              <Link href={`/dashboard/resume/versions/${version.id}`} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
-                <ArrowLeft size={16} />
-                返回详情
-              </Link>
-              <Link href={`/dashboard/resume/versions/${version.id}/edit`} className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">
-                <Edit size={16} />
-                编辑版本
-              </Link>
-            </div>
-          }
-        />
+      <AdminPageSurface className="resume-preview-page">
+        <div className="resume-preview-toolbar">
+          <PageHeader
+            eyebrow="Resume Preview"
+            title={`${version.title} · 简历预览`}
+            description="预览采用 A4 纸张式中文金融简历排版。点击打印后可在浏览器中另存为 PDF。"
+            action={
+              <div className="flex flex-wrap gap-2">
+                <Link href={`/dashboard/resume/versions/${version.id}`} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+                  <ArrowLeft size={16} />
+                  返回详情
+                </Link>
+                <Link href={`/dashboard/resume/versions/${version.id}/edit`} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+                  <Edit size={16} />
+                  编辑版本
+                </Link>
+                <ResumePrintButton />
+              </div>
+            }
+          />
 
-        <AdminSecurityNote>
-          这是后台预览页，仅管理员可访问。简历版本和素材不会被加入公开站点、sitemap 或分享链接。
-        </AdminSecurityNote>
+          <AdminSecurityNote>
+            这是后台预览页，仅管理员可访问。打印导出由浏览器完成，不会创建公开简历页面、分享链接或后端 PDF 文件。
+          </AdminSecurityNote>
+        </div>
 
-        <div className="mx-auto max-w-5xl rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft md:p-10">
-          <ResumeHeader profile={profile} targetRole={version.target_role} summary={version.summary} />
+        <div className="resume-paper-wrap">
+          <article className="resume-paper">
+            <ResumeHeader profile={profile} />
+            {version.summary ? <p className="resume-version-summary">{version.summary}</p> : null}
 
-          <div className="mt-8 flex flex-wrap gap-2 border-y border-slate-100 py-4 text-xs">
-            <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{getResumeVersionLanguageLabel(version.language)}</Badge>
-            <Badge className="bg-slate-100 text-slate-600 ring-slate-100">{getResumeTemplateLabel(version.template_key)}</Badge>
-            <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-100">{visibleItems.length} 条展示素材</Badge>
-          </div>
-
-          <div className="mt-8 space-y-8">
-            {sectionOrder.map((sectionKey) => {
+            {printSectionOrder.map((sectionKey) => {
               const items = groupedItems.get(sectionKey) ?? [];
               if (items.length === 0) {
                 return null;
               }
 
               return (
-                <section key={sectionKey}>
-                  <h2 className="border-b border-slate-200 pb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-700">
-                    {getResumeSectionLabel(sectionKey)}
-                  </h2>
-                  <div className="mt-4 space-y-5">
+                <section key={sectionKey} className="resume-print-section">
+                  <h2>{printSectionLabels[sectionKey]}</h2>
+                  <div className={cn("resume-section-body", sectionKey === "skills" && "resume-section-body-compact")}>
                     {items.map((versionItem) => {
                       const item = versionItem.resume_items;
                       if (!item) {
                         return null;
                       }
 
-                      return <ResumePreviewItem key={versionItem.id} item={item} note={versionItem.note} />;
+                      return sectionKey === "skills" ? (
+                        <SkillResumeItem key={versionItem.id} item={item} note={versionItem.note} />
+                      ) : (
+                        <ExperienceResumeItem key={versionItem.id} item={item} note={versionItem.note} />
+                      );
                     })}
                   </div>
                 </section>
               );
             })}
-          </div>
 
-          {visibleItems.length === 0 ? (
-            <div className="mt-8 rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
-              当前版本没有展示中的素材。请返回编辑页选择素材并打开展示开关。
-            </div>
-          ) : null}
+            {visibleItems.length === 0 ? (
+              <div className="resume-empty-print-state">当前版本没有展示中的素材。请返回编辑页选择素材并打开展示开关。</div>
+            ) : null}
+          </article>
         </div>
       </AdminPageSurface>
     </AppShell>
   );
 }
 
-function ResumeHeader({ profile, targetRole, summary }: { profile: ProfileRecord; targetRole: string | null; summary: string | null }) {
-  const contact = Object.entries(profile.contact ?? {})
-    .filter(([, value]) => typeof value === "string" && value.trim().length > 0)
-    .map(([key, value]) => `${key}: ${value}`);
-
-  const socialLinks = Object.entries(profile.social_links ?? {})
-    .filter(([, value]) => typeof value === "string" && value.trim().length > 0)
-    .map(([key, value]) => `${key}: ${value}`);
+function ResumeHeader({ profile }: { profile: ProfileRecord }) {
+  const contactItems = buildPublicContactItems(profile);
 
   return (
-    <header className="grid gap-6 md:grid-cols-[1fr_0.75fr] md:items-end">
-      <div>
-        <p className="text-sm font-semibold text-blue-700">{targetRole || profile.headline || "个人简历预览"}</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950">{profile.display_name}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{summary || profile.bio || profile.headline || "尚未填写公开简介。"}</p>
-      </div>
-      <div className="rounded-3xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-        <p className="font-semibold text-slate-950">{profile.role_title || "研究 / 投资 / AI 工作流"}</p>
-        {[profile.organization, profile.location].filter(Boolean).length > 0 ? (
-          <p className="mt-1">{[profile.organization, profile.location].filter(Boolean).join(" · ")}</p>
-        ) : null}
-        {[...contact, ...socialLinks].length > 0 ? (
-          <div className="mt-3 space-y-1 text-xs">
-            {[...contact, ...socialLinks].slice(0, 5).map((item) => (
-              <p key={item}>{item}</p>
-            ))}
-          </div>
-        ) : null}
-      </div>
+    <header className="resume-print-header">
+      <h1>{profile.display_name}</h1>
+      {contactItems.length > 0 ? (
+        <p className="resume-contact-line">
+          {contactItems.map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </p>
+      ) : null}
+      {profile.headline || profile.role_title ? <p className="resume-headline">{profile.headline || profile.role_title}</p> : null}
     </header>
   );
 }
 
-function ResumePreviewItem({ item, note }: { item: ResumeItemRecord; note: string | null }) {
+function ExperienceResumeItem({ item, note }: { item: ResumeItemRecord; note: string | null }) {
   return (
-    <article>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-slate-950">{item.title}</h3>
-          <p className="mt-1 text-sm text-slate-600">{[item.organization, item.role_title, item.location].filter(Boolean).join(" · ")}</p>
-        </div>
-        <p className="shrink-0 text-sm font-medium text-slate-500">{formatResumeDateRange(item)}</p>
+    <article className="resume-entry">
+      <div className="resume-entry-line">
+        <span className="resume-entry-date">{formatResumeDateRange(item)}</span>
+        <span className="resume-entry-org">{item.organization || item.title}</span>
       </div>
-      {item.summary ? <p className="mt-3 text-sm leading-7 text-slate-700">{item.summary}</p> : null}
-      {item.bullets.length > 0 ? (
-        <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
-          {item.bullets.map((bullet) => (
-            <li key={bullet}>· {bullet}</li>
-          ))}
-        </ul>
-      ) : null}
-      {item.skills.length > 0 || item.tags.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {[...item.skills, ...item.tags].slice(0, 10).map((token) => (
-            <span key={token} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{token}</span>
-          ))}
-        </div>
-      ) : null}
-      {note ? <p className="mt-3 rounded-2xl bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700">版本备注：{note}</p> : null}
+      <div className="resume-entry-role">{[item.title, item.role_title, item.location].filter(Boolean).join(" · ")}</div>
+      {item.summary ? <p className="resume-entry-summary">{item.summary}</p> : null}
+      <ResumeBullets item={item} />
+      <ResumeTokens item={item} />
+      {note ? <p className="resume-entry-note">{note}</p> : null}
     </article>
   );
 }
 
+function SkillResumeItem({ item, note }: { item: ResumeItemRecord; note: string | null }) {
+  const detail = [
+    item.summary,
+    item.bullets.length > 0 ? item.bullets.join("；") : null,
+    item.skills.length > 0 ? item.skills.join("、") : null
+  ]
+    .filter(Boolean)
+    .join("；");
+
+  return (
+    <article className="resume-skill-entry">
+      <span className="resume-skill-title">{item.title}</span>
+      {detail ? <span className="resume-skill-detail">{detail}</span> : null}
+      {note ? <span className="resume-skill-note">（{note}）</span> : null}
+    </article>
+  );
+}
+
+function ResumeBullets({ item }: { item: ResumeItemRecord }) {
+  const bullets = item.bullets.length > 0 ? item.bullets : [];
+
+  if (bullets.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className="resume-bullets">
+      {bullets.map((bullet) => (
+        <li key={bullet}>{bullet}</li>
+      ))}
+    </ul>
+  );
+}
+
+function ResumeTokens({ item }: { item: ResumeItemRecord }) {
+  const tokens = [...item.skills, ...item.tags].slice(0, 8);
+
+  if (tokens.length === 0) {
+    return null;
+  }
+
+  return <p className="resume-token-line">关键词：{tokens.join("、")}</p>;
+}
+
 function groupVersionItems(items: ResumeVersionItemRecord[]) {
-  const grouped = new Map<ResumeSectionKey, ResumeVersionItemRecord[]>();
+  const grouped = new Map<ResumePrintSection, ResumeVersionItemRecord[]>();
+
   for (const item of items) {
-    const current = grouped.get(item.section_key) ?? [];
+    const key = mapToPrintSection(item);
+    const current = grouped.get(key) ?? [];
     current.push(item);
-    grouped.set(item.section_key, current);
+    grouped.set(key, current);
   }
 
   for (const [key, values] of Array.from(grouped.entries())) {
@@ -174,12 +203,76 @@ function groupVersionItems(items: ResumeVersionItemRecord[]) {
   return grouped;
 }
 
+function mapToPrintSection(versionItem: ResumeVersionItemRecord): ResumePrintSection {
+  const sectionKey = versionItem.section_key;
+  const itemType = versionItem.resume_items?.item_type;
+
+  if (sectionKey === "education" || itemType === "education") return "education";
+  if (sectionKey === "experience" || itemType === "experience") return "experience";
+  if (sectionKey === "projects" || itemType === "project") return "projects";
+  if (sectionKey === "research" || itemType === "research") return "research";
+  if (sectionKey === "skills" || itemType === "skill" || itemType === "language") return "skills";
+  if (sectionKey === "certifications" || itemType === "certification") return "certifications";
+  if (sectionKey === "awards" || itemType === "award") return "awards";
+  if (sectionKey === "other" || itemType === "other") return "campus";
+  return "other";
+}
+
+function buildPublicContactItems(profile: ProfileRecord) {
+  const rawContact = profile.contact ?? {};
+  const rawSocialLinks = profile.social_links ?? {};
+  const orderedKeys = ["gender", "sex", "age", "phone", "mobile", "email", "wechat", "location"];
+  const labelMap: Record<string, string> = {
+    gender: "",
+    sex: "",
+    age: "",
+    phone: "电话",
+    mobile: "电话",
+    email: "邮箱",
+    wechat: "微信",
+    location: ""
+  };
+
+  const contactItems = orderedKeys
+    .map((key) => {
+      const value = key === "location" ? profile.location : rawContact[key];
+      if (!value || typeof value !== "string" || value.trim().length === 0) {
+        return null;
+      }
+
+      const label = labelMap[key];
+      return label ? `${label}: ${value.trim()}` : value.trim();
+    })
+    .filter(Boolean) as string[];
+
+  const socialItems = Object.entries(rawSocialLinks)
+    .filter(([, value]) => typeof value === "string" && value.trim().length > 0)
+    .slice(0, 2)
+    .map(([key, value]) => `${key}: ${value}`);
+
+  return [...contactItems, ...socialItems].slice(0, 7);
+}
+
 function formatResumeDateRange(item: ResumeItemRecord) {
-  if (!item.start_date && !item.end_date && !item.is_current) {
+  const start = formatResumeMonth(item.start_date);
+  const end = item.is_current ? "至今" : formatResumeMonth(item.end_date);
+
+  if (!start && !end) {
     return "";
   }
 
-  const start = item.start_date ?? "";
-  const end = item.is_current ? "至今" : item.end_date ?? "";
-  return [start, end].filter(Boolean).join(" - ");
+  return [start, end].filter(Boolean).join("-");
+}
+
+function formatResumeMonth(value: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const [year, month] = value.split("-");
+  if (!year || !month) {
+    return value;
+  }
+
+  return `${year}.${month}`;
 }
