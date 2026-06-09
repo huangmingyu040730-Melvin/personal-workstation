@@ -730,3 +730,27 @@
 - 未配置 `OPENAI_API_KEY` 时页面仍可打开，并显示配置提示。
 - 不发送 Documents、Storage 路径、signed URL、Access Requests、Access Grants、管理员邮箱、Auth UUID 或密钥给 AI。
 - 本阶段不修改 RLS、Storage、Documents、Viewer、restricted、Calendar、Profile、Resume 主数据结构或旧 migration。
+
+## 2026-06-10 - Generate Resume Word Files On Demand
+
+类型：decision
+
+决策：
+
+- Phase 2K-F 新增后台 Resume Version 的 Word `.docx` 即时导出。
+- 导出通过 `/dashboard/resume/versions/[id]/export/docx` route handler 在管理员请求时生成并返回文件。
+- `.docx` 生成逻辑集中在 `src/lib/resume-docx.ts`，使用当前 Resume Version、已选 Resume Items、Profile/basic 信息和字段可见性设置。
+- 第一版不导出照片，不创建公开简历页，不保存 Word 文件，不上传 Storage，不生成分享链接。
+
+原因：
+
+- Word 文件需要可编辑性，但不需要作为站内长期资产保存。
+- 即时生成可以避免 Storage 权限、signed URL、文件清理和公开泄露风险。
+- 复用已有 Resume Version 数据结构即可满足当前投递版本导出需求，不需要新增 migration。
+
+影响：
+
+- 管理员可以在版本详情页和预览页下载 `.docx`。
+- 导出内容只包含当前版本已选且展示的素材，并尊重 `profile_fields` 与 `visible_fields`。
+- 官方 `resume_items.bullets` 数组会以 Word 原生 bullet list 逐条展示。
+- 不读取 Documents、Storage、Access Requests、Access Grants、viewer/restricted 内容或未选择的 Resume Items。

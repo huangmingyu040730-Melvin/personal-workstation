@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Eye, Layers3, Sparkles } from "lucide-react";
+import { Eye, FileDown, Layers3, Sparkles } from "lucide-react";
 import { deleteResumeVersionAction } from "@/actions/resume";
 import { AppShell } from "@/components/app-shell";
 import { AdminDangerZone, AdminPageSurface } from "@/components/admin-ui";
@@ -60,6 +60,10 @@ export default async function ResumeVersionDetailPage({
               <Link href={`/dashboard/resume/versions/${version.id}/preview`} className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">
                 <Eye size={16} />
                 预览
+              </Link>
+              <Link href={`/dashboard/resume/versions/${version.id}/export/docx`} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:border-emerald-200 hover:bg-emerald-100">
+                <FileDown size={16} />
+                导出 Word
               </Link>
               <Link href={`/dashboard/resume/versions/${version.id}/jd-review`} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
                 <Sparkles size={16} />
