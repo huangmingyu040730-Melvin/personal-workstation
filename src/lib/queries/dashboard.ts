@@ -6,6 +6,7 @@ import { getUpcomingCalendarEvents } from "./calendar";
 import { countPublicKnowledgeNotes, getRecentKnowledgeNotes } from "./knowledge";
 import { countPublicProjects, getProjects } from "./projects";
 import { getPublicationStats, getRecentPublications } from "./publications";
+import { getRecentResumeItems, getResumeStats } from "./resume";
 import { countAvailableSkills, countPublicSkills, getSkills } from "./skills";
 
 function mockActivityFallback(): ActivityLogRecord[] {
@@ -32,7 +33,9 @@ export async function getDashboardData() {
     publicSkillCount,
     publicKnowledgeCount,
     pendingAccessRequestCount,
-    upcomingCalendarEvents
+    upcomingCalendarEvents,
+    resumeStats,
+    recentResumeItems
   ] = await Promise.all([
     getProjects(),
     getRecentKnowledgeNotes(4),
@@ -45,7 +48,9 @@ export async function getDashboardData() {
     countPublicSkills(),
     countPublicKnowledgeNotes(),
     countPendingAccessRequests(),
-    getUpcomingCalendarEvents(5)
+    getUpcomingCalendarEvents(5),
+    getResumeStats(),
+    getRecentResumeItems(3)
   ]);
 
   const inProgressProjects = projects.filter((project) => project.status === "in_progress");
@@ -66,6 +71,8 @@ export async function getDashboardData() {
     },
     pendingAccessRequestCount,
     upcomingCalendarEvents,
+    resumeStats,
+    recentResumeItems,
     activityLogs
   };
 }

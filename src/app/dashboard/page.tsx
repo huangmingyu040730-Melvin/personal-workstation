@@ -1,11 +1,11 @@
-import { BookOpen, CalendarCheck, ClipboardCheck, FileText, FolderKanban, Sparkles } from "lucide-react";
+import { BookOpen, CalendarCheck, ClipboardCheck, FileText, FileUser, FolderKanban, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Card, CardHeader } from "@/components/card";
 import { Progress } from "@/components/progress";
 import { StatCard } from "@/components/stat-card";
-import { getCalendarEventTypeLabel, getPublicationTypeLabel } from "@/lib/content-options";
+import { getCalendarEventTypeLabel, getPublicationTypeLabel, getResumeItemTypeLabel } from "@/lib/content-options";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { profile, quickActions } from "@/lib/mock-data";
 import { getDashboardData } from "@/lib/queries/dashboard";
@@ -36,12 +36,13 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard label="近期日程" value={String(data.upcomingCalendarEvents.length)} helper="未来即将开始的站内日程" icon={CalendarCheck} />
         <StatCard label="今日日程" value={String(data.upcomingCalendarEvents.filter((event) => isToday(event.starts_at)).length)} helper="基于 calendar_events 真实数据" icon={CalendarCheck} />
         <StatCard label="进行中项目" value={String(data.inProgressProjects.length)} helper={`项目总数 ${data.projects.length}`} icon={FolderKanban} />
         <StatCard label="已收录成果" value={String(data.publicationStats.total)} helper={`公开 ${data.publicationStats.publicCount} · 精选 ${data.publicationStats.featuredCount}`} icon={FileText} />
         <StatCard label="可用 Skill" value={String(data.availableSkillCount)} helper={`Skill 总数 ${data.skills.length}`} icon={Sparkles} />
+        <StatCard label="简历素材" value={String(data.resumeStats.total)} helper={`教育 ${data.resumeStats.education} · 经历 ${data.resumeStats.experience}`} icon={FileUser} />
       </div>
 
       <AdminSection title="公开内容质量提示" description="公开内容越完整，公开研究工作站越适合分享给外部访客。">
@@ -74,6 +75,29 @@ export default async function DashboardPage() {
           </div>
           <span className="text-2xl font-semibold text-blue-800">{data.pendingAccessRequestCount}</span>
         </Link>
+      </AdminSection>
+
+      <AdminSection
+        title="简历素材"
+        description="维护教育、实习、项目、研究、Skill、证书和奖项等结构化素材，为后续生成不同版本简历做准备。"
+        action={<Link href="/dashboard/resume" className="text-sm font-medium text-blue-700">进入素材库</Link>}
+      >
+        {data.recentResumeItems.length > 0 ? (
+          <div className="grid gap-3 md:grid-cols-3">
+            {data.recentResumeItems.map((item) => (
+              <Link key={item.id} href={`/dashboard/resume/${item.id}`} className="admin-card-motion rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:border-blue-200 hover:bg-blue-50">
+                <p className="text-xs font-semibold text-blue-700">{getResumeItemTypeLabel(item.item_type)}</p>
+                <p className="mt-2 line-clamp-1 text-sm font-semibold text-slate-950">{item.title}</p>
+                <p className="mt-1 line-clamp-1 text-xs text-slate-500">{item.organization || item.role_title || "未填写机构或角色"}</p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+            暂无简历素材。
+            <Link href="/dashboard/resume/new" className="ml-2 font-semibold text-blue-700">新建素材</Link>
+          </div>
+        )}
       </AdminSection>
 
       <div className="grid gap-5 xl:grid-cols-[1.25fr_0.9fr_0.75fr]">

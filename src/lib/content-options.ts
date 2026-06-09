@@ -1,4 +1,4 @@
-import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, SkillStatus } from "./content-types";
+import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, ResumeItemType, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -98,6 +98,19 @@ export const calendarEventTypes: Array<{ value: CalendarEventType; label: string
   { value: "reminder", label: "提醒" }
 ];
 
+export const resumeItemTypes: Array<{ value: ResumeItemType; label: string }> = [
+  { value: "basic", label: "基本信息" },
+  { value: "education", label: "教育经历" },
+  { value: "experience", label: "实习 / 工作" },
+  { value: "project", label: "项目经历" },
+  { value: "research", label: "研究经历" },
+  { value: "skill", label: "Skill / AI 工作流" },
+  { value: "certification", label: "证书" },
+  { value: "award", label: "奖项" },
+  { value: "language", label: "语言能力" },
+  { value: "other", label: "其他" }
+];
+
 export function getPublicationTypeLabel(value: string | null | undefined) {
   return publicationTypes.find((item) => item.value === value)?.label ?? "其他";
 }
@@ -128,4 +141,8 @@ export function getAccessGrantStatusLabel(value: string | null | undefined) {
 
 export function getCalendarEventTypeLabel(value: string | null | undefined) {
   return calendarEventTypes.find((item) => item.value === value)?.label ?? "普通事项";
+}
+
+export function getResumeItemTypeLabel(value: string | null | undefined) {
+  return resumeItemTypes.find((item) => item.value === value)?.label ?? "其他";
 }
