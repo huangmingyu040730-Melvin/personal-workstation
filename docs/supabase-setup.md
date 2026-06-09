@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、简历导出和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、简历导出和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -47,7 +47,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。已执行过的 migration 不应修改或重跑。执行 0009 后，后续数据库变更应新增 `0010_*`，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。已执行过的 migration 不应修改或重跑。执行 0010 后，后续数据库变更应新增 `0011_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -276,6 +276,31 @@ Resume 权限边界：
 - 不修改 Viewer、restricted grants、Documents、Storage、Calendar 或 Profile 主流程。
 - 后续 Phase 2K-B 才做简历版本组合生成；Phase 2K-C 才做 PDF / Word 导出；Phase 2K-D 才做 AI JD 优化。
 
+Phase 2K-B 新增 Resume 简历版本组合。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0010_resume_versions.sql
+```
+
+`0010` 会：
+
+- 创建 `public.resume_versions` 简历版本表。
+- 创建 `public.resume_version_items` 版本与素材的选择关系表。
+- 支持版本标题、目标岗位、摘要、语言、模板标记、权限、启用状态、精选状态和内部备注。
+- 支持为每个已选素材保存区块、排序值、当前版本展示开关和备注。
+- 通过外键关联 `resume_items`，删除版本时自动删除组合关系，不删除原始素材。
+- 增加版本权限、启用、精选、更新时间和组合关系常用索引。
+- 启用 RLS。
+- 允许 authenticated 角色通过表级权限访问，实际管理继续由 `public.is_admin()` RLS policy 限定管理员。
+
+Resume Version 权限边界：
+
+- 管理员通过 `/dashboard/resume/versions` 创建、编辑、删除简历版本。
+- 简历版本默认 `private`。
+- 本阶段只提供后台预览，不生成 PDF / Word，不创建公开简历页面，不创建分享链接。
+- 不向匿名访客开放简历版本或组合关系读取。
+- 不修改 Viewer、restricted grants、Documents、Storage、Calendar、Profile 或现有 Resume 素材 CRUD 主流程。
+
 ## 创建管理员
 
 在 Supabase SQL Editor 中插入管理员 UUID：
@@ -361,6 +386,7 @@ Phase 2C 使用：
 - Viewer login grant check 依赖 0006 migration；未执行 0006 时 `/viewer/login` 的授权检查 RPC 不存在。
 - Calendar 后台已由 `/dashboard/calendar` 接入真实 `calendar_events` CRUD；未执行 0008 时，新字段保存会失败，Dashboard 近期日程会降级为空或只读取旧字段。
 - Resume 后台由 `/dashboard/resume` 接入真实 `resume_items` CRUD；未执行 0009 时，简历素材库无法完成真实读写，Dashboard 简历素材概览会降级为空。
+- Resume Versions 后台由 `/dashboard/resume/versions` 接入真实 `resume_versions` 与 `resume_version_items`；未执行 0010 时，简历版本列表、版本表单、详情与预览无法完成真实读写。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。

@@ -20,6 +20,7 @@
 - Projects、Knowledge Base、Skills Library、Publications 真实 CRUD
 - Access Requests 与 Access Grants 基础能力
 - Resume 履历素材库基础能力
+- Resume 简历版本组合与后台预览
 - Supabase Storage 私密文件上传与下载
 
 ## 本地启动
@@ -82,7 +83,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。新建环境仍需按顺序执行 0001 至 0009。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。新建环境仍需按顺序执行 0001 至 0010。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -115,6 +116,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/profile` 个人信息管理
 - `/dashboard/calendar` 站内日程管理
 - `/dashboard/resume` 简历素材库
+- `/dashboard/resume/versions` 简历版本管理
 - `/calendar` 公开日历占位
 - `/profile` 兼容跳转到 `/dashboard/profile`
 - `/settings` 设置
@@ -157,7 +159,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
 - Calendar 已接入站内 `calendar_events` CRUD；管理员可在 `/dashboard/calendar` 新建、编辑、删除日程，Dashboard 会展示近期日程。
-- Resume 已接入履历素材库基础数据模型；管理员可在 `/dashboard/resume` 维护教育、实习、项目、研究、Skill、证书和奖项等结构化素材。
+- Resume 已接入履历素材库与版本组合；管理员可在 `/dashboard/resume` 维护教育、实习、项目、研究、Skill、证书和奖项等结构化素材，并在 `/dashboard/resume/versions` 组合不同简历版本与后台预览。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化；管理后台 UI 已完成工作台式视觉优化。
 - Dashboard 已读取真实项目、笔记、Skill、Publications、Calendar 与 Activity Logs。
 - Google Calendar、提醒系统和外部日历同步尚未实现。
@@ -192,6 +194,7 @@ Viewer magic link 登录仍不稳定。Phase 2E-B 已实现 restricted 授权基
 - `access_requests`：Phase 2E-A 访问申请记录，包括申请人姓名、邮箱、机构、申请内容、理由、处理状态与管理员备注。
 - `content_access_grants`：Phase 2E-B 受限内容授权记录，包括被授权邮箱、内容类型、内容 ID、状态、有效期与管理员备注。
 - `resume_items`：Phase 2K-A 履历素材库记录，包括素材类型、标题、机构、角色、时间、bullet、skills、tags、关联对象、排序、可见性与精选标记。
+- `resume_versions` 与 `resume_version_items`：Phase 2K-B 简历版本与素材组合关系，记录版本标题、目标岗位、语言、模板、启用状态、已选素材、区块、排序和展示开关。
 
 公开可读表 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 不保存管理员 Auth UUID。私密后台表 `calendar_events`、`documents`、`activity_logs` 可保留 `owner_id` 或 `actor_id` 用于后续审计。
 

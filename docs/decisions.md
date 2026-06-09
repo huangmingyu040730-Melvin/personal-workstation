@@ -238,6 +238,30 @@
 - 管理员下载文件时按需生成 60 秒 signed URL，不保存到数据库，不输出到公开页面。
 - 即使文件关联到 public Publication，附件本轮仍保持私密，仅管理员可下载。
 
+## 2026-06-09 - Store Resume Versions Separately From Resume Items
+
+类型：decision
+
+决策：
+
+- Phase 2K-B 使用 `resume_versions` 保存简历版本元数据。
+- 使用 `resume_version_items` 保存每个版本选择了哪些 `resume_items`、归属哪个区块、排序值、当前版本是否展示和备注。
+- 删除版本时只删除组合关系，不删除原始简历素材。
+- 本阶段只做后台组合与预览，不做 PDF / Word 导出、公开简历页、分享链接或 AI JD 优化。
+
+原因：
+
+- 简历素材需要复用于多个申请场景，不能把素材内容直接复制进每一份版本。
+- 版本与素材关系分离后，后续可以在不改原始素材的情况下调整区块、排序和展示开关。
+- 导出与 AI 优化属于后续能力，先稳定数据结构和后台预览闭环更安全。
+
+影响：
+
+- 需要执行 `supabase/migrations/0010_resume_versions.sql`。
+- 管理入口为 `/dashboard/resume/versions`。
+- Dashboard 可显示简历版本统计和最近版本。
+- 版本数据继续仅管理员管理，不向匿名访客开放读取。
+
 原因：
 
 - 文件中心管理的是研究资料、报告成稿、会议资料等默认私密内容。

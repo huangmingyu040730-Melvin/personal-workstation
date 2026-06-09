@@ -146,11 +146,11 @@ Phase 2J-A 已完成 Profile 真实编辑：后台 `/dashboard/profile` 维护�
 目标：
 
 - Phase 2K-A：新增 Resume 履历素材库，维护基本信息、教育经历、实习 / 工作经历、项目经历、研究经历、Skill / AI 工作流经历、证书、奖项、技能标签和简历 bullet。
-- Phase 2K-B：基于履历素材组合生成不同版本简历。
+- Phase 2K-B：基于履历素材组合生成不同版本简历，并提供后台预览。
 - Phase 2K-C：PDF / Word 导出。
 - Phase 2K-D：AI 辅助 JD 优化。
 
-Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 导出、AI 生成、模板系统、公开简历页或英文简历。
+Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 导出、AI 生成、模板系统、公开简历页或英文简历。Phase 2K-B 增加简历版本和素材选择关系，支持按区块排序、展示开关、版本语言/模板标记和后台预览；仍不生成 PDF / Word，不创建公开简历页面，不做 AI JD 优化。
 
 ### Phase 2K-E - 自动化与市场简报
 

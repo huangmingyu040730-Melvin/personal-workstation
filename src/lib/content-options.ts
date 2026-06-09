@@ -1,4 +1,4 @@
-import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, ResumeItemType, SkillStatus } from "./content-types";
+import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -111,6 +111,29 @@ export const resumeItemTypes: Array<{ value: ResumeItemType; label: string }> = 
   { value: "other", label: "其他" }
 ];
 
+export const resumeVersionLanguages: Array<{ value: ResumeVersionLanguage; label: string }> = [
+  { value: "zh", label: "中文" },
+  { value: "en", label: "英文" }
+];
+
+export const resumeTemplateKeys: Array<{ value: ResumeTemplateKey; label: string }> = [
+  { value: "classic", label: "Classic" },
+  { value: "compact", label: "Compact" },
+  { value: "research", label: "Research" }
+];
+
+export const resumeSectionKeys: Array<{ value: ResumeSectionKey; label: string }> = [
+  { value: "summary", label: "摘要" },
+  { value: "education", label: "教育经历" },
+  { value: "experience", label: "实习 / 工作经历" },
+  { value: "projects", label: "项目经历" },
+  { value: "research", label: "研究经历" },
+  { value: "skills", label: "Skill / 技能经历" },
+  { value: "certifications", label: "证书" },
+  { value: "awards", label: "奖项" },
+  { value: "other", label: "其他" }
+];
+
 export function getPublicationTypeLabel(value: string | null | undefined) {
   return publicationTypes.find((item) => item.value === value)?.label ?? "其他";
 }
@@ -145,4 +168,16 @@ export function getCalendarEventTypeLabel(value: string | null | undefined) {
 
 export function getResumeItemTypeLabel(value: string | null | undefined) {
   return resumeItemTypes.find((item) => item.value === value)?.label ?? "其他";
+}
+
+export function getResumeVersionLanguageLabel(value: string | null | undefined) {
+  return resumeVersionLanguages.find((item) => item.value === value)?.label ?? "中文";
+}
+
+export function getResumeTemplateLabel(value: string | null | undefined) {
+  return resumeTemplateKeys.find((item) => item.value === value)?.label ?? "Classic";
+}
+
+export function getResumeSectionLabel(value: string | null | undefined) {
+  return resumeSectionKeys.find((item) => item.value === value)?.label ?? "其他";
 }

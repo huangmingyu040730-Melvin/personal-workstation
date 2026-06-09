@@ -67,3 +67,28 @@ export const resumeItemSchema = z
   }));
 
 export type ResumeItemInput = z.infer<typeof resumeItemSchema>;
+
+export const resumeVersionItemSchema = z.object({
+  resume_item_id: z.string().uuid("简历素材格式不正确。"),
+  section_key: z.enum(["summary", "education", "experience", "projects", "research", "skills", "certifications", "awards", "other"], {
+    message: "请选择有效的简历区块。"
+  }),
+  sort_order: z.coerce.number().int("素材排序值必须是整数。").min(0, "素材排序值不能小于 0。").max(9999, "素材排序值不能超过 9999。"),
+  is_visible: z.boolean(),
+  note: optionalText(500)
+});
+
+export const resumeVersionSchema = z.object({
+  title: z.string().trim().min(1, "请输入简历版本名称。").max(160, "简历版本名称不能超过 160 个字符。"),
+  target_role: optionalText(160),
+  summary: optionalText(1200),
+  language: z.enum(["zh", "en"], { message: "请选择有效语言。" }),
+  template_key: z.enum(["classic", "compact", "research"], { message: "请选择有效模板。" }),
+  visibility: z.enum(["private", "public"], { message: "请选择有效的简历版本权限。" }),
+  is_active: z.boolean(),
+  is_featured: z.boolean(),
+  notes: optionalText(1200),
+  items: z.array(resumeVersionItemSchema).default([])
+});
+
+export type ResumeVersionInput = z.infer<typeof resumeVersionSchema>;

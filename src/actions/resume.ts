@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
-import { resumeItemSchema } from "@/lib/validations/resume";
+import { resumeItemSchema, resumeVersionSchema } from "@/lib/validations/resume";
 
 function resumePayloadFromForm(formData: FormData) {
   return resumeItemSchema.safeParse({
@@ -36,6 +36,36 @@ function resumeErrorRedirect(path: string, message: string): never {
 
 function getResumeErrorMessage(error: { message?: string }) {
   return error.message || "简历素材保存失败，请稍后重试。";
+}
+
+function resumeVersionPayloadFromForm(formData: FormData) {
+  const selectedItemIds = formData
+    .getAll("resume_item_id")
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter(Boolean);
+
+  return resumeVersionSchema.safeParse({
+    title: getString(formData, "title"),
+    target_role: getOptionalString(formData, "target_role"),
+    summary: getOptionalString(formData, "summary"),
+    language: getString(formData, "language"),
+    template_key: getString(formData, "template_key"),
+    visibility: getString(formData, "visibility"),
+    is_active: getBoolean(formData, "is_active"),
+    is_featured: getBoolean(formData, "is_featured"),
+    notes: getOptionalString(formData, "notes"),
+    items: selectedItemIds.map((id) => ({
+      resume_item_id: id,
+      section_key: getString(formData, `section_key_${id}`),
+      sort_order: getString(formData, `sort_order_${id}`) || "0",
+      is_visible: getBoolean(formData, `is_visible_${id}`),
+      note: getOptionalString(formData, `note_${id}`)
+    }))
+  });
+}
+
+function resumeVersionErrorRedirect(path: string, message: string): never {
+  redirect(`${path}?error=${encodeFormError(message)}`);
 }
 
 export async function createResumeItemAction(formData: FormData) {
@@ -127,7 +157,139 @@ export async function deleteResumeItemAction(id: string) {
 function revalidateResumePaths(id?: string) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/resume");
+  revalidatePath("/dashboard/resume/versions");
   if (id) {
     revalidatePath(`/dashboard/resume/${id}`);
+  }
+}
+
+export async function createResumeVersionAction(formData: FormData) {
+  const parsed = resumeVersionPayloadFromForm(formData);
+
+  if (!parsed.success) {
+    resumeVersionErrorRedirect("/dashboard/resume/versions/new", parsed.error.issues[0]?.message ?? "请检查简历版本表单。");
+  }
+
+  const { items, ...versionPayload } = parsed.data;
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    resumeVersionErrorRedirect("/dashboard/resume/versions/new", error ?? "当前账号没有管理员权限。");
+  }
+
+  const { data, error: insertError } = await supabase.from("resume_versions").insert(versionPayload).select("id,title,target_role").single();
+
+  if (insertError) {
+    resumeVersionErrorRedirect("/dashboard/resume/versions/new", insertError.message || "简历版本保存失败，请稍后重试。");
+  }
+
+  if (items.length > 0) {
+    const { error: itemsError } = await supabase.from("resume_version_items").insert(
+      items.map((item) => ({
+        ...item,
+        resume_version_id: data.id
+      }))
+    );
+
+    if (itemsError) {
+      await supabase.from("resume_versions").delete().eq("id", data.id);
+      resumeVersionErrorRedirect("/dashboard/resume/versions/new", itemsError.message || "简历素材选择保存失败，请重新尝试。");
+    }
+  }
+
+  await writeActivityLog({
+    action: "resume_version.create",
+    entityType: "resume_version",
+    entityId: data.id,
+    metadata: { title: data.title, target_role: data.target_role }
+  });
+
+  revalidateResumeVersionPaths(data.id);
+  redirect(`/dashboard/resume/versions/${data.id}`);
+}
+
+export async function updateResumeVersionAction(id: string, formData: FormData) {
+  const editPath = `/dashboard/resume/versions/${id}/edit`;
+  const parsed = resumeVersionPayloadFromForm(formData);
+
+  if (!parsed.success) {
+    resumeVersionErrorRedirect(editPath, parsed.error.issues[0]?.message ?? "请检查简历版本表单。");
+  }
+
+  const { items, ...versionPayload } = parsed.data;
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    resumeVersionErrorRedirect(editPath, error ?? "当前账号没有管理员权限。");
+  }
+
+  const { data, error: updateError } = await supabase.from("resume_versions").update(versionPayload).eq("id", id).select("id,title,target_role").single();
+
+  if (updateError) {
+    resumeVersionErrorRedirect(editPath, updateError.message || "简历版本保存失败，请稍后重试。");
+  }
+
+  const { error: deleteItemsError } = await supabase.from("resume_version_items").delete().eq("resume_version_id", id);
+
+  if (deleteItemsError) {
+    resumeVersionErrorRedirect(editPath, deleteItemsError.message || "更新简历素材选择失败，请稍后重试。");
+  }
+
+  if (items.length > 0) {
+    const { error: itemsError } = await supabase.from("resume_version_items").insert(
+      items.map((item) => ({
+        ...item,
+        resume_version_id: id
+      }))
+    );
+
+    if (itemsError) {
+      resumeVersionErrorRedirect(editPath, itemsError.message || "简历素材选择保存失败，请重新尝试。");
+    }
+  }
+
+  await writeActivityLog({
+    action: "resume_version.update",
+    entityType: "resume_version",
+    entityId: data.id,
+    metadata: { title: data.title, target_role: data.target_role }
+  });
+
+  revalidateResumeVersionPaths(id);
+  redirect(`/dashboard/resume/versions/${id}`);
+}
+
+export async function deleteResumeVersionAction(id: string) {
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(`/dashboard/resume/versions/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const { data: existing } = await supabase.from("resume_versions").select("title,target_role").eq("id", id).maybeSingle();
+  const { error: deleteError } = await supabase.from("resume_versions").delete().eq("id", id);
+
+  if (deleteError) {
+    redirect(`/dashboard/resume/versions/${id}?error=${encodeFormError(deleteError.message || "删除简历版本失败。")}`);
+  }
+
+  await writeActivityLog({
+    action: "resume_version.delete",
+    entityType: "resume_version",
+    entityId: id,
+    metadata: { title: existing?.title ?? "已删除简历版本", target_role: existing?.target_role ?? null }
+  });
+
+  revalidateResumeVersionPaths(id);
+  redirect("/dashboard/resume/versions");
+}
+
+function revalidateResumeVersionPaths(id?: string) {
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/resume");
+  revalidatePath("/dashboard/resume/versions");
+  if (id) {
+    revalidatePath(`/dashboard/resume/versions/${id}`);
+    revalidatePath(`/dashboard/resume/versions/${id}/preview`);
   }
 }

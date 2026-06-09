@@ -1,4 +1,4 @@
-import type { ResumeItemRecord, ResumeItemType } from "@/lib/content-types";
+import type { ResumeItemRecord, ResumeItemType, ResumeVersionRecord, ResumeVersionWithItems } from "@/lib/content-types";
 import { createClient } from "@/lib/supabase/server";
 import { getKnowledgeNoteOptions } from "./knowledge";
 import { getProjectOptions } from "./projects";
@@ -24,6 +24,12 @@ export type ResumeStats = {
   experience: number;
   project: number;
   skillCertificationAward: number;
+};
+
+export type ResumeVersionStats = {
+  total: number;
+  active: number;
+  featured: number;
 };
 
 export async function getResumeItems(filters?: ResumeFilters) {
@@ -56,6 +62,10 @@ export async function getResumeItems(filters?: ResumeFilters) {
 
   const items = (data ?? []) as ResumeItemRecord[];
   return filters?.q ? items.filter((item) => matchesResumeSearch(item, filters.q ?? "")) : items;
+}
+
+export async function getAllResumeItemsForVersionBuilder() {
+  return getResumeItems({ visibility: "all" });
 }
 
 export async function getResumeItemById(id: string) {
@@ -102,6 +112,122 @@ export async function getRecentResumeItems(limit = 3) {
   }
 
   return (data ?? []) as ResumeItemRecord[];
+}
+
+export async function getResumeVersions() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return [] as ResumeVersionRecord[];
+  }
+
+  const { data, error } = await supabase
+    .from("resume_versions")
+    .select("*")
+    .order("is_active", { ascending: false })
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("getResumeVersions failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  return (data ?? []) as ResumeVersionRecord[];
+}
+
+export async function getResumeVersionItemCounts() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return new Map<string, number>();
+  }
+
+  const { data, error } = await supabase.from("resume_version_items").select("resume_version_id");
+
+  if (error) {
+    console.error("getResumeVersionItemCounts failed", { code: error.code, message: error.message });
+    return new Map<string, number>();
+  }
+
+  return (data ?? []).reduce((counts, item) => {
+    const versionId = item.resume_version_id as string;
+    counts.set(versionId, (counts.get(versionId) ?? 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+}
+
+export async function getResumeVersionById(id: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase.from("resume_versions").select("*").eq("id", id).maybeSingle();
+
+  if (error) {
+    console.error("getResumeVersionById failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  return data as ResumeVersionRecord | null;
+}
+
+export async function getResumeVersionWithItems(id: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("resume_versions")
+    .select("*, resume_version_items(*, resume_items(*))")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getResumeVersionWithItems failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const version = data as ResumeVersionWithItems;
+  version.resume_version_items = [...(version.resume_version_items ?? [])].sort(
+    (a, b) => a.section_key.localeCompare(b.section_key) || a.sort_order - b.sort_order || (a.resume_items?.title ?? "").localeCompare(b.resume_items?.title ?? "")
+  );
+
+  return version;
+}
+
+export async function getResumeVersionStats(): Promise<ResumeVersionStats> {
+  const versions = await getResumeVersions();
+
+  return {
+    total: versions.length,
+    active: versions.filter((version) => version.is_active).length,
+    featured: versions.filter((version) => version.is_featured).length
+  };
+}
+
+export async function getRecentResumeVersions(limit = 3) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return [] as ResumeVersionRecord[];
+  }
+
+  const { data, error } = await supabase.from("resume_versions").select("*").order("updated_at", { ascending: false }).limit(limit);
+
+  if (error) {
+    console.error("getRecentResumeVersions failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  return (data ?? []) as ResumeVersionRecord[];
 }
 
 export async function getResumeRelationOptions(): Promise<ResumeRelationOptions> {

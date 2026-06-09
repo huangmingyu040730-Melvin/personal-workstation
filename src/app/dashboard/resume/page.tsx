@@ -23,12 +23,26 @@ export default async function ResumePage({ searchParams }: { searchParams: Promi
           title="简历素材库"
           description="维护教育、实习、项目、研究、技能、证书和奖项等结构化履历素材，为后续生成不同版本简历做准备。"
           action={
-            <Link href="/dashboard/resume/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
-              <Plus size={16} />
-              新建素材
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/dashboard/resume/versions" className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+                版本管理
+              </Link>
+              <Link href="/dashboard/resume/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
+                <Plus size={16} />
+                新建素材
+              </Link>
+            </div>
           }
         />
+
+        <div className="flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-soft">
+          <Link href="/dashboard/resume" className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
+            素材库
+          </Link>
+          <Link href="/dashboard/resume/versions" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
+            简历版本
+          </Link>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <ResumeMetric label="素材总数" value={stats.total} icon={<BriefcaseBusiness size={20} />} />
