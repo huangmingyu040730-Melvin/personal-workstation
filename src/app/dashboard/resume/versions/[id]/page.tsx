@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Eye, Layers3 } from "lucide-react";
+import { Eye, Layers3, Sparkles } from "lucide-react";
 import { deleteResumeVersionAction } from "@/actions/resume";
 import { AppShell } from "@/components/app-shell";
 import { AdminDangerZone, AdminPageSurface } from "@/components/admin-ui";
@@ -60,6 +60,10 @@ export default async function ResumeVersionDetailPage({
               <Link href={`/dashboard/resume/versions/${version.id}/preview`} className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">
                 <Eye size={16} />
                 预览
+              </Link>
+              <Link href={`/dashboard/resume/versions/${version.id}/jd-review`} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
+                <Sparkles size={16} />
+                AI JD 优化
               </Link>
               <Link href={`/dashboard/resume/versions/${version.id}/edit`} className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">编辑</Link>
               <Link href="/dashboard/resume/versions" className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">返回版本列表</Link>

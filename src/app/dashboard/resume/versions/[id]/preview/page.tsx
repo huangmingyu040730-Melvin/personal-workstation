@@ -70,6 +70,10 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
                   <Edit size={16} />
                   编辑版本
                 </Link>
+                <Link href={`/dashboard/resume/versions/${version.id}/jd-review`} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
+                  <Sparkles size={16} />
+                  AI JD 优化
+                </Link>
                 <ResumePrintButton />
               </div>
             }

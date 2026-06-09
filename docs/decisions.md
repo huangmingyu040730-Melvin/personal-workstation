@@ -705,3 +705,28 @@
 - 编辑页突出目标岗位，并允许维护目标关键词。
 - 本阶段不修改 Resume 主数据结构、RLS、Storage、Documents、Viewer、restricted、Calendar 或 Profile 主流程。
 - 后续 Phase 2K-E 可在此基础上单独设计 AI JD 优化或自动改写能力。
+
+## 2026-06-09 - Keep AI JD Resume Review Advisory Only
+
+类型：decision
+
+决策：
+
+- Phase 2K-E 新增 `/dashboard/resume/versions/[id]/jd-review` 作为 AI JD 简历优化入口。
+- AI 输入只包含当前简历版本中已选择展示的素材、版本目标岗位/关键词和管理员粘贴的 JD。
+- AI 输出为结构化建议，包括匹配摘要、已匹配关键词、缺失关键词、优势、差距、经历强化建议、bullet 改写建议、风险提示和下一步行动。
+- 本阶段不保存 JD 分析历史，不自动写回 Resume Items，不自动覆盖 Resume Versions。
+- AI 调用只在 Server Action 中进行，需要服务端 `OPENAI_API_KEY`，可选 `OPENAI_MODEL`。
+
+原因：
+
+- JD 匹配建议适合辅助人工判断，但不应直接替换用户真实经历。
+- 金融/投研简历容易涉及量化成果和事实边界，AI 不得编造经历、公司、岗位、证书或数据。
+- 不保存分析历史可以避免新增 migration 和额外隐私面，先验证单次分析体验。
+
+影响：
+
+- 管理员可以在版本详情和预览页进入 AI JD 优化页面。
+- 未配置 `OPENAI_API_KEY` 时页面仍可打开，并显示配置提示。
+- 不发送 Documents、Storage 路径、signed URL、Access Requests、Access Grants、管理员邮箱、Auth UUID 或密钥给 AI。
+- 本阶段不修改 RLS、Storage、Documents、Viewer、restricted、Calendar、Profile、Resume 主数据结构或旧 migration。
