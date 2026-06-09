@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { ArrowLeft, Award, BriefcaseBusiness, Edit, GraduationCap, Sparkles } from "lucide-react";
+import { ArrowLeft, Award, BriefcaseBusiness, Edit, FileDown, GraduationCap, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { PageHeader } from "@/components/page-header";
@@ -74,13 +74,17 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
                   <Sparkles size={16} />
                   AI JD 优化
                 </Link>
+                <Link href={`/dashboard/resume/versions/${version.id}/export/docx`} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:border-emerald-200 hover:bg-emerald-100">
+                  <FileDown size={16} />
+                  导出 Word
+                </Link>
                 <ResumePrintButton />
               </div>
             }
           />
 
           <AdminSecurityNote>
-            这是后台预览页，仅管理员可访问。打印导出由浏览器完成，不会创建公开简历页面、分享链接或后端 PDF / Word 文件。
+            这是后台预览页，仅管理员可访问。打印导出由浏览器完成；Word 导出会即时生成下载文件，不会创建公开简历页面、分享链接或长期文件。
           </AdminSecurityNote>
 
           <ResumeQualityPreviewNotice report={quality} />
