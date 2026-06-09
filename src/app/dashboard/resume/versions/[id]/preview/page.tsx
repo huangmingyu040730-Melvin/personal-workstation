@@ -184,7 +184,7 @@ function EducationResumeItem({ versionItem, item }: { versionItem: ResumeVersion
         {visible.show_school ? <span className="resume-entry-org">{school}</span> : null}
       </div>
       {degreeLine ? <div className="resume-entry-role">{degreeLine}</div> : null}
-      {visible.show_summary && item.summary ? <p className="resume-entry-summary">{item.summary}</p> : null}
+      {visible.show_summary && item.summary ? <ResumeTextBlock text={item.summary} paragraphClassName="resume-entry-summary" /> : null}
       {visible.show_core_courses && coreCourses.length > 0 ? <p className="resume-detail-line"><strong>核心课程：</strong>{coreCourses.join("、")}</p> : null}
       {visible.show_honors && honors.length > 0 ? <p className="resume-detail-line"><strong>荣誉：</strong>{honors.join("、")}</p> : null}
       {visible.show_bullets ? <ResumeBullets item={item} /> : null}
@@ -206,7 +206,7 @@ function ExperienceResumeItem({ versionItem, item, sectionKey }: { versionItem: 
         {organization ? <span className="resume-entry-org">{organization}</span> : null}
       </div>
       {role ? <div className="resume-entry-role">{[role, visible.show_location ? item.location : null].filter(Boolean).join(" ｜ ")}</div> : null}
-      {visible.show_summary && item.summary ? <p className="resume-entry-summary">{item.summary}</p> : null}
+      {visible.show_summary && item.summary ? <ResumeTextBlock text={item.summary} paragraphClassName="resume-entry-summary" /> : null}
       {detailLines.map((line) => (
         <ResumeTextBlock key={line} text={line} />
       ))}
@@ -268,7 +268,7 @@ function CredentialResumeItem({ versionItem, item, sectionKey }: { versionItem: 
   );
 }
 
-function ResumeTextBlock({ text }: { text: string }) {
+function ResumeTextBlock({ text, paragraphClassName = "resume-detail-line" }: { text: string; paragraphClassName?: string }) {
   const bullets = normalizeResumeBullets(text);
   const looksLikeList = bullets.length > 1 || /^[\s]*(?:[•·-]|\d+[.、])/.test(text);
 
@@ -282,7 +282,7 @@ function ResumeTextBlock({ text }: { text: string }) {
     );
   }
 
-  return <p className="resume-detail-line">{text}</p>;
+  return <p className={paragraphClassName}>{text}</p>;
 }
 
 function ResumeBullets({ item }: { item: ResumeItemRecord }) {
