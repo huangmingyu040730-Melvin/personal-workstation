@@ -648,11 +648,36 @@
 
 - Resume 模块应是个人履历数据库，不是单份静态简历。
 - 统一表能支持后续按岗位选择、组合和排序素材，避免早期拆多表带来过度复杂度。
-- 当前阶段只为后续一键生成简历、PDF / Word 导出和 AI JD 优化打基础。
+- 当前阶段只为后续简历版本组合、模板预览、浏览器打印和 AI JD 优化打基础。
 
 影响：
 
 - 合并后生产 Supabase 需要执行 `0009_resume_items.sql`。
 - Dashboard 可展示简历素材概览和最近更新素材。
-- 后续 Phase 2K-B 才做简历版本组合生成；Phase 2K-C 才做 PDF / Word 导出；Phase 2K-D 才做 AI JD 优化。
+- 后续 Phase 2K-B 才做简历版本组合生成；Phase 2K-C 做分区式模板预览与浏览器打印；Phase 2K-D 才做 AI JD 优化。
 - 不修改 Viewer、restricted grants、Documents、Storage、Calendar 或 Profile 主流程。
+
+## 2026-06-09 - Keep Resume Template Rendering In Browser
+
+类型：decision
+
+决策：
+
+- Phase 2K-C 不引入后端 PDF、Word、LaTeX、Puppeteer、PDFKit 或外部导出服务。
+- 在既有 `resume_items`、`resume_versions`、`resume_version_items` 结构上新增 `0011_resume_template_fields.sql`。
+- `resume_items.details` 保存教育、实习、项目、技能和个人信息等结构化细节。
+- `resume_versions.profile_fields` 控制照片、性别、年龄、电话、邮箱等顶部字段是否进入简历。
+- `resume_version_items.visible_fields` 控制单条素材的日期、机构、角色、摘要、bullets、技能、核心课程等是否进入当前版本。
+- 预览页采用更贴近上传 PDF 参考的 A4 中文简历模板，并通过浏览器打印 / 另存为 PDF。
+
+原因：
+
+- 当前用户重点是让简历模块先从“混合素材列表”变成“可维护的分区式简历管理”和“贴近 PDF 的预览模板”。
+- 浏览器打印能避免后端二进制生成、云函数体积、字体嵌入和文件存储权限的额外复杂度。
+- JSON 字段能保留统一素材库的灵活性，同时支持不同简历区块所需的差异字段。
+
+影响：
+
+- 合并后生产 Supabase 需要执行 `0011_resume_template_fields.sql`。
+- 简历个人字段不会自动进入公开 About，也不会创建公开简历页面。
+- 后续如需 Word 导出、多个严格模板、照片上传或 AI JD 优化，应另开阶段并新增必要 migration。

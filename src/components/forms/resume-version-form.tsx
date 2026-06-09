@@ -2,7 +2,6 @@ import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
 import {
   getResumeItemTypeLabel,
-  resumeItemTypes,
   resumeSectionKeys,
   resumeTemplateKeys,
   resumeVersionLanguages
@@ -11,18 +10,48 @@ import type { ResumeItemRecord, ResumeSectionKey, ResumeVersionItemRecord, Resum
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
-const defaultSectionByItemType: Record<ResumeItemRecord["item_type"], ResumeSectionKey> = {
-  basic: "summary",
-  education: "education",
-  experience: "experience",
-  project: "projects",
-  research: "research",
-  skill: "skills",
-  certification: "certifications",
-  award: "awards",
-  language: "skills",
-  other: "other"
+type VersionSection = {
+  key: ResumeSectionKey;
+  label: string;
+  description: string;
+  itemTypes: ResumeItemRecord["item_type"][];
+  defaultVisibleFields: string[];
 };
+
+const versionSections: VersionSection[] = [
+  { key: "summary", label: "个人信息", description: "照片、电话、邮箱、性别、年龄等简历顶部信息。", itemTypes: ["basic"], defaultVisibleFields: ["show_summary"] },
+  { key: "education", label: "教育经历", description: "学校、专业、学位、核心课程和荣誉。", itemTypes: ["education"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_location", "show_summary", "show_core_courses"] },
+  { key: "experience", label: "实习经历", description: "公司、岗位、职责、方法和成果。", itemTypes: ["experience"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_location", "show_summary", "show_bullets", "show_skills"] },
+  { key: "other", label: "在校经历", description: "学生组织、社团、志愿服务或其他校园经历。", itemTypes: ["other"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_summary", "show_bullets"] },
+  { key: "projects", label: "项目经历", description: "投研、量化、AI 工作流等项目经历。", itemTypes: ["project"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_summary", "show_bullets", "show_skills"] },
+  { key: "research", label: "研究经历", description: "研究主题、框架、方法和结论。", itemTypes: ["research"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_summary", "show_bullets", "show_skills"] },
+  { key: "skills", label: "相关技能", description: "技能、语言能力和 AI 工作流能力。", itemTypes: ["skill", "language"], defaultVisibleFields: ["show_summary", "show_bullets", "show_skills", "show_tags"] },
+  { key: "certifications", label: "证书", description: "证书、资格或培训记录。", itemTypes: ["certification"], defaultVisibleFields: ["show_date", "show_organization", "show_summary"] },
+  { key: "awards", label: "荣誉奖项", description: "奖项和荣誉记录。", itemTypes: ["award"], defaultVisibleFields: ["show_date", "show_organization", "show_summary"] }
+];
+
+const profileFieldOptions = [
+  { key: "show_photo", label: "照片" },
+  { key: "show_gender", label: "性别" },
+  { key: "show_age", label: "年龄" },
+  { key: "show_phone", label: "电话" },
+  { key: "show_email", label: "邮箱" },
+  { key: "show_location", label: "所在地" },
+  { key: "show_headline", label: "一句话定位" },
+  { key: "show_website", label: "个人链接" }
+];
+
+const visibleFieldOptions = [
+  { key: "show_date", label: "时间" },
+  { key: "show_organization", label: "机构" },
+  { key: "show_role_title", label: "角色" },
+  { key: "show_location", label: "地点" },
+  { key: "show_summary", label: "摘要" },
+  { key: "show_bullets", label: "Bullets" },
+  { key: "show_skills", label: "技能" },
+  { key: "show_tags", label: "标签" },
+  { key: "show_core_courses", label: "核心课程" }
+];
 
 export function ResumeVersionForm({
   action,
@@ -38,12 +67,7 @@ export function ResumeVersionForm({
   error?: string;
 }) {
   const selectedByItemId = new Map(versionItems.map((item) => [item.resume_item_id, item]));
-  const groupedItems = resumeItemTypes
-    .map((type) => ({
-      ...type,
-      items: resumeItems.filter((item) => item.item_type === type.value)
-    }))
-    .filter((group) => group.items.length > 0);
+  const profileFields = normalizeBooleanRecord(version?.profile_fields);
 
   return (
     <form action={action} className="space-y-5">
@@ -65,7 +89,7 @@ export function ResumeVersionForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="语言、模板与状态" description="本阶段只保存组合结构和后台预览，不生成 PDF / Word。">
+      <AdminFormSection title="语言、模板与状态" description="本阶段保存组合结构和浏览器打印预览，不生成后端 PDF / Word。">
         <div className="grid gap-5 md:grid-cols-4">
           <Field label="语言">
             <Select name="language" defaultValue={version?.language ?? "zh"}>
@@ -103,64 +127,95 @@ export function ResumeVersionForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="选择与排序素材" description="勾选素材后，可为它指定简历区块、排序值和是否在当前版本中展示。">
-        {groupedItems.length > 0 ? (
-          <div className="space-y-5">
-            {groupedItems.map((group) => (
-              <section key={group.value} className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-slate-950">{group.label}</h3>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-xs text-slate-500">{group.items.length} 条</span>
-                </div>
-                <div className="space-y-3">
-                  {group.items.map((item) => {
-                    const selected = selectedByItemId.get(item.id);
-                    const sectionKey = selected?.section_key ?? defaultSectionByItemType[item.item_type];
+      <AdminFormSection title="顶部个人信息" description="选择哪些个人信息进入简历顶部。未勾选的字段不会出现在打印预览中。">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {profileFieldOptions.map((option) => (
+            <Checkbox key={option.key} name={option.key} label={option.label} defaultChecked={profileFields[option.key] ?? ["show_photo", "show_gender", "show_age", "show_phone", "show_email"].includes(option.key)} />
+          ))}
+        </div>
+      </AdminFormSection>
 
-                    return (
-                      <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <label className="flex min-w-0 gap-3">
-                            <input
-                              type="checkbox"
-                              name="resume_item_id"
-                              value={item.id}
-                              defaultChecked={Boolean(selected)}
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600"
-                            />
-                            <span className="min-w-0">
-                              <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
-                              <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">
-                                {[item.organization, item.role_title, item.summary].filter(Boolean).join(" · ") || getResumeItemTypeLabel(item.item_type)}
+      <AdminFormSection title="按区块选择素材" description="素材按简历区块管理。每条素材可控制哪些字段进入当前版本，避免打印稿被无关字段挤满。">
+        {resumeItems.length > 0 ? (
+          <div className="space-y-5">
+            {versionSections.map((section) => {
+              const sectionItems = resumeItems.filter((item) => section.itemTypes.includes(item.item_type));
+              if (sectionItems.length === 0) {
+                return null;
+              }
+
+              return (
+                <section key={section.key} className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-950">{section.label}</h3>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">{section.description}</p>
+                    </div>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs text-slate-500">{sectionItems.length} 条</span>
+                  </div>
+                  <div className="space-y-3">
+                    {sectionItems.map((item) => {
+                      const selected = selectedByItemId.get(item.id);
+                      const visibleFields = normalizeBooleanRecord(selected?.visible_fields);
+
+                      return (
+                        <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <label className="flex min-w-0 gap-3">
+                              <input
+                                type="checkbox"
+                                name="resume_item_id"
+                                value={item.id}
+                                defaultChecked={Boolean(selected)}
+                                className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600"
+                              />
+                              <span className="min-w-0">
+                                <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
+                                <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">
+                                  {[item.organization, item.role_title, item.summary].filter(Boolean).join(" · ") || getResumeItemTypeLabel(item.item_type)}
+                                </span>
                               </span>
-                            </span>
-                          </label>
-                          <div className="grid gap-3 sm:grid-cols-[150px_100px_120px]">
-                            <Select name={`section_key_${item.id}`} defaultValue={sectionKey}>
-                              {resumeSectionKeys.map((section) => (
-                                <option key={section.value} value={section.value}>
-                                  {section.label}
-                                </option>
+                            </label>
+                            <div className="grid gap-3 sm:grid-cols-[150px_100px_120px]">
+                              <Select name={`section_key_${item.id}`} defaultValue={selected?.section_key ?? section.key}>
+                                {resumeSectionKeys.map((sectionOption) => (
+                                  <option key={sectionOption.value} value={sectionOption.value}>
+                                    {sectionOption.label}
+                                  </option>
+                                ))}
+                              </Select>
+                              <TextInput name={`sort_order_${item.id}`} type="number" min={0} max={9999} defaultValue={selected?.sort_order ?? item.sort_order ?? 0} />
+                              <Checkbox name={`is_visible_${item.id}`} label="展示" defaultChecked={selected?.is_visible ?? true} />
+                            </div>
+                          </div>
+                          <div className="mt-4 rounded-2xl bg-slate-50 p-3">
+                            <p className="mb-2 text-xs font-semibold text-slate-500">当前版本可见字段</p>
+                            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                              {visibleFieldOptions.map((option) => (
+                                <Checkbox
+                                  key={option.key}
+                                  name={`${option.key}_${item.id}`}
+                                  label={option.label}
+                                  defaultChecked={visibleFields[option.key] ?? section.defaultVisibleFields.includes(option.key)}
+                                />
                               ))}
-                            </Select>
-                            <TextInput name={`sort_order_${item.id}`} type="number" min={0} max={9999} defaultValue={selected?.sort_order ?? item.sort_order ?? 0} />
-                            <Checkbox name={`is_visible_${item.id}`} label="展示" defaultChecked={selected?.is_visible ?? true} />
+                            </div>
+                          </div>
+                          <div className="mt-3">
+                            <Textarea
+                              name={`note_${item.id}`}
+                              defaultValue={selected?.note ?? ""}
+                              className="min-h-16"
+                              placeholder="可选：记录此素材在当前版本中的使用说明，不默认进入打印稿。"
+                            />
                           </div>
                         </div>
-                        <div className="mt-3">
-                          <Textarea
-                            name={`note_${item.id}`}
-                            defaultValue={selected?.note ?? ""}
-                            className="min-h-16"
-                            placeholder="可选：记录此素材在当前版本中的使用说明。"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500">
@@ -180,4 +235,12 @@ export function ResumeVersionForm({
       </div>
     </form>
   );
+}
+
+function normalizeBooleanRecord(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, boolean>;
 }

@@ -47,7 +47,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。已执行过的 migration 不应修改或重跑。执行 0010 后，后续数据库变更应新增 `0011_*`，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。已执行过的 migration 不应修改或重跑。执行 0011 后，后续数据库变更应新增 `0012_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -274,7 +274,7 @@ Resume 权限边界：
 - Resume 素材默认 `private`。
 - 本阶段不创建公开简历页面，不输出 Documents、signed URL 或 Storage 路径。
 - 不修改 Viewer、restricted grants、Documents、Storage、Calendar 或 Profile 主流程。
-- 后续 Phase 2K-B 才做简历版本组合生成；Phase 2K-C 才做 PDF / Word 导出；Phase 2K-D 才做 AI JD 优化。
+- 后续 Phase 2K-B 才做简历版本组合生成；Phase 2K-C 做分区式模板预览与浏览器打印；Phase 2K-D 才做 AI JD 优化。
 
 Phase 2K-B 新增 Resume 简历版本组合。合并对应代码后，新建环境或生产环境需要继续运行：
 
@@ -300,6 +300,27 @@ Resume Version 权限边界：
 - 本阶段只提供后台预览，不生成 PDF / Word，不创建公开简历页面，不创建分享链接。
 - 不向匿名访客开放简历版本或组合关系读取。
 - 不修改 Viewer、restricted grants、Documents、Storage、Calendar、Profile 或现有 Resume 素材 CRUD 主流程。
+
+Phase 2K-C 增强 Resume 模板字段。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0011_resume_template_fields.sql
+```
+
+`0011` 会：
+
+- 为 `public.resume_items` 增加 `details jsonb`，保存照片、性别、年龄、电话、邮箱、教育细节、项目方法、技能分类等结构化字段。
+- 为 `public.resume_version_items` 增加 `visible_fields jsonb`，保存当前版本中每条素材的日期、机构、角色、摘要、bullets、技能和核心课程等可见字段开关。
+- 为 `public.resume_versions` 增加 `profile_fields jsonb`、`section_order text[]` 和 `template_options jsonb`，用于控制顶部个人字段、区块顺序和模板选项。
+- 增加 `resume_items.details` GIN 索引。
+
+Resume Template 权限边界：
+
+- 不新增公开简历页面。
+- 不把 Resume 私密个人字段同步到 `/about`。
+- 不生成后端 PDF / Word 文件，不使用 Puppeteer、PDFKit、LaTeX 或外部导出服务。
+- 打印 PDF 仍由管理员浏览器完成。
+- 不修改 Viewer、restricted grants、Documents、Storage、Calendar 或 Profile 主流程。
 
 ## 创建管理员
 
@@ -387,6 +408,7 @@ Phase 2C 使用：
 - Calendar 后台已由 `/dashboard/calendar` 接入真实 `calendar_events` CRUD；未执行 0008 时，新字段保存会失败，Dashboard 近期日程会降级为空或只读取旧字段。
 - Resume 后台由 `/dashboard/resume` 接入真实 `resume_items` CRUD；未执行 0009 时，简历素材库无法完成真实读写，Dashboard 简历素材概览会降级为空。
 - Resume Versions 后台由 `/dashboard/resume/versions` 接入真实 `resume_versions` 与 `resume_version_items`；未执行 0010 时，简历版本列表、版本表单、详情与预览无法完成真实读写。
+- Resume Template 字段依赖 0011 migration；未执行 0011 时，简历素材详情字段、版本顶部个人字段开关、逐条素材可见字段控制和贴近 PDF 的打印预览会因为缺少列而无法稳定保存或读取。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。

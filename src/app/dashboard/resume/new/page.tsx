@@ -3,11 +3,15 @@ import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
 import { ResumeItemForm } from "@/components/forms/resume-item-form";
 import { PageHeader } from "@/components/page-header";
+import { resumeItemTypes } from "@/lib/content-options";
+import type { ResumeItemType } from "@/lib/content-types";
 import { getFormError } from "@/lib/forms";
 import { getResumeRelationOptions } from "@/lib/queries/resume";
 
 export default async function NewResumeItemPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [params, options] = await Promise.all([searchParams, getResumeRelationOptions()]);
+  const requestedType = typeof params.item_type === "string" ? params.item_type : undefined;
+  const defaultType = resumeItemTypes.some((type) => type.value === requestedType) ? (requestedType as ResumeItemType) : undefined;
 
   return (
     <AppShell>
@@ -29,7 +33,7 @@ export default async function NewResumeItemPage({ searchParams }: { searchParams
             </>
           }
         >
-          <ResumeItemForm action={createResumeItemAction} options={options} error={getFormError(params)} />
+          <ResumeItemForm action={createResumeItemAction} options={options} error={getFormError(params)} defaultType={defaultType} />
         </AdminFormSurface>
       </AdminPageSurface>
     </AppShell>

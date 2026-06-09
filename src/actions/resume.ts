@@ -6,6 +6,53 @@ import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { resumeItemSchema, resumeVersionSchema } from "@/lib/validations/resume";
 
+const detailTextKeys = [
+  "photo_url",
+  "gender",
+  "age",
+  "phone",
+  "email",
+  "website",
+  "direction",
+  "school",
+  "college",
+  "major",
+  "degree",
+  "gpa",
+  "company",
+  "department",
+  "position",
+  "business_area",
+  "organization_name",
+  "project_role",
+  "background",
+  "methods",
+  "topic",
+  "conclusion",
+  "skill_category",
+  "issuer",
+  "issued_at",
+  "description"
+];
+
+const detailArrayKeys = ["core_courses", "honors", "tools", "skill_items"];
+
+const profileFieldKeys = ["show_photo", "show_gender", "show_age", "show_phone", "show_email", "show_location", "show_headline", "show_website"];
+
+const visibleFieldKeys = [
+  "show_date",
+  "show_organization",
+  "show_role_title",
+  "show_location",
+  "show_summary",
+  "show_bullets",
+  "show_skills",
+  "show_tags",
+  "show_core_courses"
+];
+
+const defaultSectionOrder = ["education", "experience", "campus", "projects", "research", "skills", "certifications", "awards", "other"];
+
 function resumePayloadFromForm(formData: FormData) {
   return resumeItemSchema.safeParse({
     item_type: getString(formData, "item_type"),
@@ -20,6 +67,7 @@ function resumePayloadFromForm(formData: FormData) {
     bullets: getArrayFromText(formData, "bullets"),
     skills: getArrayFromText(formData, "skills"),
     tags: getArrayFromText(formData, "tags"),
+    details: buildResumeDetails(formData),
     sort_order: getString(formData, "sort_order") || "0",
     visibility: getString(formData, "visibility"),
     is_featured: getBoolean(formData, "is_featured"),
@@ -38,6 +86,34 @@ function getResumeErrorMessage(error: { message?: string }) {
   return error.message || "简历素材保存失败，请稍后重试。";
 }
 
+function buildResumeDetails(formData: FormData) {
+  const details: Record<string, string | string[]> = {};
+
+  for (const key of detailTextKeys) {
+    const value = getOptionalString(formData, `detail_${key}`);
+    if (value) {
+      details[key] = value;
+    }
+  }
+
+  for (const key of detailArrayKeys) {
+    const value = getArrayFromText(formData, `detail_${key}`);
+    if (value.length > 0) {
+      details[key] = value;
+    }
+  }
+
+  return details;
+}
+
+function getProfileFields(formData: FormData) {
+  return Object.fromEntries(profileFieldKeys.map((key) => [key, getBoolean(formData, key)]));
+}
+
+function getVisibleFields(formData: FormData, itemId: string) {
+  return Object.fromEntries(visibleFieldKeys.map((key) => [key, getBoolean(formData, `${key}_${itemId}`)]));
+}
+
 function resumeVersionPayloadFromForm(formData: FormData) {
   const selectedItemIds = formData
     .getAll("resume_item_id")
@@ -54,12 +130,16 @@ function resumeVersionPayloadFromForm(formData: FormData) {
     is_active: getBoolean(formData, "is_active"),
     is_featured: getBoolean(formData, "is_featured"),
     notes: getOptionalString(formData, "notes"),
+    profile_fields: getProfileFields(formData),
+    section_order: defaultSectionOrder,
+    template_options: {},
     items: selectedItemIds.map((id) => ({
       resume_item_id: id,
       section_key: getString(formData, `section_key_${id}`),
       sort_order: getString(formData, `sort_order_${id}`) || "0",
       is_visible: getBoolean(formData, `is_visible_${id}`),
-      note: getOptionalString(formData, `note_${id}`)
+      note: getOptionalString(formData, `note_${id}`),
+      visible_fields: getVisibleFields(formData, id)
     }))
   });
 }

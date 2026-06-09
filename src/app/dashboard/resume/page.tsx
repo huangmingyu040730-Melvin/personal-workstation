@@ -5,6 +5,7 @@ import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } fro
 import { Badge, VisibilityBadge } from "@/components/badge";
 import { PageHeader } from "@/components/page-header";
 import { getResumeItemTypeLabel, resumeItemTypes } from "@/lib/content-options";
+import type { ResumeItemType } from "@/lib/content-types";
 import { formatRelative } from "@/lib/format";
 import { getResumeItems, getResumeStats } from "@/lib/queries/resume";
 
@@ -13,7 +14,8 @@ export default async function ResumePage({ searchParams }: { searchParams: Promi
   const itemType = params.item_type ?? "all";
   const visibility = params.visibility ?? "all";
   const q = params.q ?? "";
-  const [items, stats] = await Promise.all([getResumeItems({ itemType, visibility, q }), getResumeStats()]);
+  const [items, stats, allItems] = await Promise.all([getResumeItems({ itemType, visibility, q }), getResumeStats(), getResumeItems({ visibility: "all" })]);
+  const sectionCards = buildSectionCards(allItems);
 
   return (
     <AppShell>
@@ -50,6 +52,30 @@ export default async function ResumePage({ searchParams }: { searchParams: Promi
           <ResumeMetric label="实习 / 工作" value={stats.experience} icon={<Sparkles size={20} />} />
           <ResumeMetric label="技能 / 证书 / 奖项" value={stats.skillCertificationAward} icon={<Award size={20} />} />
         </div>
+
+        <AdminSection title="按简历区块管理" description="先按简历版式维护素材：个人信息、教育、实习、项目、研究、技能和补充经历分开管理。">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {sectionCards.map((section) => (
+              <div key={section.type} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-soft">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">{section.label}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{section.description}</p>
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">{section.count}</span>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href={`/dashboard/resume?item_type=${section.type}`} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-700">
+                    查看
+                  </Link>
+                  <Link href={`/dashboard/resume/new?item_type=${section.type}`} className="rounded-full bg-navy-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-800">
+                    新建
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </AdminSection>
 
         <AdminSection title="筛选素材" description="按素材类型、权限或关键词快速定位可复用的履历条目。">
           <form className="grid gap-3 lg:grid-cols-[1fr_180px_160px_auto]">
@@ -121,6 +147,24 @@ export default async function ResumePage({ searchParams }: { searchParams: Promi
       </AdminPageSurface>
     </AppShell>
   );
+}
+
+function buildSectionCards(items: Array<{ item_type: ResumeItemType }>) {
+  const cards: Array<{ type: ResumeItemType; label: string; description: string }> = [
+    { type: "basic", label: "个人信息", description: "照片、电话、邮箱、性别、年龄等简历顶部信息。" },
+    { type: "education", label: "教育经历", description: "学校、专业、学位、核心课程和荣誉。" },
+    { type: "experience", label: "实习经历", description: "公司、岗位、职责和成果。" },
+    { type: "other", label: "在校经历", description: "学生组织、社团和其他补充经历。" },
+    { type: "project", label: "项目经历", description: "投研、量化、产品和工作流项目。" },
+    { type: "research", label: "研究经历", description: "研究主题、方法与阶段性结论。" },
+    { type: "skill", label: "相关技能", description: "技能分类、语言能力和工具栈。" },
+    { type: "certification", label: "证书奖项", description: "证书、荣誉和奖项记录。" }
+  ];
+
+  return cards.map((card) => ({
+    ...card,
+    count: items.filter((item) => (card.type === "certification" ? ["certification", "award"].includes(item.item_type) : item.item_type === card.type)).length
+  }));
 }
 
 function ResumeMetric({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {

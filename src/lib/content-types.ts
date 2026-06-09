@@ -169,6 +169,7 @@ export type ResumeItemRecord = {
   bullets: string[];
   skills: string[];
   tags: string[];
+  details: Record<string, unknown>;
   sort_order: number;
   visibility: "public" | "private";
   is_featured: boolean;
@@ -191,6 +192,9 @@ export type ResumeVersionRecord = {
   is_active: boolean;
   is_featured: boolean;
   notes: string | null;
+  profile_fields: Record<string, unknown>;
+  section_order: string[];
+  template_options: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 };
@@ -203,6 +207,7 @@ export type ResumeVersionItemRecord = {
   sort_order: number;
   is_visible: boolean;
   note: string | null;
+  visible_fields: Record<string, unknown>;
   created_at: string;
   resume_items?: ResumeItemRecord | null;
 };

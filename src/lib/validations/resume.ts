@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { optionalText, textArraySchema } from "./common";
 
+const jsonRecordSchema = z.record(z.string(), z.unknown()).default({});
+
 const optionalUuid = z.preprocess(
   (value) => {
     if (value === null || value === undefined) {
@@ -49,6 +51,7 @@ export const resumeItemSchema = z
     bullets: textArraySchema,
     skills: textArraySchema,
     tags: textArraySchema,
+    details: jsonRecordSchema,
     sort_order: z.coerce.number().int("排序值必须是整数。").min(0, "排序值不能小于 0。").max(9999, "排序值不能超过 9999。"),
     visibility: z.enum(["private", "public"], { message: "请选择有效的素材权限。" }),
     is_featured: z.boolean(),
@@ -75,7 +78,8 @@ export const resumeVersionItemSchema = z.object({
   }),
   sort_order: z.coerce.number().int("素材排序值必须是整数。").min(0, "素材排序值不能小于 0。").max(9999, "素材排序值不能超过 9999。"),
   is_visible: z.boolean(),
-  note: optionalText(500)
+  note: optionalText(500),
+  visible_fields: z.record(z.string(), z.boolean()).default({})
 });
 
 export const resumeVersionSchema = z.object({
@@ -88,6 +92,9 @@ export const resumeVersionSchema = z.object({
   is_active: z.boolean(),
   is_featured: z.boolean(),
   notes: optionalText(1200),
+  profile_fields: z.record(z.string(), z.boolean()).default({}),
+  section_order: z.array(z.string()).default(["education", "experience", "campus", "projects", "research", "skills", "certifications", "awards", "other"]),
+  template_options: jsonRecordSchema,
   items: z.array(resumeVersionItemSchema).default([])
 });
 

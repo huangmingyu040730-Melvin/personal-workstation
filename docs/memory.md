@@ -24,6 +24,7 @@
 - Phase 2J-B / 2J-C：Calendar CRUD 与月视图。
 - Phase 2K-A：Resume 履历素材库基础数据模型与后台管理入口。
 - Phase 2K-B：Resume 简历版本组合与后台预览。
+- Phase 2K-C：Resume 分区式素材管理、A4 中文模板化预览与浏览器打印 PDF。
 
 当前网站包括：
 
@@ -62,6 +63,7 @@
 - Phase 2F / 2G 只优化公开站点运营体验、SEO 和 UI，不扩展权限系统。
 - Phase 2K-A 采用统一 `resume_items` 表 + `item_type` 区分素材类型，不为教育、经历、证书等一开始拆多张表。
 - Phase 2K-B 采用 `resume_versions` + `resume_version_items` 保存版本和素材选择关系，不在本阶段生成 PDF / Word，也不创建公开简历页面。
+- Phase 2K-C 在统一表结构上增加 JSON 字段承载简历模板细节：`resume_items.details` 保存教育、实习、个人信息、技能等结构化字段，`resume_versions.profile_fields` 控制顶部个人字段，`resume_version_items.visible_fields` 控制单条素材进入预览的字段。
 
 ## Known Issues
 
@@ -121,10 +123,14 @@ Phase 2K-B 合并后需执行：
 
 - `0010_resume_versions.sql`
 
+Phase 2K-C 本轮 PR 合并后需执行：
+
+- `0011_resume_template_fields.sql`
+
 规则：
 
 - 已执行 migration 不应修改或重跑。
-- 执行 0010 后，后续数据库变更应新增 `0011_*`。
+- 执行 0011 后，后续数据库变更应新增 `0012_*`。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Next Steps
@@ -132,10 +138,10 @@ Phase 2K-B 合并后需执行：
 建议顺序：
 
 1. Phase 2I：Viewer 登录与 restricted 访问专项修复。
-2. Phase 2K-C：PDF / Word 导出。
-3. Phase 2K-D：AI JD 优化。
-5. Phase 2K-E：自动化与市场简报。
-6. Phase 2L：Notion / Google Calendar / AI 辅助研究。
+2. Phase 2K-C：A4 中文模板化预览与浏览器打印 PDF。
+3. Phase 2K-D：AI JD 优化与更复杂模板。
+4. Phase 2K-E：自动化与市场简报。
+5. Phase 2L：Notion / Google Calendar / AI 辅助研究。
 
 ## Stale Or Superseded Notes
 
