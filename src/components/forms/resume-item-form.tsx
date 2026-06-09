@@ -185,6 +185,9 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
         <div className="mt-5">
           <DetailTextarea label="使用工具 / 方法" name="tools" details={details} hint="例如 Python、Wind、Excel、SQL、因子分析。" />
         </div>
+        <div className="mt-5">
+          <DetailTextarea label="成果 / 业绩" name="achievements" details={details} />
+        </div>
       </AdminFormSection>
     );
   }
@@ -204,7 +207,7 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
           <DetailTextarea label="工具" name="tools" details={details} />
           <DetailTextarea label="结论 / 产出" name="conclusion" details={details} />
           <DetailTextarea label="成果" name="results" details={details} />
-          <DetailTextarea label="关联产出" name="outputs" details={details} />
+          <DetailTextarea label="关联产出" name="related_outputs" details={details} fallback={arrayOrStringDetail(details, "outputs")} />
         </div>
       </AdminFormSection>
     );
@@ -246,6 +249,9 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
         <DetailInput label="组织名称" name="organization_name" details={details} fallback={item?.organization} />
         <DetailInput label="担任职务" name="position" details={details} fallback={item?.role_title} />
       </div>
+      <div className="mt-5">
+        <DetailTextarea label="成果 / 贡献" name="achievements" details={details} />
+      </div>
     </AdminFormSection>
   );
 }
@@ -258,10 +264,10 @@ function DetailInput({ label, name, details, fallback, placeholder }: { label: s
   );
 }
 
-function DetailTextarea({ label, name, details, hint }: { label: string; name: string; details: Record<string, string | string[]>; hint?: string }) {
+function DetailTextarea({ label, name, details, hint, fallback }: { label: string; name: string; details: Record<string, string | string[]>; hint?: string; fallback?: string }) {
   return (
     <Field label={label} hint={hint}>
-      <Textarea name={`detail_${name}`} defaultValue={arrayOrStringDetail(details, name)} />
+      <Textarea name={`detail_${name}`} defaultValue={arrayOrStringDetail(details, name) || fallback || ""} />
     </Field>
   );
 }

@@ -47,12 +47,14 @@ const detailTextKeys = [
   "level",
   "results",
   "outputs",
+  "achievements",
+  "related_outputs",
   "description"
 ];
 
 const detailArrayKeys = ["core_courses", "honors", "tools", "skill_items"];
 
-const profileFieldKeys = ["show_photo", "show_gender", "show_age", "show_phone", "show_email", "show_location", "show_headline", "show_website"];
+const profileFieldKeys = ["show_photo", "show_name", "show_gender", "show_age", "show_phone", "show_email", "show_location", "show_headline", "show_website", "show_social_links"];
 
 const visibleFieldKeys = [
   "show_date",
@@ -83,6 +85,7 @@ const visibleFieldKeys = [
   "show_department",
   "show_position",
   "show_results",
+  "show_achievements",
   "show_project_name",
   "show_project_role",
   "show_background",
@@ -91,6 +94,7 @@ const visibleFieldKeys = [
   "show_research_role",
   "show_conclusion",
   "show_outputs",
+  "show_related_outputs",
   "show_skill_category",
   "show_skill_items",
   "show_proficiency",

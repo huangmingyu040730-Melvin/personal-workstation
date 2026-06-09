@@ -8,8 +8,8 @@ import { PageHeader } from "@/components/page-header";
 import { ResumePrintButton } from "@/components/resume-print-button";
 import type { ProfileRecord, ResumeItemRecord, ResumeVersionItemRecord } from "@/lib/content-types";
 import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
-import { getResumeVersionWithItems } from "@/lib/queries/resume";
-import { arrayDetail, detailRecord, formatResumeDateRange, stringDetail } from "@/lib/resume-display";
+import { getResumeItems, getResumeVersionWithItems } from "@/lib/queries/resume";
+import { arrayDetail, detailRecord, formatResumeDateRange, getResumeProfileData, stringDetail } from "@/lib/resume-display";
 import { cn } from "@/lib/utils";
 
 type ResumePrintSection = "education" | "experience" | "campus" | "projects" | "research" | "skills" | "certifications" | "awards" | "other";
@@ -29,7 +29,11 @@ const printSectionMeta: Record<ResumePrintSection, { label: string; icon: ReactN
 
 export default async function ResumeVersionPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [version, publicProfile] = await Promise.all([getResumeVersionWithItems(id), getPublicProfile()]);
+  const [version, publicProfile, basicItems] = await Promise.all([
+    getResumeVersionWithItems(id),
+    getPublicProfile(),
+    getResumeItems({ itemType: "basic", visibility: "all" })
+  ]);
 
   if (!version) {
     notFound();
@@ -37,10 +41,13 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
 
   const profile = publicProfile ?? getProfileFallback();
   const visibleItems = version.resume_version_items.filter((item) => item.is_visible && item.resume_items);
-  const basicItem = visibleItems.find((item) => item.resume_items?.item_type === "basic")?.resume_items ?? null;
-  const profileFields = normalizeBooleanRecord(version.profile_fields);
+  const bodyItems = visibleItems.filter((item) => item.resume_items?.item_type !== "basic");
+  const selectedBasicItem = visibleItems.find((item) => item.resume_items?.item_type === "basic")?.resume_items ?? null;
+  const latestBasicItem = [...basicItems].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0] ?? null;
+  const basicItem = selectedBasicItem ?? latestBasicItem;
+  const profileFields = normalizeProfileFields(version.profile_fields);
   const sectionOrder = normalizeSectionOrder(version.section_order);
-  const groupedItems = groupVersionItems(visibleItems.filter((item) => item.resume_items?.item_type !== "basic"));
+  const groupedItems = groupVersionItems(bodyItems);
 
   return (
     <AppShell>
@@ -72,8 +79,7 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
 
         <div className="resume-paper-wrap">
           <article className="resume-paper">
-            <ResumeHeader profile={profile} basicItem={basicItem} profileFields={profileFields} />
-            {version.summary && profileFields.show_headline ? <p className="resume-version-summary">{version.summary}</p> : null}
+            <ResumeHeader profile={profile} basicItem={basicItem} profileFields={profileFields} nameFallback={version.title} />
 
             {sectionOrder.map((sectionKey) => {
               const items = groupedItems.get(sectionKey) ?? [];
@@ -106,15 +112,15 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
                         return <CredentialResumeItem key={versionItem.id} versionItem={versionItem} item={item} sectionKey={sectionKey} />;
                       }
 
-                      return <ExperienceResumeItem key={versionItem.id} versionItem={versionItem} item={item} />;
+                      return <ExperienceResumeItem key={versionItem.id} versionItem={versionItem} item={item} sectionKey={sectionKey} />;
                     })}
                   </div>
                 </section>
               );
             })}
 
-            {visibleItems.length === 0 ? (
-              <div className="resume-empty-print-state">当前版本没有展示中的素材。请返回编辑页选择素材并打开展示开关。</div>
+            {bodyItems.length === 0 ? (
+              <div className="resume-empty-print-state">当前版本没有展示中的正文素材。请返回编辑页选择教育、实习、项目、研究或技能素材。</div>
             ) : null}
           </article>
         </div>
@@ -123,27 +129,25 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
   );
 }
 
-function ResumeHeader({ profile, basicItem, profileFields }: { profile: ProfileRecord; basicItem: ResumeItemRecord | null; profileFields: Record<string, boolean> }) {
-  const details = detailRecord(basicItem);
-  const displayName = stringDetail(details, "name") || basicItem?.title || profile.display_name;
-  const photoUrl = stringDetail(details, "photo_url") || null;
-  const infoItems = buildResumeContactItems(profile, details, profileFields);
+function ResumeHeader({ profile, basicItem, profileFields, nameFallback }: { profile: ProfileRecord; basicItem: ResumeItemRecord | null; profileFields: Record<string, boolean>; nameFallback: string }) {
+  const data = getResumeProfileData({ profile, basicItem, profileFields, nameFallback });
+  const infoItems = buildResumeContactItems(data);
 
   return (
     <header className="resume-print-header">
-      <div className="resume-photo-box">
-        {photoUrl && profileFields.show_photo ? (
+      {profileFields.show_photo ? (
+        <div className="resume-photo-box">
+          {data.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photoUrl} alt={`${displayName} 简历照片`} className="h-full w-full object-cover" />
-        ) : (
-          <span>照片</span>
-        )}
-      </div>
+            <img src={data.photoUrl} alt={`${data.name || "候选人"} 简历照片`} className="h-full w-full object-cover" />
+          ) : (
+            <span>照片</span>
+          )}
+        </div>
+      ) : null}
       <div className="resume-header-main">
-        <h1>{displayName}</h1>
-        {profileFields.show_headline && (stringDetail(details, "direction") || profile.headline || profile.role_title) ? (
-          <p className="resume-headline">{stringDetail(details, "direction") || profile.headline || profile.role_title}</p>
-        ) : null}
+        {data.name ? <h1>{data.name}</h1> : null}
+        {data.headline ? <p className="resume-headline">{data.headline}</p> : null}
         {infoItems.length > 0 ? (
           <div className="resume-info-grid">
             {infoItems.map((item) => (
@@ -177,9 +181,9 @@ function EducationResumeItem({ versionItem, item }: { versionItem: ResumeVersion
     <article className="resume-entry">
       <div className="resume-entry-line">
         {visible.show_date ? <span className="resume-entry-date">{formatResumeDateRange(item)}</span> : <span />}
-        {visible.show_organization ? <span className="resume-entry-org">{school}</span> : null}
+        {visible.show_school ? <span className="resume-entry-org">{school}</span> : null}
       </div>
-      {visible.show_role_title && degreeLine ? <div className="resume-entry-role">{degreeLine}</div> : null}
+      {degreeLine ? <div className="resume-entry-role">{degreeLine}</div> : null}
       {visible.show_summary && item.summary ? <p className="resume-entry-summary">{item.summary}</p> : null}
       {visible.show_core_courses && coreCourses.length > 0 ? <p className="resume-detail-line"><strong>核心课程：</strong>{coreCourses.join("、")}</p> : null}
       {visible.show_honors && honors.length > 0 ? <p className="resume-detail-line"><strong>荣誉：</strong>{honors.join("、")}</p> : null}
@@ -188,36 +192,26 @@ function EducationResumeItem({ versionItem, item }: { versionItem: ResumeVersion
   );
 }
 
-function ExperienceResumeItem({ versionItem, item }: { versionItem: ResumeVersionItemRecord; item: ResumeItemRecord }) {
+function ExperienceResumeItem({ versionItem, item, sectionKey }: { versionItem: ResumeVersionItemRecord; item: ResumeItemRecord; sectionKey: ResumePrintSection }) {
   const details = detailRecord(item);
   const visible = visibleRecord(versionItem);
-  const organization = stringDetail(details, "company") || stringDetail(details, "organization_name") || stringDetail(details, "project_name") || stringDetail(details, "research_topic") || stringDetail(details, "certificate_name") || stringDetail(details, "award_name") || item.organization || item.title;
-  const role = [
-    stringDetail(details, "position") || stringDetail(details, "project_role") || stringDetail(details, "research_role") || item.role_title || item.title,
-    stringDetail(details, "department"),
-    stringDetail(details, "business_area")
-  ].filter(Boolean).join(" ｜ ");
-  const methodLine = [
-    visible.show_background ? stringDetail(details, "background") : null,
-    visible.show_methods ? stringDetail(details, "methods") : null,
-    visible.show_conclusion ? stringDetail(details, "conclusion") : null,
-    visible.show_bullets ? stringDetail(details, "results") : null,
-    visible.show_bullets ? stringDetail(details, "outputs") : null
-  ].filter(Boolean);
+  const organization = getEntryOrganization(item, details, visible, sectionKey);
+  const role = getEntryRole(item, details, visible, sectionKey);
+  const detailLines = getEntryDetailLines(item, details, visible, sectionKey);
 
   return (
     <article className="resume-entry">
       <div className="resume-entry-line">
         {visible.show_date ? <span className="resume-entry-date">{formatResumeDateRange(item)}</span> : <span />}
-        {visible.show_organization ? <span className="resume-entry-org">{organization}</span> : null}
+        {organization ? <span className="resume-entry-org">{organization}</span> : null}
       </div>
-      {visible.show_role_title && role ? <div className="resume-entry-role">{[role, visible.show_location ? item.location : null].filter(Boolean).join(" ｜ ")}</div> : null}
+      {role ? <div className="resume-entry-role">{[role, visible.show_location ? item.location : null].filter(Boolean).join(" ｜ ")}</div> : null}
       {visible.show_summary && item.summary ? <p className="resume-entry-summary">{item.summary}</p> : null}
-      {methodLine.map((line) => (
+      {detailLines.map((line) => (
         <p key={line} className="resume-detail-line">{line}</p>
       ))}
       {visible.show_bullets ? <ResumeBullets item={item} /> : null}
-      {visible.show_skills ? <ResumeTokens item={item} /> : null}
+      {visible.show_skills || visible.show_tools ? <ResumeTokens item={item} /> : null}
     </article>
   );
 }
@@ -227,20 +221,21 @@ function SkillResumeItem({ versionItem, item }: { versionItem: ResumeVersionItem
   const visible = visibleRecord(versionItem);
   const title = stringDetail(details, "skill_category") || item.title;
   const skillItems = arrayDetail(details, "skill_items");
+  const tools = arrayDetail(details, "tools");
   const detail = [
     visible.show_summary ? item.summary : null,
-    visible.show_bullets && item.bullets.length > 0 ? item.bullets.join("；") : null,
-    visible.show_skills ? stringDetail(details, "language_level") : null,
-    visible.show_skills ? stringDetail(details, "proficiency") : null,
-    visible.show_skills && skillItems.length > 0 ? skillItems.join("、") : null,
-    visible.show_skills && item.skills.length > 0 ? item.skills.join("、") : null
+    visible.show_language_level ? stringDetail(details, "language_level") : null,
+    visible.show_proficiency ? stringDetail(details, "proficiency") : null,
+    visible.show_skill_items && skillItems.length > 0 ? skillItems.join("、") : null,
+    visible.show_skill_items && item.skills.length > 0 ? item.skills.join("、") : null,
+    visible.show_tools && tools.length > 0 ? tools.join("、") : null
   ]
     .filter(Boolean)
     .join("；");
 
   return (
     <article className="resume-skill-entry">
-      <span className="resume-skill-title">{title}</span>
+      {visible.show_skill_category ? <span className="resume-skill-title">{title}</span> : null}
       {detail ? <span className="resume-skill-detail">{detail}</span> : null}
     </article>
   );
@@ -251,20 +246,20 @@ function CredentialResumeItem({ versionItem, item, sectionKey }: { versionItem: 
   const visible = visibleRecord(versionItem);
   const isAward = sectionKey === "awards";
   const title = isAward
-    ? stringDetail(details, "award_name") || item.title
-    : stringDetail(details, "certificate_name") || item.title;
+    ? (visible.show_award_name ? stringDetail(details, "award_name") || item.title : "")
+    : (visible.show_certificate_name ? stringDetail(details, "certificate_name") || item.title : "");
   const meta = [
     visible.show_issuer ? stringDetail(details, "issuer") || item.organization : null,
     isAward && visible.show_level ? stringDetail(details, "level") : null,
     !isAward && visible.show_valid_until ? stringDetail(details, "valid_until") : null
   ].filter(Boolean).join(" ｜ ");
-  const description = visible.show_description ? stringDetail(details, "description") || item.summary : "";
+  const description = visible.show_summary ? stringDetail(details, "description") || item.summary : "";
 
   return (
     <article className="resume-entry">
       <div className="resume-entry-line">
         {visible.show_date ? <span className="resume-entry-date">{stringDetail(details, "date") || stringDetail(details, "issued_at") || formatResumeDateRange(item)}</span> : <span />}
-        <span className="resume-entry-org">{title}</span>
+        {title ? <span className="resume-entry-org">{title}</span> : null}
       </div>
       {meta ? <div className="resume-entry-role">{meta}</div> : null}
       {description ? <p className="resume-entry-summary">{description}</p> : null}
@@ -295,6 +290,62 @@ function ResumeTokens({ item }: { item: ResumeItemRecord }) {
   }
 
   return <p className="resume-token-line">工具 / 方法：{tokens.join("、")}</p>;
+}
+
+function getEntryOrganization(item: ResumeItemRecord, details: Record<string, unknown>, visible: ReturnType<typeof visibleRecord>, sectionKey: ResumePrintSection) {
+  if (sectionKey === "experience") {
+    return visible.show_company ? stringDetail(details, "company") || item.organization || item.title : "";
+  }
+  if (sectionKey === "projects") {
+    return visible.show_project_name ? stringDetail(details, "project_name") || item.title : "";
+  }
+  if (sectionKey === "research") {
+    return visible.show_research_topic ? stringDetail(details, "research_topic") || stringDetail(details, "topic") || item.title : "";
+  }
+  return visible.show_organization ? stringDetail(details, "organization_name") || item.organization || item.title : "";
+}
+
+function getEntryRole(item: ResumeItemRecord, details: Record<string, unknown>, visible: ReturnType<typeof visibleRecord>, sectionKey: ResumePrintSection) {
+  const roleParts =
+    sectionKey === "experience"
+      ? [
+          visible.show_position ? stringDetail(details, "position") || item.role_title || item.title : null,
+          visible.show_department ? stringDetail(details, "department") : null
+        ]
+      : sectionKey === "projects"
+        ? [visible.show_project_role ? stringDetail(details, "project_role") || item.role_title : null]
+        : sectionKey === "research"
+          ? [visible.show_research_role ? stringDetail(details, "research_role") || item.role_title : null]
+          : [visible.show_position ? stringDetail(details, "position") || item.role_title || item.title : null];
+
+  return roleParts.filter(Boolean).join(" ｜ ");
+}
+
+function getEntryDetailLines(item: ResumeItemRecord, details: Record<string, unknown>, visible: ReturnType<typeof visibleRecord>, sectionKey: ResumePrintSection) {
+  if (sectionKey === "experience" || sectionKey === "campus" || sectionKey === "other") {
+    return [
+      visible.show_achievements ? stringDetail(details, "achievements") || stringDetail(details, "results") : null
+    ].filter(Boolean);
+  }
+
+  if (sectionKey === "projects") {
+    return [
+      visible.show_background ? stringDetail(details, "background") : null,
+      visible.show_methods ? stringDetail(details, "methods") : null,
+      visible.show_results ? stringDetail(details, "results") || stringDetail(details, "achievements") : null
+    ].filter(Boolean);
+  }
+
+  if (sectionKey === "research") {
+    return [
+      visible.show_methods ? stringDetail(details, "methods") : null,
+      visible.show_conclusion ? stringDetail(details, "conclusion") : null,
+      visible.show_results ? stringDetail(details, "results") : null,
+      visible.show_related_outputs ? stringDetail(details, "related_outputs") || stringDetail(details, "outputs") : null
+    ].filter(Boolean);
+  }
+
+  return [];
 }
 
 function groupVersionItems(items: ResumeVersionItemRecord[]) {
@@ -338,16 +389,15 @@ function normalizeSectionOrder(value: unknown): ResumePrintSection[] {
   return cleaned.length > 0 ? [...cleaned, ...defaultPrintSectionOrder.filter((item) => !cleaned.includes(item))] : defaultPrintSectionOrder;
 }
 
-function buildResumeContactItems(profile: ProfileRecord, details: Record<string, unknown>, profileFields: Record<string, boolean>) {
-  const profileContact = profile.contact ?? {};
-  const profileSocial = profile.social_links ?? {};
+function buildResumeContactItems(data: ReturnType<typeof getResumeProfileData>) {
   const rows = [
-    profileFields.show_gender ? { label: "性别", value: stringDetail(details, "gender") || stringValue(profileContact.gender) || stringValue(profileContact.sex) } : null,
-    profileFields.show_age ? { label: "年龄", value: stringDetail(details, "age") || stringValue(profileContact.age) } : null,
-    profileFields.show_phone ? { label: "电话", value: stringDetail(details, "phone") || stringValue(profileContact.phone) || stringValue(profileContact.mobile) } : null,
-    profileFields.show_email ? { label: "邮箱", value: stringDetail(details, "email") || stringValue(profileContact.email) } : null,
-    profileFields.show_location ? { label: "所在地", value: stringDetail(details, "location") || profile.location } : null,
-    profileFields.show_website ? { label: "链接", value: stringDetail(details, "website") || stringValue(profileSocial.website) || stringValue(profileSocial.github) } : null
+    { label: "性别", value: data.gender },
+    { label: "年龄", value: data.age },
+    { label: "电话", value: data.phone },
+    { label: "邮箱", value: data.email },
+    { label: "所在地", value: data.location },
+    { label: "链接", value: data.website },
+    { label: "社交", value: data.socialLinks }
   ];
 
   return rows.filter((row): row is { label: string; value: string } => Boolean(row?.value));
@@ -357,14 +407,28 @@ function visibleRecord(versionItem: ResumeVersionItemRecord) {
   const raw = normalizeBooleanRecord(versionItem.visible_fields);
   return {
     show_date: raw.show_date ?? true,
-    show_organization: raw.show_organization ?? raw.show_school ?? raw.show_company ?? raw.show_project_name ?? raw.show_research_topic ?? true,
-    show_role_title: raw.show_role_title ?? raw.show_position ?? raw.show_project_role ?? raw.show_research_role ?? true,
+    show_school: raw.show_school ?? raw.show_organization ?? true,
+    show_company: raw.show_company ?? raw.show_organization ?? true,
+    show_organization: raw.show_organization ?? true,
+    show_project_name: raw.show_project_name ?? raw.show_organization ?? true,
+    show_research_topic: raw.show_research_topic ?? raw.show_organization ?? true,
+    show_position: raw.show_position ?? raw.show_role_title ?? true,
+    show_department: raw.show_department ?? true,
+    show_project_role: raw.show_project_role ?? raw.show_role_title ?? true,
+    show_research_role: raw.show_research_role ?? raw.show_role_title ?? true,
     show_location: raw.show_location ?? true,
     show_summary: raw.show_summary ?? true,
-    show_bullets: raw.show_bullets ?? raw.show_results ?? true,
-    show_skills: raw.show_skills ?? raw.show_skill_items ?? raw.show_tools ?? true,
+    show_bullets: raw.show_bullets ?? true,
+    show_results: raw.show_results ?? true,
+    show_achievements: raw.show_achievements ?? raw.show_results ?? true,
+    show_skills: raw.show_skills ?? true,
+    show_tools: raw.show_tools ?? raw.show_skills ?? true,
     show_tags: raw.show_tags ?? false,
     show_core_courses: raw.show_core_courses ?? true,
+    show_skill_category: raw.show_skill_category ?? true,
+    show_skill_items: raw.show_skill_items ?? raw.show_skills ?? true,
+    show_proficiency: raw.show_proficiency ?? false,
+    show_language_level: raw.show_language_level ?? false,
     show_major: raw.show_major ?? true,
     show_degree: raw.show_degree ?? true,
     show_college: raw.show_college ?? true,
@@ -378,7 +442,8 @@ function visibleRecord(versionItem: ResumeVersionItemRecord) {
     show_issuer: raw.show_issuer ?? true,
     show_level: raw.show_level ?? true,
     show_valid_until: raw.show_valid_until ?? true,
-    show_description: raw.show_description ?? true
+    show_description: raw.show_description ?? true,
+    show_related_outputs: raw.show_related_outputs ?? raw.show_outputs ?? false
   };
 }
 
@@ -390,6 +455,18 @@ function normalizeBooleanRecord(value: unknown) {
   return value as Record<string, boolean>;
 }
 
-function stringValue(value: unknown) {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : "";
+function normalizeProfileFields(value: unknown) {
+  const raw = normalizeBooleanRecord(value);
+  return {
+    show_photo: raw.show_photo ?? true,
+    show_name: raw.show_name ?? true,
+    show_gender: raw.show_gender ?? true,
+    show_age: raw.show_age ?? true,
+    show_phone: raw.show_phone ?? true,
+    show_email: raw.show_email ?? true,
+    show_location: raw.show_location ?? false,
+    show_headline: raw.show_headline ?? false,
+    show_website: raw.show_website ?? false,
+    show_social_links: raw.show_social_links ?? false
+  };
 }

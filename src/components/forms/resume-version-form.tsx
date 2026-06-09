@@ -18,7 +18,6 @@ type VersionSection = {
 };
 
 const versionSections: VersionSection[] = [
-  { key: "summary", label: "个人信息", description: "照片、电话、邮箱、性别、年龄等简历顶部信息。", itemTypes: ["basic"] },
   { key: "education", label: "教育经历", description: "学校、专业、学位、核心课程和荣誉。", itemTypes: ["education"] },
   { key: "experience", label: "实习经历", description: "公司、岗位、职责、方法和成果。", itemTypes: ["experience"] },
   { key: "other", label: "在校经历", description: "学生组织、社团、志愿服务或其他校园经历。", itemTypes: ["other"] },
@@ -30,6 +29,7 @@ const versionSections: VersionSection[] = [
 ];
 
 const profileFieldOptions = [
+  { key: "show_name", label: "姓名" },
   { key: "show_photo", label: "照片" },
   { key: "show_gender", label: "性别" },
   { key: "show_age", label: "年龄" },
@@ -37,7 +37,8 @@ const profileFieldOptions = [
   { key: "show_email", label: "邮箱" },
   { key: "show_location", label: "所在地" },
   { key: "show_headline", label: "一句话定位" },
-  { key: "show_website", label: "个人链接" }
+  { key: "show_website", label: "个人网站" },
+  { key: "show_social_links", label: "社交链接" }
 ];
 
 const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string; label: string; defaultChecked?: boolean }>> = {
@@ -72,8 +73,8 @@ const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string
     { key: "show_location", label: "地点" },
     { key: "show_summary", label: "摘要", defaultChecked: true },
     { key: "show_bullets", label: "工作内容", defaultChecked: true },
-    { key: "show_results", label: "成果", defaultChecked: true },
-    { key: "show_skills", label: "工具 / 技能", defaultChecked: true }
+    { key: "show_achievements", label: "成果", defaultChecked: true },
+    { key: "show_tools", label: "工具 / 技能", defaultChecked: true }
   ],
   other: [
     { key: "show_date", label: "时间", defaultChecked: true },
@@ -82,7 +83,7 @@ const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string
     { key: "show_location", label: "地点" },
     { key: "show_summary", label: "摘要", defaultChecked: true },
     { key: "show_bullets", label: "工作内容", defaultChecked: true },
-    { key: "show_results", label: "成果", defaultChecked: true }
+    { key: "show_achievements", label: "成果", defaultChecked: true }
   ],
   projects: [
     { key: "show_date", label: "时间", defaultChecked: true },
@@ -90,6 +91,7 @@ const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string
     { key: "show_project_role", label: "项目角色", defaultChecked: true },
     { key: "show_background", label: "背景", defaultChecked: true },
     { key: "show_methods", label: "方法 / 工具", defaultChecked: true },
+    { key: "show_bullets", label: "项目内容", defaultChecked: true },
     { key: "show_results", label: "成果", defaultChecked: true },
     { key: "show_skills", label: "技能", defaultChecked: true }
   ],
@@ -99,8 +101,9 @@ const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string
     { key: "show_research_role", label: "研究角色", defaultChecked: true },
     { key: "show_methods", label: "方法", defaultChecked: true },
     { key: "show_conclusion", label: "结论", defaultChecked: true },
+    { key: "show_bullets", label: "研究内容", defaultChecked: true },
     { key: "show_results", label: "成果", defaultChecked: true },
-    { key: "show_outputs", label: "关联产出" },
+    { key: "show_related_outputs", label: "关联产出" },
     { key: "show_skills", label: "技能", defaultChecked: true }
   ],
   skills: [
@@ -116,14 +119,14 @@ const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string
     { key: "show_issuer", label: "颁发机构", defaultChecked: true },
     { key: "show_date", label: "取得时间", defaultChecked: true },
     { key: "show_valid_until", label: "有效期" },
-    { key: "show_description", label: "说明", defaultChecked: true }
+    { key: "show_summary", label: "说明", defaultChecked: true }
   ],
   awards: [
     { key: "show_award_name", label: "奖项名称", defaultChecked: true },
     { key: "show_issuer", label: "授予机构", defaultChecked: true },
     { key: "show_date", label: "时间", defaultChecked: true },
     { key: "show_level", label: "级别" },
-    { key: "show_description", label: "说明", defaultChecked: true }
+    { key: "show_summary", label: "说明", defaultChecked: true }
   ]
 };
 
@@ -142,6 +145,11 @@ export function ResumeVersionForm({
 }) {
   const selectedByItemId = new Map(versionItems.map((item) => [item.resume_item_id, item]));
   const profileFields = normalizeBooleanRecord(version?.profile_fields);
+  const basicItems = resumeItems
+    .filter((item) => item.item_type === "basic")
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+  const selectableResumeItems = resumeItems.filter((item) => item.item_type !== "basic");
+  const bodySectionOptions = resumeSectionKeys.filter((section) => section.value !== "summary");
 
   return (
     <form action={action} className="space-y-5">
@@ -201,19 +209,26 @@ export function ResumeVersionForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="顶部个人信息" description="选择哪些个人信息进入简历顶部。未勾选的字段不会出现在打印预览中。">
+      <AdminFormSection title="顶部个人信息" description="控制简历顶部展示哪些个人字段。具体内容来自 Profile 或简历素材库中的「个人信息」素材。">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {profileFieldOptions.map((option) => (
-            <Checkbox key={option.key} name={option.key} label={option.label} defaultChecked={profileFields[option.key] ?? ["show_photo", "show_gender", "show_age", "show_phone", "show_email"].includes(option.key)} />
+            <Checkbox key={option.key} name={option.key} label={option.label} defaultChecked={profileFields[option.key] ?? ["show_photo", "show_name", "show_gender", "show_age", "show_phone", "show_email"].includes(option.key)} />
           ))}
+        </div>
+        <div className="mt-4 rounded-2xl bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
+          {basicItems.length > 0 ? (
+            <span>当前会优先使用最近更新的「个人信息」素材：{basicItems[0]?.title}；若字段为空，则回退到 Profile。</span>
+          ) : (
+            <span>如需展示电话、年龄、性别或照片，请先在简历素材库中新增「个人信息」素材，或在 Profile 中维护公开基础信息。</span>
+          )}
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="按区块选择素材" description="素材按简历区块管理。每条素材可控制哪些字段进入当前版本，避免打印稿被无关字段挤满。">
-        {resumeItems.length > 0 ? (
+      <AdminFormSection title="按区块选择素材" description="选择进入正文区块的教育、实习、项目、研究、技能、证书和奖项素材。个人信息不在这里重复选择。">
+        {selectableResumeItems.length > 0 ? (
           <div className="space-y-5">
             {versionSections.map((section) => {
-              const sectionItems = resumeItems.filter((item) => section.itemTypes.includes(item.item_type));
+              const sectionItems = selectableResumeItems.filter((item) => section.itemTypes.includes(item.item_type));
               if (sectionItems.length === 0) {
                 return null;
               }
@@ -231,7 +246,7 @@ export function ResumeVersionForm({
                     {sectionItems.map((item) => {
                       const selected = selectedByItemId.get(item.id);
                       const visibleFields = normalizeBooleanRecord(selected?.visible_fields);
-                      const currentSectionKey = selected?.section_key ?? section.key;
+                      const currentSectionKey = selected?.section_key && selected.section_key !== "summary" ? selected.section_key : section.key;
                       const display = getResumeItemDisplay(item, currentSectionKey);
                       const fieldOptions = visibleFieldOptionsBySection[currentSectionKey] ?? visibleFieldOptionsBySection[section.key];
 
@@ -255,7 +270,7 @@ export function ResumeVersionForm({
                             </label>
                             <div className="grid gap-3 sm:grid-cols-[150px_100px_120px]">
                               <Select name={`section_key_${item.id}`} defaultValue={currentSectionKey}>
-                                {resumeSectionKeys.map((sectionOption) => (
+                                {bodySectionOptions.map((sectionOption) => (
                                   <option key={sectionOption.value} value={sectionOption.value}>
                                     {sectionOption.label}
                                   </option>

@@ -1,4 +1,4 @@
-import type { ResumeItemRecord, ResumeSectionKey } from "@/lib/content-types";
+import type { ProfileRecord, ResumeItemRecord, ResumeSectionKey } from "@/lib/content-types";
 
 export type ResumeItemDisplay = {
   title: string;
@@ -6,6 +6,48 @@ export type ResumeItemDisplay = {
   meta?: string;
   description?: string;
 };
+
+export type ResumeProfileData = {
+  name: string;
+  photoUrl: string;
+  gender: string;
+  age: string;
+  phone: string;
+  email: string;
+  location: string;
+  website: string;
+  socialLinks: string;
+  headline: string;
+};
+
+export function getResumeProfileData({
+  profile,
+  basicItem,
+  profileFields,
+  nameFallback = "简历"
+}: {
+  profile: ProfileRecord;
+  basicItem: ResumeItemRecord | null;
+  profileFields: Record<string, boolean>;
+  nameFallback?: string;
+}): ResumeProfileData {
+  const details = detailRecord(basicItem);
+  const contact = profile.contact ?? {};
+  const social = profile.social_links ?? {};
+
+  return {
+    name: profileFields.show_name === false ? "" : stringDetail(details, "name") || profile.display_name || nameFallback,
+    photoUrl: profileFields.show_photo ? stringDetail(details, "photo_url") || profile.avatar_url || "" : "",
+    gender: profileFields.show_gender ? stringDetail(details, "gender") || stringValue(contact.gender) || stringValue(contact.sex) : "",
+    age: profileFields.show_age ? stringDetail(details, "age") || stringValue(contact.age) : "",
+    phone: profileFields.show_phone ? stringDetail(details, "phone") || stringValue(contact.phone) || stringValue(contact.mobile) : "",
+    email: profileFields.show_email ? stringDetail(details, "email") || profile.email || stringValue(contact.email) : "",
+    location: profileFields.show_location ? stringDetail(details, "location") || profile.location || stringValue(contact.location) : "",
+    website: profileFields.show_website ? stringDetail(details, "website") || stringValue(social.website) || stringValue(social.github) : "",
+    socialLinks: profileFields.show_social_links ? stringDetail(details, "social_links") || stringValue(social.linkedin) || stringValue(social.x) || stringValue(social.wechat) : "",
+    headline: profileFields.show_headline ? stringDetail(details, "direction") || profile.headline || profile.role_title || "" : ""
+  };
+}
 
 export function getResumeItemDisplay(item: ResumeItemRecord, sectionKey?: ResumeSectionKey | null): ResumeItemDisplay {
   const details = detailRecord(item);
