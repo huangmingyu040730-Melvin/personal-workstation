@@ -11,6 +11,9 @@ export type AccessGrantStatus = "active" | "revoked";
 export type AccessGrantContentType = "project" | "publication" | "skill" | "knowledge";
 export type CalendarEventType = "general" | "meeting" | "research" | "deadline" | "review" | "reminder";
 export type ResumeItemType = "basic" | "education" | "experience" | "project" | "research" | "skill" | "certification" | "award" | "language" | "other";
+export type ResumeVersionLanguage = "zh" | "en";
+export type ResumeTemplateKey = "classic" | "compact" | "research";
+export type ResumeSectionKey = "summary" | "education" | "experience" | "projects" | "research" | "skills" | "certifications" | "awards" | "other";
 
 export type ProjectRecord = {
   id: string;
@@ -175,6 +178,37 @@ export type ResumeItemRecord = {
   related_skill_id: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ResumeVersionRecord = {
+  id: string;
+  title: string;
+  target_role: string | null;
+  summary: string | null;
+  language: ResumeVersionLanguage;
+  template_key: ResumeTemplateKey;
+  visibility: "public" | "private";
+  is_active: boolean;
+  is_featured: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ResumeVersionItemRecord = {
+  id: string;
+  resume_version_id: string;
+  resume_item_id: string;
+  section_key: ResumeSectionKey;
+  sort_order: number;
+  is_visible: boolean;
+  note: string | null;
+  created_at: string;
+  resume_items?: ResumeItemRecord | null;
+};
+
+export type ResumeVersionWithItems = ResumeVersionRecord & {
+  resume_version_items: ResumeVersionItemRecord[];
 };
 
 export type AccessRequestRecord = {
