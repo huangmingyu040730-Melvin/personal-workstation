@@ -585,3 +585,27 @@
 - public 日程可被 RLS 允许公开读取，但本阶段不会进入公开列表、sitemap 或首页。
 - private 日程仍仅管理员可读。
 - 后续如接入 Google Calendar、提醒系统或公开日历展示，应另开阶段并新增 migration。
+
+## 2026-06-09 - Model Resume As A Reusable Item Library
+
+类型：decision
+
+决策：
+
+- Phase 2K-A 新增 `public.resume_items` 统一素材表。
+- 使用 `item_type` 区分 basic、education、experience、project、research、skill、certification、award、language 和 other。
+- 后台管理入口为 `/dashboard/resume`，并提供新建、详情、编辑、删除能力。
+- Resume 素材默认 `private`，本阶段不创建公开简历页面。
+
+原因：
+
+- Resume 模块应是个人履历数据库，不是单份静态简历。
+- 统一表能支持后续按岗位选择、组合和排序素材，避免早期拆多表带来过度复杂度。
+- 当前阶段只为后续一键生成简历、PDF / Word 导出和 AI JD 优化打基础。
+
+影响：
+
+- 合并后生产 Supabase 需要执行 `0009_resume_items.sql`。
+- Dashboard 可展示简历素材概览和最近更新素材。
+- 后续 Phase 2K-B 才做简历版本组合生成；Phase 2K-C 才做 PDF / Word 导出；Phase 2K-D 才做 AI JD 优化。
+- 不修改 Viewer、restricted grants、Documents、Storage、Calendar 或 Profile 主流程。

@@ -10,6 +10,7 @@ export type AccessRequestContentType = "project" | "publication" | "skill" | "kn
 export type AccessGrantStatus = "active" | "revoked";
 export type AccessGrantContentType = "project" | "publication" | "skill" | "knowledge";
 export type CalendarEventType = "general" | "meeting" | "research" | "deadline" | "review" | "reminder";
+export type ResumeItemType = "basic" | "education" | "experience" | "project" | "research" | "skill" | "certification" | "award" | "language" | "other";
 
 export type ProjectRecord = {
   id: string;
@@ -149,6 +150,31 @@ export type CalendarEventRecord = {
   publications?: Pick<PublicationRecord, "id" | "title" | "slug"> | null;
   knowledge_notes?: Pick<KnowledgeNoteRecord, "id" | "title" | "slug"> | null;
   skills?: Pick<SkillRecord, "id" | "name" | "slug"> | null;
+};
+
+export type ResumeItemRecord = {
+  id: string;
+  item_type: ResumeItemType;
+  title: string;
+  organization: string | null;
+  role_title: string | null;
+  location: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  is_current: boolean;
+  summary: string | null;
+  bullets: string[];
+  skills: string[];
+  tags: string[];
+  sort_order: number;
+  visibility: "public" | "private";
+  is_featured: boolean;
+  related_project_id: string | null;
+  related_publication_id: string | null;
+  related_knowledge_id: string | null;
+  related_skill_id: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type AccessRequestRecord = {

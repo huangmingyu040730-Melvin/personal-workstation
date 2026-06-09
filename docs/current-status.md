@@ -54,6 +54,7 @@
 - Access Grants 授权管理基础。
 - Profile 个人公开信息编辑基础。
 - Calendar 站内日程 CRUD。
+- Resume 履历素材库基础 CRUD。
 - 管理后台 UI 已优化。
 - 后台新建 / 编辑 / 上传 / 授权页已调整为更平衡的工作台布局。
 
@@ -136,19 +137,17 @@
 - `0004_access_requests.sql`
 - `0005_restricted_content_access.sql`
 - `0006_viewer_login_grant_check.sql`
-
-Phase 2J-A 合并后需要继续执行：
-
 - `0007_profile_public_fields.sql`
-
-Phase 2J-B 合并后需要继续执行：
-
 - `0008_calendar_events.sql`
+
+Phase 2K-A 合并后需要继续执行：
+
+- `0009_resume_items.sql`
 
 规则：
 
 - 已执行过的 migration 不应修改。
-- 执行 0008 后，后续数据库变更应新增 `0009_*`。
+- 执行 0009 后，后续数据库变更应新增 `0010_*`。
 - 不得重跑旧 migration。
 - 不得放宽 Storage / RLS。
 - 不得提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL 或 `service_role`。
@@ -183,7 +182,18 @@ Viewer magic link 登录仍未稳定。Phase 2E-B restricted 授权基础代码�
 - Dashboard 近期日程已接入。
 - Google Calendar 同步与提醒系统尚未实现。
 
-### Phase 2K - 自动化与市场简报
+### Phase 2K - Resume 履历素材库与简历生成
+
+目标：
+
+- Phase 2K-A：Resume 履历素材库，维护教育、实习、项目、研究、Skill、证书和奖项等结构化素材。
+- Phase 2K-B：简历版本组合生成。
+- Phase 2K-C：PDF / Word 导出。
+- Phase 2K-D：AI JD 优化。
+
+Phase 2K-A 当前新增 `resume_items` 数据模型和后台 `/dashboard/resume` 管理入口。本阶段不做 PDF / Word 导出、AI 生成简历或公开简历页面。
+
+### Phase 2K-E - 自动化与市场简报
 
 目标：
 

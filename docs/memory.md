@@ -20,6 +20,9 @@
 - Phase 2F：SEO 基础、sitemap、robots、metadata。
 - Phase 2G-A：公共页 UI 优化。
 - Phase 2G-B：管理后台 UI 优化。
+- Phase 2J-A：Profile 真实编辑。
+- Phase 2J-B / 2J-C：Calendar CRUD 与月视图。
+- Phase 2K-A：Resume 履历素材库基础数据模型与后台管理入口。
 
 当前网站包括：
 
@@ -28,6 +31,7 @@
 - 私密文件中心。
 - 访问申请与审批。
 - restricted 内容授权基础。
+- Resume 履历素材库。
 
 详细当前状态见 `docs/current-status.md`。
 
@@ -54,6 +58,7 @@
 - Documents 上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。
 - Phase 2E-B 的 restricted 基础代码保留，但 Viewer 登录问题冻结，后续单独 Hotfix。
 - Phase 2F / 2G 只优化公开站点运营体验、SEO 和 UI，不扩展权限系统。
+- Phase 2K-A 采用统一 `resume_items` 表 + `item_type` 区分素材类型，不为教育、经历、证书等一开始拆多张表。
 
 ## Known Issues
 
@@ -102,19 +107,17 @@
 - `0004_access_requests.sql`
 - `0005_restricted_content_access.sql`
 - `0006_viewer_login_grant_check.sql`
-
-Phase 2J-A 合并后需执行：
-
 - `0007_profile_public_fields.sql`
-
-Phase 2J-B 合并后需执行：
-
 - `0008_calendar_events.sql`
+
+Phase 2K-A 合并后需执行：
+
+- `0009_resume_items.sql`
 
 规则：
 
 - 已执行 migration 不应修改或重跑。
-- 执行 0008 后，后续数据库变更应新增 `0009_*`。
+- 执行 0009 后，后续数据库变更应新增 `0010_*`。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Next Steps
@@ -122,8 +125,11 @@ Phase 2J-B 合并后需执行：
 建议顺序：
 
 1. Phase 2I：Viewer 登录与 restricted 访问专项修复。
-2. Phase 2K：自动化与市场简报。
-3. Phase 2L：Notion / Google Calendar / AI 辅助研究。
+2. Phase 2K-B：Resume 简历版本组合生成。
+3. Phase 2K-C：PDF / Word 导出。
+4. Phase 2K-D：AI JD 优化。
+5. Phase 2K-E：自动化与市场简报。
+6. Phase 2L：Notion / Google Calendar / AI 辅助研究。
 
 ## Stale Or Superseded Notes
 
