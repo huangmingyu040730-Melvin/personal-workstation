@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
 import {
-  getResumeItemTypeLabel,
   resumeSectionKeys,
   resumeTemplateKeys,
   resumeVersionLanguages
 } from "@/lib/content-options";
 import type { ResumeItemRecord, ResumeSectionKey, ResumeVersionItemRecord, ResumeVersionRecord } from "@/lib/content-types";
+import { getResumeItemDisplay } from "@/lib/resume-display";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
@@ -15,19 +15,18 @@ type VersionSection = {
   label: string;
   description: string;
   itemTypes: ResumeItemRecord["item_type"][];
-  defaultVisibleFields: string[];
 };
 
 const versionSections: VersionSection[] = [
-  { key: "summary", label: "个人信息", description: "照片、电话、邮箱、性别、年龄等简历顶部信息。", itemTypes: ["basic"], defaultVisibleFields: ["show_summary"] },
-  { key: "education", label: "教育经历", description: "学校、专业、学位、核心课程和荣誉。", itemTypes: ["education"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_location", "show_summary", "show_core_courses"] },
-  { key: "experience", label: "实习经历", description: "公司、岗位、职责、方法和成果。", itemTypes: ["experience"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_location", "show_summary", "show_bullets", "show_skills"] },
-  { key: "other", label: "在校经历", description: "学生组织、社团、志愿服务或其他校园经历。", itemTypes: ["other"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_summary", "show_bullets"] },
-  { key: "projects", label: "项目经历", description: "投研、量化、AI 工作流等项目经历。", itemTypes: ["project"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_summary", "show_bullets", "show_skills"] },
-  { key: "research", label: "研究经历", description: "研究主题、框架、方法和结论。", itemTypes: ["research"], defaultVisibleFields: ["show_date", "show_organization", "show_role_title", "show_summary", "show_bullets", "show_skills"] },
-  { key: "skills", label: "相关技能", description: "技能、语言能力和 AI 工作流能力。", itemTypes: ["skill", "language"], defaultVisibleFields: ["show_summary", "show_bullets", "show_skills", "show_tags"] },
-  { key: "certifications", label: "证书", description: "证书、资格或培训记录。", itemTypes: ["certification"], defaultVisibleFields: ["show_date", "show_organization", "show_summary"] },
-  { key: "awards", label: "荣誉奖项", description: "奖项和荣誉记录。", itemTypes: ["award"], defaultVisibleFields: ["show_date", "show_organization", "show_summary"] }
+  { key: "summary", label: "个人信息", description: "照片、电话、邮箱、性别、年龄等简历顶部信息。", itemTypes: ["basic"] },
+  { key: "education", label: "教育经历", description: "学校、专业、学位、核心课程和荣誉。", itemTypes: ["education"] },
+  { key: "experience", label: "实习经历", description: "公司、岗位、职责、方法和成果。", itemTypes: ["experience"] },
+  { key: "other", label: "在校经历", description: "学生组织、社团、志愿服务或其他校园经历。", itemTypes: ["other"] },
+  { key: "projects", label: "项目经历", description: "投研、量化、AI 工作流等项目经历。", itemTypes: ["project"] },
+  { key: "research", label: "研究经历", description: "研究主题、框架、方法和结论。", itemTypes: ["research"] },
+  { key: "skills", label: "相关技能", description: "技能、语言能力和 AI 工作流能力。", itemTypes: ["skill", "language"] },
+  { key: "certifications", label: "证书", description: "证书、资格或培训记录。", itemTypes: ["certification"] },
+  { key: "awards", label: "荣誉奖项", description: "奖项和荣誉记录。", itemTypes: ["award"] }
 ];
 
 const profileFieldOptions = [
@@ -41,17 +40,92 @@ const profileFieldOptions = [
   { key: "show_website", label: "个人链接" }
 ];
 
-const visibleFieldOptions = [
-  { key: "show_date", label: "时间" },
-  { key: "show_organization", label: "机构" },
-  { key: "show_role_title", label: "角色" },
-  { key: "show_location", label: "地点" },
-  { key: "show_summary", label: "摘要" },
-  { key: "show_bullets", label: "Bullets" },
-  { key: "show_skills", label: "技能" },
-  { key: "show_tags", label: "标签" },
-  { key: "show_core_courses", label: "核心课程" }
-];
+const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string; label: string; defaultChecked?: boolean }>> = {
+  summary: [
+    { key: "show_photo", label: "照片", defaultChecked: true },
+    { key: "show_name", label: "姓名", defaultChecked: true },
+    { key: "show_gender", label: "性别", defaultChecked: true },
+    { key: "show_age", label: "年龄", defaultChecked: true },
+    { key: "show_phone", label: "电话", defaultChecked: true },
+    { key: "show_email", label: "邮箱", defaultChecked: true },
+    { key: "show_location", label: "所在地" },
+    { key: "show_website", label: "个人网站" },
+    { key: "show_social_links", label: "社交链接" },
+    { key: "show_direction", label: "求职方向" }
+  ],
+  education: [
+    { key: "show_date", label: "时间", defaultChecked: true },
+    { key: "show_school", label: "学校", defaultChecked: true },
+    { key: "show_college", label: "学院", defaultChecked: true },
+    { key: "show_major", label: "专业", defaultChecked: true },
+    { key: "show_degree", label: "学位", defaultChecked: true },
+    { key: "show_gpa", label: "GPA" },
+    { key: "show_core_courses", label: "核心课程", defaultChecked: true },
+    { key: "show_honors", label: "荣誉", defaultChecked: true },
+    { key: "show_location", label: "地点" }
+  ],
+  experience: [
+    { key: "show_date", label: "时间", defaultChecked: true },
+    { key: "show_company", label: "公司", defaultChecked: true },
+    { key: "show_department", label: "部门", defaultChecked: true },
+    { key: "show_position", label: "岗位", defaultChecked: true },
+    { key: "show_location", label: "地点" },
+    { key: "show_summary", label: "摘要", defaultChecked: true },
+    { key: "show_bullets", label: "工作内容", defaultChecked: true },
+    { key: "show_results", label: "成果", defaultChecked: true },
+    { key: "show_skills", label: "工具 / 技能", defaultChecked: true }
+  ],
+  other: [
+    { key: "show_date", label: "时间", defaultChecked: true },
+    { key: "show_organization", label: "组织", defaultChecked: true },
+    { key: "show_position", label: "职务", defaultChecked: true },
+    { key: "show_location", label: "地点" },
+    { key: "show_summary", label: "摘要", defaultChecked: true },
+    { key: "show_bullets", label: "工作内容", defaultChecked: true },
+    { key: "show_results", label: "成果", defaultChecked: true }
+  ],
+  projects: [
+    { key: "show_date", label: "时间", defaultChecked: true },
+    { key: "show_project_name", label: "项目名称", defaultChecked: true },
+    { key: "show_project_role", label: "项目角色", defaultChecked: true },
+    { key: "show_background", label: "背景", defaultChecked: true },
+    { key: "show_methods", label: "方法 / 工具", defaultChecked: true },
+    { key: "show_results", label: "成果", defaultChecked: true },
+    { key: "show_skills", label: "技能", defaultChecked: true }
+  ],
+  research: [
+    { key: "show_date", label: "时间", defaultChecked: true },
+    { key: "show_research_topic", label: "研究主题", defaultChecked: true },
+    { key: "show_research_role", label: "研究角色", defaultChecked: true },
+    { key: "show_methods", label: "方法", defaultChecked: true },
+    { key: "show_conclusion", label: "结论", defaultChecked: true },
+    { key: "show_results", label: "成果", defaultChecked: true },
+    { key: "show_outputs", label: "关联产出" },
+    { key: "show_skills", label: "技能", defaultChecked: true }
+  ],
+  skills: [
+    { key: "show_skill_category", label: "技能类别", defaultChecked: true },
+    { key: "show_skill_items", label: "技能条目", defaultChecked: true },
+    { key: "show_proficiency", label: "熟练度" },
+    { key: "show_language_level", label: "语言等级" },
+    { key: "show_summary", label: "说明", defaultChecked: true },
+    { key: "show_tools", label: "工具列表", defaultChecked: true }
+  ],
+  certifications: [
+    { key: "show_certificate_name", label: "证书名称", defaultChecked: true },
+    { key: "show_issuer", label: "颁发机构", defaultChecked: true },
+    { key: "show_date", label: "取得时间", defaultChecked: true },
+    { key: "show_valid_until", label: "有效期" },
+    { key: "show_description", label: "说明", defaultChecked: true }
+  ],
+  awards: [
+    { key: "show_award_name", label: "奖项名称", defaultChecked: true },
+    { key: "show_issuer", label: "授予机构", defaultChecked: true },
+    { key: "show_date", label: "时间", defaultChecked: true },
+    { key: "show_level", label: "级别" },
+    { key: "show_description", label: "说明", defaultChecked: true }
+  ]
+};
 
 export function ResumeVersionForm({
   action,
@@ -157,6 +231,9 @@ export function ResumeVersionForm({
                     {sectionItems.map((item) => {
                       const selected = selectedByItemId.get(item.id);
                       const visibleFields = normalizeBooleanRecord(selected?.visible_fields);
+                      const currentSectionKey = selected?.section_key ?? section.key;
+                      const display = getResumeItemDisplay(item, currentSectionKey);
+                      const fieldOptions = visibleFieldOptionsBySection[currentSectionKey] ?? visibleFieldOptionsBySection[section.key];
 
                       return (
                         <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -170,14 +247,14 @@ export function ResumeVersionForm({
                                 className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600"
                               />
                               <span className="min-w-0">
-                                <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
-                                <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">
-                                  {[item.organization, item.role_title, item.summary].filter(Boolean).join(" · ") || getResumeItemTypeLabel(item.item_type)}
-                                </span>
+                                <span className="block text-sm font-semibold text-slate-950">{display.title}</span>
+                                {display.subtitle ? <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-600">{display.subtitle}</span> : null}
+                                {display.meta ? <span className="mt-1 line-clamp-1 block text-xs leading-5 text-slate-500">{display.meta}</span> : null}
+                                {!display.subtitle && !display.meta && display.description ? <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">{display.description}</span> : null}
                               </span>
                             </label>
                             <div className="grid gap-3 sm:grid-cols-[150px_100px_120px]">
-                              <Select name={`section_key_${item.id}`} defaultValue={selected?.section_key ?? section.key}>
+                              <Select name={`section_key_${item.id}`} defaultValue={currentSectionKey}>
                                 {resumeSectionKeys.map((sectionOption) => (
                                   <option key={sectionOption.value} value={sectionOption.value}>
                                     {sectionOption.label}
@@ -191,12 +268,12 @@ export function ResumeVersionForm({
                           <div className="mt-4 rounded-2xl bg-slate-50 p-3">
                             <p className="mb-2 text-xs font-semibold text-slate-500">当前版本可见字段</p>
                             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                              {visibleFieldOptions.map((option) => (
+                              {fieldOptions.map((option) => (
                                 <Checkbox
                                   key={option.key}
                                   name={`${option.key}_${item.id}`}
                                   label={option.label}
-                                  defaultChecked={visibleFields[option.key] ?? section.defaultVisibleFields.includes(option.key)}
+                                  defaultChecked={visibleFields[option.key] ?? option.defaultChecked ?? false}
                                 />
                               ))}
                             </div>

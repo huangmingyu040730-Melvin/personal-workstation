@@ -9,6 +9,7 @@ import { getCalendarEventTypeLabel, getPublicationTypeLabel, getResumeItemTypeLa
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { profile, quickActions } from "@/lib/mock-data";
 import { getDashboardData } from "@/lib/queries/dashboard";
+import { getResumeItemDisplay } from "@/lib/resume-display";
 
 function activityTitle(metadata: Record<string, unknown>, fallback: string) {
   const title = metadata.title ?? metadata.name ?? metadata.slug;
@@ -90,13 +91,17 @@ export default async function DashboardPage() {
             </div>
             {data.recentResumeItems.length > 0 ? (
               <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
-                {data.recentResumeItems.map((item) => (
-                  <Link key={item.id} href={`/dashboard/resume/${item.id}`} className="admin-card-motion rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:border-blue-200 hover:bg-blue-50">
-                    <p className="text-xs font-semibold text-blue-700">{getResumeItemTypeLabel(item.item_type)}</p>
-                    <p className="mt-2 line-clamp-1 text-sm font-semibold text-slate-950">{item.title}</p>
-                    <p className="mt-1 line-clamp-1 text-xs text-slate-500">{item.organization || item.role_title || "未填写机构或角色"}</p>
-                  </Link>
-                ))}
+                {data.recentResumeItems.map((item) => {
+                  const display = getResumeItemDisplay(item);
+
+                  return (
+                    <Link key={item.id} href={`/dashboard/resume/${item.id}`} className="admin-card-motion rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:border-blue-200 hover:bg-blue-50">
+                      <p className="text-xs font-semibold text-blue-700">{getResumeItemTypeLabel(item.item_type)}</p>
+                      <p className="mt-2 line-clamp-1 text-sm font-semibold text-slate-950">{display.title}</p>
+                      <p className="mt-1 line-clamp-1 text-xs text-slate-500">{display.subtitle || display.meta || display.description || "待补充摘要"}</p>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">

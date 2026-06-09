@@ -14,6 +14,7 @@ import { formatDateTime, formatRelative } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getResumeVersionWithItems } from "@/lib/queries/resume";
+import { getResumeItemDisplay } from "@/lib/resume-display";
 
 const sectionOrder: ResumeSectionKey[] = ["summary", "education", "experience", "projects", "research", "skills", "certifications", "awards", "other"];
 
@@ -76,21 +77,27 @@ export default async function ResumeVersionDetailPage({
                       <section key={sectionKey}>
                         <h3 className="mb-3 text-sm font-semibold text-slate-950">{getResumeSectionLabel(sectionKey)}</h3>
                         <div className="space-y-3">
-                          {items.map((item) => (
-                            <Link key={item.id} href={`/dashboard/resume/${item.resume_item_id}`} className="block rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-blue-50">
-                              <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="font-semibold text-slate-950">{item.resume_items?.title ?? "已删除素材"}</p>
-                                  <p className="mt-1 text-sm text-slate-500">{[item.resume_items?.organization, item.resume_items?.role_title].filter(Boolean).join(" · ") || "未填写机构或角色"}</p>
+                          {items.map((item) => {
+                            const display = item.resume_items ? getResumeItemDisplay(item.resume_items, item.section_key) : null;
+
+                            return (
+                              <Link key={item.id} href={`/dashboard/resume/${item.resume_item_id}`} className="block rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-blue-50">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-slate-950">{display?.title ?? "已删除素材"}</p>
+                                    {display?.subtitle ? <p className="mt-1 text-sm text-slate-500">{display.subtitle}</p> : null}
+                                    {display?.meta ? <p className="mt-1 text-xs text-slate-400">{display.meta}</p> : null}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Badge className="bg-white text-slate-500 ring-slate-200">#{item.sort_order}</Badge>
+                                    {item.is_visible ? <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-100">展示</Badge> : <Badge className="bg-slate-100 text-slate-500 ring-slate-100">隐藏</Badge>}
+                                  </div>
                                 </div>
-                                <div className="flex gap-2">
-                                  <Badge className="bg-white text-slate-500 ring-slate-200">#{item.sort_order}</Badge>
-                                  {item.is_visible ? <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-100">展示</Badge> : <Badge className="bg-slate-100 text-slate-500 ring-slate-100">隐藏</Badge>}
-                                </div>
-                              </div>
-                              {item.note ? <p className="mt-3 text-sm leading-6 text-slate-600">{item.note}</p> : null}
-                            </Link>
-                          ))}
+                                {display?.description ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{display.description}</p> : null}
+                                {item.note ? <p className="mt-3 text-sm leading-6 text-slate-600">{item.note}</p> : null}
+                              </Link>
+                            );
+                          })}
                         </div>
                       </section>
                     );

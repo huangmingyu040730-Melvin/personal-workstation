@@ -8,6 +8,7 @@ import { getResumeItemTypeLabel, resumeItemTypes } from "@/lib/content-options";
 import type { ResumeItemType } from "@/lib/content-types";
 import { formatRelative } from "@/lib/format";
 import { getResumeItems, getResumeStats } from "@/lib/queries/resume";
+import { getResumeItemDisplay } from "@/lib/resume-display";
 
 export default async function ResumePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -111,37 +112,41 @@ export default async function ResumePage({ searchParams }: { searchParams: Promi
           />
         ) : (
           <div className="grid gap-5 xl:grid-cols-2">
-            {items.map((item) => (
-              <AdminContentCard key={item.id} href={`/dashboard/resume/${item.id}`} className="hover:border-blue-200">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{getResumeItemTypeLabel(item.item_type)}</Badge>
-                      {item.is_featured ? <Badge className="bg-violet-50 text-violet-700 ring-violet-100">重点素材</Badge> : null}
-                      <VisibilityBadge visibility={item.visibility} />
+            {items.map((item) => {
+              const display = getResumeItemDisplay(item);
+
+              return (
+                <AdminContentCard key={item.id} href={`/dashboard/resume/${item.id}`} className="hover:border-blue-200">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{getResumeItemTypeLabel(item.item_type)}</Badge>
+                        {item.is_featured ? <Badge className="bg-violet-50 text-violet-700 ring-violet-100">重点素材</Badge> : null}
+                        <VisibilityBadge visibility={item.visibility} />
+                      </div>
+                      <h2 className="text-lg font-semibold text-slate-950">{display.title}</h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {display.subtitle || display.meta || display.description || item.summary || "待补充素材摘要。"}
+                      </p>
                     </div>
-                    <h2 className="text-lg font-semibold text-slate-950">{item.title}</h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {[item.organization, item.role_title].filter(Boolean).join(" · ") || item.summary || "尚未填写机构或概述。"}
-                    </p>
+                    <span className="shrink-0 rounded-2xl bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">#{item.sort_order}</span>
                   </div>
-                  <span className="shrink-0 rounded-2xl bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">#{item.sort_order}</span>
-                </div>
-                {item.bullets.length > 0 ? (
-                  <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
-                    {item.bullets.slice(0, 2).map((bullet) => (
-                      <li key={bullet} className="line-clamp-2">· {bullet}</li>
+                  {item.bullets.length > 0 ? (
+                    <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+                      {item.bullets.slice(0, 2).map((bullet) => (
+                        <li key={bullet} className="line-clamp-2">· {bullet}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {item.tags.slice(0, 5).map((tag) => (
+                      <span key={tag} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{tag}</span>
                     ))}
-                  </ul>
-                ) : null}
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {item.tags.slice(0, 5).map((tag) => (
-                    <span key={tag} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{tag}</span>
-                  ))}
-                </div>
-                <div className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500">更新于 {formatRelative(item.updated_at)}</div>
-              </AdminContentCard>
-            ))}
+                  </div>
+                  <div className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500">更新于 {formatRelative(item.updated_at)}</div>
+                </AdminContentCard>
+              );
+            })}
           </div>
         )}
       </AdminPageSurface>

@@ -139,13 +139,16 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
     return (
       <AdminFormSection title="个人信息字段" description="这些字段只用于简历版本选择和打印预览，不会自动公开到 About。">
         <div className="grid gap-5 md:grid-cols-2">
+          <DetailInput label="姓名" name="name" details={details} fallback={item?.title} />
           <DetailInput label="照片 URL" name="photo_url" details={details} placeholder="可选，后续支持头像或照片引用" />
           <DetailInput label="求职 / 研究方向" name="direction" details={details} placeholder="例如 投资研究 / 量化分析" />
           <DetailInput label="性别" name="gender" details={details} />
           <DetailInput label="年龄" name="age" details={details} />
           <DetailInput label="电话" name="phone" details={details} />
           <DetailInput label="邮箱" name="email" details={details} />
+          <DetailInput label="所在地" name="location" details={details} fallback={item?.location} />
           <DetailInput label="个人网站 / 链接" name="website" details={details} />
+          <DetailInput label="社交链接" name="social_links" details={details} placeholder="例如 GitHub / LinkedIn / 个人主页" />
         </div>
       </AdminFormSection>
     );
@@ -190,14 +193,18 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
     return (
       <AdminFormSection title={itemType === "project" ? "项目 / 产品研究字段" : "研究经历字段"} description="用于投研、量化、AI 工作流等项目型经历。">
         <div className="grid gap-5 md:grid-cols-2">
+          <DetailInput label="项目名称" name="project_name" details={details} fallback={itemType === "project" ? item?.title : undefined} />
           <DetailInput label="项目角色" name="project_role" details={details} fallback={item?.role_title} />
-          <DetailInput label="研究主题" name="topic" details={details} />
+          <DetailInput label="研究主题" name="research_topic" details={details} fallback={itemType === "research" ? item?.title : undefined} />
+          <DetailInput label="研究角色" name="research_role" details={details} />
         </div>
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           <DetailTextarea label="背景" name="background" details={details} />
           <DetailTextarea label="方法 / 框架" name="methods" details={details} />
           <DetailTextarea label="工具" name="tools" details={details} />
           <DetailTextarea label="结论 / 产出" name="conclusion" details={details} />
+          <DetailTextarea label="成果" name="results" details={details} />
+          <DetailTextarea label="关联产出" name="outputs" details={details} />
         </div>
       </AdminFormSection>
     );
@@ -208,6 +215,8 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
       <AdminFormSection title="技能字段" description="适合按类别写成简历底部紧凑技能行。">
         <div className="grid gap-5 md:grid-cols-2">
           <DetailInput label="技能分类" name="skill_category" details={details} placeholder="例如 编程与数据分析、金融工具、语言能力" />
+          <DetailInput label="熟练度" name="proficiency" details={details} />
+          <DetailInput label="语言等级" name="language_level" details={details} />
           <DetailTextarea label="技能条目" name="skill_items" details={details} hint="用逗号或换行分隔。" />
         </div>
       </AdminFormSection>
@@ -218,8 +227,11 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
     return (
       <AdminFormSection title="证书 / 奖项字段" description="用于简历补充区块，保持简洁。">
         <div className="grid gap-5 md:grid-cols-2">
+          <DetailInput label={itemType === "award" ? "奖项名称" : "证书名称"} name={itemType === "award" ? "award_name" : "certificate_name"} details={details} fallback={item?.title} />
           <DetailInput label="颁发方" name="issuer" details={details} fallback={item?.organization} />
           <DetailInput label="获得时间" name="issued_at" details={details} placeholder="例如 2026.05" />
+          <DetailInput label="有效期" name="valid_until" details={details} />
+          <DetailInput label="级别" name="level" details={details} />
         </div>
         <div className="mt-5">
           <DetailTextarea label="说明" name="description" details={details} />
