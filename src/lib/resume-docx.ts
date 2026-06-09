@@ -142,26 +142,37 @@ function buildHeaderTable(model: ResumeTemplateModel) {
     });
   }
 
+  const cells = model.profile.showPhoto
+    ? [
+        new TableCell({
+          width: { size: 1750, type: WidthType.DXA },
+          verticalAlign: VerticalAlign.CENTER,
+          borders: noBorders,
+          children: [photoPlaceholder()]
+        }),
+        new TableCell({
+          width: { size: 7600, type: WidthType.DXA },
+          verticalAlign: VerticalAlign.CENTER,
+          borders: noBorders,
+          children
+        })
+      ]
+    : [
+        new TableCell({
+          width: { size: 9350, type: WidthType.DXA },
+          verticalAlign: VerticalAlign.CENTER,
+          borders: noBorders,
+          children
+        })
+      ];
+
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     layout: TableLayoutType.FIXED,
     borders: noBorders,
     rows: [
       new TableRow({
-        children: [
-          new TableCell({
-            width: { size: 1750, type: WidthType.DXA },
-            verticalAlign: VerticalAlign.CENTER,
-            borders: noBorders,
-            children: model.profile.showPhoto ? [photoPlaceholder()] : [new Paragraph("")]
-          }),
-          new TableCell({
-            width: { size: 7600, type: WidthType.DXA },
-            verticalAlign: VerticalAlign.CENTER,
-            borders: noBorders,
-            children
-          })
-        ]
+        children: cells
       })
     ]
   });
@@ -227,7 +238,7 @@ function buildTimelineEntry(entry: ResumeTemplateEntry) {
               verticalAlign: VerticalAlign.TOP,
               borders: noBorders,
               children: compactParagraphs([
-                titleParagraph(entry.title),
+                entry.title ? titleParagraph(entry.title) : null,
                 entry.subtitle ? subtitleParagraph(entry.subtitle) : null,
                 entry.summary ? bodyParagraph(entry.summary) : null,
                 ...entry.detailLines.map((line) => bodyParagraph(line)),
@@ -244,15 +255,17 @@ function buildTimelineEntry(entry: ResumeTemplateEntry) {
 
 function buildSkillEntry(entry: ResumeTemplateEntry) {
   return [
-    new Paragraph({
-      spacing: { after: 12, line: 205 },
-      children: [
-        ...(entry.title ? [new TextRun({ text: `${entry.title}：`, bold: true, size: 18, color: "111827", font })] : []),
-        new TextRun({ text: entry.subtitle || entry.summary || "未填写技能描述", size: 18, color: "374151", font })
-      ]
-    }),
+    entry.title || entry.subtitle || entry.summary
+      ? new Paragraph({
+          spacing: { after: 12, line: 205 },
+          children: [
+            ...(entry.title ? [new TextRun({ text: `${entry.title}：`, bold: true, size: 18, color: "111827", font })] : []),
+            ...(entry.subtitle || entry.summary ? [new TextRun({ text: entry.subtitle || entry.summary, size: 18, color: "374151", font })] : [])
+          ]
+        })
+      : null,
     ...entry.bullets.map((bullet) => bulletParagraph(bullet))
-  ];
+  ].filter((value): value is Paragraph => Boolean(value));
 }
 
 function dateParagraph(text: string) {
@@ -265,7 +278,7 @@ function dateParagraph(text: string) {
 function titleParagraph(text: string) {
   return new Paragraph({
     spacing: { after: 8, line: 205 },
-    children: [new TextRun({ text: text || "未命名经历", bold: true, size: 19, color: "111827", font })]
+    children: [new TextRun({ text, bold: true, size: 19, color: "111827", font })]
   });
 }
 

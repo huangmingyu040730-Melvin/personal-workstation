@@ -176,8 +176,15 @@ select {
   min-height: auto;
 }
 
+.resume-print-header-no-photo .resume-header-main {
+  grid-column: 1;
+}
+
 .resume-photo-box {
   grid-area: photo;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
   display: flex;
   height: 32mm;
   width: 27mm;
@@ -192,6 +199,8 @@ select {
 
 .resume-header-main {
   grid-area: main;
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   padding-top: 3px;
   text-align: left;

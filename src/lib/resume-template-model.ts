@@ -363,5 +363,5 @@ function normalizeBooleanRecord(value: unknown) {
 }
 
 function isTemplateEntry(entry: ResumeTemplateEntry | null): entry is ResumeTemplateEntry {
-  return Boolean(entry && (entry.title || entry.subtitle || entry.summary || entry.detailLines.length > 0 || entry.bullets.length > 0));
+  return Boolean(entry && (entry.title || entry.subtitle || entry.summary || entry.detailLines.length > 0 || entry.bullets.length > 0 || entry.tokens));
 }
