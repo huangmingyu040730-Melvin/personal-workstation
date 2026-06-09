@@ -31,6 +31,7 @@ export default async function ResumeItemDetailPage({
   const relation = getResumeItemRelation(item, relationOptions);
   const deleteAction = deleteResumeItemAction.bind(null, item.id);
   const error = getFormError(query);
+  const detailEntries = getDetailEntries(item.details);
 
   return (
     <AppShell>
@@ -65,6 +66,19 @@ export default async function ResumeItemDetailPage({
                 </ul>
               ) : (
                 <p className="text-sm text-slate-500">尚未填写 bullet。</p>
+              )}
+            </Card>
+
+            <Card>
+              <CardHeader title="结构化字段" />
+              {detailEntries.length > 0 ? (
+                <dl className="grid gap-3 md:grid-cols-2">
+                  {detailEntries.map((entry) => (
+                    <InfoRow key={entry.label} label={entry.label} value={entry.value} />
+                  ))}
+                </dl>
+              ) : (
+                <p className="text-sm text-slate-500">尚未填写教育、个人信息、项目方法或技能分类等结构化字段。</p>
               )}
             </Card>
 
@@ -147,6 +161,48 @@ function TokenBlock({ label, items }: { label: string; items: string[] }) {
       )}
     </div>
   );
+}
+
+function getDetailEntries(details: Record<string, unknown>) {
+  const labelMap: Record<string, string> = {
+    photo_url: "照片 URL",
+    gender: "性别",
+    age: "年龄",
+    phone: "电话",
+    email: "邮箱",
+    website: "个人链接",
+    direction: "方向",
+    school: "学校",
+    college: "学院",
+    major: "专业",
+    degree: "学位",
+    gpa: "GPA",
+    core_courses: "核心课程",
+    honors: "荣誉",
+    company: "公司",
+    department: "部门",
+    position: "岗位",
+    business_area: "业务方向",
+    organization_name: "组织名称",
+    project_role: "项目角色",
+    background: "背景",
+    methods: "方法",
+    tools: "工具",
+    topic: "研究主题",
+    conclusion: "结论",
+    skill_category: "技能分类",
+    skill_items: "技能条目",
+    issuer: "颁发方",
+    issued_at: "获得时间",
+    description: "说明"
+  };
+
+  return Object.entries(details ?? {})
+    .map(([key, value]) => {
+      const rendered = Array.isArray(value) ? value.join("、") : typeof value === "string" ? value : "";
+      return rendered ? { label: labelMap[key] ?? key, value: rendered } : null;
+    })
+    .filter((entry): entry is { label: string; value: string } => Boolean(entry));
 }
 
 function formatResumeDateRange(item: { start_date: string | null; end_date: string | null; is_current: boolean }) {

@@ -104,11 +104,11 @@ export const resumeItemTypes: Array<{ value: ResumeItemType; label: string }> = 
   { value: "experience", label: "实习 / 工作" },
   { value: "project", label: "项目经历" },
   { value: "research", label: "研究经历" },
-  { value: "skill", label: "Skill / AI 工作流" },
+  { value: "skill", label: "相关技能" },
   { value: "certification", label: "证书" },
   { value: "award", label: "奖项" },
   { value: "language", label: "语言能力" },
-  { value: "other", label: "其他" }
+  { value: "other", label: "在校 / 其他经历" }
 ];
 
 export const resumeVersionLanguages: Array<{ value: ResumeVersionLanguage; label: string }> = [
@@ -128,7 +128,7 @@ export const resumeSectionKeys: Array<{ value: ResumeSectionKey; label: string }
   { value: "experience", label: "实习 / 工作经历" },
   { value: "projects", label: "项目经历" },
   { value: "research", label: "研究经历" },
-  { value: "skills", label: "Skill / 技能经历" },
+  { value: "skills", label: "相关技能" },
   { value: "certifications", label: "证书" },
   { value: "awards", label: "奖项" },
   { value: "other", label: "其他" }

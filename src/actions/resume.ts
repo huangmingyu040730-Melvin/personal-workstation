@@ -5,6 +5,111 @@ import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { resumeItemSchema, resumeVersionSchema } from "@/lib/validations/resume";
+import { normalizeResumeBullets } from "@/lib/resume-display";
+
+const detailTextKeys = [
+  "photo_url",
+  "name",
+  "gender",
+  "age",
+  "phone",
+  "email",
+  "website",
+  "social_links",
+  "direction",
+  "location",
+  "school",
+  "college",
+  "major",
+  "degree",
+  "gpa",
+  "company",
+  "department",
+  "position",
+  "business_area",
+  "organization_name",
+  "project_role",
+  "project_name",
+  "background",
+  "methods",
+  "topic",
+  "research_topic",
+  "research_role",
+  "conclusion",
+  "skill_category",
+  "language_level",
+  "proficiency",
+  "certificate_name",
+  "award_name",
+  "issuer",
+  "issued_at",
+  "date",
+  "valid_until",
+  "level",
+  "results",
+  "outputs",
+  "achievements",
+  "related_outputs",
+  "description"
+];
+
+const detailArrayKeys = ["core_courses", "honors", "tools", "skill_items"];
+
+const profileFieldKeys = ["show_photo", "show_name", "show_gender", "show_age", "show_phone", "show_email", "show_location", "show_headline", "show_website", "show_social_links"];
+
+const visibleFieldKeys = [
+  "show_date",
+  "show_organization",
+  "show_role_title",
+  "show_location",
+  "show_summary",
+  "show_bullets",
+  "show_skills",
+  "show_tags",
+  "show_core_courses",
+  "show_photo",
+  "show_name",
+  "show_gender",
+  "show_age",
+  "show_phone",
+  "show_email",
+  "show_website",
+  "show_social_links",
+  "show_direction",
+  "show_school",
+  "show_college",
+  "show_major",
+  "show_degree",
+  "show_gpa",
+  "show_honors",
+  "show_company",
+  "show_department",
+  "show_position",
+  "show_results",
+  "show_achievements",
+  "show_project_name",
+  "show_project_role",
+  "show_background",
+  "show_methods",
+  "show_research_topic",
+  "show_research_role",
+  "show_conclusion",
+  "show_outputs",
+  "show_related_outputs",
+  "show_skill_category",
+  "show_skill_items",
+  "show_proficiency",
+  "show_language_level",
+  "show_tools",
+  "show_certificate_name",
+  "show_issuer",
+  "show_valid_until",
+  "show_description",
+  "show_award_name",
+  "show_level"
+];
+
+const defaultSectionOrder = ["education", "experience", "campus", "projects", "research", "skills", "certifications", "awards", "other"];
 
 function resumePayloadFromForm(formData: FormData) {
   return resumeItemSchema.safeParse({
@@ -17,9 +122,10 @@ function resumePayloadFromForm(formData: FormData) {
     end_date: getOptionalString(formData, "end_date"),
     is_current: getBoolean(formData, "is_current"),
     summary: getOptionalString(formData, "summary"),
-    bullets: getArrayFromText(formData, "bullets"),
+    bullets: normalizeResumeBullets(getString(formData, "bullets")),
     skills: getArrayFromText(formData, "skills"),
     tags: getArrayFromText(formData, "tags"),
+    details: buildResumeDetails(formData),
     sort_order: getString(formData, "sort_order") || "0",
     visibility: getString(formData, "visibility"),
     is_featured: getBoolean(formData, "is_featured"),
@@ -38,6 +144,34 @@ function getResumeErrorMessage(error: { message?: string }) {
   return error.message || "简历素材保存失败，请稍后重试。";
 }
 
+function buildResumeDetails(formData: FormData) {
+  const details: Record<string, string | string[]> = {};
+
+  for (const key of detailTextKeys) {
+    const value = getOptionalString(formData, `detail_${key}`);
+    if (value) {
+      details[key] = value;
+    }
+  }
+
+  for (const key of detailArrayKeys) {
+    const value = getArrayFromText(formData, `detail_${key}`);
+    if (value.length > 0) {
+      details[key] = value;
+    }
+  }
+
+  return details;
+}
+
+function getProfileFields(formData: FormData) {
+  return Object.fromEntries(profileFieldKeys.map((key) => [key, getBoolean(formData, key)]));
+}
+
+function getVisibleFields(formData: FormData, itemId: string) {
+  return Object.fromEntries(visibleFieldKeys.map((key) => [key, getBoolean(formData, `${key}_${itemId}`)]));
+}
+
 function resumeVersionPayloadFromForm(formData: FormData) {
   const selectedItemIds = formData
     .getAll("resume_item_id")
@@ -54,12 +188,16 @@ function resumeVersionPayloadFromForm(formData: FormData) {
     is_active: getBoolean(formData, "is_active"),
     is_featured: getBoolean(formData, "is_featured"),
     notes: getOptionalString(formData, "notes"),
+    profile_fields: getProfileFields(formData),
+    section_order: defaultSectionOrder,
+    template_options: {},
     items: selectedItemIds.map((id) => ({
       resume_item_id: id,
       section_key: getString(formData, `section_key_${id}`),
       sort_order: getString(formData, `sort_order_${id}`) || "0",
       is_visible: getBoolean(formData, `is_visible_${id}`),
-      note: getOptionalString(formData, `note_${id}`)
+      note: getOptionalString(formData, `note_${id}`),
+      visible_fields: getVisibleFields(formData, id)
     }))
   });
 }
