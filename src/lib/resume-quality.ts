@@ -56,7 +56,7 @@ export function analyzeResumeVersionQuality({ version, versionItems, profile, ba
   const profileFields = normalizeBooleanRecord(version.profile_fields);
   const profileData = profile ? getResumeProfileData({ profile, basicItem: basicItem ?? null, profileFields, nameFallback: version.title }) : null;
   const targetKeywords = getTargetKeywords(version);
-  const allBullets = bodyItems.flatMap((item) => getItemBullets(item));
+  const allBullets = bodyVersionItems.flatMap((versionItem) => getVisibleItemBullets(versionItem));
   const quantifiedBullets = allBullets.filter((bullet) => quantifiedPattern.test(bullet));
   const passed: string[] = [];
   const warnings: string[] = [];
@@ -126,7 +126,6 @@ export function analyzeResumeVersionQuality({ version, versionItems, profile, ba
   }
 
   if (quantifiedBullets.length > 0) {
-    score += 10;
     passed.push("已有量化或结果导向表达");
   } else {
     suggestions.push("建议至少补充 1 条含数字、比例、覆盖范围、效率或成果的量化表达。");
@@ -209,6 +208,39 @@ function getItemBullets(item: ResumeItemRecord) {
     if (value) {
       values.push(value);
     }
+  }
+
+  return values.flatMap((value) => normalizeResumeBullets(value));
+}
+
+function getVisibleItemBullets(versionItem: ResumeVersionItemRecord) {
+  const item = versionItem.resume_items;
+  if (!item) {
+    return [];
+  }
+
+  const visible = normalizeBooleanRecord(versionItem.visible_fields);
+  const details = detailRecord(item);
+  const values: unknown[] = [];
+
+  if (visible.show_bullets !== false) {
+    values.push(item.bullets);
+  }
+
+  if (visible.show_results !== false) {
+    values.push(details.results);
+  }
+
+  if (visible.show_achievements !== false) {
+    values.push(details.achievements);
+  }
+
+  if (visible.show_related_outputs || visible.show_outputs) {
+    values.push(details.related_outputs, details.outputs);
+  }
+
+  if (visible.show_description) {
+    values.push(details.description);
   }
 
   return values.flatMap((value) => normalizeResumeBullets(value));

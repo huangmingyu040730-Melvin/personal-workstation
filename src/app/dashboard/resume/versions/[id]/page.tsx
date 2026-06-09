@@ -14,7 +14,7 @@ import type { ResumeSectionKey, ResumeVersionItemRecord } from "@/lib/content-ty
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getEditableProfile } from "@/lib/queries/profile";
+import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
 import { getResumeItems, getResumeVersionWithItems } from "@/lib/queries/resume";
 import { getResumeItemDisplay } from "@/lib/resume-display";
 import { analyzeResumeVersionQuality, getTargetKeywords } from "@/lib/resume-quality";
@@ -29,9 +29,9 @@ export default async function ResumeVersionDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const [version, profile, basicItems] = await Promise.all([
+  const [version, publicProfile, basicItems] = await Promise.all([
     getResumeVersionWithItems(id),
-    getEditableProfile(),
+    getPublicProfile(),
     getResumeItems({ itemType: "basic", visibility: "all" })
   ]);
 
@@ -42,6 +42,7 @@ export default async function ResumeVersionDetailPage({
   const error = getFormError(query);
   const deleteAction = deleteResumeVersionAction.bind(null, version.id);
   const groupedItems = groupVersionItems(version.resume_version_items);
+  const profile = publicProfile ?? getProfileFallback();
   const selectedBasicItem = version.resume_version_items.find((item) => item.resume_items?.item_type === "basic")?.resume_items ?? null;
   const latestBasicItem = [...basicItems].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0] ?? null;
   const quality = analyzeResumeVersionQuality({ version, versionItems: version.resume_version_items, profile, basicItem: selectedBasicItem ?? latestBasicItem });

@@ -8,19 +8,20 @@ import { ResumeQualityBadge } from "@/components/resume-quality";
 import { getResumeTemplateLabel, getResumeVersionLanguageLabel } from "@/lib/content-options";
 import type { ResumeVersionWithItems } from "@/lib/content-types";
 import { formatRelative } from "@/lib/format";
-import { getEditableProfile } from "@/lib/queries/profile";
+import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
 import { getResumeItems, getResumeVersionItemCounts, getResumeVersionItemsForQuality, getResumeVersionStats, getResumeVersions } from "@/lib/queries/resume";
 import { analyzeResumeVersionQuality } from "@/lib/resume-quality";
 
 export default async function ResumeVersionsPage() {
-  const [versions, stats, itemCounts, qualityItems, profile, basicItems] = await Promise.all([
+  const [versions, stats, itemCounts, qualityItems, publicProfile, basicItems] = await Promise.all([
     getResumeVersions(),
     getResumeVersionStats(),
     getResumeVersionItemCounts(),
     getResumeVersionItemsForQuality(),
-    getEditableProfile(),
+    getPublicProfile(),
     getResumeItems({ itemType: "basic", visibility: "all" })
   ]);
+  const profile = publicProfile ?? getProfileFallback();
   const latestBasicItem = [...basicItems].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0] ?? null;
 
   return (
