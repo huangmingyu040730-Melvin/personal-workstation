@@ -1,6 +1,9 @@
 import OpenAI from "openai";
 import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
+import type { MarketBriefGroundingContext } from "@/lib/market-brief-grounding";
+import { buildGroundingSourceSnapshotBase, buildMarketBriefGroundingContext } from "@/lib/market-brief-grounding";
 import { buildMarketBriefAiPrompt } from "@/lib/market-brief-ai-prompt";
+import type { MarketBriefSearchSource } from "@/lib/market-brief-search";
 
 export type MarketBriefGenerationInput = {
   market: string;
@@ -48,6 +51,11 @@ export async function generateMarketBriefDraft(input: MarketBriefGenerationInput
 }
 
 async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise<GeneratedMarketBrief> {
+  const grounding = await buildMarketBriefGroundingContext({
+    market: input.market,
+    briefDate: input.briefDate,
+    isHistorical: Boolean(input.isHistorical)
+  });
   const aiConfig = getAiProviderConfig();
   const providerLabel = getAiProviderDisplayName(aiConfig.provider);
 
@@ -63,7 +71,8 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
     market: input.market,
     briefDate: input.briefDate,
     isHistorical: Boolean(input.isHistorical),
-    providerLabel
+    providerLabel,
+    grounding
   });
 
   const response = await client.chat.completions.create({
@@ -90,7 +99,8 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
     briefDate: input.briefDate,
     isHistorical: Boolean(input.isHistorical),
     model: aiConfig.model,
-    providerLabel
+    providerLabel,
+    grounding
   });
 
   return {
@@ -111,32 +121,31 @@ function parseAiJson(content: string) {
   } catch {
     const matched = content.match(/\{[\s\S]*\}/);
     if (!matched) {
-      throw new Error("AI 返回内容不是合法 JSON。");
+      throw new Error("AI 返回格式无法解析，请重试。");
     }
     try {
       return JSON.parse(matched[0]) as Record<string, unknown>;
     } catch {
-      throw new Error("AI 返回内容不是合法 JSON。");
+      throw new Error("AI 返回格式无法解析，请重试。");
     }
   }
 }
 
 function normalizeAiMarketBriefOutput(
   value: Record<string, unknown>,
-  context: { market: string; briefDate: string; isHistorical: boolean; model: string; providerLabel: string }
+  context: { market: string; briefDate: string; isHistorical: boolean; model: string; providerLabel: string; grounding: MarketBriefGroundingContext }
 ) {
   const title = asText(value.title) || `${context.market}市场收评简报｜${context.briefDate}`;
   const dataQuality = normalizeAiDataQuality(asText(value.data_quality));
-  const generationStatus = dataQuality === "ai_verified" && hasReliableSources(value) ? "generated" : "needs_review";
+  const generationStatus = normalizeGenerationStatus(asText(value.generation_status));
   const summary = asText(value.summary) || "AI 已生成市场简报草稿，需人工复核关键数据与来源。";
-  const charts = normalizeCharts(value.charts);
+  const sourceIds = new Set(context.grounding.sources.map((source) => source.id));
+  const charts = normalizeCharts(value.charts, sourceIds);
   const sourceSnapshotInput = asRecord(value.source_snapshot);
   const sourceSnapshotMeta = asRecord(sourceSnapshotInput.meta);
-  const sourceNotes = normalizeTextArray(sourceSnapshotMeta.source_notes, [
-    "当前 AI Provider 未显式提供可验证联网搜索结果时，精确行情数据需人工复核。"
-  ]);
-  const sources = normalizeTextArray(sourceSnapshotMeta.sources, []);
-  const warnings = normalizeTextArray(sourceSnapshotMeta.warnings, []);
+  const sourceNotes = normalizeTextArray(sourceSnapshotMeta.source_notes, context.grounding.sourceNotes);
+  const warnings = normalizeTextArray(sourceSnapshotMeta.warnings, context.grounding.warnings);
+  const extractedFacts = normalizeExtractedFacts(sourceSnapshotInput);
   const markdownContent = ensureAiMarkdown({
     markdown: asText(value.markdown_content),
     title,
@@ -144,30 +153,25 @@ function normalizeAiMarketBriefOutput(
     generationStatus,
     dataQuality,
     isHistorical: context.isHistorical,
-    sourceNotes
+    sourceNotes,
+    sources: context.grounding.sources
+  });
+  const sourceSnapshotBase = buildGroundingSourceSnapshotBase({
+    ...context.grounding,
+    model: context.model,
+    generationStatus,
+    dataQuality
   });
   const sourceSnapshot = {
+    ...sourceSnapshotBase,
     meta: {
-      ...sourceSnapshotMeta,
-      market: context.market,
-      brief_date: context.briefDate,
-      generator: "ai",
+      ...sourceSnapshotBase.meta,
       provider: context.providerLabel,
-      model: context.model,
-      data_quality: dataQuality,
-      is_historical: context.isHistorical,
-      generation_status: generationStatus,
       warnings,
-      sources,
       source_notes: sourceNotes
     },
-    indices: Array.isArray(sourceSnapshotInput.indices) ? sourceSnapshotInput.indices : [],
-    sectors: Array.isArray(sourceSnapshotInput.sectors) ? sourceSnapshotInput.sectors : [],
-    market_breadth: asRecord(sourceSnapshotInput.market_breadth),
-    hot_topics: Array.isArray(sourceSnapshotInput.hot_topics) ? sourceSnapshotInput.hot_topics : [],
-    capital_flows: Array.isArray(sourceSnapshotInput.capital_flows) ? sourceSnapshotInput.capital_flows : [],
-    policy_news: Array.isArray(sourceSnapshotInput.policy_news) ? sourceSnapshotInput.policy_news : [],
-    risk_signals: Array.isArray(sourceSnapshotInput.risk_signals) ? sourceSnapshotInput.risk_signals : [],
+    sources: context.grounding.sources,
+    extracted_facts: extractedFacts,
     charts
   };
 
@@ -179,8 +183,8 @@ function normalizeAiMarketBriefOutput(
     data_quality: dataQuality,
     charts,
     source_snapshot: sourceSnapshot,
-    tags: normalizeTextArray(value.tags, [context.market, "市场收评", "AI生成", "待复核"]),
-    data_sources: normalizeTextArray(value.data_sources, sources.length > 0 ? sources : ["AI", "公开市场信息"])
+    tags: normalizeTextArray(value.tags, [context.market, "市场收评", "AI生成", "来源检索", "待复核"]),
+    data_sources: normalizeTextArray(value.data_sources, ["AI", context.grounding.searchProviderLabel, "Web Search"])
   };
 }
 
@@ -192,6 +196,7 @@ function ensureAiMarkdown(input: {
   dataQuality: string;
   isHistorical: boolean;
   sourceNotes: string[];
+  sources: MarketBriefSearchSource[];
 }) {
   const historicalNotice = input.isHistorical
     ? "\n\n> 本简报为历史日期补生成版本，部分盘中热点、新闻和资金流数据可能无法完整回溯。"
@@ -258,6 +263,7 @@ function ensureAiMarkdown(input: {
     "## 九、数据与来源说明",
     "",
     ...input.sourceNotes.map((note) => `- ${note}`),
+    ...input.sources.map((source) => `- [${source.id}] ${source.title} - ${source.publisher || "未知来源"} - ${source.url}`),
     "",
     "## 十、AI 复核状态",
     "",
@@ -271,20 +277,19 @@ function ensureAiMarkdown(input: {
 }
 
 function normalizeAiDataQuality(value: string | null) {
-  if (value === "ai_verified" || value === "ai_partial" || value === "ai_unverified") {
+  if (value === "ai_verified") return "ai_grounded";
+  if (value === "ai_partial") return "ai_grounded_partial";
+  if (value === "ai_grounded" || value === "ai_grounded_partial" || value === "ai_unverified") {
     return value;
   }
   return "ai_unverified";
 }
 
-function hasReliableSources(value: Record<string, unknown>) {
-  const sourceSnapshot = asRecord(value.source_snapshot);
-  const meta = asRecord(sourceSnapshot.meta);
-  const sources = normalizeTextArray(meta.sources, []);
-  return sources.length >= 2;
+function normalizeGenerationStatus(value: string | null): NonNullable<GeneratedMarketBrief["generationStatus"]> {
+  return value === "generated" ? "generated" : "needs_review";
 }
 
-function normalizeCharts(value: unknown) {
+function normalizeCharts(value: unknown, validSourceIds: Set<string>) {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -306,10 +311,47 @@ function normalizeCharts(value: unknown) {
         name_key: asText(chart.name_key) || "name",
         value_key: asText(chart.value_key) || "value",
         unit: asText(chart.unit) || "",
-        data: Array.isArray(chart.data) ? chart.data.filter((row) => typeof row === "object" && row !== null) : []
+        data: Array.isArray(chart.data)
+          ? chart.data
+              .map((row) => normalizeSourcedChartRow(row, validSourceIds))
+              .filter((row): row is Record<string, unknown> => Boolean(row))
+          : []
       };
     })
     .filter(Boolean);
+}
+
+function normalizeSourcedChartRow(value: unknown, validSourceIds: Set<string>): Record<string, unknown> | null {
+  const row = asRecord(value);
+  if (Object.keys(row).length === 0) {
+    return null;
+  }
+
+  const sourceIds = normalizeTextArray(row.source_ids, []);
+  const sourceId = asText(row.source_id);
+  const mergedSourceIds = Array.from(new Set([...sourceIds, ...(sourceId ? [sourceId] : [])])).filter((id) => validSourceIds.has(id));
+
+  if (mergedSourceIds.length === 0) {
+    return null;
+  }
+
+  return {
+    ...row,
+    source_ids: mergedSourceIds
+  };
+}
+
+function normalizeExtractedFacts(sourceSnapshotInput: Record<string, unknown>) {
+  const extractedFacts = asRecord(sourceSnapshotInput.extracted_facts);
+  return {
+    indices: Array.isArray(extractedFacts.indices) ? extractedFacts.indices : Array.isArray(sourceSnapshotInput.indices) ? sourceSnapshotInput.indices : [],
+    market_breadth: asRecord(extractedFacts.market_breadth ?? sourceSnapshotInput.market_breadth),
+    sectors: Array.isArray(extractedFacts.sectors) ? extractedFacts.sectors : Array.isArray(sourceSnapshotInput.sectors) ? sourceSnapshotInput.sectors : [],
+    hot_topics: Array.isArray(extractedFacts.hot_topics) ? extractedFacts.hot_topics : Array.isArray(sourceSnapshotInput.hot_topics) ? sourceSnapshotInput.hot_topics : [],
+    capital_flows: Array.isArray(extractedFacts.capital_flows) ? extractedFacts.capital_flows : Array.isArray(sourceSnapshotInput.capital_flows) ? sourceSnapshotInput.capital_flows : [],
+    policy_news: Array.isArray(extractedFacts.policy_news) ? extractedFacts.policy_news : Array.isArray(sourceSnapshotInput.policy_news) ? sourceSnapshotInput.policy_news : [],
+    risk_signals: Array.isArray(extractedFacts.risk_signals) ? extractedFacts.risk_signals : Array.isArray(sourceSnapshotInput.risk_signals) ? sourceSnapshotInput.risk_signals : []
+  };
 }
 
 function normalizeTextArray(value: unknown, fallback: string[]) {

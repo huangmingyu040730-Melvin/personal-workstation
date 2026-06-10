@@ -29,13 +29,15 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 ```text
 MARKET_BRIEF_GENERATOR=ai
+MARKET_BRIEF_SEARCH_PROVIDER=tavily
+MARKET_BRIEF_SEARCH_API_KEY=your_search_api_key
 AI_PROVIDER=deepseek
 AI_API_KEY=your_api_key
 AI_BASE_URL=https://api.deepseek.com
 AI_MODEL=deepseek-v4-flash
 ```
 
-`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`。AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 配置，并继续兼容旧 `OPENAI_API_KEY` / `OPENAI_MODEL`。旧 `MARKET_BRIEF_GENERATOR=external`、`MARKET_BRIEF_RUNNER_SECRET` 和 external runner / Python 数据源 runner 仅保留为 deprecated 历史兼容路径，不再作为推荐市场简报生成方式；普通后台页面继续使用登录管理员身份和 RLS。
+`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`。AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 配置，并继续兼容旧 `OPENAI_API_KEY` / `OPENAI_MODEL`。Phase 2M-C 起，AI 生成前会先调用 `MARKET_BRIEF_SEARCH_PROVIDER` 检索公开来源；未配置 `MARKET_BRIEF_SEARCH_API_KEY` 时，生成任务会 failed 并提示配置搜索服务。旧 `MARKET_BRIEF_GENERATOR=external`、`MARKET_BRIEF_RUNNER_SECRET` 和 external runner / Python 数据源 runner 仅保留为 deprecated 历史兼容路径，不再作为推荐市场简报生成方式；普通后台页面继续使用登录管理员身份和 RLS。
 
 ## Auth 设置
 

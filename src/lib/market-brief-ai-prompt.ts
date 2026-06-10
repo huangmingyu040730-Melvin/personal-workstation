@@ -1,3 +1,6 @@
+import type { MarketBriefGroundingContext } from "@/lib/market-brief-grounding";
+import { serializeGroundingSourcesForPrompt } from "@/lib/market-brief-grounding";
+
 export const marketBriefAiTemplate = `# A股市场收评简报｜YYYY-MM-DD
 
 > 本简报由 AI 根据公开市场信息生成，内容仅供研究复盘与人工复核，不构成投资建议。
@@ -106,6 +109,7 @@ export function buildMarketBriefAiPrompt(input: {
   briefDate: string;
   isHistorical: boolean;
   providerLabel: string;
+  grounding: MarketBriefGroundingContext;
 }) {
   const historicalInstruction = input.isHistorical
     ? "本次是历史日期补生成，Markdown 必须包含：本简报为历史日期补生成版本，部分盘中热点、新闻和资金流数据可能无法完整回溯。"
@@ -118,17 +122,25 @@ export function buildMarketBriefAiPrompt(input: {
     `市场：${input.market}`,
     `日期：${input.briefDate}`,
     `AI Provider：${input.providerLabel}`,
+    `搜索 Provider：${input.grounding.searchProviderLabel}`,
     historicalInstruction,
+    "",
+    "Grounding sources：",
+    "你只能基于以下 sources 生成报告。所有精确数字必须能对应到 sources 中的一个或多个 source id。",
+    "如果 sources 中没有可靠数据，请写明无法确认，不要编造。",
+    "",
+    serializeGroundingSourcesForPrompt(input.grounding.sources),
     "",
     "重要约束：",
     "1. 中文输出，金融研究员风格，克制、可复核。",
     "2. 不做投资建议，不推荐个股，不输出买入 / 卖出建议。",
     "3. 必须按固定 Markdown 模板生成 markdown_content。",
-    "4. 如果无法可靠确认某个精确数字，写 null、未能可靠确认或需人工复核。",
+    "4. 如果无法从 sources 可靠确认某个精确数字，写 null、未能从本次检索来源中可靠确认或需人工复核。",
     "5. 不得编造指数涨跌幅、成交额、行业排名、资金流、涨跌家数等精确数据。",
-    "6. 如果你没有联网搜索或实时行情能力，data_quality 必须为 ai_unverified，generation_status 必须为 needs_review，charts 的 data 可以为空。",
-    "7. 如果引用了任何数据或判断来源，必须在 source_snapshot.meta.sources 或 source_snapshot.meta.source_notes 中说明来源边界。",
-    "8. 生成状态默认 needs_review，除非来源和数据非常充分。",
+    "6. charts 的每一条 data 都必须包含 source_ids，例如 [\"S1\"]；没有 source_ids 的图表数据无效。",
+    "7. Markdown 的“数据与来源说明”必须列出 [S1]、[S2] 这类来源编号、标题、发布方和 URL。",
+    "8. data_quality 只能是 ai_grounded、ai_grounded_partial 或 ai_unverified。生成状态默认 needs_review。",
+    "9. source_snapshot.sources 必须原样保留下方 sources；source_snapshot.extracted_facts 用结构化字段摘录已确认事实。",
     "",
     "固定 Markdown 模板：",
     marketBriefAiTemplate,
@@ -140,7 +152,7 @@ export function buildMarketBriefAiPrompt(input: {
         summary: "一句话摘要",
         markdown_content: "完整 Markdown",
         generation_status: "needs_review",
-        data_quality: "ai_verified | ai_partial | ai_unverified",
+        data_quality: "ai_grounded | ai_grounded_partial | ai_unverified",
         charts: [
           {
             id: "index_performance",
@@ -150,7 +162,7 @@ export function buildMarketBriefAiPrompt(input: {
             x_key: "name",
             y_key: "change_pct",
             unit: "%",
-            data: [{ name: "上证指数", code: "000001.SH", change_pct: null, source: "AI/source" }]
+            data: [{ name: "上证指数", code: "000001.SH", change_pct: null, source_ids: ["S1"] }]
           },
           {
             id: "sector_performance",
@@ -177,23 +189,28 @@ export function buildMarketBriefAiPrompt(input: {
             market: input.market,
             brief_date: input.briefDate,
             generator: "ai",
+            grounding_enabled: true,
+            search_provider: input.grounding.searchProvider,
             model: "model-name",
             data_quality: "ai_unverified",
             is_historical: input.isHistorical,
             warnings: [],
-            sources: [],
             source_notes: []
           },
-          indices: [],
-          sectors: [],
-          market_breadth: {},
-          hot_topics: [],
-          capital_flows: [],
-          policy_news: [],
-          risk_signals: []
+          sources: input.grounding.sources,
+          extracted_facts: {
+            indices: [],
+            sectors: [],
+            market_breadth: {},
+            hot_topics: [],
+            capital_flows: [],
+            policy_news: [],
+            risk_signals: []
+          },
+          charts: []
         },
-        tags: ["A股", "市场收评", "AI生成", "待复核"],
-        data_sources: ["AI", "公开市场信息"]
+        tags: ["A股", "市场收评", "AI生成", "来源检索", "待复核"],
+        data_sources: ["AI", "Web Search"]
       },
       null,
       2

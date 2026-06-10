@@ -1159,3 +1159,30 @@
 - 不改变 AI 生成、Markdown 预览、图表预览、下载、交易日校验、任务取消 / 重排和历史补生成能力。
 - 不读取 Documents、Storage、cookie、signed URL、Access Requests、Access Grants；不保存外部 API key，不打印 AI key、runner secret 或 Supabase key。
 - 不修改 Resume、Career、Calendar、Documents、Profile、Storage、RLS 或旧 migrations。
+
+## 2026-06-11 - Add Web Grounding To AI Market Brief Generation
+
+类型：decision
+
+决策：
+
+- Phase 2M-C 不新增 migration，继续复用 `market_briefs.source_snapshot` 和 `market_brief_generation_jobs.source_snapshot` 保存检索来源、结构化事实和图表数据。
+- 新增 `src/lib/market-brief-search.ts`，通过 `MARKET_BRIEF_SEARCH_PROVIDER` 抽象搜索服务，支持 `disabled | tavily | serper | custom`；推荐第一版配置 `MARKET_BRIEF_SEARCH_PROVIDER=tavily` 和 `MARKET_BRIEF_SEARCH_API_KEY`。
+- 新增 `src/lib/market-brief-grounding.ts`，在 AI prompt 前生成日期 / 市场相关 queries、去重 sources、warnings 和 source notes。
+- AI prompt 改为只允许基于 sources 生成报告；所有精确数字必须能对应到 source id，charts 的每条 data 必须包含 `source_ids`。
+- `source_snapshot` 增强为 `{ meta, sources, extracted_facts, charts }` 结构；preview 页展示来源列表，图表卡片展示来源编号。
+- 如果搜索服务未配置，生成任务直接 failed，错误信息为“未配置市场简报搜索服务，请配置 MARKET_BRIEF_SEARCH_PROVIDER 和 MARKET_BRIEF_SEARCH_API_KEY。”；不继续生成空模板。
+- 如果搜索服务已配置但没有返回 sources，允许生成 `ai_unverified` 草稿，但必须明确说明没有检索到可靠来源。
+
+原因：
+
+- 裸 AI 生成缺少可验证行情、新闻和行业来源，容易产出大量“未能可靠确认”的空模板。
+- 市场简报需要来源、结构化事实和图表之间有可追溯关系，后续才能做人工复核、下载和归档。
+- 搜索 Provider 抽象能避免把单一服务写死在业务逻辑中，后续可替换为授权数据供应商或更可靠 web search。
+
+影响：
+
+- 生产环境除 AI Provider 外，还需要配置 `MARKET_BRIEF_SEARCH_PROVIDER` 和 `MARKET_BRIEF_SEARCH_API_KEY` 才能生成 grounded 市场简报。
+- 不保存搜索 API key、请求头、cookie 或敏感信息；页面只展示来源标题、URL、发布方、摘要和 source id。
+- 不接 AkShare、东方财富、Tushare，不恢复 Python runner 主流程，不做股票推荐或投资建议。
+- 不修改 Resume、Career、Calendar、Documents、Profile、Storage、RLS 或旧 migrations。
