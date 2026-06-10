@@ -44,8 +44,22 @@ export async function POST(request: Request) {
       runner_name: job.runner_name,
       request_payload: job.request_payload
     });
-  } catch {
-    return NextResponse.json({ error: "Failed to claim market brief generation job." }, { status: 500 });
+  } catch (error) {
+    const claimFailedAt = new Date().toISOString();
+    console.error("marketBrief.claimApi.failed", {
+      claim_failed_at: claimFailedAt,
+      market: market ?? null,
+      runner_name: runnerName,
+      error: getSafeErrorLog(error)
+    });
+
+    return NextResponse.json(
+      {
+        error: "Failed to claim market brief generation job.",
+        claim_failed_at: claimFailedAt
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -55,4 +69,17 @@ function getOptionalText(value: unknown) {
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function getSafeErrorLog(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message
+    };
+  }
+
+  return {
+    message: "Unknown error"
+  };
 }
