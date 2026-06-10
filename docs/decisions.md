@@ -1186,3 +1186,27 @@
 - 不保存搜索 API key、请求头、cookie 或敏感信息；页面只展示来源标题、URL、发布方、摘要和 source id。
 - 不接 AkShare、东方财富、Tushare，不恢复 Python runner 主流程，不做股票推荐或投资建议。
 - 不修改 Resume、Career、Calendar、Documents、Profile、Storage、RLS 或旧 migrations。
+
+## 2026-06-11 - Add AI Market Brief Generation Progress UX
+
+类型：decision
+
+决策：
+
+- Phase 2M-D 不新增 migration，继续复用 `market_brief_generation_jobs.request_payload`，在其中写入 `progress` 对象记录阶段、百分比、提示文案和更新时间。
+- 今日生成和历史生成按钮在 AI-first 模式下只创建 queued job，然后跳转 `/dashboard/market-briefs/jobs/[id]?auto_generate=1`。
+- 任务详情页新增客户端进度面板；进入页面后调用 `POST /api/market-briefs/jobs/[id]/generate-ai` 启动 AI 生成，并通过 `GET /api/market-briefs/jobs/[id]/status` 每 1.5 秒轮询状态。
+- 进度阶段统一为 queued、validating、preparing、searching、analyzing、writing、charting、saving、succeeded、failed、cancelled；成功后自动跳转生成的市场简报预览页。
+- 任务列表页展示当前阶段、百分比和“查看进度”入口；取消和重新排队继续复用现有任务状态流转，并同步更新 progress。
+
+原因：
+
+- AI-first + web grounding 生成可能需要较长时间，按钮点击后直接等待会让后台体验像“卡住”。
+- 将生成流程显式拆成任务状态页，可以让管理员看到 AI 正在检索、整理、写作、保存，并能在失败或取消时继续手动处理。
+
+影响：
+
+- 生成 API 和状态 API 均要求管理员登录，不返回 AI key、搜索 key、Supabase key、Auth UUID、request header 或 service role 信息。
+- `failed` / `cancelled` 任务不会继续轮询；`succeeded` 任务展示预览跳转。
+- 本阶段不改变 `market_briefs` 或 `market_brief_generation_jobs` 表结构，不改 RLS，不恢复 external / Python runner 主流程。
+- 不影响 Resume、Career、Calendar、Documents、Profile 或公开页面。

@@ -10,6 +10,8 @@ import { getMarketBriefJobStatusLabel, marketBriefJobStatuses } from "@/lib/cont
 import type { MarketBriefGenerationJobRecord } from "@/lib/content-types";
 import { formatDate, formatDateTime, formatRelative } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
+import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
+import { getMarketBriefJobProgressFromPayload } from "@/lib/market-brief-job-progress";
 import { getMarketBriefJobStatusTone } from "@/lib/market-briefs";
 import { getMarketBriefGenerationJobFilterOptions, getMarketBriefGenerationJobs } from "@/lib/queries/market-brief-jobs";
 
@@ -111,6 +113,8 @@ export default async function MarketBriefJobsPage({ searchParams }: { searchPara
 }
 
 function MarketBriefJobRow({ job }: { job: MarketBriefGenerationJobRecord }) {
+  const progress = getMarketBriefJobProgressFromPayload(job.request_payload, getFallbackProgressStage(job.status));
+
   return (
     <tr className="align-top text-slate-700">
       <td className="whitespace-nowrap px-3 py-4">{formatDate(job.brief_date)}</td>
@@ -123,7 +127,23 @@ function MarketBriefJobRow({ job }: { job: MarketBriefGenerationJobRecord }) {
       </td>
       <td className="whitespace-nowrap px-3 py-4">{job.market}</td>
       <td className="whitespace-nowrap px-3 py-4">
-        <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
+        <div className="space-y-2">
+          <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
+          <div className="min-w-36">
+            <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500">
+              <span>{progress.message}</span>
+              <span className="tabular-nums">{progress.percent}%</span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div className={`h-full rounded-full ${getProgressBarClassName(job.status)}`} style={{ width: `${progress.percent}%` }} />
+            </div>
+          </div>
+          {job.status === "running" || job.status === "queued" ? (
+            <Link href={`/dashboard/market-briefs/jobs/${job.id}${job.status === "queued" ? "?auto_generate=1" : ""}`} className="text-xs font-semibold text-blue-700 hover:text-blue-800">
+              查看进度
+            </Link>
+          ) : null}
+        </div>
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-slate-500">{getGeneratorDisplayName(job)}</td>
       <td className="px-3 py-4">
@@ -197,6 +217,21 @@ function NoticeBanner({ message }: { message: string }) {
 
 function getSearchValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function getFallbackProgressStage(status: string): MarketBriefJobProgressStage {
+  if (status === "running") return "preparing";
+  if (status === "succeeded") return "succeeded";
+  if (status === "failed") return "failed";
+  if (status === "cancelled") return "cancelled";
+  return "queued";
+}
+
+function getProgressBarClassName(status: string) {
+  if (status === "failed") return "bg-rose-500";
+  if (status === "cancelled") return "bg-slate-400";
+  if (status === "succeeded") return "bg-emerald-500";
+  return "bg-blue-600";
 }
 
 function isHistoricalJob(job: MarketBriefGenerationJobRecord) {

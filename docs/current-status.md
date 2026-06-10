@@ -54,7 +54,7 @@
 - Access Grants 授权管理基础。
 - Profile 个人公开信息编辑基础。
 - Calendar 站内日程 CRUD。
-- Market Briefs 市场简报后台手工 CRUD、AI-first + web grounding 生成、Markdown 主内容、站内来源 / 图表预览、多格式下载、历史交易日补生成与生成任务记录。
+- Market Briefs 市场简报后台手工 CRUD、AI-first + web grounding 生成、任务进度动画、Markdown 主内容、站内来源 / 图表预览、多格式下载、历史交易日补生成与生成任务记录。
 - Resume 履历素材库基础 CRUD。
 - Resume 简历版本组合与后台预览。
 - Resume 分区式素材管理、A4 中文简历模板化预览与浏览器打印 PDF。
@@ -182,6 +182,8 @@ Phase 2L-D-B 不新增 migration，继续复用 0015 的 `market_brief_generatio
 
 Phase 2L-D-C 不新增 migration，曾新增 `scripts/market-brief-runner/python/` 作为旧数据源实验路径。Phase 2M-B 后，该 Python runner 仅保留为 deprecated 历史诊断与兼容资料，不再作为推荐生成方式。
 
+Phase 2M-D 不新增 migration，继续复用 `market_brief_generation_jobs.request_payload.progress` 保存 AI 生成阶段、百分比和进度文案。
+
 规则：
 
 - 已执行过的 migration 不应修改。
@@ -247,8 +249,11 @@ Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行�
 - Phase 2M-A：AI-first Market Brief Generator / 停用推荐旧数据抓取主流程，服务端 AI 生成固定模板 Markdown、structured JSON、source snapshot 和预览图表。
 - Phase 2M-B：Clean legacy market data runner path / 后台主流程与文档全面收口为 AI-first，旧 external / Python 数据源 runner 仅保留 deprecated 兼容与历史诊断说明。
 - Phase 2M-C：AI Web Search Grounding / 生成前检索公开来源，AI 基于 sources 生成 Markdown、structured JSON 和 charts，preview 展示来源列表。
+- Phase 2M-D：AI Generation Progress UX / 生成按钮创建任务后进入任务详情页，前端启动 AI 生成、轮询任务状态、展示进度动画，并在成功后自动跳转预览页。
 
 Phase 2K-A 当前新增 `resume_items` 数据模型和后台 `/dashboard/resume` 管理入口。Phase 2K-B 新增 `resume_versions`、`resume_version_items` 和 `/dashboard/resume/versions` 管理入口，用于组合素材、排序、分区和后台预览。Phase 2K-C 进一步补充 `resume_items.details`、`resume_versions.profile_fields`、`resume_versions.section_order`、`resume_versions.template_options` 和 `resume_version_items.visible_fields`，把素材库从混合条目列表升级为按个人信息、教育、实习、在校、项目、研究、技能等区块维护，并将预览页调整为更接近上传 PDF 的中文 A4 简历排版。Phase 2K-D 新增基于规则的简历质量检查，检查姓名、联系方式、教育、实习、项目/研究、技能、目标岗位、bullet 数量、量化表达和一页过长风险。Phase 2K-E 新增 `/dashboard/resume/versions/[id]/jd-review`，管理员可粘贴目标岗位 JD 并获取 AI 生成的匹配摘要、关键词差距、经历强化建议和 bullet 改写草稿；该能力通过 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 支持 DeepSeek 等 OpenAI-compatible Provider，并继续兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`。Hotfix 新增 `src/lib/resume-ai-input.ts`，复用 `resume-template-model` 生成 AI JD 输入和页面“版本内容概览”，避免教育、实习、项目、研究、技能等结构化字段被旧摘要逻辑漏掉；AI JD 分析只发送当前版本已选且可见的 Profile/basic 与正文素材、目标岗位设置和 JD，不发送 Documents、Storage 路径、signed URL、Access Requests 或 Access Grants，也不会自动覆盖原始简历数据。Phase 2K-F 新增 `/dashboard/resume/versions/[id]/export/docx`，管理员可即时下载 Word `.docx` 简历；导出只包含当前版本已选并展示的素材，尊重顶部个人字段开关和逐条素材可见字段，不写入 Storage、不创建长期下载链接、不新增 migration。Phase 2K-G 新增统一 `resume-template-model`，让 A4 Preview 和 Word 导出共享同一套 20260523 风格模板结构，包括照片位置、模块标题视觉符号、左侧时间列、右侧学校/公司/项目内容和正式简历条目布局。Phase 2K-H 新增 `/dashboard/resume/jd-reviews`，管理员可以保存 AI JD 分析结果、公司/岗位、关键词缺口、风险、下一步行动和投递状态，并在简历版本详情页查看最近记录；分析历史为后台私密数据，不自动修改 Resume Items 或 Resume Versions。Phase 2K-I 新增 `/dashboard/resume/applications` 投递看板，基于 `resume_jd_reviews.application_status` 按状态分组展示求职 pipeline，提供看板视图、列表视图、公司/岗位搜索、状态/版本/方向/渠道筛选、快速改状态和投递统计；该页面仍为后台私密数据，不展示 JD 原文，不自动投递，不发送邮件，不读取 Documents / Storage，不新增 migration。Phase 2K-J 新增 `/dashboard/career` 求职中心首页，侧边栏只保留一个“求职中心”入口，并通过统一 Career tabs 进入 `/dashboard/resume`、`/dashboard/resume/versions`、`/dashboard/resume/applications` 和 `/dashboard/resume/jd-reviews`；原有子模块路径保持兼容，不新增 migration。Phase 2L-A 新增 `market_briefs` 表和 `/dashboard/market-briefs` 后台模块，支持手工新建、编辑、详情、删除、搜索筛选、状态/市场/标签管理和 Dashboard 最近简报。Phase 2L-B 新增 `markdown_content`、`generation_status`、`generated_at`、`generator_name`、`source_snapshot` 和 `artifact_files` 字段，市场简报以 Markdown 为主内容源，支持 `/dashboard/market-briefs/[id]/preview` 站内预览、Markdown / HTML / JSON / Word 即时下载和浏览器打印 / 保存 PDF。Phase 2L-C 在 `/dashboard/market-briefs` 新增“获取今日市场动态”按钮，曾先以 `manual-skill-mock` 验证生成闭环。Phase 2L-D-A 至 2L-D-E 建立 `market_brief_generation_jobs`、任务列表 / 详情、任务取消 / 重排、今日与历史 A 股交易日校验，并沉淀旧 external 兼容协议和 Python 数据源实验。Phase 2M-A 将主生成链路切换为 AI-first：`MARKET_BRIEF_GENERATOR=ai` 为默认推荐，点击今日或历史交易日生成会创建 generation job，并在服务端调用 OpenAI-compatible AI Provider，输出固定模板 Markdown、structured JSON、`source_snapshot` 和 charts。Phase 2M-B 进一步清理后台页面和推荐文档中的旧 external / runner / 数据抓取主流程表达；旧 external 兼容接口、Node mock 脚本和 Python 数据源 runner 仅保留为 deprecated 历史诊断资料，不再作为推荐市场简报生成方式。Phase 2M-C 新增 web search grounding：AI 生成前先按日期和市场检索公开来源，`source_snapshot.sources` 保存去重后的来源，`source_snapshot.extracted_facts` 和 `source_snapshot.charts` 保存结构化事实与图表；预览页展示正文、检索来源和图表，图表数据项需要 `source_ids` 才会渲染。若 `MARKET_BRIEF_SEARCH_PROVIDER` 或 `MARKET_BRIEF_SEARCH_API_KEY` 未配置，生成任务会失败并提示配置搜索服务，避免继续生成空模板。当前不做行情接口抓取、新闻爬虫、邮件发送、Notion 同步、定时任务、公开简报页、股票推荐或投资建议。
+
+Phase 2M-D 后，市场简报 AI 生成改为更明确的进度页体验：今日或历史生成先创建 queued job 并进入 `/dashboard/market-briefs/jobs/[id]`，客户端启动 AI 生成、轮询状态 API，展示 queued / validating / preparing / searching / analyzing / writing / charting / saving / succeeded / failed / cancelled 等阶段。生成成功后自动跳转预览页；失败、取消和重新排队继续复用现有任务状态流转。
 
 ### Phase 2L - 自动化与市场简报
 

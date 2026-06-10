@@ -3,6 +3,7 @@ import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider
 import type { MarketBriefGroundingContext } from "@/lib/market-brief-grounding";
 import { buildGroundingSourceSnapshotBase, buildMarketBriefGroundingContext } from "@/lib/market-brief-grounding";
 import { buildMarketBriefAiPrompt } from "@/lib/market-brief-ai-prompt";
+import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
 import type { MarketBriefSearchSource } from "@/lib/market-brief-search";
 
 export type MarketBriefGenerationInput = {
@@ -10,6 +11,7 @@ export type MarketBriefGenerationInput = {
   briefDate: string;
   runnerName?: string;
   isHistorical?: boolean;
+  onProgress?: (stage: MarketBriefJobProgressStage, message?: string) => Promise<void> | void;
 };
 
 export type GeneratedMarketBrief = {
@@ -51,11 +53,13 @@ export async function generateMarketBriefDraft(input: MarketBriefGenerationInput
 }
 
 async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise<GeneratedMarketBrief> {
+  await input.onProgress?.("searching", "正在检索公开市场信息...");
   const grounding = await buildMarketBriefGroundingContext({
     market: input.market,
     briefDate: input.briefDate,
     isHistorical: Boolean(input.isHistorical)
   });
+  await input.onProgress?.("analyzing", "正在整理市场信息与来源...");
   const aiConfig = getAiProviderConfig();
   const providerLabel = getAiProviderDisplayName(aiConfig.provider);
 
@@ -67,6 +71,7 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
     apiKey: aiConfig.apiKey,
     baseURL: aiConfig.baseURL
   });
+  await input.onProgress?.("writing", "正在生成市场简报正文...");
   const prompt = buildMarketBriefAiPrompt({
     market: input.market,
     briefDate: input.briefDate,
@@ -94,6 +99,7 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
   }
 
   const parsed = parseAiJson(content);
+  await input.onProgress?.("charting", "正在生成图表数据...");
   const normalized = normalizeAiMarketBriefOutput(parsed, {
     market: input.market,
     briefDate: input.briefDate,
