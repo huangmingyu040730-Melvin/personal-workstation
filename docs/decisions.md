@@ -731,6 +731,10 @@
 - 不发送 Documents、Storage 路径、signed URL、Access Requests、Access Grants、管理员邮箱、Auth UUID 或密钥给 AI。
 - 本阶段不修改 RLS、Storage、Documents、Viewer、restricted、Calendar、Profile、Resume 主数据结构或旧 migration。
 
+替代 / 更新：
+
+- 2026-06-10 Phase 2K-H 在验证单次分析体验后，新增后台私密 JD 分析历史和投递状态记录。2K-E 的“不保存分析历史”只适用于当时的首版 AI 建议能力。
+
 ## 2026-06-10 - Generate Resume Word Files On Demand
 
 类型：decision
@@ -778,3 +782,28 @@
 - Word 导出补充照片占位、模块视觉符号和左右列经历布局。
 - 字段可见性仍由 `resume_versions.profile_fields` 和 `resume_version_items.visible_fields` 控制。
 - 相关技能按正式条目展示，不做标签墙。
+
+## 2026-06-10 - Store JD Reviews As Private Application Records
+
+类型：decision
+
+决策：
+
+- Phase 2K-H 新增 `resume_jd_reviews` 表，用于保存某次 JD 分析、目标公司/岗位、AI 结构化建议、关键词缺口、风险、下一步行动和投递状态。
+- `/dashboard/resume/jd-reviews` 作为后台私密列表；`/dashboard/resume/jd-reviews/[id]` 作为详情和状态维护页。
+- `/dashboard/resume/versions/[id]/jd-review` 在 AI 分析结果后提供保存表单，但保存记录不会自动写回 Resume Items 或 Resume Versions。
+- 简历版本详情页展示最近 3 条 JD 分析记录，并链接到完整历史。
+- 本阶段新增 `supabase/migrations/0012_resume_jd_reviews.sql`；不修改已执行过的 0001-0011。
+
+原因：
+
+- AI JD 建议如果只停留在当前页面，无法沉淀不同公司、岗位和投递阶段的判断。
+- 投递记录属于后台私密运营数据，不应公开展示，也不应进入 sitemap、公开页面或 viewer 链路。
+- 将 AI 建议保存为记录而不是直接改写素材，可以保留人工复核边界，避免 AI 自动覆盖真实经历。
+
+影响：
+
+- 管理员可按状态、公司、岗位或简历版本筛选 JD 分析历史。
+- 记录保存 JD 原文、AI JSON、匹配/缺失关键词、风险和下一步行动。
+- RLS 继续通过 `public.is_admin()` 限定管理员管理；不向 anon、viewer 或普通外部用户开放。
+- 不读取 Documents、Storage、signed URL、Access Requests、Access Grants、viewer/restricted 数据或未选择的 Resume Items。

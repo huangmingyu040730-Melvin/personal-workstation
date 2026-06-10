@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Eye, FileDown, Layers3, Sparkles } from "lucide-react";
+import { Eye, FileDown, FileSearch, Layers3, Sparkles } from "lucide-react";
 import { deleteResumeVersionAction } from "@/actions/resume";
 import { AppShell } from "@/components/app-shell";
 import { AdminDangerZone, AdminPageSurface } from "@/components/admin-ui";
@@ -15,8 +15,10 @@ import { formatDateTime, formatRelative } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
+import { getRecentResumeJdReviewsForVersion } from "@/lib/queries/resume-jd-reviews";
 import { getResumeItems, getResumeVersionWithItems } from "@/lib/queries/resume";
 import { getResumeItemDisplay } from "@/lib/resume-display";
+import { getResumeJdReviewStatusLabel, getResumeJdReviewStatusTone } from "@/lib/resume-jd-review-options";
 import { analyzeResumeVersionQuality, getTargetKeywords } from "@/lib/resume-quality";
 
 const sectionOrder: ResumeSectionKey[] = ["summary", "education", "experience", "projects", "research", "skills", "certifications", "awards", "other"];
@@ -29,10 +31,11 @@ export default async function ResumeVersionDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const [version, publicProfile, basicItems] = await Promise.all([
+  const [version, publicProfile, basicItems, recentJdReviews] = await Promise.all([
     getResumeVersionWithItems(id),
     getPublicProfile(),
-    getResumeItems({ itemType: "basic", visibility: "all" })
+    getResumeItems({ itemType: "basic", visibility: "all" }),
+    getRecentResumeJdReviewsForVersion(id)
   ]);
 
   if (!version) {
@@ -68,6 +71,10 @@ export default async function ResumeVersionDetailPage({
               <Link href={`/dashboard/resume/versions/${version.id}/jd-review`} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
                 <Sparkles size={16} />
                 AI JD 优化
+              </Link>
+              <Link href={`/dashboard/resume/jd-reviews?versionId=${version.id}`} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+                <FileSearch size={16} />
+                JD 记录
               </Link>
               <Link href={`/dashboard/resume/versions/${version.id}/edit`} className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">编辑</Link>
               <Link href="/dashboard/resume/versions" className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">返回版本列表</Link>
@@ -158,6 +165,34 @@ export default async function ResumeVersionDetailPage({
             <Card>
               <CardHeader title="内部备注" action={<Layers3 size={18} className="text-blue-700" />} />
               <MarkdownPreview content={version.notes} emptyText="暂无内部备注。" />
+            </Card>
+
+            <Card>
+              <CardHeader
+                title="最近 JD 分析"
+                description="最近保存的岗位匹配分析和投递状态。"
+                action={<Link href={`/dashboard/resume/jd-reviews?versionId=${version.id}`} className="text-xs font-semibold text-blue-700 hover:text-blue-800">查看全部</Link>}
+              />
+              {recentJdReviews.length > 0 ? (
+                <div className="space-y-3">
+                  {recentJdReviews.map((review) => (
+                    <Link key={review.id} href={`/dashboard/resume/jd-reviews/${review.id}`} className="block rounded-2xl border border-slate-100 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-950">{review.job_title || "未命名岗位"}</p>
+                          <p className="mt-1 text-xs text-slate-500">{review.company_name || "未填写公司"} · {formatRelative(review.created_at)}</p>
+                        </div>
+                        <Badge className={getResumeJdReviewStatusTone(review.application_status)}>{getResumeJdReviewStatusLabel(review.application_status)}</Badge>
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{review.match_summary || review.next_actions[0] || "暂无摘要。"}</p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-500">
+                  暂无 JD 分析记录。完成一次 AI JD 优化后，可以保存为投递记录。
+                </div>
+              )}
             </Card>
           </div>
         </div>
