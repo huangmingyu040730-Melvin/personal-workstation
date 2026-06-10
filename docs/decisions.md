@@ -735,6 +735,34 @@
 
 - 2026-06-10 Phase 2K-H 在验证单次分析体验后，新增后台私密 JD 分析历史和投递状态记录。2K-E 的“不保存分析历史”只适用于当时的首版 AI 建议能力。
 
+## 2026-06-10 - Support Configurable AI Provider For JD Review
+
+类型：decision
+
+决策：
+
+- AI JD 简历优化不再直接读取 `OPENAI_API_KEY` / `OPENAI_MODEL`。
+- 新增 `src/lib/ai-provider.ts`，统一解析 AI Provider 配置。
+- 优先使用通用环境变量：`AI_PROVIDER`、`AI_API_KEY`、`AI_BASE_URL`、`AI_MODEL`。
+- 继续兼容旧环境变量：`OPENAI_API_KEY`、`OPENAI_MODEL`。
+- `AI_PROVIDER=deepseek` 时默认 `AI_BASE_URL=https://api.deepseek.com`，默认 `AI_MODEL=deepseek-v4-flash`。
+- `AI_PROVIDER=openai` 或旧 OpenAI 环境变量时，继续使用项目既有 OpenAI 默认模型。
+- 未配置任何 API Key 时，页面和 Server Action 显示中文配置提示，不崩溃。
+- 本次 hotfix 不新增 migration，不修改 Resume 主数据结构，不影响 JD Review History、Word 导出、Profile、Calendar、Documents 或 Viewer。
+
+原因：
+
+- DeepSeek 等服务支持 OpenAI-compatible 调用，可以通过 `baseURL` 与模型名复用同一套 AI JD 分析流程。
+- 将 provider 配置抽到独立 helper，可以避免后续在业务 Server Action 中散落不同厂商的环境变量判断。
+- 保留旧 OpenAI 环境变量能保证已部署环境不被破坏。
+
+影响：
+
+- AI JD 分析继续只在 Server Action 中读取 API Key，API Key 不传到客户端、不写进 HTML、不写入日志。
+- AI 输入仍只包含当前简历版本已选择展示的素材、目标岗位设置和管理员粘贴的 JD。
+- 不发送 Documents、Storage 路径、signed URL、Access Requests、Access Grants、管理员邮箱、Auth UUID 或密钥。
+- AI 输出仍是建议和分析，不自动写回 Resume Items 或 Resume Versions。
+
 ## 2026-06-10 - Generate Resume Word Files On Demand
 
 类型：decision
