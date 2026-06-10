@@ -1048,3 +1048,31 @@
 - `SUPABASE_SERVICE_ROLE_KEY` 仍只允许服务端 API route 使用，不进入客户端 bundle、日志或仓库；外部 runner 脚本不需要 Supabase key。
 - 本阶段不做真实 AkShare、Tushare、Wind、新闻爬虫、AI 自动生成、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
+
+## 2026-06-10 - Add First Real Market Data Runner
+
+类型：decision
+
+决策：
+
+- Phase 2L-D-C 不新增 migration，不修改网站数据库结构，不修改 market brief 或 generation job 表结构。
+- 在 `scripts/market-brief-runner/python/` 新增 Python AkShare runner，包括 `run_market_brief_runner.py`、`market_data_sources.py`、`market_brief_writer.py`、`requirements.txt`、README 和 sample source snapshot。
+- Python runner 读取 `WORKSTATION_BASE_URL`、`MARKET_BRIEF_RUNNER_SECRET`、`MARKET_BRIEF_MARKET`、`MARKET_BRIEF_RUNNER_NAME` 和 `MARKET_BRIEF_DATA_MODE`，默认 `A股`、`akshare-runner` 和 `akshare`。
+- 数据源第一版尝试抓取宽基指数、A 股市场宽度、行业板块涨跌榜和行业 / 概念涨幅榜生成的热点方向。
+- `source_snapshot` 固定包含 `meta`、`indices`、`market_breadth`、`styles`、`sectors`、`hot_topics`、`capital_flows`、`policy_news` 和 `risk_signals`。
+- 单个 AkShare 接口失败时记录到 `source_snapshot.meta.warnings`，其余模块继续生成；若领取任务后完全没有核心指数、宽度或板块数据，则调用 fail API 标记任务失败。
+- Markdown 由 `market_brief_writer.py` 根据真实数据生成，包含摘要、市场概览、宽基指数、市场宽度、行业板块、热点、资金流向、风险提示、明日关注和数据来源，并明确“不构成投资建议”。
+
+原因：
+
+- 在保留 external runner 协议的前提下，先接入第一版真实 A 股基础行情数据，验证 source snapshot 和 Markdown artifact 能承载真实数据。
+- AkShare 接口可能受网络、版本和数据源变化影响，因此数据层采用模块级 try/except 和 warning 机制，而不是让单个接口失败拖垮整个任务。
+- 当前阶段先做行情基础数据，不引入新闻爬虫、AI 成稿、邮件、Notion 或定时任务，避免在数据质量尚未稳定时扩大系统复杂度。
+
+影响：
+
+- 无需执行 SQL；生产环境仍只要求已执行到 `0015_market_brief_generation_jobs.sql`。
+- 不改网站 API、预览、下载或后台页面，继续复用 claim/result/fail。
+- Python runner 不需要 Supabase key，只通过 `WORKSTATION_BASE_URL` 和 `MARKET_BRIEF_RUNNER_SECRET` 调网站私有 API；不读取 Documents、Storage、cookie、浏览器会话或 signed URL。
+- 本阶段不做 AI 自动成稿、DeepSeek/OpenAI 调用、新闻爬虫、邮件发送、Notion 同步、GitHub Actions、n8n、后端 PDF、复杂图表、股票推荐、个股买卖建议或投资建议。
+- 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
