@@ -13,8 +13,14 @@ import { getMarketBriefGenerationStatusTone } from "@/lib/market-briefs";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getMarketBriefById } from "@/lib/queries/market-briefs";
 
-export default async function MarketBriefPreviewPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function MarketBriefPreviewPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const brief = await getMarketBriefById(id);
 
   if (!brief) {
@@ -22,6 +28,7 @@ export default async function MarketBriefPreviewPage({ params }: { params: Promi
   }
 
   const markdown = buildMarketBriefMarkdown(brief);
+  const notice = Array.isArray(query.notice) ? query.notice[0] : query.notice;
 
   return (
     <AppShell>
@@ -65,6 +72,10 @@ export default async function MarketBriefPreviewPage({ params }: { params: Promi
           <AdminSecurityNote>
             这是后台私密预览页，仅管理员可访问。下载文件即时生成，不写入 Storage，不创建公开下载链接，不调用 AI。
           </AdminSecurityNote>
+
+          {notice === "generated" ? <PreviewNotice tone="emerald" message="今日市场简报草稿已生成。当前使用 mock generator，尚未接入真实行情数据。" /> : null}
+          {notice === "exists" ? <PreviewNotice tone="blue" message="今日市场简报已存在，已跳转到已有预览页，未重复创建。" /> : null}
+          {brief.generator_name === "manual-skill-mock" ? <PreviewNotice tone="slate" message="本简报由 manual-skill-mock 生成，当前尚未接入真实行情数据。" /> : null}
         </div>
 
         <div className="market-brief-paper-wrap">
@@ -81,4 +92,14 @@ export default async function MarketBriefPreviewPage({ params }: { params: Promi
       </AdminPageSurface>
     </AppShell>
   );
+}
+
+function PreviewNotice({ message, tone }: { message: string; tone: "blue" | "emerald" | "slate" }) {
+  const className = {
+    blue: "border-blue-200 bg-blue-50 text-blue-700",
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    slate: "border-slate-200 bg-white text-slate-600"
+  }[tone];
+
+  return <div className={`rounded-2xl border px-4 py-3 text-sm ${className}`}>{message}</div>;
 }

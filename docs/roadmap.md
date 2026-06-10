@@ -179,11 +179,12 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 
 - Phase 2L-A：Market Briefs / 市场简报后台管理，新增 `market_briefs` 表和 `/dashboard/market-briefs` 手工 CRUD，支持日期、市场、状态、标签、数据来源、摘要和模块化正文，并在 Dashboard 展示最近 3 条。
 - Phase 2L-B：Market Brief artifact / 文件化与站内预览，新增 Markdown 主内容、生成状态和 artifact 元数据字段，支持 `/dashboard/market-briefs/[id]/preview`、Markdown / HTML / JSON / Word 即时下载和浏览器打印 / 保存 PDF。
-- Phase 2L-C 可继续设计“获取今日市场动态”按钮和 Skill 调用，把手工录入流程逐步升级为可审核的自动生成流程。
+- Phase 2L-C：新增“获取今日市场动态”按钮，当前使用 `manual-skill-mock` 生成器创建今日 A 股 Markdown 草稿并保存到 `market_briefs`；若今日同市场简报已存在则跳转已有预览页，不重复创建。
+- Phase 2L-D 可继续接入 AkShare / Tushare / 新闻源 / Skill，把 mock 生成替换为可审核的真实数据生成流程。
 - 后续：每日 A 股市场收评自动生成。
 - 后续：AkShare / Tushare / Wind 等数据源接入。
 - 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。
-- 当前 2L-B 不做自动抓取、AI、邮件、Notion、公开市场简报页、图表、股票推荐或投资建议。
+- 当前 2L-C 不做真实抓取、AI、邮件、Notion、公开市场简报页、图表、股票推荐或投资建议。
 
 ### Phase 2L - Notion / Google Calendar / AI 辅助研究
 
