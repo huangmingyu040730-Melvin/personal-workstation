@@ -54,7 +54,7 @@ export function MarketBriefForm({
             <Textarea name="tags" defaultValue={marketBriefArrayToText(brief?.tags)} placeholder="A股、市场收评、量化观察" className="min-h-24" />
           </Field>
           <Field label="数据来源" hint="仅记录来源名称或公开链接说明，不保存 API Key。">
-            <Textarea name="data_sources" defaultValue={marketBriefArrayToText(brief?.data_sources)} placeholder="东方财富、交易所公告、指数公司公开数据" className="min-h-24" />
+            <Textarea name="data_sources" defaultValue={marketBriefArrayToText(brief?.data_sources)} placeholder="交易所公告、指数公司公开数据、人工复核来源" className="min-h-24" />
           </Field>
         </div>
       </AdminFormSection>

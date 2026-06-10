@@ -1,15 +1,27 @@
-# Market Brief External Runner
+# Deprecated Market Brief External Runner
 
-This folder contains external runner examples for Market Brief generation.
+> Deprecated: Market Brief generation is now AI-first in the web app. This folder remains only for historical diagnostics and compatibility tests. It is not the recommended generation path.
+
+This folder contains deprecated external runner examples for Market Brief generation.
 
 The runner communicates only through private workstation API endpoints. It does not need a Supabase key.
 
-Available runners:
+Recommended current setup is the AI-first web app path:
+
+```bash
+MARKET_BRIEF_GENERATOR=ai
+AI_PROVIDER=deepseek
+AI_API_KEY="your_api_key"
+AI_BASE_URL="https://api.deepseek.com"
+AI_MODEL="deepseek-v4-flash"
+```
+
+Legacy runners kept here for diagnostics:
 
 - `run-market-brief-runner.mjs`: Node.js mock runner for API flow testing.
 - `python/run_market_brief_runner.py`: Python AkShare runner for first-version real A-share market data.
 
-## Environment
+## Legacy Environment
 
 ```bash
 export WORKSTATION_BASE_URL="http://localhost:3000"
@@ -20,7 +32,7 @@ export MARKET_BRIEF_RUNNER_NAME="external-skill-runner"
 
 `MARKET_BRIEF_RUNNER_SECRET` must match the server-side `MARKET_BRIEF_RUNNER_SECRET` configured on the workstation app. Do not commit real secrets.
 
-## Run Node Mock Runner
+## Run Node Mock Runner For Legacy Diagnostics
 
 ```bash
 node scripts/market-brief-runner/run-market-brief-runner.mjs
@@ -40,7 +52,7 @@ If generation fails, the script calls:
 POST /api/market-briefs/skill-jobs/fail
 ```
 
-## Run Python AkShare Runner
+## Run Deprecated Python Data Runner
 
 ```bash
 cd scripts/market-brief-runner/python

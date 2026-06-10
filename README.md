@@ -76,15 +76,17 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 不要提交 `.env.local`，不要在前端项目中放入 `service_role` key。
 
-如需启用市场简报外部 Skill Runner 回写接口，只在服务端环境配置：
+市场简报推荐使用 AI-first 生成，只在服务端环境配置：
 
 ```text
 MARKET_BRIEF_GENERATOR=ai
-MARKET_BRIEF_RUNNER_SECRET=your_runner_secret
-SUPABASE_SERVICE_ROLE_KEY=server_only_service_role_key
+AI_PROVIDER=deepseek
+AI_API_KEY=your_api_key
+AI_BASE_URL=https://api.deepseek.com
+AI_MODEL=deepseek-v4-flash
 ```
 
-`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`；`ai` 模式复用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 或旧 `OPENAI_API_KEY` / `OPENAI_MODEL`，在服务端生成固定模板 Markdown、structured JSON 和预览图表。`mock` 仅用于本地占位测试；`external` 为历史 Skill Runner 模式，会只创建 queued job 并等待外部 runner 回写。`MARKET_BRIEF_RUNNER_SECRET` 用于这些私有 runner API 鉴权；`SUPABASE_SERVICE_ROLE_KEY` 仅用于无用户会话的服务端回调写入，不得暴露到客户端、日志或仓库。普通后台页面仍使用登录管理员身份与 RLS。
+`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`；`ai` 模式复用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 或旧 `OPENAI_API_KEY` / `OPENAI_MODEL`，在服务端生成固定模板 Markdown、structured JSON 和预览图表。`mock` 仅用于本地占位测试。`MARKET_BRIEF_GENERATOR=external`、`MARKET_BRIEF_RUNNER_SECRET` 和旧 external / Python 数据源 runner 已废弃，仅保留为历史兼容和诊断路径，不再是推荐市场简报生成方式。普通后台页面继续使用登录管理员身份与 RLS。
 
 如需使用 AI JD 简历优化助手，推荐只在服务端环境配置通用 AI Provider：
 
@@ -204,7 +206,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
 - Calendar 已接入站内 `calendar_events` CRUD；管理员可在 `/dashboard/calendar` 新建、编辑、删除日程，Dashboard 会展示近期日程。
-- Market Briefs 已接入后台私密 `market_briefs` CRUD；管理员可在 `/dashboard/market-briefs` 手工维护每日市场收评，字段包括日期、标题、市场、状态、标签、数据来源和摘要 / 市场概览 / 指数表现 / 风格表现 / 行业板块 / 热点 / 资金流向 / 政策新闻 / 风险提示 / 明日关注等模块。Phase 2L-B 进一步增加 Markdown 主内容源、`/dashboard/market-briefs/[id]/preview` 站内预览、Markdown / HTML / JSON / Word 即时下载，以及浏览器打印 / 保存 PDF。Phase 2L-D-E 后，今日和历史生成都会在服务端校验 A 股交易日。Phase 2M-A 将主生成链路切换为 AI-first：点击“获取今日市场动态”或“生成指定日期市场简报”会创建 generation job，并在服务端调用 OpenAI-compatible AI Provider 生成固定模板 Markdown、structured JSON、`source_snapshot` 和图表数据；预览页会展示正文和图表，空图表显示“暂无可靠数据，需人工复核”。AkShare / multi-source Python runner 已 deprecated，仅保留为历史诊断和 fallback 实验。本阶段不做行情接口抓取、新闻爬虫、邮件发送、Notion 同步、定时任务、公开页面、股票推荐或投资建议。
+- Market Briefs 已接入后台私密 `market_briefs` CRUD；管理员可在 `/dashboard/market-briefs` 手工维护每日市场收评，字段包括日期、标题、市场、状态、标签、数据来源和摘要 / 市场概览 / 指数表现 / 风格表现 / 行业板块 / 热点 / 资金流向 / 政策新闻 / 风险提示 / 明日关注等模块。Phase 2L-B 进一步增加 Markdown 主内容源、`/dashboard/market-briefs/[id]/preview` 站内预览、Markdown / HTML / JSON / Word 即时下载，以及浏览器打印 / 保存 PDF。Phase 2L-D-E 后，今日和历史生成都会在服务端校验 A 股交易日。Phase 2M-A / 2M-B 后，主生成链路收口为 AI-first：点击“获取今日市场动态”或“生成指定日期市场简报”会创建 generation job，并在服务端调用 OpenAI-compatible AI Provider 生成固定模板 Markdown、structured JSON、`source_snapshot` 和图表数据；预览页会展示正文和图表，空图表显示“暂无可靠数据，需人工复核”。旧 external / Python 数据源 runner 已 deprecated，仅保留为历史诊断和兼容资料。本阶段不做行情接口抓取、新闻爬虫、邮件发送、Notion 同步、定时任务、公开页面、股票推荐或投资建议。
 - Resume 已接入履历素材库与版本组合；管理员可在 `/dashboard/career` 进入求职中心，并继续通过 `/dashboard/resume`、`/dashboard/resume/versions`、`/dashboard/resume/applications` 和 `/dashboard/resume/jd-reviews` 使用原有子模块路径。管理员可在 `/dashboard/resume` 按个人信息、教育、实习、在校、项目、研究、技能、证书和奖项等区块维护结构化素材，并在 `/dashboard/resume/versions` 组合不同简历版本。版本编辑页可选择进入简历顶部的个人字段，并为每条素材控制日期、机构、角色、摘要、bullets、技能和核心课程等字段是否展示。版本详情、列表和预览页提供规则化简历质量检查、完整度评分、缺失项和投递方向提示。Phase 2K-E 新增 AI JD 简历优化助手，可基于当前版本已选素材和管理员粘贴的 JD 生成关键词差距、经历强化和 bullet 改写建议；该能力支持 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 通用配置，可接入 DeepSeek 等 OpenAI-compatible Provider，并继续兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`。Hotfix 进一步将 AI JD 输入与页面“版本内容概览”统一到 `resume-template-model` 派生的 `resume-ai-input`，确保教育、实习、项目、研究和技能等可见字段与预览 / Word 导出的核心内容一致。AI JD 优化只生成建议，不自动写回 Resume Items 或 Resume Versions。Phase 2K-H 新增 JD 分析历史与投递记录，管理员可保存单次 AI JD 分析、公司/岗位信息、缺失关键词、风险、下一步行动和投递状态；该记录仍为后台私密数据，不公开展示。Phase 2K-I 新增 `/dashboard/resume/applications` 投递看板，基于 `resume_jd_reviews.application_status` 按草稿、已分析、准备投递、已投递、面试中、被拒、Offer 和已归档管理求职 pipeline，并支持列表筛选和快速改状态；本阶段不自动投递、不发送邮件、不公开记录，也不新增 migration。Phase 2K-J 新增 `/dashboard/career` 求职中心首页，将简历素材、简历版本、投递看板和 JD 分析记录收拢到一个侧边栏入口，并在子页面顶部提供统一 Career tabs；原有子模块路径保持不变。版本预览页提供贴近中文金融简历 PDF 的 A4 样式和浏览器打印 / 另存为 PDF 能力；Phase 2K-F 新增 Word `.docx` 即时导出，导出只读取当前版本已选素材、Profile/basic 信息和字段可见性设置，不写入 Storage，不创建公开简历页面或分享链接。Phase 2K-G 将 Preview 与 Word 导出统一到 20260523 风格模板模型，补充照片位置、模块标题视觉符号和左时间 / 右内容的正式简历布局。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化；管理后台 UI 已完成工作台式视觉优化。
 - Dashboard 已读取真实项目、笔记、Skill、Publications、Calendar 与 Activity Logs。
@@ -242,8 +244,8 @@ Viewer magic link 登录仍不稳定。Phase 2E-B 已实现 restricted 授权基
 - `resume_items`：Phase 2K-A 履历素材库记录，包括素材类型、标题、机构、角色、时间、bullet、skills、tags、关联对象、排序、可见性与精选标记。
 - `resume_versions` 与 `resume_version_items`：Phase 2K-B 简历版本与素材组合关系，记录版本标题、目标岗位、语言、模板、启用状态、已选素材、区块、排序和展示开关；Phase 2K-C 通过 0011 补充顶部个人字段开关、区块顺序、模板选项和逐条素材可见字段控制。
 - `resume_jd_reviews`：Phase 2K-H JD 分析历史与投递记录，保存关联简历版本、JD 原文、AI 结构化建议、关键词缺口、风险、下一步行动、公司/岗位和投递状态；Phase 2K-I 投递看板继续复用该表和 `application_status`，不新增表结构。
-- `market_briefs`：Phase 2L-A / 2L-B / 2L-C 市场简报后台记录，保存日期、标题、市场、状态、摘要、模块化正文、数据来源、标签、精选标记、Markdown 主内容、生成状态、生成时间、生成方式、source snapshot 和 artifact 文件元数据；当前仅管理员后台手工维护、mock / runner 生成、站内预览和即时下载，不公开展示。
-- `market_brief_generation_jobs`：Phase 2L-D-A 至 2M-A 市场简报生成任务记录，保存 owner、日期、市场、任务状态、runner 名称、request payload、source snapshot、result payload、关联 `market_brief_id`、错误信息和运行时间线；`request_payload.is_historical` 标记历史补生成，AI 生成结果的 structured JSON 和 charts 保存在 `source_snapshot` / `result_payload` 中，queued / running 会阻止重复任务，failed / cancelled 可重新创建或重新排队；仅管理员或 owner 可通过后台读取管理，anon/viewer/public 不可访问。
+- `market_briefs`：Phase 2L-A / 2L-B / 2L-C 市场简报后台记录，保存日期、标题、市场、状态、摘要、模块化正文、数据来源、标签、精选标记、Markdown 主内容、生成状态、生成时间、生成方式、source snapshot 和 artifact 文件元数据；当前仅管理员后台手工维护、AI 生成、站内预览和即时下载，不公开展示。
+- `market_brief_generation_jobs`：Phase 2L-D-A 至 2M-B 市场简报生成任务记录，保存 owner、日期、市场、任务状态、生成器名称（兼容字段 `runner_name`）、request payload、source snapshot、result payload、关联 `market_brief_id`、错误信息和运行时间线；`request_payload.is_historical` 标记历史补生成，AI 生成结果的 structured JSON 和 charts 保存在 `source_snapshot` / `result_payload` 中，queued / running 会阻止重复任务，failed / cancelled 可重新创建或重新排队；仅管理员或 owner 可通过后台读取管理，anon/viewer/public 不可访问。
 
 公开可读表 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 不保存管理员 Auth UUID。私密后台表 `calendar_events`、`documents`、`activity_logs`、`market_briefs` 可保留 `owner_id` 或 `actor_id` 用于后续审计。
 

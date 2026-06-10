@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Phase 2L-B 新增 Market Brief artifact / Markdown 主内容、站内预览和多格式下载。Phase 2L-D-A 新增 Market Brief generation jobs / Skill Runner 任务记录。Phase 2L-D-B 新增 external runner 模式和任务领取 / 失败回写接口。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、市场数据源和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Phase 2L-B 新增 Market Brief artifact / Markdown 主内容、站内预览和多格式下载。Phase 2L-D-A 新增 Market Brief generation jobs / 生成任务记录。Phase 2M-A / 2M-B 后市场简报主路线为 AI-first 生成，旧 external runner 路线仅保留为 deprecated 历史兼容。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -25,15 +25,17 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 - 不要把 `service_role` key 放入本仓库或前端运行时。
 - publishable key 会配合 RLS 使用，不能绕过数据库策略。
 
-市场简报外部 Skill Runner 回写接口需要额外的服务端环境变量：
+市场简报推荐使用 AI-first 生成，需要额外的服务端环境变量：
 
 ```text
-MARKET_BRIEF_GENERATOR=mock
-MARKET_BRIEF_RUNNER_SECRET=your_runner_secret
-SUPABASE_SERVICE_ROLE_KEY=server_only_service_role_key
+MARKET_BRIEF_GENERATOR=ai
+AI_PROVIDER=deepseek
+AI_API_KEY=your_api_key
+AI_BASE_URL=https://api.deepseek.com
+AI_MODEL=deepseek-v4-flash
 ```
 
-`MARKET_BRIEF_GENERATOR` 未配置时默认 `mock`。设置为 `external` 后，站内按钮只创建 queued job，不立即生成市场简报，等待外部 runner 通过 `/api/market-briefs/skill-jobs/claim` 领取并回写。`MARKET_BRIEF_RUNNER_SECRET` 用于 `/api/market-briefs/skill-jobs/claim`、`/api/market-briefs/skill-jobs/fail` 和 `/api/market-briefs/skill-result` 的 header 鉴权。`SUPABASE_SERVICE_ROLE_KEY` 仅供这些无用户会话的私有 API 在服务端写入任务结果，不得进入浏览器、日志、`.env.example` 或仓库；普通后台页面继续使用登录管理员身份和 RLS。
+`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`。AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 配置，并继续兼容旧 `OPENAI_API_KEY` / `OPENAI_MODEL`。旧 `MARKET_BRIEF_GENERATOR=external`、`MARKET_BRIEF_RUNNER_SECRET` 和 external runner / Python 数据源 runner 仅保留为 deprecated 历史兼容路径，不再作为推荐市场简报生成方式；普通后台页面继续使用登录管理员身份和 RLS。
 
 ## Auth 设置
 

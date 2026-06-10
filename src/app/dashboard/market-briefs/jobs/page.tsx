@@ -33,7 +33,7 @@ export default async function MarketBriefJobsPage({ searchParams }: { searchPara
         <PageHeader
           eyebrow="Market Brief Jobs"
           title="市场简报生成任务"
-          description="查看“获取今日市场动态”和外部 Skill Runner 回写产生的任务记录。"
+          description="查看 AI 市场简报生成任务、状态、错误信息和关联简报。"
           action={
             <div className="flex flex-wrap gap-2">
               <Link href="/dashboard/market-briefs" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
@@ -47,7 +47,7 @@ export default async function MarketBriefJobsPage({ searchParams }: { searchPara
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "active" ? <NoticeBanner message="今日同市场已有排队中或运行中的生成任务，已跳转到任务记录。" /> : null}
         {notice === "cancelled" ? <NoticeBanner message="任务已取消。" /> : null}
-        {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次运行 runner 领取。" /> : null}
+        {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次由 AI 生成器处理。" /> : null}
 
         <AdminSection title="筛选" description="按任务创建时间倒序展示；可按状态、市场和简报日期过滤。">
           <form className="grid gap-3 md:grid-cols-[180px_180px_180px_auto]">
@@ -82,7 +82,7 @@ export default async function MarketBriefJobsPage({ searchParams }: { searchPara
                     <th className="px-3 py-3 font-semibold">类型</th>
                     <th className="px-3 py-3 font-semibold">市场</th>
                     <th className="px-3 py-3 font-semibold">状态</th>
-                    <th className="px-3 py-3 font-semibold">Runner</th>
+                    <th className="px-3 py-3 font-semibold">生成器</th>
                     <th className="px-3 py-3 font-semibold">生成简报</th>
                     <th className="px-3 py-3 font-semibold">错误</th>
                     <th className="px-3 py-3 font-semibold">运行时间</th>
@@ -125,7 +125,7 @@ function MarketBriefJobRow({ job }: { job: MarketBriefGenerationJobRecord }) {
       <td className="whitespace-nowrap px-3 py-4">
         <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-slate-500">{job.runner_name}</td>
+      <td className="whitespace-nowrap px-3 py-4 text-slate-500">{getGeneratorDisplayName(job)}</td>
       <td className="px-3 py-4">
         {job.market_briefs ? (
           <Link href={`/dashboard/market-briefs/${job.market_briefs.id}/preview`} className="inline-flex items-center gap-1.5 text-blue-700 hover:text-blue-800">
@@ -201,4 +201,20 @@ function getSearchValue(value: string | string[] | undefined) {
 
 function isHistoricalJob(job: MarketBriefGenerationJobRecord) {
   return job.request_payload?.is_historical === true;
+}
+
+function getGeneratorDisplayName(job: MarketBriefGenerationJobRecord) {
+  if (job.request_payload.generator_mode === "ai" || job.runner_name === "ai-market-brief-generator") {
+    return "AI 市场简报生成器";
+  }
+
+  if (job.request_payload.generator_mode === "external" || job.runner_name.includes("external")) {
+    return "历史任务：旧 external runner";
+  }
+
+  if (job.runner_name === "manual-skill-mock") {
+    return "历史任务：mock 生成器";
+  }
+
+  return "历史任务：旧生成器";
 }
