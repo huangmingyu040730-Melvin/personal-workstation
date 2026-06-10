@@ -835,3 +835,30 @@
 - 记录保存 JD 原文、AI JSON、匹配/缺失关键词、风险和下一步行动。
 - RLS 继续通过 `public.is_admin()` 限定管理员管理；不向 anon、viewer 或普通外部用户开放。
 - 不读取 Documents、Storage、signed URL、Access Requests、Access Grants、viewer/restricted 数据或未选择的 Resume Items。
+
+## 2026-06-10 - Build Application Board From JD Review Records
+
+类型：decision
+
+决策：
+
+- Phase 2K-I 新增 `/dashboard/resume/applications` 投递看板。
+- 投递看板复用 `resume_jd_reviews` 表，不新增 migration。
+- 看板按 `application_status` 分组展示 `draft`、`reviewed`、`ready`、`submitted`、`interview`、`rejected`、`offer`、`archived`。
+- 页面同时提供看板视图和列表视图，支持公司 / 岗位搜索、状态筛选、Resume Version 筛选、岗位方向筛选和投递渠道筛选。
+- 快速改状态使用下拉选择和提交按钮，不做拖拽。
+- `/dashboard/resume` 增加轻量投递状态概览和最近 JD 分析记录入口。
+
+原因：
+
+- `resume_jd_reviews` 已经保存公司、岗位、岗位方向、投递渠道、投递状态、备注、关联简历版本和更新时间，足够支撑第一版求职 pipeline 管理。
+- 不新增字段可以避免扩大数据库迁移和生产验收范围。
+- 下拉改状态比拖拽看板简单、稳定，更符合当前后台工作台的低复杂度要求。
+
+影响：
+
+- 投递看板仍是私密后台数据，只允许管理员访问。
+- 不展示 JD 原文，不公开投递记录，不进入 sitemap。
+- 不自动投递，不发送邮件，不做 Notion 同步，不创建日历提醒，不自动生成投递邮件。
+- 不修改 Resume Items、Resume Versions、旧 migration、RLS 旧策略、Storage、Documents、Viewer、restricted、Calendar、Profile、AI JD prompt 或 Word 导出逻辑。
+- 后续可扩展日历提醒、面试记录、投递邮件草稿、Notion 同步和统计图表。

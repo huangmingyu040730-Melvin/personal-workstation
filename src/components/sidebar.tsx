@@ -12,7 +12,7 @@ function isSidebarItemActive(pathname: string, href: string) {
   }
 
   if (href === "/dashboard/resume") {
-    return pathname === href || (pathname.startsWith(`${href}/`) && !pathname.startsWith("/dashboard/resume/versions") && !pathname.startsWith("/dashboard/resume/jd-reviews"));
+    return pathname === href || (pathname.startsWith(`${href}/`) && !pathname.startsWith("/dashboard/resume/versions") && !pathname.startsWith("/dashboard/resume/applications") && !pathname.startsWith("/dashboard/resume/jd-reviews"));
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);

@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getOptionalString, getString } from "@/lib/forms";
 import { normalizeResumeJdReviewResult } from "@/lib/resume-jd-review";
-import { resumeJdReviewSaveSchema, resumeJdReviewUpdateSchema } from "@/lib/validations/resume-jd-review";
+import { getSafeDashboardRedirect } from "@/lib/safe-redirect";
+import { resumeJdReviewSaveSchema, resumeJdReviewStatuses, resumeJdReviewUpdateSchema } from "@/lib/validations/resume-jd-review";
 
 function jdReviewErrorRedirect(path: string, message: string): never {
   redirect(`${path}?error=${encodeFormError(message)}`);
@@ -130,6 +131,48 @@ export async function updateResumeJdReviewAction(id: string, formData: FormData)
   redirect(detailPath);
 }
 
+export async function updateResumeJdReviewStatusAction(id: string, formData: FormData) {
+  const sourcePath = getSafeDashboardRedirect(getString(formData, "source_path") || "/dashboard/resume/applications");
+  const status = getString(formData, "application_status");
+
+  if (!resumeJdReviewStatuses.includes(status as (typeof resumeJdReviewStatuses)[number])) {
+    redirect(withFormError(sourcePath, "请选择有效的投递状态。"));
+  }
+
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(withFormError(sourcePath, error ?? "当前账号没有管理员权限。"));
+  }
+
+  const { data, error: updateError } = await supabase
+    .from("resume_jd_reviews")
+    .update({ application_status: status })
+    .eq("id", id)
+    .select("id,company_name,job_title,resume_version_id,application_status")
+    .single();
+
+  if (updateError) {
+    redirect(withFormError(sourcePath, updateError.message || "投递状态更新失败，请稍后重试。"));
+  }
+
+  await writeActivityLog({
+    action: "resume_jd_review.status_update",
+    entityType: "resume_jd_review",
+    entityId: data.id,
+    metadata: {
+      company_name: data.company_name,
+      job_title: data.job_title,
+      resume_version_id: data.resume_version_id,
+      application_status: data.application_status
+    }
+  });
+
+  revalidateResumeJdReviewPaths(data.id, data.resume_version_id);
+  revalidatePath("/dashboard/resume/applications");
+  redirect(sourcePath);
+}
+
 function readJsonRecord(formData: FormData, key: string) {
   const value = getString(formData, key);
   if (!value) {
@@ -142,6 +185,11 @@ function readJsonRecord(formData: FormData, key: string) {
   } catch {
     return {};
   }
+}
+
+function withFormError(path: string, message: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}error=${encodeFormError(message)}`;
 }
 
 function readStringArray(formData: FormData, key: string, fallback: string[] = []) {
@@ -170,6 +218,7 @@ function revalidateResumeJdReviewPaths(id?: string, versionId?: string) {
   revalidatePath("/dashboard/resume");
   revalidatePath("/dashboard/resume/versions");
   revalidatePath("/dashboard/resume/jd-reviews");
+  revalidatePath("/dashboard/resume/applications");
   if (id) {
     revalidatePath(`/dashboard/resume/jd-reviews/${id}`);
   }
