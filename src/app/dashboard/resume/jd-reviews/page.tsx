@@ -3,6 +3,7 @@ import { FileSearch, Filter, Search } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
+import { CareerTabs } from "@/components/career-tabs";
 import { PageHeader } from "@/components/page-header";
 import { getResumeJdReviewStatusLabel, getResumeJdReviewStatusTone, resumeJdReviewStatusOptions } from "@/lib/resume-jd-review-options";
 import { formatDateTime, formatRelative } from "@/lib/format";
@@ -34,20 +35,7 @@ export default async function ResumeJdReviewsPage({
           }
         />
 
-        <div className="flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-soft">
-          <Link href="/dashboard/resume" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
-            素材库
-          </Link>
-          <Link href="/dashboard/resume/versions" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
-            简历版本
-          </Link>
-          <Link href="/dashboard/resume/applications" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
-            投递看板
-          </Link>
-          <Link href="/dashboard/resume/jd-reviews" className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
-            JD 分析记录
-          </Link>
-        </div>
+        <CareerTabs active="jdReviews" />
 
         <form className="grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft md:grid-cols-[1fr_220px_auto]">
           {versionId ? <input type="hidden" name="versionId" value={versionId} /> : null}

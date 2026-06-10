@@ -6,7 +6,6 @@ import {
   CalendarDays,
   ClipboardCheck,
   FileText,
-  FileSearch,
   FileUser,
   FolderOpen,
   Home,
@@ -62,14 +61,16 @@ export const sidebarGroups = [
     ]
   },
   {
+    label: "个人发展",
+    items: [
+      { label: "求职中心", href: "/dashboard/career", icon: BriefcaseBusiness }
+    ]
+  },
+  {
     label: "系统",
     items: [
       { label: "访问申请", href: "/dashboard/access-requests", icon: ClipboardCheck },
       { label: "访问授权", href: "/dashboard/access-grants", icon: KeyRound },
-      { label: "简历素材", href: "/dashboard/resume", icon: FileUser },
-      { label: "简历版本", href: "/dashboard/resume/versions", icon: Library },
-      { label: "投递看板", href: "/dashboard/resume/applications", icon: BriefcaseBusiness },
-      { label: "JD 分析记录", href: "/dashboard/resume/jd-reviews", icon: FileSearch },
       { label: "个人信息", href: "/dashboard/profile", icon: UserRound },
       { label: "设置", href: "/settings", icon: Settings }
     ]

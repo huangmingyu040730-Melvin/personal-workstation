@@ -26,6 +26,7 @@
 - Resume AI JD 简历优化建议，支持 OpenAI-compatible Provider 与 DeepSeek
 - Resume JD 分析历史与投递记录
 - Resume 投递看板与求职 Pipeline 管理
+- Career Center / 求职中心导航整合
 - Resume Word `.docx` 即时导出
 - Resume Preview 与 Word 导出共用 20260523 风格模板
 - Supabase Storage 私密文件上传与下载
@@ -140,6 +141,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/access-grants` 访问授权管理
 - `/dashboard/profile` 个人信息管理
 - `/dashboard/calendar` 站内日程管理
+- `/dashboard/career` 求职中心
 - `/dashboard/resume` 简历素材库
 - `/dashboard/resume/versions` 简历版本管理
 - `/dashboard/resume/applications` 投递看板
@@ -188,7 +190,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
 - Calendar 已接入站内 `calendar_events` CRUD；管理员可在 `/dashboard/calendar` 新建、编辑、删除日程，Dashboard 会展示近期日程。
-- Resume 已接入履历素材库与版本组合；管理员可在 `/dashboard/resume` 按个人信息、教育、实习、在校、项目、研究、技能、证书和奖项等区块维护结构化素材，并在 `/dashboard/resume/versions` 组合不同简历版本。版本编辑页可选择进入简历顶部的个人字段，并为每条素材控制日期、机构、角色、摘要、bullets、技能和核心课程等字段是否展示。版本详情、列表和预览页提供规则化简历质量检查、完整度评分、缺失项和投递方向提示。Phase 2K-E 新增 AI JD 简历优化助手，可基于当前版本已选素材和管理员粘贴的 JD 生成关键词差距、经历强化和 bullet 改写建议；该能力支持 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 通用配置，可接入 DeepSeek 等 OpenAI-compatible Provider，并继续兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`。AI JD 优化只生成建议，不自动写回 Resume Items 或 Resume Versions。Phase 2K-H 新增 JD 分析历史与投递记录，管理员可保存单次 AI JD 分析、公司/岗位信息、缺失关键词、风险、下一步行动和投递状态；该记录仍为后台私密数据，不公开展示。Phase 2K-I 新增 `/dashboard/resume/applications` 投递看板，基于 `resume_jd_reviews.application_status` 按草稿、已分析、准备投递、已投递、面试中、被拒、Offer 和已归档管理求职 pipeline，并支持列表筛选和快速改状态；本阶段不自动投递、不发送邮件、不公开记录，也不新增 migration。版本预览页提供贴近中文金融简历 PDF 的 A4 样式和浏览器打印 / 另存为 PDF 能力；Phase 2K-F 新增 Word `.docx` 即时导出，导出只读取当前版本已选素材、Profile/basic 信息和字段可见性设置，不写入 Storage，不创建公开简历页面或分享链接。Phase 2K-G 将 Preview 与 Word 导出统一到 20260523 风格模板模型，补充照片位置、模块标题视觉符号和左时间 / 右内容的正式简历布局。
+- Resume 已接入履历素材库与版本组合；管理员可在 `/dashboard/career` 进入求职中心，并继续通过 `/dashboard/resume`、`/dashboard/resume/versions`、`/dashboard/resume/applications` 和 `/dashboard/resume/jd-reviews` 使用原有子模块路径。管理员可在 `/dashboard/resume` 按个人信息、教育、实习、在校、项目、研究、技能、证书和奖项等区块维护结构化素材，并在 `/dashboard/resume/versions` 组合不同简历版本。版本编辑页可选择进入简历顶部的个人字段，并为每条素材控制日期、机构、角色、摘要、bullets、技能和核心课程等字段是否展示。版本详情、列表和预览页提供规则化简历质量检查、完整度评分、缺失项和投递方向提示。Phase 2K-E 新增 AI JD 简历优化助手，可基于当前版本已选素材和管理员粘贴的 JD 生成关键词差距、经历强化和 bullet 改写建议；该能力支持 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 通用配置，可接入 DeepSeek 等 OpenAI-compatible Provider，并继续兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`。AI JD 优化只生成建议，不自动写回 Resume Items 或 Resume Versions。Phase 2K-H 新增 JD 分析历史与投递记录，管理员可保存单次 AI JD 分析、公司/岗位信息、缺失关键词、风险、下一步行动和投递状态；该记录仍为后台私密数据，不公开展示。Phase 2K-I 新增 `/dashboard/resume/applications` 投递看板，基于 `resume_jd_reviews.application_status` 按草稿、已分析、准备投递、已投递、面试中、被拒、Offer 和已归档管理求职 pipeline，并支持列表筛选和快速改状态；本阶段不自动投递、不发送邮件、不公开记录，也不新增 migration。Phase 2K-J 新增 `/dashboard/career` 求职中心首页，将简历素材、简历版本、投递看板和 JD 分析记录收拢到一个侧边栏入口，并在子页面顶部提供统一 Career tabs；原有子模块路径保持不变。版本预览页提供贴近中文金融简历 PDF 的 A4 样式和浏览器打印 / 另存为 PDF 能力；Phase 2K-F 新增 Word `.docx` 即时导出，导出只读取当前版本已选素材、Profile/basic 信息和字段可见性设置，不写入 Storage，不创建公开简历页面或分享链接。Phase 2K-G 将 Preview 与 Word 导出统一到 20260523 风格模板模型，补充照片位置、模块标题视觉符号和左时间 / 右内容的正式简历布局。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化；管理后台 UI 已完成工作台式视觉优化。
 - Dashboard 已读取真实项目、笔记、Skill、Publications、Calendar 与 Activity Logs。
 - Google Calendar、提醒系统和外部日历同步尚未实现。

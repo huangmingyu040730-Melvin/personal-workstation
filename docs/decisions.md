@@ -862,3 +862,30 @@
 - 不自动投递，不发送邮件，不做 Notion 同步，不创建日历提醒，不自动生成投递邮件。
 - 不修改 Resume Items、Resume Versions、旧 migration、RLS 旧策略、Storage、Documents、Viewer、restricted、Calendar、Profile、AI JD prompt 或 Word 导出逻辑。
 - 后续可扩展日历提醒、面试记录、投递邮件草稿、Notion 同步和统计图表。
+
+## 2026-06-10 - Consolidate Career Navigation Into Career Center
+
+类型：decision
+
+决策：
+
+- Phase 2K-J 新增 `/dashboard/career` 求职中心首页。
+- 侧边栏不再平铺显示“简历素材”“简历版本”“投递看板”“JD 分析记录”。
+- 侧边栏新增一个一级入口“求职中心”，位于“个人发展”分组。
+- `/dashboard/career` 展示简历素材数量、简历版本数量、JD 分析记录数量、当前投递记录数量、面试中数量和 Offer 数量。
+- `/dashboard/career` 提供四个子模块入口：简历素材、简历版本、投递看板、JD 分析记录。
+- `/dashboard/career`、`/dashboard/resume`、`/dashboard/resume/versions`、`/dashboard/resume/applications`、`/dashboard/resume/jd-reviews` 使用统一 Career tabs。
+- 原有子模块路径全部保留，不做 redirect，不删除页面。
+- 本阶段不新增 migration。
+
+原因：
+
+- Resume / 求职相关功能已经形成完整业务模块，继续平铺在 Sidebar 会让后台导航变长且模块边界不清晰。
+- 单一“求职中心”入口更适合后续扩展面试记录、面试复盘、投递提醒、Offer 对比和求职统计。
+- 保留原 URL 可以避免破坏现有代码引用、文档链接和用户书签。
+
+影响：
+
+- 求职相关功能仍保持管理员后台私密访问，不进入公开站点或 sitemap。
+- 不修改 Resume Items、Resume Versions、`resume_jd_reviews` 表结构、RLS、Storage、Documents、Viewer、restricted、Calendar、Profile、AI JD 分析逻辑、Word 导出逻辑、质量检查规则、投递看板核心逻辑或旧 migration。
+- 本阶段不做面试记录、自动提醒、Notion 同步、邮件发送、自动投递、公开求职页或分享链接。

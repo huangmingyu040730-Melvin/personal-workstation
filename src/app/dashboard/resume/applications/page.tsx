@@ -4,6 +4,7 @@ import { updateResumeJdReviewStatusAction } from "@/actions/resume-jd-reviews";
 import { AppShell } from "@/components/app-shell";
 import { AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
+import { CareerTabs } from "@/components/career-tabs";
 import { PageHeader } from "@/components/page-header";
 import type { ResumeJdReviewRecord } from "@/lib/content-types";
 import { formatDateTime, formatRelative } from "@/lib/format";
@@ -53,7 +54,7 @@ export default async function ResumeApplicationsPage({
           }
         />
 
-        <ResumeTabs active="applications" />
+        <CareerTabs active="applications" />
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{decodeURIComponent(error)}</div> : null}
 
@@ -142,25 +143,6 @@ export default async function ResumeApplicationsPage({
         )}
       </AdminPageSurface>
     </AppShell>
-  );
-}
-
-function ResumeTabs({ active }: { active: "items" | "versions" | "applications" | "jdReviews" }) {
-  const tabs = [
-    { label: "素材库", href: "/dashboard/resume", key: "items" },
-    { label: "简历版本", href: "/dashboard/resume/versions", key: "versions" },
-    { label: "投递看板", href: "/dashboard/resume/applications", key: "applications" },
-    { label: "JD 分析记录", href: "/dashboard/resume/jd-reviews", key: "jdReviews" }
-  ] as const;
-
-  return (
-    <div className="flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-soft">
-      {tabs.map((tab) => (
-        <Link key={tab.key} href={tab.href} className={active === tab.key ? "rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white" : "rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"}>
-          {tab.label}
-        </Link>
-      ))}
-    </div>
   );
 }
 
