@@ -811,6 +811,30 @@
 - 字段可见性仍由 `resume_versions.profile_fields` 和 `resume_version_items.visible_fields` 控制。
 - 相关技能按正式条目展示，不做标签墙。
 
+## 2026-06-10 - Align AI JD Review Content Source With Resume Template Model
+
+类型：decision
+
+决策：
+
+- 新增 `src/lib/resume-ai-input.ts`，为 AI JD 分析提供统一 Resume AI 输入模型。
+- AI JD Server Action 不再用独立摘要逻辑拼接 `title`、`summary` 和部分 `bullets`，而是复用 `resume-template-model` 派生出的 Profile、section、entry、detailLines、bullets 和 tokens。
+- `/dashboard/resume/versions/[id]/jd-review` 的“版本内容概览”使用与 AI prompt 完全相同的输入上下文，并完整展示所有参与分析的 section 和条目。
+- 字段可见性继续由 `resume_versions.profile_fields` 和 `resume_version_items.visible_fields` 控制；例如隐藏 bullets 或核心课程后，页面概览和 AI 输入都不会包含对应内容。
+- 本次 hotfix 不新增 migration，不修改 Resume Items、Resume Versions、`resume_jd_reviews` 表结构、RLS、Storage、Documents、Viewer、restricted、Calendar、Profile 主流程、Word 导出、质量检查或投递看板。
+
+原因：
+
+- 旧 AI JD 上下文单独拼接素材摘要，教育经历、技能和结构化 details 容易显示为“暂无摘要”或被漏掉。
+- Preview / Word 已经有统一模板模型，AI JD 应复用同一套可见内容解释，避免用户看到的简历内容、AI 实际输入和导出内容不一致。
+
+影响：
+
+- AI JD 分析会看到当前版本已选择且可见的真实教育、实习、项目、研究、技能、证书和奖项字段。
+- 页面概览不再截断前 6 条，也不再只提示“还有 x 条素材会参与分析”。
+- AI 输入仍不包含 Documents、Storage 路径、signed URL、Access Requests、Access Grants、viewer/restricted 数据、Supabase key、AI API key、Auth UUID 或未选择素材。
+- AI JD 输出仍只生成建议，不自动修改 Resume Items 或 Resume Versions；保存到 JD Review History 的流程保持不变。
+
 ## 2026-06-10 - Store JD Reviews As Private Application Records
 
 类型：decision
