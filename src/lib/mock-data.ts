@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   FileText,
+  FileSearch,
   FileUser,
   FolderOpen,
   Home,
@@ -66,6 +67,7 @@ export const sidebarGroups = [
       { label: "访问授权", href: "/dashboard/access-grants", icon: KeyRound },
       { label: "简历素材", href: "/dashboard/resume", icon: FileUser },
       { label: "简历版本", href: "/dashboard/resume/versions", icon: Library },
+      { label: "JD 分析记录", href: "/dashboard/resume/jd-reviews", icon: FileSearch },
       { label: "个人信息", href: "/dashboard/profile", icon: UserRound },
       { label: "设置", href: "/settings", icon: Settings }
     ]

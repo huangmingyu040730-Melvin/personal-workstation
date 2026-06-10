@@ -14,6 +14,7 @@ export type ResumeItemType = "basic" | "education" | "experience" | "project" | 
 export type ResumeVersionLanguage = "zh" | "en";
 export type ResumeTemplateKey = "classic" | "compact" | "research";
 export type ResumeSectionKey = "summary" | "education" | "experience" | "projects" | "research" | "skills" | "certifications" | "awards" | "other";
+export type ResumeJdReviewStatus = "draft" | "reviewed" | "ready" | "submitted" | "interview" | "rejected" | "offer" | "archived";
 
 export type ProjectRecord = {
   id: string;
@@ -214,6 +215,31 @@ export type ResumeVersionItemRecord = {
 
 export type ResumeVersionWithItems = ResumeVersionRecord & {
   resume_version_items: ResumeVersionItemRecord[];
+};
+
+export type ResumeJdReviewRecord = {
+  id: string;
+  owner_id: string;
+  resume_version_id: string;
+  company_name: string | null;
+  job_title: string | null;
+  job_direction: string | null;
+  job_location: string | null;
+  application_channel: string | null;
+  jd_text: string;
+  target_keywords: string[];
+  ai_result: Record<string, unknown>;
+  match_summary: string | null;
+  missing_keywords: string[];
+  matched_keywords: string[];
+  risks: string[];
+  next_actions: string[];
+  application_status: ResumeJdReviewStatus;
+  notes: string | null;
+  model_name: string | null;
+  created_at: string;
+  updated_at: string;
+  resume_versions?: Pick<ResumeVersionRecord, "id" | "title" | "target_role"> | null;
 };
 
 export type AccessRequestRecord = {

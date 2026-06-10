@@ -29,6 +29,9 @@ export type ResumeJdReviewState = {
   message?: string;
   result?: ResumeJdReviewResult;
   rawText?: string;
+  jdText?: string;
+  direction?: ResumeJdDirection;
+  modelName?: string;
 };
 
 export const resumeJdDirectionOptions: Array<{ value: ResumeJdDirection; label: string; description: string }> = [

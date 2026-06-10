@@ -19,6 +19,7 @@ export async function analyzeResumeJdAction(versionId: string, previousState: Re
   void previousState;
   const jdText = readFormText(formData, "jd_text");
   const direction = normalizeDirection(readFormText(formData, "direction"));
+  const modelName = process.env.OPENAI_MODEL || defaultModel;
 
   if (jdText.length < 80) {
     return {
@@ -123,13 +124,19 @@ export async function analyzeResumeJdAction(versionId: string, previousState: Re
       return {
         status: "success",
         message: "AI JD 分析完成。以下建议不会自动写回简历，请手动复制和复核。",
-        result: normalizeResumeJdReviewResult(parsed)
+        result: normalizeResumeJdReviewResult(parsed),
+        jdText,
+        direction,
+        modelName
       };
     } catch {
       return {
         status: "success",
         message: "AI 返回了文本建议，但不是严格 JSON。请参考下方原始建议并人工复核。",
-        rawText: outputText
+        rawText: outputText,
+        jdText,
+        direction,
+        modelName
       };
     }
   } catch (requestError) {
