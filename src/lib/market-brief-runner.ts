@@ -114,7 +114,10 @@ export async function claimQueuedMarketBriefGenerationJob(supabase: RunnerSupaba
   const { data: queuedJob, error: queuedError } = await query.maybeSingle();
 
   if (queuedError) {
-    throw new Error("读取待领取任务失败。");
+    logMarketBriefRunnerSupabaseError("marketBrief.claimQueuedJob.queuedQueryFailed", queuedError, {
+      market: input.market ?? null
+    });
+    throw new Error(`读取待领取任务失败：${queuedError.message || "Supabase queued query failed."}`);
   }
 
   if (!queuedJob) {
@@ -136,7 +139,12 @@ export async function claimQueuedMarketBriefGenerationJob(supabase: RunnerSupaba
     .maybeSingle();
 
   if (error) {
-    throw new Error("领取市场简报生成任务失败。");
+    logMarketBriefRunnerSupabaseError("marketBrief.claimQueuedJob.updateFailed", error, {
+      market: queuedJob.market,
+      runner_name: input.runnerName ?? queuedJob.runner_name,
+      previous_status: "queued"
+    });
+    throw new Error(`领取市场简报生成任务失败：${error.message || "Supabase claim update failed."}`);
   }
 
   return data as MarketBriefGenerationJobRecord | null;
@@ -378,4 +386,23 @@ function getSafeRunnerErrorMessage(error: unknown) {
   }
 
   return "市场简报生成任务失败。";
+}
+
+function logMarketBriefRunnerSupabaseError(
+  event: string,
+  error: {
+    message?: string;
+    code?: string;
+    details?: string;
+    hint?: string;
+  },
+  context: Record<string, string | null | undefined> = {}
+) {
+  console.error(event, {
+    ...context,
+    message: error.message,
+    code: error.code,
+    details: error.details,
+    hint: error.hint
+  });
 }

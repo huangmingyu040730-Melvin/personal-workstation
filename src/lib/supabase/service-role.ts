@@ -1,10 +1,10 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { isSupabaseConfigured, supabaseConfig } from "./config";
+import { supabaseConfig } from "./config";
 
 export function createServiceRoleClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!isSupabaseConfigured || !supabaseConfig.url || !serviceRoleKey) {
+  if (!supabaseConfig.url || !serviceRoleKey) {
     return null;
   }
 
