@@ -5,6 +5,7 @@
   "title": "A股市场收评简报｜2026-06-10",
   "summary": "本简报由外部 runner 骨架生成，当前仍使用 mock 数据。",
   "markdown_content": "# A股市场收评简报｜2026-06-10\n\n本内容为 external runner mock fixture。",
+  "generation_status": "needs_review",
   "source_snapshot": {
     "meta": {
       "market": "A股",

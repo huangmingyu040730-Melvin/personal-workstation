@@ -1,6 +1,6 @@
 # Python AkShare Market Brief Runner
 
-Phase 2L-D-C adds a first real-data runner for A-share market briefs.
+Phase 2L-D-C adds a first real-data runner for A-share market briefs. Phase 2L-D-D adds fallback brief generation when AkShare or Eastmoney endpoints are unavailable.
 
 The runner claims queued jobs from the workstation, fetches market data with AkShare, writes a stable `source_snapshot`, generates Markdown, and sends the result back through the existing private API.
 
@@ -53,16 +53,20 @@ Flow:
 1. `POST /api/market-briefs/skill-jobs/claim`
 2. If no queued job exists, print `No queued market brief generation job found. This usually means the site has no queued job, or MARKET_BRIEF_GENERATOR is not external.` and exit 0.
 3. Fetch A-share market data through AkShare.
-4. Build `source_snapshot`.
-5. Build Markdown.
+4. Classify `source_snapshot.meta.data_quality` as `real`, `partial`, or `fallback`.
+5. Build Markdown. If all core data sources fail, build a fallback Markdown draft for manual review.
 6. `POST /api/market-briefs/skill-result`
 7. Print the returned preview URL.
 
-If the runner claims a job but cannot fetch any core module, it calls:
+If the runner claims a job but cannot fetch any core module, it no longer fails the job by default. It sends a fallback result payload with:
 
 ```text
-POST /api/market-briefs/skill-jobs/fail
+source_snapshot.meta.data_quality = fallback
+source_snapshot.meta.is_fallback = true
+generation_status = needs_review
 ```
+
+The runner calls `POST /api/market-briefs/skill-jobs/fail` only if the result API fails or local code cannot build a Markdown payload.
 
 ## Data Scope
 
@@ -75,6 +79,14 @@ Current first version attempts to fetch:
 
 Unavailable fields are saved as `null` or empty arrays. Module-level failures are written to `source_snapshot.meta.warnings`.
 
+Data quality rules:
+
+- `real`: at least two core modules have data.
+- `partial`: exactly one core module has data.
+- `fallback`: no core module has data.
+
+Core modules are `indices`, `market_breadth`, and `sectors`.
+
 ## Snapshot Shape
 
 ```json
@@ -85,6 +97,8 @@ Unavailable fields are saved as `null` or empty arrays. Module-level failures ar
     "runner_name": "akshare-runner",
     "data_mode": "akshare",
     "generated_at": "...",
+    "data_quality": "fallback",
+    "is_fallback": true,
     "warnings": []
   },
   "indices": [],
@@ -105,6 +119,21 @@ Unavailable fields are saved as `null` or empty arrays. Module-level failures ar
   "capital_flows": [],
   "policy_news": [],
   "risk_signals": []
+}
+```
+
+## Fallback Briefs
+
+When AkShare or Eastmoney endpoints are completely unavailable, the runner still persists a market brief so the job does not remain `running` or become a technical failure. The generated Markdown states that real market data is unavailable, lists warnings, marks the draft as fallback, and asks for manual review.
+
+Fallback payloads include:
+
+```json
+{
+  "summary": "真实行情数据源暂不可用，本简报为 fallback 草稿，需人工复核。",
+  "tags": ["A股", "市场收评", "fallback", "待复核"],
+  "data_sources": ["AkShare", "东方财富接口", "fallback"],
+  "generation_status": "needs_review"
 }
 ```
 

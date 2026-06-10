@@ -54,10 +54,12 @@ def fetch_a_share_market_snapshot(
 
     if data_mode != "akshare":
         warnings.append(f"Unsupported MARKET_BRIEF_DATA_MODE={data_mode}; using fallback snapshot.")
+        apply_data_quality(snapshot)
         return snapshot
 
     ak = _load_akshare(warnings)
     if ak is None:
+        apply_data_quality(snapshot)
         return snapshot
 
     snapshot["indices"] = fetch_indices(ak, warnings)
@@ -65,19 +67,41 @@ def fetch_a_share_market_snapshot(
     sectors = fetch_sectors(ak, warnings)
     snapshot["sectors"] = sectors
     snapshot["hot_topics"] = fetch_hot_topics(ak, sectors, warnings)
+    apply_data_quality(snapshot)
 
     return snapshot
 
 
 def has_core_market_data(snapshot: dict[str, Any]) -> bool:
+    return classify_data_quality(snapshot) != "fallback"
+
+
+def classify_data_quality(snapshot: dict[str, Any]) -> str:
+    real_modules = 0
     indices = snapshot.get("indices") or []
     sectors = snapshot.get("sectors") or {}
     breadth = snapshot.get("market_breadth") or {}
-    return bool(
-        indices
-        or (sectors.get("top_gainers") or sectors.get("top_losers"))
-        or any(breadth.get(key) is not None for key in ("up_count", "down_count", "total_turnover"))
-    )
+
+    if indices:
+        real_modules += 1
+    if any(breadth.get(key) is not None for key in ("up_count", "down_count", "total_turnover")):
+        real_modules += 1
+    if sectors.get("top_gainers") or sectors.get("top_losers"):
+        real_modules += 1
+
+    if real_modules >= 2:
+        return "real"
+    if real_modules == 1:
+        return "partial"
+    return "fallback"
+
+
+def apply_data_quality(snapshot: dict[str, Any]) -> dict[str, Any]:
+    meta = snapshot.setdefault("meta", {})
+    data_quality = classify_data_quality(snapshot)
+    meta["data_quality"] = data_quality
+    meta["is_fallback"] = data_quality == "fallback"
+    return snapshot
 
 
 def fetch_indices(ak: Any, warnings: list[str]) -> list[dict[str, Any]]:

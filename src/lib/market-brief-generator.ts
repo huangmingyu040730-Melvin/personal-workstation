@@ -12,6 +12,7 @@ export type GeneratedMarketBrief = {
   tags: string[];
   dataSources: string[];
   generatorName: string;
+  generationStatus?: "manual" | "draft" | "generated" | "failed" | "needs_review" | "archived";
 };
 
 export const defaultMarketBriefRunnerName = "manual-skill-mock";

@@ -23,6 +23,7 @@ export type SkillResultPayload = {
   source_snapshot?: Record<string, unknown>;
   tags?: string[];
   data_sources?: string[];
+  generation_status?: GeneratedMarketBrief["generationStatus"];
 };
 
 export type ClaimMarketBriefJobInput = {
@@ -227,7 +228,8 @@ export async function applySkillResultToMarketBriefJob(supabase: RunnerSupabaseC
       sourceSnapshot,
       tags: normalizeTextArray(payload.tags, ["市场简报", market, "待复核"]),
       dataSources: normalizeTextArray(payload.data_sources, ["Skill Runner"]),
-      generatorName: runningJob.runner_name
+      generatorName: runningJob.runner_name,
+      generationStatus: payload.generation_status
     };
     const brief = await createOrUpdateMarketBriefFromGenerated(supabase, { ...runningJob, brief_date: briefDate, market }, generated);
     const completedAt = new Date().toISOString();
@@ -242,7 +244,8 @@ export async function applySkillResultToMarketBriefJob(supabase: RunnerSupabaseC
           summary: generated.summary,
           markdown_content: generated.markdownContent,
           tags: generated.tags,
-          data_sources: generated.dataSources
+          data_sources: generated.dataSources,
+          generation_status: generated.generationStatus ?? "generated"
         },
         market_brief_id: brief.id,
         completed_at: completedAt,
@@ -334,7 +337,7 @@ async function createOrUpdateMarketBriefFromGenerated(
         status: "draft",
         summary: generated.summary,
         markdown_content: generated.markdownContent,
-        generation_status: "generated",
+        generation_status: generated.generationStatus ?? "generated",
         generated_at: generatedAt,
         generator_name: generated.generatorName || job.runner_name,
         source_snapshot: generated.sourceSnapshot,
