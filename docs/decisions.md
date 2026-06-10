@@ -966,3 +966,29 @@
 - HTML / JSON / DOCX 文件为即时响应，不保存到 Documents、Storage 或公开 bucket，不生成 signed URL。
 - 本阶段不读取 Documents / Storage，不调用 AI，不保存外部 API key，不做自动抓取、AkShare、Tushare、Wind、邮件发送、Notion 同步、GitHub Actions、n8n、定时任务、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
+
+## 2026-06-10 - Add Market Brief Generation Button With Mock Generator
+
+类型：decision
+
+决策：
+
+- Phase 2L-C 在 `/dashboard/market-briefs` 增加“获取今日市场动态”按钮。
+- 新增 `src/lib/market-brief-generator.ts`，提供 `generateMarketBriefDraft()` 可替换生成接口。
+- 当前默认使用 `manual-skill-mock` 生成器，`MARKET_BRIEF_GENERATOR` 未设置或设置为 `mock` 时都走 mock 生成。
+- 新增 `generateTodayMarketBriefAction()`，由管理员点击按钮触发，默认市场为 `A股`，日期为 Asia/Shanghai 今日。
+- 生成 action 先按 `owner_id + brief_date + market` 查询已有记录；如果今日同市场简报已存在，则跳转已有预览页并提示，不重复创建。
+- 新记录写入 `title`、`summary`、`markdown_content`、`generation_status=generated`、`generated_at`、`generator_name`、`source_snapshot`、`tags` 和 `data_sources`，并跳转到 `/dashboard/market-briefs/[id]/preview`。
+- 本阶段不新增 migration，复用 Phase 2L-B 已有 artifact 字段。
+
+原因：
+
+- 先跑通“按钮触发 -> 生成草稿 -> 保存 market_briefs -> 预览/下载”的闭环，可以为后续真实行情源、新闻源或 Skill 调用打好接口边界。
+- 使用 mock generator 能在不引入外部 API key、行情依赖、队列或后台 worker 的情况下验证交互、权限和重复生成处理。
+
+影响：
+
+- 市场简报仍为后台私密数据，仅管理员可触发生成和访问预览。
+- 不读取 Documents / Storage，不发送 signed URL，不调用 AI，不保存外部 API key。
+- 不做真实 AkShare、Tushare、Wind、新闻爬虫、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
+- 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。

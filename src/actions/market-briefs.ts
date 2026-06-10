@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
+import { generateMarketBriefDraft } from "@/lib/market-brief-generator";
 import { marketBriefSchema, type MarketBriefInput } from "@/lib/validations/market-brief";
 
 function marketBriefPayloadFromForm(formData: FormData) {
@@ -142,6 +143,89 @@ export async function deleteMarketBriefAction(id: string) {
   redirect("/dashboard/market-briefs");
 }
 
+export async function generateTodayMarketBriefAction(formData: FormData) {
+  const market = getString(formData, "market") || "A股";
+  const briefDate = normalizeBriefDate(getString(formData, "brief_date")) ?? getTodayDateInShanghai();
+  const { supabase, isAdmin, actorId, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin || !actorId) {
+    redirect(`/dashboard/market-briefs?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("market_briefs")
+    .select("id")
+    .eq("owner_id", actorId)
+    .eq("brief_date", briefDate)
+    .eq("market", market)
+    .maybeSingle();
+
+  if (existingError) {
+    redirect(`/dashboard/market-briefs?error=${encodeFormError(existingError.message || "检查今日市场简报失败。")}`);
+  }
+
+  if (existing?.id) {
+    redirect(`/dashboard/market-briefs/${existing.id}/preview?notice=exists`);
+  }
+
+  const generated = await generateMarketBriefDraft({ market, briefDate });
+
+  const { data, error: insertError } = await supabase
+    .from("market_briefs")
+    .insert({
+      owner_id: actorId,
+      brief_date: briefDate,
+      title: generated.title,
+      market,
+      status: "draft",
+      summary: generated.summary,
+      markdown_content: generated.markdownContent,
+      generation_status: "generated",
+      generated_at: new Date().toISOString(),
+      generator_name: generated.generatorName,
+      source_snapshot: generated.sourceSnapshot,
+      tags: generated.tags,
+      data_sources: generated.dataSources
+    })
+    .select("id,title,brief_date,market,status,generation_status,generator_name")
+    .single();
+
+  if (insertError) {
+    if (insertError.code === "23505") {
+      const { data: duplicated } = await supabase
+        .from("market_briefs")
+        .select("id")
+        .eq("owner_id", actorId)
+        .eq("brief_date", briefDate)
+        .eq("market", market)
+        .maybeSingle();
+
+      if (duplicated?.id) {
+        redirect(`/dashboard/market-briefs/${duplicated.id}/preview?notice=exists`);
+      }
+    }
+
+    redirect(`/dashboard/market-briefs?error=${encodeFormError(getMarketBriefErrorMessage(insertError))}`);
+  }
+
+  await writeActivityLog({
+    action: "market_brief.generate",
+    entityType: "market_brief",
+    entityId: data.id,
+    metadata: {
+      title: data.title,
+      brief_date: data.brief_date,
+      market: data.market,
+      status: data.status,
+      generation_status: data.generation_status,
+      generator_name: data.generator_name
+    }
+  });
+
+  revalidateMarketBriefPaths(data.id);
+  redirect(`/dashboard/market-briefs/${data.id}/preview?notice=generated`);
+}
+
 function revalidateMarketBriefPaths(id?: string) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/market-briefs");
@@ -157,4 +241,17 @@ function normalizeMarketBriefPayload(data: MarketBriefInput) {
     generation_status: data.generation_status ?? "manual",
     generator_name: data.generator_name ?? (data.markdown_content ? "manual" : null)
   };
+}
+
+function getTodayDateInShanghai() {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
+
+function normalizeBriefDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 }

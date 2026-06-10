@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { BarChart3, Download, Eye, FileText, Plus } from "lucide-react";
+import { BarChart3, Download, Eye, FileText, Plus, Sparkles } from "lucide-react";
+import { generateTodayMarketBriefAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Select, TextInput } from "@/components/forms/form-fields";
+import { SubmitButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { getMarketBriefGenerationStatusLabel, getMarketBriefStatusLabel, marketBriefStatuses } from "@/lib/content-options";
 import type { MarketBriefRecord } from "@/lib/content-types";
@@ -20,6 +22,8 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
     market: params.market ?? "all",
     tag: params.tag ?? "all"
   };
+  const error = params.error;
+  const notice = params.notice;
   const [briefs, filterOptions] = await Promise.all([
     getMarketBriefs(filters),
     getMarketBriefFilterOptions()
@@ -33,12 +37,34 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
           title="市场简报"
           description="手工维护每日市场收评和研究简报。当前阶段不自动抓取行情、不调用 AI、不发送邮件。"
           action={
-            <Link href="/dashboard/market-briefs/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
-              <Plus size={16} />
-              新建简报
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <form action={generateTodayMarketBriefAction}>
+                <input type="hidden" name="market" value="A股" />
+                <SubmitButton pendingLabel="生成中...">
+                  <span className="inline-flex items-center gap-2">
+                    <Sparkles size={16} />
+                    获取今日市场动态
+                  </span>
+                </SubmitButton>
+              </form>
+              <Link href="/dashboard/market-briefs/new" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">
+                <Plus size={16} />
+                新建手工简报
+              </Link>
+            </div>
           }
         />
+
+        <AdminSection title="今日生成" description="自动生成一份今日市场简报草稿，后续可在预览页编辑和下载。当前使用 mock generator，不接真实行情或新闻源。">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+            <Badge className="bg-blue-50 text-blue-700 ring-blue-100">默认市场：A股</Badge>
+            <Badge className="bg-slate-50 text-slate-600 ring-slate-200">生成器：manual-skill-mock</Badge>
+            <span>如果今日同市场简报已存在，会直接跳转到已有预览页，不重复创建。</span>
+          </div>
+        </AdminSection>
+
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {notice === "exists" ? <NoticeBanner tone="blue" message="今日市场简报已存在，已保留原记录。" /> : null}
 
         <AdminSection title="筛选" description="按日期倒序展示；可搜索标题 / 摘要，并按状态、市场和标签过滤。">
           <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_160px_160px_auto]">
@@ -87,6 +113,14 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
       </AdminPageSurface>
     </AppShell>
   );
+}
+
+function NoticeBanner({ message, tone }: { message: string; tone: "blue" | "emerald" }) {
+  const className = tone === "emerald"
+    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+    : "border-blue-200 bg-blue-50 text-blue-700";
+
+  return <div className={`rounded-2xl border px-4 py-3 text-sm ${className}`}>{message}</div>;
 }
 
 function MarketBriefCard({ brief }: { brief: MarketBriefRecord }) {
