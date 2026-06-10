@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Tag } from "lucide-react";
+import { ArrowLeft, Download, Edit, Eye, Printer, Tag } from "lucide-react";
 import { deleteMarketBriefAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminDangerZone, AdminPageSurface } from "@/components/admin-ui";
@@ -8,10 +8,11 @@ import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
-import { getMarketBriefStatusLabel } from "@/lib/content-options";
+import { getMarketBriefGenerationStatusLabel, getMarketBriefStatusLabel } from "@/lib/content-options";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
-import { getMarketBriefStatusTone, marketBriefContentFields } from "@/lib/market-briefs";
+import { getMarketBriefMarkdownSourceLabel, hasMarketBriefMarkdownContent } from "@/lib/market-brief-markdown";
+import { getMarketBriefGenerationStatusTone, getMarketBriefStatusTone, marketBriefContentFields } from "@/lib/market-briefs";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getMarketBriefById } from "@/lib/queries/market-briefs";
 
@@ -31,6 +32,7 @@ export default async function MarketBriefDetailPage({
 
   const deleteAction = deleteMarketBriefAction.bind(null, brief.id);
   const error = getFormError(query);
+  const artifactFileCount = Array.isArray(brief.artifact_files) ? brief.artifact_files.length : 0;
   const visibleContentFields = marketBriefContentFields.filter((field) => {
     const value = brief[field.key];
     return typeof value === "string" && value.trim().length > 0;
@@ -45,6 +47,22 @@ export default async function MarketBriefDetailPage({
           description="市场简报详情。当前为私密后台数据，不进入公开站点。"
           action={
             <div className="flex flex-wrap gap-2">
+              <Link href={`/dashboard/market-briefs/${brief.id}/preview`} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
+                <Eye size={16} />
+                预览简报
+              </Link>
+              <Link href={`/dashboard/market-briefs/${brief.id}/download/markdown`} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+                <Download size={16} />
+                下载 Markdown
+              </Link>
+              <Link href={`/dashboard/market-briefs/${brief.id}/download/docx`} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:border-emerald-200 hover:bg-emerald-100">
+                <Download size={16} />
+                下载 Word
+              </Link>
+              <Link href={`/dashboard/market-briefs/${brief.id}/preview`} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+                <Printer size={16} />
+                打印 / 保存 PDF
+              </Link>
               <Link href={`/dashboard/market-briefs/${brief.id}/edit`} className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">
                 <Edit size={16} />
                 编辑
@@ -90,13 +108,20 @@ export default async function MarketBriefDetailPage({
               <CardHeader title="基础信息" />
               <div className="mb-4 flex flex-wrap gap-2">
                 <Badge className={getMarketBriefStatusTone(brief.status)}>{getMarketBriefStatusLabel(brief.status)}</Badge>
+                <Badge className={getMarketBriefGenerationStatusTone(brief.generation_status)}>{getMarketBriefGenerationStatusLabel(brief.generation_status)}</Badge>
                 <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{brief.market}</Badge>
                 {brief.is_featured ? <Badge className="bg-amber-50 text-amber-700 ring-amber-100">精选</Badge> : null}
+                {hasMarketBriefMarkdownContent(brief) ? <Badge className="bg-violet-50 text-violet-700 ring-violet-100">有 Markdown</Badge> : null}
               </div>
               <dl className="space-y-3 text-sm">
                 <InfoRow label="日期" value={formatDate(brief.brief_date)} />
                 <InfoRow label="市场" value={brief.market} />
                 <InfoRow label="状态" value={getMarketBriefStatusLabel(brief.status)} />
+                <InfoRow label="内容源" value={getMarketBriefMarkdownSourceLabel(brief)} />
+                <InfoRow label="生成状态" value={getMarketBriefGenerationStatusLabel(brief.generation_status)} />
+                <InfoRow label="生成时间" value={brief.generated_at ? formatDateTime(brief.generated_at) : "暂无"} />
+                <InfoRow label="生成方式" value={brief.generator_name ?? "manual"} />
+                <InfoRow label="Artifact 文件" value={artifactFileCount > 0 ? `${artifactFileCount} 个` : "暂无文件元数据"} />
                 <InfoRow label="创建时间" value={formatDateTime(brief.created_at)} />
                 <InfoRow label="更新时间" value={formatDateTime(brief.updated_at)} />
               </dl>

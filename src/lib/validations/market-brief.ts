@@ -5,6 +5,10 @@ const marketBriefStatusSchema = z.enum(["draft", "reviewed", "published", "archi
   message: "请选择有效的简报状态。"
 });
 
+const marketBriefGenerationStatusSchema = z.enum(["manual", "draft", "generated", "failed", "needs_review", "archived"], {
+  message: "请选择有效的生成状态。"
+});
+
 const dateSchema = z
   .string()
   .trim()
@@ -27,7 +31,10 @@ export const marketBriefSchema = z.object({
   tomorrow_watch: optionalText(8000),
   data_sources: textArraySchema,
   tags: textArraySchema,
-  is_featured: z.boolean().default(false)
+  is_featured: z.boolean().default(false),
+  markdown_content: optionalText(80000),
+  generation_status: marketBriefGenerationStatusSchema.default("manual"),
+  generator_name: optionalText(120)
 });
 
 export type MarketBriefInput = z.infer<typeof marketBriefSchema>;

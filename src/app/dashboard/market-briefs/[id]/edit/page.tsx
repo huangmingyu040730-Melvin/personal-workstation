@@ -24,14 +24,14 @@ export default async function EditMarketBriefPage({
   return (
     <AppShell>
       <AdminPageSurface>
-        <PageHeader eyebrow="Market Briefs" title="编辑市场简报" description="保存后会刷新市场简报详情、列表和 Dashboard 最近市场简报。" />
+        <PageHeader eyebrow="Market Briefs" title="编辑市场简报" description="保存后会刷新详情、预览、下载文件、列表和 Dashboard 最近市场简报。" />
         <AdminFormSurface
           sidebar={
             <>
               <AdminFormHelpCard
                 title="编辑检查"
-                description="更新简报前，确认日期、市场、状态和数据来源仍然准确。"
-                items={["同一市场同一日期只能保留一篇简报。", "published 只是内部状态，不会生成公开页面。", "精选只影响后台标记，当前不公开展示。"]}
+                description="更新简报前，确认日期、市场、状态、Markdown 内容源和数据来源仍然准确。"
+                items={["同一市场同一日期只能保留一篇简报。", "Markdown 主内容会优先用于预览和下载。", "published 只是内部状态，不会生成公开页面。", "精选只影响后台标记，当前不公开展示。"]}
               />
               <AdminFormHelpCard
                 title="安全边界"

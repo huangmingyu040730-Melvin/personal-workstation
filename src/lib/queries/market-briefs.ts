@@ -119,8 +119,11 @@ function matchesMarketBriefSearch(brief: MarketBriefRecord, q: string) {
     brief.policy_news,
     brief.risk_alerts,
     brief.tomorrow_watch,
+    brief.markdown_content,
     brief.market,
     brief.status,
+    brief.generation_status,
+    brief.generator_name,
     ...(brief.tags ?? []),
     ...(brief.data_sources ?? [])
   ]

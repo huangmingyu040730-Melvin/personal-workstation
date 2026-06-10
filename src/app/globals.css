@@ -432,8 +432,28 @@ select {
   font-size: 12px;
 }
 
+.market-brief-paper-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 40px;
+}
+
+.market-brief-paper {
+  width: min(100%, 210mm);
+  min-height: 297mm;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.12);
+  padding: 17mm 18mm;
+}
+
 @media (max-width: 760px) {
   .resume-paper {
+    min-height: auto;
+    padding: 24px 20px;
+  }
+
+  .market-brief-paper {
     min-height: auto;
     padding: 24px 20px;
   }
@@ -476,7 +496,8 @@ select {
 
   body > div > aside,
   body > div > header,
-  .resume-preview-toolbar {
+  .resume-preview-toolbar,
+  .market-brief-preview-toolbar {
     display: none !important;
   }
 
@@ -488,13 +509,15 @@ select {
     background: #ffffff !important;
   }
 
-  .resume-preview-page {
+  .resume-preview-page,
+  .market-brief-preview-page {
     margin: 0 !important;
     padding: 0 !important;
     animation: none !important;
   }
 
-  .resume-paper-wrap {
+  .resume-paper-wrap,
+  .market-brief-paper-wrap {
     display: block;
     padding: 0 !important;
   }
@@ -508,6 +531,15 @@ select {
     border: 0 !important;
     box-shadow: none !important;
     padding: 11mm 13mm 10mm !important;
+  }
+
+  .market-brief-paper {
+    box-sizing: border-box !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 16mm 15mm !important;
   }
 
   .resume-print-section,
