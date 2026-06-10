@@ -15,6 +15,12 @@ export type GeneratedMarketBrief = {
 };
 
 export const defaultMarketBriefRunnerName = "manual-skill-mock";
+export const externalMarketBriefRunnerName = "external-skill-runner";
+export type MarketBriefGeneratorMode = "mock" | "external";
+
+export function getMarketBriefGeneratorMode(): MarketBriefGeneratorMode {
+  return process.env.MARKET_BRIEF_GENERATOR?.trim().toLowerCase() === "external" ? "external" : "mock";
+}
 
 export async function generateMarketBriefDraft(input: MarketBriefGenerationInput): Promise<GeneratedMarketBrief> {
   const generator = process.env.MARKET_BRIEF_GENERATOR ?? "mock";

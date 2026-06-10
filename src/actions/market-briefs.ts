@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
+import { externalMarketBriefRunnerName, getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
 import {
   createQueuedMarketBriefGenerationJob,
   findActiveMarketBriefGenerationJob,
@@ -153,6 +154,7 @@ export async function deleteMarketBriefAction(id: string) {
 export async function generateTodayMarketBriefAction(formData: FormData) {
   const market = getString(formData, "market") || "A股";
   const briefDate = normalizeBriefDate(getString(formData, "brief_date")) ?? getTodayDateInShanghai();
+  const generatorMode = getMarketBriefGeneratorMode();
   const { supabase, isAdmin, actorId, error } = await getAdminClient();
 
   if (!supabase || !isAdmin || !actorId) {
@@ -190,10 +192,30 @@ export async function generateTodayMarketBriefAction(formData: FormData) {
       ownerId: actorId,
       briefDate,
       market,
-      requestPayload: { triggered_by: "dashboard" }
+      runnerName: generatorMode === "external" ? externalMarketBriefRunnerName : undefined,
+      requestPayload: { triggered_by: "dashboard", generator_mode: generatorMode }
     });
   } catch (createError) {
     redirect(`/dashboard/market-briefs?error=${encodeFormError(getActionErrorMessage(createError, "创建生成任务失败。"))}`);
+  }
+
+  if (generatorMode === "external") {
+    await writeActivityLog({
+      action: "market_brief_generation_job.create",
+      entityType: "market_brief_generation_job",
+      entityId: job.id,
+      metadata: {
+        brief_date: job.brief_date,
+        market: job.market,
+        status: job.status,
+        runner_name: job.runner_name,
+        generator_mode: generatorMode
+      }
+    });
+
+    revalidateMarketBriefPaths();
+    revalidateMarketBriefJobPaths(job.id);
+    redirect(`/dashboard/market-briefs/jobs/${job.id}?notice=queued`);
   }
 
   let result;

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Eye, FileText } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { AdminPageSurface } from "@/components/admin-ui";
+import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { PageHeader } from "@/components/page-header";
@@ -54,6 +54,7 @@ export default async function MarketBriefJobDetailPage({
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "active" ? <NoticeBanner message="今日同市场已有排队中或运行中的生成任务，暂不重复创建。" /> : null}
+        {notice === "queued" ? <NoticeBanner message="任务已创建，等待外部 Skill Runner 处理。" /> : null}
         {notice === "failed" ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">生成任务失败，请查看错误信息后手动处理。</div> : null}
 
         <div className="grid gap-5 xl:grid-cols-[1fr_0.4fr]">
@@ -64,6 +65,23 @@ export default async function MarketBriefJobDetailPage({
           </div>
 
           <div className="space-y-5">
+            <Card>
+              <CardHeader title="下一步" />
+              <p className={`text-sm leading-6 ${job.status === "failed" ? "text-rose-700" : "text-slate-600"}`}>{getJobNextStep(job.status, job.error_message)}</p>
+              {isExternalJob(job) ? (
+                <div className="mt-4 space-y-3">
+                  <AdminSecurityNote>
+                    <p>该任务等待外部 Skill Runner 通过私有 API 领取、处理并回写。页面只展示调用路径，不展示 runner secret。</p>
+                  </AdminSecurityNote>
+                  <div className="rounded-2xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+                    <div>领取任务：POST /api/market-briefs/skill-jobs/claim</div>
+                    <div>成功回写：POST /api/market-briefs/skill-result</div>
+                    <div>失败回写：POST /api/market-briefs/skill-jobs/fail</div>
+                  </div>
+                </div>
+              ) : null}
+            </Card>
+
             <Card>
               <CardHeader title="任务信息" />
               <div className="mb-4 flex flex-wrap gap-2">
@@ -128,6 +146,18 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function NoticeBanner({ message }: { message: string }) {
   return <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">{message}</div>;
+}
+
+function getJobNextStep(status: string, errorMessage: string | null) {
+  if (status === "queued") return "等待外部 Skill Runner 领取任务。";
+  if (status === "running") return "外部 Skill Runner 正在处理。";
+  if (status === "succeeded") return "已生成市场简报。";
+  if (status === "failed") return errorMessage ? `任务失败：${errorMessage}` : "任务失败，请查看 runner 日志并决定是否重新创建任务。";
+  return "任务已取消或归档，无需继续处理。";
+}
+
+function isExternalJob(job: { runner_name: string; request_payload: Record<string, unknown> }) {
+  return job.runner_name.includes("external") || job.request_payload.generator_mode === "external";
 }
 
 function getSearchValue(value: string | string[] | undefined) {

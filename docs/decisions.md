@@ -1020,3 +1020,31 @@
 - 普通后台页面继续使用 Supabase Auth、`public.is_admin()` 和 RLS；私有 runner API 需要 `MARKET_BRIEF_RUNNER_SECRET`，并且不得泄露 API key、Supabase key、Auth UUID、Documents、Storage 路径、signed URL、Access Requests 或 Access Grants。
 - 本阶段不做真实 AkShare、Tushare、Wind、新闻爬虫、AI 自动生成、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
+
+## 2026-06-10 - Add External Market Brief Runner Mode
+
+类型：decision
+
+决策：
+
+- Phase 2L-D-B 不新增 migration，继续复用 `market_brief_generation_jobs`。
+- 新增 `MARKET_BRIEF_GENERATOR` 运行模式：未配置或 `mock` 时保持站内 mock runner 同步生成；`external` 时站内按钮只创建 queued job 并跳转任务详情。
+- 新增 `POST /api/market-briefs/skill-jobs/claim`，外部 runner 通过 `MARKET_BRIEF_RUNNER_SECRET` 领取最早一条 queued job，并将其更新为 running。
+- 新增 `POST /api/market-briefs/skill-jobs/fail`，外部 runner 可将任务标记为 failed，并写入可读错误原因。
+- 继续复用 `POST /api/market-briefs/skill-result` 作为成功回写接口，将 running job 标记为 succeeded 并创建或更新 `market_briefs`。
+- 新增 `scripts/market-brief-runner/`，提供 Node.js 外部 runner 骨架、README 和 sample result；脚本只调用网站 API，不需要 Supabase key。
+- `/dashboard/market-briefs/jobs/[id]` 增加下一步提示，queued/running/succeeded/failed 分别展示等待领取、处理中、已生成和失败原因；external 任务只展示 API 路径，不显示 secret。
+
+原因：
+
+- 在接入真实行情/新闻/AI 前，先固定“网站创建任务 -> 外部 runner 领取 -> 回写成功或失败”的协议，可以把数据源复杂度和网站后台状态机解耦。
+- 外部 runner 不应拿 Supabase key；它只需要 runner secret，并通过私有 API 与网站通信。
+- 保留 mock 模式可以继续支持无外部 runner 的本地验收和手工演示。
+
+影响：
+
+- 不新增 migration；合并后无需执行 SQL，前提是生产已执行 `0015_market_brief_generation_jobs.sql`。
+- claim/fail/result API 都要求 `MARKET_BRIEF_RUNNER_SECRET`；未配置返回 503，wrong secret 返回 401，不允许无 secret 写入。
+- `SUPABASE_SERVICE_ROLE_KEY` 仍只允许服务端 API route 使用，不进入客户端 bundle、日志或仓库；外部 runner 脚本不需要 Supabase key。
+- 本阶段不做真实 AkShare、Tushare、Wind、新闻爬虫、AI 自动生成、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
+- 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。

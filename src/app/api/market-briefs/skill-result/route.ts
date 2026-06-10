@@ -1,37 +1,29 @@
 import { NextResponse } from "next/server";
+import { getMarketBriefRunnerServiceClient, readJsonBody, validateMarketBriefRunnerRequest } from "@/lib/market-brief-runner-api";
 import { applySkillResultToMarketBriefJob, type SkillResultPayload } from "@/lib/market-brief-runner";
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const expectedSecret = process.env.MARKET_BRIEF_RUNNER_SECRET;
+  const authError = validateMarketBriefRunnerRequest(request);
 
-  if (!expectedSecret) {
-    return NextResponse.json({ error: "Market brief runner is not configured." }, { status: 503 });
+  if (authError) {
+    return authError;
   }
 
-  const receivedSecret = request.headers.get("x-market-brief-runner-secret");
-
-  if (!receivedSecret || receivedSecret !== expectedSecret) {
-    return NextResponse.json({ error: "Unauthorized market brief runner." }, { status: 401 });
-  }
-
-  const supabase = createServiceRoleClient();
+  const { supabase, response } = getMarketBriefRunnerServiceClient();
 
   if (!supabase) {
-    return NextResponse.json({ error: "Market brief persistence is not configured." }, { status: 503 });
+    return response;
   }
 
-  let payload: unknown;
+  const bodyResult = await readJsonBody(request);
 
-  try {
-    payload = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+  if (!bodyResult.ok) {
+    return bodyResult.response;
   }
 
-  const parsed = parseSkillResultPayload(payload);
+  const parsed = parseSkillResultPayload(bodyResult.body);
 
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
