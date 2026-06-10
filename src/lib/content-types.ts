@@ -10,6 +10,7 @@ export type AccessRequestContentType = "project" | "publication" | "skill" | "kn
 export type AccessGrantStatus = "active" | "revoked";
 export type AccessGrantContentType = "project" | "publication" | "skill" | "knowledge";
 export type CalendarEventType = "general" | "meeting" | "research" | "deadline" | "review" | "reminder";
+export type MarketBriefStatus = "draft" | "reviewed" | "published" | "archived";
 export type ResumeItemType = "basic" | "education" | "experience" | "project" | "research" | "skill" | "certification" | "award" | "language" | "other";
 export type ResumeVersionLanguage = "zh" | "en";
 export type ResumeTemplateKey = "classic" | "compact" | "research";
@@ -154,6 +155,30 @@ export type CalendarEventRecord = {
   publications?: Pick<PublicationRecord, "id" | "title" | "slug"> | null;
   knowledge_notes?: Pick<KnowledgeNoteRecord, "id" | "title" | "slug"> | null;
   skills?: Pick<SkillRecord, "id" | "name" | "slug"> | null;
+};
+
+export type MarketBriefRecord = {
+  id: string;
+  owner_id: string;
+  brief_date: string;
+  title: string;
+  status: MarketBriefStatus;
+  market: string;
+  summary: string | null;
+  market_overview: string | null;
+  index_performance: string | null;
+  style_performance: string | null;
+  sector_performance: string | null;
+  hot_topics: string | null;
+  capital_flows: string | null;
+  policy_news: string | null;
+  risk_alerts: string | null;
+  tomorrow_watch: string | null;
+  data_sources: string[];
+  tags: string[];
+  is_featured: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ResumeItemRecord = {

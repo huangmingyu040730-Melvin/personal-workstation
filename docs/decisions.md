@@ -913,3 +913,29 @@
 - 求职相关功能仍保持管理员后台私密访问，不进入公开站点或 sitemap。
 - 不修改 Resume Items、Resume Versions、`resume_jd_reviews` 表结构、RLS、Storage、Documents、Viewer、restricted、Calendar、Profile、AI JD 分析逻辑、Word 导出逻辑、质量检查规则、投递看板核心逻辑或旧 migration。
 - 本阶段不做面试记录、自动提醒、Notion 同步、邮件发送、自动投递、公开求职页或分享链接。
+
+## 2026-06-10 - Add Private Market Briefs Management
+
+类型：decision
+
+决策：
+
+- Phase 2L-A 新增 `supabase/migrations/0013_market_briefs.sql`。
+- 新增 `market_briefs` 表，保存 `brief_date`、`title`、`status`、`market`、摘要、市场概览、指数表现、风格表现、行业板块、市场热点、资金流向、政策新闻、风险提示、明日关注、`data_sources`、`tags` 和精选标记。
+- `status` 第一版限定为 `draft`、`reviewed`、`published`、`archived`。
+- 增加唯一约束 `owner_id + brief_date + market`，避免同一市场同一日期重复录入。
+- 新增后台 `/dashboard/market-briefs`、`/dashboard/market-briefs/new`、`/dashboard/market-briefs/[id]`、`/dashboard/market-briefs/[id]/edit`。
+- Dashboard 新增“最近市场简报”区域，显示最近 3 条后台记录。
+
+原因：
+
+- 市场简报 / 研究自动化需要先有稳定的手工数据落点，再接自动抓取、AI 生成、邮件发送和 Notion 同步。
+- 手工 CRUD 可以先验证字段设计、后台信息架构和 RLS 边界，避免一开始引入外部行情源和自动化复杂度。
+
+影响：
+
+- 市场简报当前仅管理员后台可访问，不进入公开页面或 sitemap。
+- RLS 允许管理员或 owner 管理；不授予 anon 读取权限，不允许 viewer/public 访问。
+- 本阶段不读取 Documents / Storage，不保存外部 API Key，不发送 AI 请求，不生成邮件，不创建定时任务。
+- 本阶段不做 AkShare、Tushare、Wind、AI 自动生成、Notion 同步、GitHub Actions、n8n、公开市场简报页、PDF/Word 导出、图表、股票推荐或投资建议。
+- 不修改 Resume、Career Center、JD Review、投递看板、Word 导出、AI Provider、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。

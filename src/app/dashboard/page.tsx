@@ -1,12 +1,12 @@
-import { BookOpen, CalendarCheck, ClipboardCheck, FileText, FileUser, FolderKanban, Sparkles } from "lucide-react";
+import { BookOpen, CalendarCheck, ClipboardCheck, FileText, FileUser, FolderKanban, Newspaper, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Card, CardHeader } from "@/components/card";
 import { Progress } from "@/components/progress";
 import { StatCard } from "@/components/stat-card";
-import { getCalendarEventTypeLabel, getPublicationTypeLabel, getResumeItemTypeLabel, getResumeTemplateLabel } from "@/lib/content-options";
-import { formatDateTime, formatRelative } from "@/lib/format";
+import { getCalendarEventTypeLabel, getMarketBriefStatusLabel, getPublicationTypeLabel, getResumeItemTypeLabel, getResumeTemplateLabel } from "@/lib/content-options";
+import { formatDate, formatDateTime, formatRelative } from "@/lib/format";
 import { profile, quickActions } from "@/lib/mock-data";
 import { getDashboardData } from "@/lib/queries/dashboard";
 import { getResumeItemDisplay } from "@/lib/resume-display";
@@ -76,6 +76,34 @@ export default async function DashboardPage() {
           </div>
           <span className="text-2xl font-semibold text-blue-800">{data.pendingAccessRequestCount}</span>
         </Link>
+      </AdminSection>
+
+      <AdminSection
+        title="最近市场简报"
+        description="手工录入的每日市场收评。当前不自动抓取行情、不调用 AI、不发送邮件。"
+        action={<Link href="/dashboard/market-briefs" className="text-sm font-medium text-blue-700">查看全部</Link>}
+      >
+        {data.recentMarketBriefs.length > 0 ? (
+          <div className="grid gap-3 md:grid-cols-3">
+            {data.recentMarketBriefs.map((brief) => (
+              <Link key={brief.id} href={`/dashboard/market-briefs/${brief.id}`} className="admin-card-motion flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:border-blue-200 hover:bg-blue-50">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700 shadow-sm">
+                  <Newspaper size={19} />
+                </span>
+                <span className="min-w-0">
+                  <span className="text-xs font-semibold text-blue-700">{formatDate(brief.brief_date)} · {brief.market}</span>
+                  <span className="mt-1 line-clamp-1 block text-sm font-semibold text-slate-950">{brief.title}</span>
+                  <span className="mt-1 text-xs text-slate-500">{getMarketBriefStatusLabel(brief.status)}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+            暂无市场简报。
+            <Link href="/dashboard/market-briefs/new" className="ml-2 font-semibold text-blue-700">新建简报</Link>
+          </div>
+        )}
       </AdminSection>
 
       <AdminSection
