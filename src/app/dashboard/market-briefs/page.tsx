@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BarChart3, Download, Eye, FileText, ListChecks, Plus, Sparkles } from "lucide-react";
-import { generateTodayMarketBriefAction } from "@/actions/market-briefs";
+import { generateMarketBriefForDateAction, generateTodayMarketBriefAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
@@ -10,7 +10,9 @@ import { PageHeader } from "@/components/page-header";
 import { getMarketBriefGenerationStatusLabel, getMarketBriefStatusLabel, marketBriefStatuses } from "@/lib/content-options";
 import type { MarketBriefRecord } from "@/lib/content-types";
 import { formatDate, formatRelative } from "@/lib/format";
+import { getNearestPreviousAShareTradingDay } from "@/lib/a-share-trading-calendar";
 import { hasMarketBriefMarkdownContent } from "@/lib/market-brief-markdown";
+import { getTodayDateInShanghai } from "@/lib/market-brief-runner";
 import { getMarketBriefGenerationStatusTone, getMarketBriefStatusTone } from "@/lib/market-briefs";
 import { getMarketBriefFilterOptions, getMarketBriefs } from "@/lib/queries/market-briefs";
 
@@ -24,6 +26,8 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
   };
   const error = params.error;
   const notice = params.notice;
+  const today = getTodayDateInShanghai();
+  const nearestTradingDay = getNearestPreviousAShareTradingDay(today);
   const [briefs, filterOptions] = await Promise.all([
     getMarketBriefs(filters),
     getMarketBriefFilterOptions()
@@ -59,11 +63,41 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
           }
         />
 
-        <AdminSection title="今日生成" description="自动生成一份今日市场简报草稿，后续可在预览页编辑和下载。当前使用 mock generator，不接真实行情或新闻源。">
-          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-            <Badge className="bg-blue-50 text-blue-700 ring-blue-100">默认市场：A股</Badge>
-            <Badge className="bg-slate-50 text-slate-600 ring-slate-200">生成器：manual-skill-mock</Badge>
-            <span>点击后会先创建生成任务；如果今日同市场简报或运行中任务已存在，会直接跳转到对应记录。</span>
+        <AdminSection title="市场动态生成" description="保留今日生成入口，也支持指定历史交易日补生成。历史日期可能无法完整回溯热点、新闻和资金流数据，系统会尽量生成待复核版本。">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-slate-100 bg-white p-4">
+              <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                <Badge className="bg-blue-50 text-blue-700 ring-blue-100">今日：{today}</Badge>
+                <Badge className="bg-slate-50 text-slate-600 ring-slate-200">默认市场：A股</Badge>
+              </div>
+              <p className="mb-4 text-sm leading-6 text-slate-600">仅当今天为 A 股交易日时创建任务；如果已有同日同市场简报或排队 / 运行中任务，会直接跳转到对应记录。</p>
+              <form action={generateTodayMarketBriefAction}>
+                <input type="hidden" name="market" value="A股" />
+                <SubmitButton pendingLabel="生成中...">
+                  <span className="inline-flex items-center gap-2">
+                    <Sparkles size={16} />
+                    获取今日市场动态
+                  </span>
+                </SubmitButton>
+              </form>
+            </div>
+
+            <form action={generateMarketBriefForDateAction} className="rounded-2xl border border-slate-100 bg-white p-4">
+              <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-100">历史补生成</Badge>
+                {nearestTradingDay ? <Badge className="bg-slate-50 text-slate-600 ring-slate-200">最近交易日：{nearestTradingDay}</Badge> : null}
+              </div>
+              <p className="mb-4 text-sm leading-6 text-slate-600">仅支持选择 A 股交易日。周末、节假日、未来日期不可生成。</p>
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px]">
+                <TextInput type="date" name="brief_date" defaultValue={nearestTradingDay ?? today} max={today} required />
+                <Select name="market" defaultValue="A股">
+                  <option value="A股">A股</option>
+                </Select>
+              </div>
+              <div className="mt-4">
+                <SubmitButton pendingLabel="创建中...">生成历史市场动态</SubmitButton>
+              </div>
+            </form>
           </div>
         </AdminSection>
 

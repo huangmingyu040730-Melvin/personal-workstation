@@ -22,7 +22,7 @@ def main() -> int:
     runner_secret = os.getenv("MARKET_BRIEF_RUNNER_SECRET")
     market = os.getenv("MARKET_BRIEF_MARKET", "A股")
     runner_name = os.getenv("MARKET_BRIEF_RUNNER_NAME", "akshare-runner")
-    data_mode = os.getenv("MARKET_BRIEF_DATA_MODE", "akshare")
+    data_mode = os.getenv("MARKET_BRIEF_DATA_MODE", "multi")
 
     if not base_url:
         print_missing_env_help("WORKSTATION_BASE_URL", env_files)

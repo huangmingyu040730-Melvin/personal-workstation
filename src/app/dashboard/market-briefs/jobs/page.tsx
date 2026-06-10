@@ -79,6 +79,7 @@ export default async function MarketBriefJobsPage({ searchParams }: { searchPara
                 <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
                   <tr>
                     <th className="px-3 py-3 font-semibold">日期</th>
+                    <th className="px-3 py-3 font-semibold">类型</th>
                     <th className="px-3 py-3 font-semibold">市场</th>
                     <th className="px-3 py-3 font-semibold">状态</th>
                     <th className="px-3 py-3 font-semibold">Runner</th>
@@ -113,6 +114,13 @@ function MarketBriefJobRow({ job }: { job: MarketBriefGenerationJobRecord }) {
   return (
     <tr className="align-top text-slate-700">
       <td className="whitespace-nowrap px-3 py-4">{formatDate(job.brief_date)}</td>
+      <td className="whitespace-nowrap px-3 py-4">
+        {isHistoricalJob(job) ? (
+          <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-100">历史补生成</Badge>
+        ) : (
+          <Badge className="bg-slate-50 text-slate-600 ring-slate-200">今日生成</Badge>
+        )}
+      </td>
       <td className="whitespace-nowrap px-3 py-4">{job.market}</td>
       <td className="whitespace-nowrap px-3 py-4">
         <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
@@ -189,4 +197,8 @@ function NoticeBanner({ message }: { message: string }) {
 
 function getSearchValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function isHistoricalJob(job: MarketBriefGenerationJobRecord) {
+  return job.request_payload?.is_historical === true;
 }

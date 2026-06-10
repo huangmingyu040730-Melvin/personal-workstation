@@ -50,11 +50,11 @@ pip install -r requirements.txt
 export WORKSTATION_BASE_URL="http://localhost:3000"
 export MARKET_BRIEF_RUNNER_SECRET="your_runner_secret"
 export MARKET_BRIEF_RUNNER_NAME="akshare-runner"
-export MARKET_BRIEF_DATA_MODE="akshare"
+export MARKET_BRIEF_DATA_MODE="multi"
 python run_market_brief_runner.py
 ```
 
-The Python runner attempts to fetch broad A-share indices, market breadth, industry boards, and hot-topic placeholders from AkShare. If a module fails, it records warnings in `source_snapshot.meta.warnings`. If no core data is available after a job is claimed, it writes a fallback Markdown brief with `source_snapshot.meta.data_quality=fallback` and `generation_status=needs_review` so the job can complete for manual review.
+The Python runner defaults to `MARKET_BRIEF_DATA_MODE=multi`, tries a lightweight HTTP index source before AkShare, and records module status in `source_snapshot.meta.source_status`. For historical jobs it uses `job.brief_date`, skips latest-only sources instead of substituting today data, and writes a partial or fallback Markdown brief with `generation_status=needs_review` when data is incomplete.
 
 ## Current Scope
 

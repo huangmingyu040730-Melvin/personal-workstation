@@ -59,6 +59,7 @@ export default async function MarketBriefJobDetailPage({
         {notice === "failed" ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">生成任务失败，请查看错误信息后手动处理。</div> : null}
         {notice === "cancelled" ? <NoticeBanner message="任务已取消。" /> : null}
         {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次运行 runner 领取。" /> : null}
+        {isHistoricalJob(job) ? <NoticeBanner message="该任务为历史日期补生成，部分热点、新闻、资金流数据可能无法完整回溯。" /> : null}
 
         <div className="grid gap-5 xl:grid-cols-[1fr_0.4fr]">
           <div className="space-y-5">
@@ -91,9 +92,15 @@ export default async function MarketBriefJobDetailPage({
               <div className="mb-4 flex flex-wrap gap-2">
                 <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
                 <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{job.market}</Badge>
+                {isHistoricalJob(job) ? (
+                  <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-100">历史补生成</Badge>
+                ) : (
+                  <Badge className="bg-slate-50 text-slate-600 ring-slate-200">今日生成</Badge>
+                )}
               </div>
               <dl className="space-y-3 text-sm">
                 <InfoRow label="日期" value={formatDate(job.brief_date)} />
+                <InfoRow label="任务类型" value={isHistoricalJob(job) ? "历史日期补生成" : "今日生成"} />
                 <InfoRow label="市场" value={job.market} />
                 <InfoRow label="状态" value={getMarketBriefJobStatusLabel(job.status)} />
                 <InfoRow label="Runner" value={job.runner_name} />
@@ -163,6 +170,10 @@ function getJobNextStep(status: string, errorMessage: string | null) {
 
 function isExternalJob(job: { runner_name: string; request_payload: Record<string, unknown> }) {
   return job.runner_name.includes("external") || job.request_payload.generator_mode === "external";
+}
+
+function isHistoricalJob(job: { request_payload: Record<string, unknown> }) {
+  return job.request_payload?.is_historical === true;
 }
 
 function getSearchValue(value: string | string[] | undefined) {

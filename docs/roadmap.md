@@ -183,11 +183,13 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 - Phase 2L-D-A：新增 `market_brief_generation_jobs`、`/dashboard/market-briefs/jobs` 和私有 `/api/market-briefs/skill-result`，把“获取今日市场动态”改成先创建任务、记录 request/source/result payload，再同步运行 mock runner 并写入简报。
 - Phase 2L-D-B：新增 `MARKET_BRIEF_GENERATOR=external`、claim/fail 私有 API 和 `scripts/market-brief-runner/` 外部 runner 骨架；external 模式下站内按钮只创建 queued job，外部 runner 通过 API 领取并回写 mock 结果。
 - Phase 2L-D-C：新增 Python AkShare runner，第一版接入宽基指数、市场宽度、行业板块和热点方向，生成稳定 `source_snapshot` 与 Markdown，并通过 claim/result/fail API 回写网站。
-- Phase 2L-D-D 后续可继续补充 Tushare / 新闻源 / AI 草稿 / GICS 行业映射，把第一版真实数据扩展为可审核的研究自动化流程。
+- Phase 2L-D-D：真实行情源不可用时生成 fallback / partial 待复核简报，不让任务因 AkShare / 东方财富不稳定而长期卡住。
+- Phase 2L-D-E：新增 `MARKET_BRIEF_DATA_MODE=multi`、轻量 HTTP 指数源和指定日期历史补生成；今日与历史生成都先校验 A 股交易日，周末、节假日、未来日期不创建 job。
 - 后续：每日 A 股市场收评自动生成。
 - 后续：AkShare / Tushare / Wind 等数据源接入。
+- 后续：扩展稳定历史行情、资金流、新闻和交易所日历刷新源。
 - 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。
-- 当前 2L-D-C 不做 AI、邮件、Notion、公开市场简报页、复杂图表、股票推荐或投资建议；外部 runner 只通过 `WORKSTATION_BASE_URL` 和 `MARKET_BRIEF_RUNNER_SECRET` 调网站 API，不需要 Supabase key。
+- 当前 2L-D-E 不做 AI、新闻爬虫、邮件、Notion、公开市场简报页、复杂图表、股票推荐或投资建议；外部 runner 只通过 `WORKSTATION_BASE_URL` 和 `MARKET_BRIEF_RUNNER_SECRET` 调网站 API，不需要 Supabase key。
 
 ### Phase 2L - Notion / Google Calendar / AI 辅助研究
 
