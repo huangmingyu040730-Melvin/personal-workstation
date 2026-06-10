@@ -57,7 +57,7 @@ SUPABASE_SERVICE_ROLE_KEY=server_only_service_role_key
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。Phase 2L-A 合并后还需要执行 `0013_market_briefs.sql`。Phase 2L-B 合并后还需要执行 `0014_market_brief_artifacts.sql`。Phase 2L-D-A 合并后还需要执行 `0015_market_brief_generation_jobs.sql`。已执行过的 migration 不应修改或重跑。执行 0015 后，后续数据库变更应新增 `0016_*`，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。Phase 2L-A 合并后还需要执行 `0013_market_briefs.sql`。Phase 2L-B 合并后还需要执行 `0014_market_brief_artifacts.sql`。Phase 2L-D-A 合并后还需要执行 `0015_market_brief_generation_jobs.sql`。Market Brief external runner hotfix 合并后还需要执行 `0016_market_brief_runner_service_role_grants.sql`。已执行过的 migration 不应修改或重跑。执行 0016 后，后续数据库变更应新增 `0017_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -428,6 +428,20 @@ Phase 2L-D-B 权限边界：
 - 外部 runner 脚本只需要 `WORKSTATION_BASE_URL` 和 `MARKET_BRIEF_RUNNER_SECRET`，不需要 Supabase key。
 - `SUPABASE_SERVICE_ROLE_KEY` 只用于网站服务端 API route，不暴露给外部 runner、客户端、日志或仓库。
 - 任务领取和回写不提供 GET 公共读取，不进入 sitemap，不创建 public URL，不读取 Documents 或 Storage，不调用 AI。
+
+Market Brief external runner 权限 hotfix 新增：
+
+```text
+supabase/migrations/0016_market_brief_runner_service_role_grants.sql
+```
+
+`0016` 会：
+
+- 给 `service_role` 授予 `public.market_brief_generation_jobs` 的 `select, insert, update, delete`，用于 claim / fail / result API 查询和更新任务。
+- 给 `service_role` 授予 `public.market_briefs` 的 `select, insert, update, delete`，用于 result API 创建或更新简报。
+- 不给 `anon` 增加权限，不公开市场简报，不修改 RLS、表结构、Storage 或 Documents。
+
+如果 external runner diagnose 返回 `permission denied for table market_brief_generation_jobs` 且 code 为 `42501`，需要在生产 Supabase 执行 `0016` 后重新测试。
 
 ## 创建管理员
 
