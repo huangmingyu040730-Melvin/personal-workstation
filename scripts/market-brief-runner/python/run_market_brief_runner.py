@@ -10,7 +10,7 @@ import urllib.request
 from typing import Any
 
 from market_brief_writer import build_market_brief_payload
-from market_data_sources import fetch_a_share_market_snapshot, has_core_market_data
+from market_data_sources import fetch_a_share_market_snapshot
 
 
 def main() -> int:
@@ -66,17 +66,11 @@ def main() -> int:
             data_mode=data_mode,
         )
 
-        if not has_core_market_data(snapshot):
-            warnings = snapshot.get("meta", {}).get("warnings") or []
-            message = "Real market data unavailable; no core index, breadth, or sector data fetched."
-            if warnings:
-                message = f"{message} Warnings: {'; '.join(warnings[:3])}"
-            fail_job(base_url, runner_secret, job["job_id"], message)
-            print(message, file=sys.stderr)
-            return 1
-
         result_payload = build_market_brief_payload(job, snapshot)
         result = post_json(base_url, "/api/market-briefs/skill-result", result_payload, runner_secret).body
+        data_quality = snapshot.get("meta", {}).get("data_quality") or "unknown"
+        if data_quality == "fallback":
+            print("Real market data unavailable; generated fallback market brief for manual review.")
         print(f"Market brief generated: {result.get('preview_url')}")
         return 0
     except Exception as exc:  # noqa: BLE001

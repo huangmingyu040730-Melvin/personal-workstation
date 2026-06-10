@@ -74,7 +74,8 @@ function parseSkillResultPayload(value: unknown): { ok: true; payload: SkillResu
       markdown_content: markdownContent,
       source_snapshot: isPlainRecord(value.source_snapshot) ? value.source_snapshot : undefined,
       tags: getOptionalTextArray(value.tags),
-      data_sources: getOptionalTextArray(value.data_sources)
+      data_sources: getOptionalTextArray(value.data_sources),
+      generation_status: getOptionalGenerationStatus(value.generation_status)
     }
   };
 }
@@ -99,6 +100,13 @@ function getOptionalTextArray(value: unknown) {
 
   const items = value.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
   return items.length > 0 ? Array.from(new Set(items)) : undefined;
+}
+
+function getOptionalGenerationStatus(value: unknown) {
+  const text = getOptionalText(value);
+  return text && ["manual", "draft", "generated", "failed", "needs_review", "archived"].includes(text)
+    ? (text as "manual" | "draft" | "generated" | "failed" | "needs_review" | "archived")
+    : undefined;
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {

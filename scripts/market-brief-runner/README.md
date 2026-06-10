@@ -54,7 +54,7 @@ export MARKET_BRIEF_DATA_MODE="akshare"
 python run_market_brief_runner.py
 ```
 
-The Python runner attempts to fetch broad A-share indices, market breadth, industry boards, and hot-topic placeholders from AkShare. If a module fails, it records warnings in `source_snapshot.meta.warnings`. If no core data is available after a job is claimed, it marks the job failed.
+The Python runner attempts to fetch broad A-share indices, market breadth, industry boards, and hot-topic placeholders from AkShare. If a module fails, it records warnings in `source_snapshot.meta.warnings`. If no core data is available after a job is claimed, it writes a fallback Markdown brief with `source_snapshot.meta.data_quality=fallback` and `generation_status=needs_review` so the job can complete for manual review.
 
 ## Current Scope
 
