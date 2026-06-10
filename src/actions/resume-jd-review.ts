@@ -3,8 +3,11 @@
 import OpenAI from "openai";
 import { getAdminClient } from "@/lib/auth/admin";
 import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
+import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
+import { getResumeItems } from "@/lib/queries/resume";
+import { buildResumeAiInputContext, pickResumeBasicItem } from "@/lib/resume-ai-input";
+import { getTargetKeywords } from "@/lib/resume-quality";
 import {
-  buildResumeJdReviewContext,
   buildResumeJdReviewPrompt,
   defaultResumeJdReviewState,
   normalizeResumeJdReviewResult,
@@ -63,7 +66,22 @@ export async function analyzeResumeJdAction(versionId: string, previousState: Re
     };
   }
 
-  const resumeContext = buildResumeJdReviewContext(version, version.resume_version_items ?? []);
+  const [publicProfile, basicItems] = await Promise.all([
+    getPublicProfile(),
+    getResumeItems({ itemType: "basic", visibility: "all" })
+  ]);
+  const profile = publicProfile ?? getProfileFallback();
+  const versionWithItems = {
+    ...version,
+    resume_version_items: version.resume_version_items ?? []
+  };
+  const basicItem = pickResumeBasicItem(versionWithItems, basicItems);
+  const resumeContext = buildResumeAiInputContext({
+    version: versionWithItems,
+    profile,
+    basicItem,
+    targetKeywords: getTargetKeywords(versionWithItems)
+  });
   const prompt = buildResumeJdReviewPrompt({ jdText, direction, resumeContext });
   const client = new OpenAI({
     apiKey: aiConfig.apiKey,

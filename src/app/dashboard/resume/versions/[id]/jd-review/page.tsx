@@ -8,20 +8,29 @@ import { Card, CardHeader } from "@/components/card";
 import { ResumeJdReviewForm } from "@/components/forms/resume-jd-review-form";
 import { PageHeader } from "@/components/page-header";
 import { getAiProviderPublicInfo } from "@/lib/ai-provider";
-import { getResumeVersionWithItems } from "@/lib/queries/resume";
-import { buildResumeJdReviewContext } from "@/lib/resume-jd-review";
+import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
+import { getResumeItems, getResumeVersionWithItems } from "@/lib/queries/resume";
+import { buildResumeAiInputContext, pickResumeBasicItem, type ResumeAiInputEntry } from "@/lib/resume-ai-input";
 import { getTargetKeywords } from "@/lib/resume-quality";
 
 export default async function ResumeVersionJdReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const version = await getResumeVersionWithItems(id);
+  const [version, publicProfile, basicItems] = await Promise.all([
+    getResumeVersionWithItems(id),
+    getPublicProfile(),
+    getResumeItems({ itemType: "basic", visibility: "all" })
+  ]);
 
   if (!version) {
     notFound();
   }
 
-  const reviewContext = buildResumeJdReviewContext(version, version.resume_version_items);
   const targetKeywords = getTargetKeywords(version);
+  const profile = publicProfile ?? getProfileFallback();
+  const basicItem = pickResumeBasicItem(version, basicItems);
+  const reviewContext = buildResumeAiInputContext({ version, profile, basicItem, targetKeywords });
+  const visibleItemCount = reviewContext.sections.reduce((count, section) => count + section.entries.length, 0);
+  const profileRows = Object.entries(reviewContext.profile);
   const aiProvider = getAiProviderPublicInfo();
 
   return (
@@ -79,25 +88,46 @@ export default async function ResumeVersionJdReviewPage({ params }: { params: Pr
               <dl className="space-y-3 text-sm">
                 <InfoRow label="版本名称" value={version.title} />
                 <InfoRow label="目标岗位" value={version.target_role || "未设置"} />
-                <InfoRow label="已选素材" value={`${reviewContext.items.length} 条`} />
+                <InfoRow label="已选素材" value={`${visibleItemCount} 条`} />
                 <InfoRow label="目标关键词" value={targetKeywords.length > 0 ? targetKeywords.join("、") : "未设置"} />
               </dl>
             </Card>
 
             <Card>
-              <CardHeader title="版本内容概览" description="这里只展示送入 AI 的摘要级内容，不包含附件或后台数据。" action={<ShieldCheck size={18} className="text-emerald-700" />} />
-              {reviewContext.items.length > 0 ? (
-                <div className="space-y-3">
-                  {reviewContext.items.slice(0, 6).map((item) => (
-                    <div key={`${item.section}-${item.title}`} className="rounded-2xl bg-slate-50 p-3">
-                      <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <Badge className="bg-white text-slate-600 ring-slate-200">{item.section}</Badge>
-                        <p className="font-semibold text-slate-950">{item.title}</p>
+              <CardHeader title="版本内容概览" description="这里完整展示送入 AI 的同源内容，不包含附件或后台数据。" action={<ShieldCheck size={18} className="text-emerald-700" />} />
+              {visibleItemCount > 0 || profileRows.length > 0 ? (
+                <div className="space-y-4">
+                  {profileRows.length > 0 ? (
+                    <section className="rounded-2xl bg-slate-50 p-3">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <Badge className="bg-white text-slate-600 ring-slate-200">profile</Badge>
+                        <p className="font-semibold text-slate-950">顶部个人信息</p>
                       </div>
-                      <p className="line-clamp-2 text-sm leading-6 text-slate-600">{[item.organization, item.roleTitle, item.summary, item.bullets[0]].filter(Boolean).join(" · ") || "暂无摘要。"}</p>
-                    </div>
+                      <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                        {profileRows.map(([key, value]) => (
+                          <div key={key} className="rounded-xl bg-white px-3 py-2">
+                            <dt className="text-xs text-slate-400">{getProfileFieldLabel(key)}</dt>
+                            <dd className="mt-1 leading-6 text-slate-700">{value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  ) : null}
+
+                  {reviewContext.sections.map((section) => (
+                    <section key={section.key} className="rounded-2xl bg-slate-50 p-3">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <Badge className="bg-white text-slate-600 ring-slate-200">{section.key}</Badge>
+                        <h2 className="text-sm font-semibold text-slate-950">{section.label}</h2>
+                        <span className="text-xs text-slate-500">{section.entries.length} 条</span>
+                      </div>
+                      <div className="space-y-3">
+                        {section.entries.map((entry) => (
+                          <ResumeAiInputEntryCard key={entry.id} entry={entry} />
+                        ))}
+                      </div>
+                    </section>
                   ))}
-                  {reviewContext.items.length > 6 ? <p className="text-xs text-slate-500">还有 {reviewContext.items.length - 6} 条素材会参与分析。</p> : null}
                 </div>
               ) : (
                 <p className="text-sm leading-6 text-slate-500">当前版本还没有展示中的正文素材。建议先返回编辑页选择素材。</p>
@@ -105,11 +135,59 @@ export default async function ResumeVersionJdReviewPage({ params }: { params: Pr
             </Card>
           </div>
 
-          <ResumeJdReviewForm versionId={version.id} targetRole={version.target_role} targetKeywords={targetKeywords} visibleItemCount={reviewContext.items.length} />
+          <ResumeJdReviewForm versionId={version.id} targetRole={version.target_role} targetKeywords={targetKeywords} visibleItemCount={visibleItemCount} />
         </AdminFormSurface>
       </AdminPageSurface>
     </AppShell>
   );
+}
+
+function ResumeAiInputEntryCard({ entry }: { entry: ResumeAiInputEntry }) {
+  const meta = [entry.date, entry.subtitle].filter(Boolean).join(" · ");
+
+  return (
+    <article className="rounded-2xl bg-white p-3">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-sm font-semibold text-slate-950">{entry.title || "未命名素材"}</h3>
+        {meta ? <p className="text-xs leading-5 text-slate-500">{meta}</p> : null}
+      </div>
+      {entry.summary ? <p className="mt-2 text-sm leading-6 text-slate-700">{entry.summary}</p> : null}
+      {entry.detailLines.length > 0 ? (
+        <div className="mt-2 space-y-1">
+          {entry.detailLines.map((line) => (
+            <p key={line} className="text-sm leading-6 text-slate-700">{line}</p>
+          ))}
+        </div>
+      ) : null}
+      {entry.bullets.length > 0 ? (
+        <ul className="mt-2 space-y-1 text-sm leading-6 text-slate-700">
+          {entry.bullets.map((bullet) => (
+            <li key={bullet} className="flex gap-2">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-300" aria-hidden="true" />
+              <span>{bullet}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {entry.tokens ? <p className="mt-2 text-xs leading-5 text-slate-500">工具 / 方法：{entry.tokens}</p> : null}
+    </article>
+  );
+}
+
+function getProfileFieldLabel(key: string) {
+  const labels: Record<string, string> = {
+    name: "姓名",
+    headline: "一句话定位",
+    gender: "性别",
+    age: "年龄",
+    phone: "电话",
+    email: "邮箱",
+    location: "所在地",
+    website: "个人网站",
+    socialLinks: "社交链接"
+  };
+
+  return labels[key] ?? key;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {

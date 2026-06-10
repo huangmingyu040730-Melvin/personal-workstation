@@ -1,6 +1,4 @@
-import type { ResumeItemRecord, ResumeVersionItemRecord, ResumeVersionRecord } from "@/lib/content-types";
-import { detailRecord, formatResumeDateRange, normalizeResumeBullets } from "@/lib/resume-display";
-import { getTargetKeywords } from "@/lib/resume-quality";
+import type { ResumeAiInputContext } from "@/lib/resume-ai-input";
 
 export type ResumeJdDirection = "investment_research" | "quant_research" | "asset_management" | "financial_product" | "ai_data" | "general";
 
@@ -59,22 +57,6 @@ export function createEmptyResumeJdReviewResult(): ResumeJdReviewResult {
   };
 }
 
-export function buildResumeJdReviewContext(version: ResumeVersionRecord, versionItems: ResumeVersionItemRecord[]) {
-  const visibleItems = versionItems
-    .filter((versionItem) => versionItem.is_visible && versionItem.resume_items && versionItem.resume_items.item_type !== "basic")
-    .sort((a, b) => a.section_key.localeCompare(b.section_key) || a.sort_order - b.sort_order);
-
-  return {
-    version: {
-      title: version.title,
-      targetRole: version.target_role,
-      summary: version.summary,
-      targetKeywords: getTargetKeywords(version)
-    },
-    items: visibleItems.map((versionItem) => summarizeVersionItem(versionItem))
-  };
-}
-
 export function buildResumeJdReviewPrompt({
   jdText,
   direction,
@@ -82,7 +64,7 @@ export function buildResumeJdReviewPrompt({
 }: {
   jdText: string;
   direction: ResumeJdDirection;
-  resumeContext: ReturnType<typeof buildResumeJdReviewContext>;
+  resumeContext: ResumeAiInputContext;
 }) {
   const directionLabel = resumeJdDirectionOptions.find((option) => option.value === direction)?.label ?? "通用";
 
@@ -94,7 +76,7 @@ export function buildResumeJdReviewPrompt({
     "",
     `岗位方向：${directionLabel}`,
     "",
-    "当前简历版本内容（仅包含已选择进入当前版本的素材，不包含 Documents、Storage、signed URL 或后台权限数据）：",
+    "当前简历版本内容（与页面版本内容概览同源，仅包含当前版本已选择且可见的 Profile 字段和正文素材；不包含 Documents、Storage、signed URL 或后台权限数据）：",
     JSON.stringify(resumeContext, null, 2),
     "",
     "目标岗位 JD：",
@@ -175,47 +157,6 @@ export function resumeJdReviewJsonSchema() {
   };
 }
 
-function summarizeVersionItem(versionItem: ResumeVersionItemRecord) {
-  const item = versionItem.resume_items as ResumeItemRecord;
-  const visible = normalizeVisibleFields(versionItem.visible_fields);
-  const details = detailRecord(item);
-  const bullets: string[] = [];
-
-  if (visible.show_bullets !== false) {
-    bullets.push(...normalizeResumeBullets(item.bullets));
-  }
-
-  for (const [visibleKey, detailKey] of [
-    ["show_results", "results"],
-    ["show_achievements", "achievements"],
-    ["show_related_outputs", "related_outputs"],
-    ["show_outputs", "outputs"],
-    ["show_description", "description"]
-  ] as const) {
-    if (visible[visibleKey]) {
-      bullets.push(...normalizeResumeBullets(details[detailKey]));
-    }
-  }
-
-  return {
-    section: versionItem.section_key,
-    type: item.item_type,
-    title: item.title,
-    organization: visible.show_organization === false ? null : item.organization,
-    roleTitle: visible.show_role_title === false ? null : item.role_title,
-    dateRange: visible.show_date === false ? null : formatResumeDateRange(item),
-    location: visible.show_location ? item.location : null,
-    summary: visible.show_summary === false ? null : item.summary,
-    bullets: dedupe(bullets).slice(0, 12),
-    skills: visible.show_skills === false ? [] : item.skills,
-    tags: visible.show_tags === false ? [] : item.tags
-  };
-}
-
-function normalizeVisibleFields(value: Record<string, unknown>) {
-  return Object.fromEntries(Object.entries(value ?? {}).map(([key, fieldValue]) => [key, Boolean(fieldValue)])) as Record<string, boolean>;
-}
-
 function readString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -264,8 +205,4 @@ function readRewriteArray(value: unknown) {
       };
     })
     .filter((item): item is { original?: string; rewritten: string; reason: string } => Boolean(item && item.rewritten));
-}
-
-function dedupe(values: string[]) {
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
