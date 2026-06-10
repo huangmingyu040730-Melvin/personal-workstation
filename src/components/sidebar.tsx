@@ -11,8 +11,8 @@ function isSidebarItemActive(pathname: string, href: string) {
     return pathname === href;
   }
 
-  if (href === "/dashboard/resume") {
-    return pathname === href || (pathname.startsWith(`${href}/`) && !pathname.startsWith("/dashboard/resume/versions") && !pathname.startsWith("/dashboard/resume/applications") && !pathname.startsWith("/dashboard/resume/jd-reviews"));
+  if (href === "/dashboard/career") {
+    return pathname === href || pathname.startsWith("/dashboard/resume");
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);

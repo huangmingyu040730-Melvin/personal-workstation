@@ -3,6 +3,7 @@ import { Eye, FileUser, Layers3, Plus, Star } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Badge, VisibilityBadge } from "@/components/badge";
+import { CareerTabs } from "@/components/career-tabs";
 import { PageHeader } from "@/components/page-header";
 import { ResumeQualityBadge } from "@/components/resume-quality";
 import { getResumeTemplateLabel, getResumeVersionLanguageLabel } from "@/lib/content-options";
@@ -44,20 +45,7 @@ export default async function ResumeVersionsPage() {
           }
         />
 
-        <div className="flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-soft">
-          <Link href="/dashboard/resume" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
-            素材库
-          </Link>
-          <Link href="/dashboard/resume/versions" className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
-            简历版本
-          </Link>
-          <Link href="/dashboard/resume/applications" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
-            投递看板
-          </Link>
-          <Link href="/dashboard/resume/jd-reviews" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
-            JD 分析记录
-          </Link>
-        </div>
+        <CareerTabs active="versions" />
 
         <div className="grid gap-4 md:grid-cols-3">
           <ResumeVersionMetric label="版本总数" value={stats.total} icon={<FileUser size={20} />} />
