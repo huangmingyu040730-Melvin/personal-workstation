@@ -6,6 +6,7 @@ import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { MarketBriefCharts } from "@/components/market-brief-charts";
 import { MarketBriefPrintButton } from "@/components/market-brief-print-button";
+import { MarketBriefSources } from "@/components/market-brief-sources";
 import { PageHeader } from "@/components/page-header";
 import { getMarketBriefGenerationStatusLabel } from "@/lib/content-options";
 import { formatDate } from "@/lib/format";
@@ -77,7 +78,7 @@ export default async function MarketBriefPreviewPage({
           {notice === "generated" ? <PreviewNotice tone="emerald" message="市场简报已生成。AI 输出默认需要人工复核，图表来自 structured output。" /> : null}
           {notice === "exists" ? <PreviewNotice tone="blue" message="该日期市场简报已存在，已跳转到已有预览页，未重复创建。" /> : null}
           {brief.generator_name === "manual-skill-mock" ? <PreviewNotice tone="slate" message="本简报由 manual-skill-mock 生成，当前尚未接入真实行情数据。" /> : null}
-          {brief.generator_name === "ai-market-brief-generator" ? <PreviewNotice tone="slate" message="本简报由 AI 生成，精确行情数据、来源和图表需人工复核。" /> : null}
+          {brief.generator_name === "ai-market-brief-generator" ? <PreviewNotice tone="slate" message="本简报由 AI 基于检索来源生成，精确行情数据、来源和图表需人工复核。" /> : null}
         </div>
 
         <div className="market-brief-paper-wrap">
@@ -92,6 +93,7 @@ export default async function MarketBriefPreviewPage({
           </article>
         </div>
 
+        <MarketBriefSources brief={brief} />
         <MarketBriefCharts brief={brief} />
       </AdminPageSurface>
     </AppShell>

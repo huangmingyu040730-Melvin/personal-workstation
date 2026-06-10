@@ -42,6 +42,7 @@ export function MarketBriefCharts({ brief }: { brief: Pick<MarketBriefRecord, "s
 
 function ChartCard({ chart }: { chart: MarketBriefChart }) {
   const rows = chart.data.filter((row) => getNumericValue(row, chart) !== null);
+  const sourceIds = getChartSourceIds(rows);
 
   return (
     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
@@ -55,6 +56,7 @@ function ChartCard({ chart }: { chart: MarketBriefChart }) {
       {rows.length > 0 && chart.type === "bar" ? <BarChart chart={chart} rows={rows} /> : null}
       {rows.length > 0 && chart.type === "pie" ? <PieChart chart={chart} rows={rows} /> : null}
       {rows.length > 0 && chart.type === "line" ? <LineChart chart={chart} rows={rows} /> : null}
+      {sourceIds.length > 0 ? <p className="mt-4 text-xs leading-5 text-slate-500">来源：{sourceIds.map((id) => `[${id}]`).join(" ")}</p> : null}
     </div>
   );
 }
@@ -183,6 +185,18 @@ function getNumericValue(row: Record<string, unknown>, chart: MarketBriefChart) 
 function formatValue(value: number, unit = "") {
   const text = Number.isInteger(value) ? String(value) : value.toFixed(2);
   return `${text}${unit}`;
+}
+
+function getChartSourceIds(rows: Array<Record<string, unknown>>) {
+  const ids = rows.flatMap((row) => {
+    if (Array.isArray(row.source_ids)) {
+      return row.source_ids.filter((id): id is string => typeof id === "string" && id.trim().length > 0);
+    }
+
+    return typeof row.source_id === "string" && row.source_id.trim().length > 0 ? [row.source_id] : [];
+  });
+
+  return Array.from(new Set(ids));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

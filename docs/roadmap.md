@@ -187,11 +187,12 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 - Phase 2L-D-E：新增多数据源模式、轻量 HTTP 指数源和指定日期历史补生成；今日与历史生成都先校验 A 股交易日，周末、节假日、未来日期不创建 job。
 - Phase 2M-A：切换为 AI-first Market Brief Generator，后台按钮直接创建 generation job 并由服务端 AI 生成固定模板 Markdown、structured JSON、source snapshot 和预览图表；旧 Python 数据源 runner 标记为 deprecated。
 - Phase 2M-B：清理旧数据源 / runner 路线，后台主流程、任务页面和推荐文档全面收口为 AI-first；旧 external 兼容接口和 runner 目录只作为 deprecated 历史诊断资料保留。
+- Phase 2M-C：新增 Market Brief AI Web Search Grounding，生成前按日期和市场检索公开来源，AI 只能基于 sources 生成 Markdown、structured JSON 和 charts；preview 展示来源列表，图表数据项必须带 `source_ids`。
 - 后续：每日 A 股市场收评自动生成。
-- 后续：接入更可靠的 AI web search provider、可验证来源引用或授权数据供应商。
+- 后续：扩展更可靠的可验证来源引用、授权数据供应商和来源质量评分。
 - 后续：扩展稳定交易日历刷新、来源审计和人工复核工作流。
 - 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。
-- 当前 2M-B 不做行情接口抓取、新闻爬虫、邮件、Notion、公开市场简报页、股票推荐或投资建议；AI 调用只在服务端执行，默认 `needs_review`。
+- 当前 2M-C 不做行情接口抓取、新闻爬虫、邮件、Notion、公开市场简报页、股票推荐或投资建议；AI 和搜索 key 只在服务端读取，输出默认 `needs_review`。
 
 ### Phase 2L - Notion / Google Calendar / AI 辅助研究
 

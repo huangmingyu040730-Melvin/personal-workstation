@@ -15,6 +15,7 @@ import { hasMarketBriefMarkdownContent } from "@/lib/market-brief-markdown";
 import { getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
 import { getTodayDateInShanghai } from "@/lib/market-brief-runner";
 import { getMarketBriefGenerationStatusTone, getMarketBriefStatusTone } from "@/lib/market-briefs";
+import { getMarketBriefSearchPublicInfo } from "@/lib/market-brief-search";
 import { getMarketBriefFilterOptions, getMarketBriefs } from "@/lib/queries/market-briefs";
 
 export default async function MarketBriefsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -30,6 +31,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
   const today = getTodayDateInShanghai();
   const nearestTradingDay = getNearestPreviousAShareTradingDay(today);
   const generatorMode = getMarketBriefGeneratorMode();
+  const searchInfo = getMarketBriefSearchPublicInfo();
   const [briefs, filterOptions] = await Promise.all([
     getMarketBriefs(filters),
     getMarketBriefFilterOptions()
@@ -41,7 +43,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
         <PageHeader
           eyebrow="Market Briefs"
           title="市场简报"
-          description="系统将调用 AI 根据公开市场信息生成固定模板市场简报，并附带结构化图表数据。生成结果默认需要人工复核，不构成投资建议。"
+          description="系统会先检索公开市场信息，再调用 AI 生成固定模板市场简报，并附带结构化图表数据。生成结果默认需要人工复核，不构成投资建议。"
           action={
             <div className="flex flex-wrap gap-2">
               <form action={generateTodayMarketBriefAction}>
@@ -65,7 +67,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
           }
         />
 
-        <AdminSection title="AI 市场动态生成" description="保留今日生成入口，也支持指定历史交易日补生成。生成结果默认需要人工复核；若 AI 无法可靠确认精确数据，会以空值或复核提示呈现。">
+        <AdminSection title="AI 市场动态生成" description="保留今日生成入口，也支持指定历史交易日补生成。生成前会先检索公开市场信息；若搜索服务未配置，生成任务会失败并提示配置方式。">
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-slate-100 bg-white p-4">
               <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
@@ -107,6 +109,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "exists" ? <NoticeBanner tone="blue" message="该日期市场简报已存在，已保留原记录。" /> : null}
         {generatorMode === "external" ? <NoticeBanner tone="blue" message="当前配置为旧 external runner 模式，建议改为 MARKET_BRIEF_GENERATOR=ai。" /> : null}
+        {!searchInfo.isConfigured ? <NoticeBanner tone="blue" message="市场简报搜索服务未配置，AI 无法生成可靠行情数据；点击生成后任务会失败并提示配置 MARKET_BRIEF_SEARCH_PROVIDER 和 MARKET_BRIEF_SEARCH_API_KEY。" /> : null}
 
         <AdminSection title="筛选" description="按日期倒序展示；可搜索标题 / 摘要，并按状态、市场和标签过滤。">
           <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_160px_160px_auto]">
