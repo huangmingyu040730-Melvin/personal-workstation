@@ -1,8 +1,13 @@
 # Market Brief External Runner
 
-This folder contains a minimal external runner skeleton for Phase 2L-D-B.
+This folder contains external runner examples for Market Brief generation.
 
 The runner communicates only through private workstation API endpoints. It does not need a Supabase key.
+
+Available runners:
+
+- `run-market-brief-runner.mjs`: Node.js mock runner for API flow testing.
+- `python/run_market_brief_runner.py`: Python AkShare runner for first-version real A-share market data.
 
 ## Environment
 
@@ -15,7 +20,7 @@ export MARKET_BRIEF_RUNNER_NAME="external-skill-runner"
 
 `MARKET_BRIEF_RUNNER_SECRET` must match the server-side `MARKET_BRIEF_RUNNER_SECRET` configured on the workstation app. Do not commit real secrets.
 
-## Run
+## Run Node Mock Runner
 
 ```bash
 node scripts/market-brief-runner/run-market-brief-runner.mjs
@@ -35,10 +40,27 @@ If generation fails, the script calls:
 POST /api/market-briefs/skill-jobs/fail
 ```
 
+## Run Python AkShare Runner
+
+```bash
+cd scripts/market-brief-runner/python
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export WORKSTATION_BASE_URL="http://localhost:3000"
+export MARKET_BRIEF_RUNNER_SECRET="your_runner_secret"
+export MARKET_BRIEF_RUNNER_NAME="akshare-runner"
+export MARKET_BRIEF_DATA_MODE="akshare"
+python run_market_brief_runner.py
+```
+
+The Python runner attempts to fetch broad A-share indices, market breadth, industry boards, and hot-topic placeholders from AkShare. If a module fails, it records warnings in `source_snapshot.meta.warnings`. If no core data is available after a job is claimed, it marks the job failed.
+
 ## Current Scope
 
-- Uses mock data only.
-- Does not call AkShare, Tushare, Wind, news crawlers, AI, email, Notion, cron, GitHub Actions, or n8n.
+- Node runner uses mock data only.
+- Python runner uses AkShare for first-version real market data.
+- Does not call Tushare, Wind, news crawlers, AI, email, Notion, cron, GitHub Actions, or n8n.
 - Does not provide investment advice or stock recommendations.
 
-Phase 2L-D-C can replace the mock generation block with real data collection and reviewed markdown generation.
+Later phases can add reviewed news sources, AI drafting, scheduled execution, richer sector mapping, email delivery, and Notion sync.
