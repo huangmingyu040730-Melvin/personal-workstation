@@ -10,6 +10,8 @@ const eslintConfig = [
       "node_modules/**",
       "out/**",
       "dist/**",
+      "**/.venv/**",
+      "**/__pycache__/**",
       "next-env.d.ts"
     ]
   }

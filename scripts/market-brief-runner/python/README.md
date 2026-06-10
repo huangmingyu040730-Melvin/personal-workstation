@@ -40,10 +40,18 @@ cd scripts/market-brief-runner/python
 python run_market_brief_runner.py
 ```
 
+To diagnose only the claim API without fetching AkShare data or writing a result:
+
+```bash
+python run_market_brief_runner.py --diagnose
+```
+
+Diagnose mode prints the base URL, market, runner name, masked runner secret metadata, claim URL, HTTP status, and response body. It does not call AkShare, `skill-result`, or `skill-jobs/fail`.
+
 Flow:
 
 1. `POST /api/market-briefs/skill-jobs/claim`
-2. If no queued job exists, print `No queued market brief generation jobs.` and exit 0.
+2. If no queued job exists, print `No queued market brief generation job found. This usually means the site has no queued job, or MARKET_BRIEF_GENERATOR is not external.` and exit 0.
 3. Fetch A-share market data through AkShare.
 4. Build `source_snapshot`.
 5. Build Markdown.
@@ -112,3 +120,47 @@ Unavailable fields are saved as `null` or empty arrays. Module-level failures ar
 - No stock recommendations, buy/sell signals, or investment advice.
 
 Phase 2L-D-C is only the first real data-source pass. Later phases can add reviewed news sources, AI drafting, scheduling, email, Notion, and richer sector mapping such as GICS.
+
+## Troubleshooting
+
+### Failed to claim market brief generation job
+
+Run diagnose mode first:
+
+```bash
+python run_market_brief_runner.py --diagnose
+```
+
+Common causes:
+
+1. Vercel has no `MARKET_BRIEF_RUNNER_SECRET`.
+2. Local `MARKET_BRIEF_RUNNER_SECRET` does not match Vercel.
+3. Vercel env vars were changed but the app was not redeployed.
+4. `MARKET_BRIEF_GENERATOR` is not `external`, so the dashboard button did not create a queued job.
+5. The dashboard has not yet created a job with `获取今日市场动态`.
+6. `SUPABASE_SERVICE_ROLE_KEY` is missing or invalid in the server environment.
+7. Local SSL certificates are not configured.
+
+Manual API check:
+
+```bash
+curl -i -X POST "$WORKSTATION_BASE_URL/api/market-briefs/skill-jobs/claim" \
+  -H "content-type: application/json" \
+  -H "x-market-brief-runner-secret: $MARKET_BRIEF_RUNNER_SECRET" \
+  -d '{"market":"A股","runner_name":"akshare-runner"}'
+```
+
+Interpretation:
+
+- `200 + {"job":null}` or `200` without `job_id`: secret is accepted, but there is no queued job.
+- `401`: local runner secret does not match the server secret.
+- `503`: Vercel is missing `MARKET_BRIEF_RUNNER_SECRET`, or the app has not been redeployed after env changes.
+- `500`: server-side persistence, service role, RLS bypass, or database issue.
+- SSL / certificate errors: configure Python certificates, for example:
+
+```bash
+export SSL_CERT_FILE=$(python -c "import certifi; print(certifi.where())")
+export REQUESTS_CA_BUNDLE=$SSL_CERT_FILE
+```
+
+The runner never prints the raw secret. It only prints whether the secret is set, its length, and a short SHA-256 prefix for comparison.

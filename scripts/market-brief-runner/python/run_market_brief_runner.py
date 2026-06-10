@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 import os
 import sys
@@ -13,6 +15,7 @@ from market_data_sources import fetch_a_share_market_snapshot, has_core_market_d
 
 def main() -> int:
     load_dotenv_if_available()
+    args = parse_args()
 
     base_url = normalize_base_url(os.getenv("WORKSTATION_BASE_URL"))
     runner_secret = os.getenv("MARKET_BRIEF_RUNNER_SECRET")
@@ -28,17 +31,29 @@ def main() -> int:
         print("MARKET_BRIEF_RUNNER_SECRET is required.", file=sys.stderr)
         return 1
 
+    if args.diagnose:
+        return diagnose_claim(base_url, runner_secret, market, runner_name)
+
     job: dict[str, Any] | None = None
 
     try:
-        claim = post_json(
+        claim_response = post_json(
             base_url,
             "/api/market-briefs/skill-jobs/claim",
             {"market": market, "runner_name": runner_name},
             runner_secret,
+            raise_for_status=False,
         )
+        if not 200 <= claim_response.status < 300:
+            print(format_claim_error(claim_response, base_url, market, runner_name, runner_secret), file=sys.stderr)
+            return 1
+
+        claim = claim_response.body
         if not claim.get("job_id"):
-            print(claim.get("message") or "No queued market brief generation jobs.")
+            print(
+                claim.get("message")
+                or "No queued market brief generation job found. This usually means the site has no queued job, or MARKET_BRIEF_GENERATOR is not external."
+            )
             return 0
 
         job = claim
@@ -61,20 +76,64 @@ def main() -> int:
             return 1
 
         result_payload = build_market_brief_payload(job, snapshot)
-        result = post_json(base_url, "/api/market-briefs/skill-result", result_payload, runner_secret)
+        result = post_json(base_url, "/api/market-briefs/skill-result", result_payload, runner_secret).body
         print(f"Market brief generated: {result.get('preview_url')}")
         return 0
     except Exception as exc:  # noqa: BLE001
         message = safe_error(exc)
         if job:
             fail_job(base_url, runner_secret, job["job_id"], message)
+        else:
+            print("Claim context:", file=sys.stderr)
+            print(f"WORKSTATION_BASE_URL: {base_url}", file=sys.stderr)
+            print(f"MARKET_BRIEF_MARKET: {market}", file=sys.stderr)
+            print(f"MARKET_BRIEF_RUNNER_NAME: {runner_name}", file=sys.stderr)
+            print(f"Runner secret: {describe_secret(runner_secret)}", file=sys.stderr)
         print(message, file=sys.stderr)
         return 1
 
 
-def post_json(base_url: str, path: str, payload: dict[str, Any], runner_secret: str) -> dict[str, Any]:
+def diagnose_claim(base_url: str, runner_secret: str, market: str, runner_name: str) -> int:
+    path = "/api/market-briefs/skill-jobs/claim"
+    print("Market brief runner diagnose")
+    print(f"WORKSTATION_BASE_URL: {base_url}")
+    print(f"MARKET_BRIEF_MARKET: {market}")
+    print(f"MARKET_BRIEF_RUNNER_NAME: {runner_name}")
+    print(f"Runner secret: {describe_secret(runner_secret)}")
+
+    try:
+        response = post_json(
+            base_url,
+            path,
+            {"market": market, "runner_name": runner_name},
+            runner_secret,
+            raise_for_status=False,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"Network or TLS error while calling claim API: {safe_error(exc)}", file=sys.stderr)
+        return 1
+
+    print(f"Claim URL: {response.url}")
+    print(f"Status: {response.status}")
+    print(f"Body: {response.raw_body or '{}'}")
+
+    if response.status == 200 and not response.body.get("job_id"):
+        print("No queued market brief generation job found. This usually means the site has no queued job, or MARKET_BRIEF_GENERATOR is not external.")
+
+    return 0 if 200 <= response.status < 500 else 1
+
+
+def post_json(
+    base_url: str,
+    path: str,
+    payload: dict[str, Any],
+    runner_secret: str,
+    *,
+    raise_for_status: bool = True,
+) -> ApiResponse:
+    url = f"{base_url}{path}"
     request = urllib.request.Request(
-        f"{base_url}{path}",
+        url,
         data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
         headers={
             "content-type": "application/json",
@@ -85,16 +144,21 @@ def post_json(base_url: str, path: str, payload: dict[str, Any], runner_secret: 
     try:
         with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310
             body = response.read().decode("utf-8")
-            return json.loads(body) if body else {}
+            parsed = parse_json_body(body)
+            return ApiResponse(url=url, status=response.status, raw_body=body, body=parsed)
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8")
-        try:
-            parsed = json.loads(body) if body else {}
-        except json.JSONDecodeError:
-            parsed = {}
-        raise RuntimeError(parsed.get("error") or f"HTTP {exc.code} calling {path}") from exc
+        parsed = parse_json_body(body)
+        response = ApiResponse(url=url, status=exc.code, raw_body=body, body=parsed)
+        if raise_for_status:
+            raise RuntimeError(format_api_error("Runner API request failed", response, runner_secret)) from exc
+        return response
     except urllib.error.URLError as exc:
-        raise RuntimeError(f"Network error calling {path}: {safe_error(exc)}") from exc
+        raise RuntimeError(
+            f"Network error calling {url}: {safe_error(exc)}\n"
+            f"WORKSTATION_BASE_URL: {base_url}\n"
+            f"MARKET_BRIEF_RUNNER_SECRET: {describe_secret(runner_secret)}"
+        ) from exc
 
 
 def fail_job(base_url: str, runner_secret: str, job_id: str, message: str) -> None:
@@ -126,6 +190,62 @@ def normalize_base_url(value: str | None) -> str | None:
 
 def safe_error(exc: Exception) -> str:
     return str(exc).replace("\n", " ")[:500]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run or diagnose the Market Brief Python runner.")
+    parser.add_argument("--diagnose", action="store_true", help="Only call claim API and print status/body. Do not fetch data, post result, or mark fail.")
+    return parser.parse_args()
+
+
+def parse_json_body(body: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(body) if body else {}
+        return parsed if isinstance(parsed, dict) else {"value": parsed}
+    except json.JSONDecodeError:
+        return {"raw": body}
+
+
+def format_api_error(prefix: str, response: "ApiResponse", runner_secret: str) -> str:
+    return "\n".join(
+        [
+            f"{prefix}.",
+            f"URL: {response.url}",
+            f"Status: {response.status}",
+            f"Body: {response.raw_body or '{}'}",
+            f"Runner secret: {describe_secret(runner_secret)}",
+        ]
+    )
+
+
+def format_claim_error(response: "ApiResponse", base_url: str, market: str, runner_name: str, runner_secret: str) -> str:
+    return "\n".join(
+        [
+            "Failed to claim market brief generation job.",
+            f"URL: {response.url}",
+            f"Status: {response.status}",
+            f"Body: {response.raw_body or '{}'}",
+            f"WORKSTATION_BASE_URL: {base_url}",
+            f"MARKET_BRIEF_MARKET: {market}",
+            f"MARKET_BRIEF_RUNNER_NAME: {runner_name}",
+            f"Runner secret: {describe_secret(runner_secret)}",
+        ]
+    )
+
+
+def describe_secret(value: str | None) -> str:
+    if not value:
+        return "not set"
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:8]
+    return f"set, length={len(value)}, sha256_prefix={digest}"
+
+
+class ApiResponse:
+    def __init__(self, url: str, status: int, raw_body: str, body: dict[str, Any]) -> None:
+        self.url = url
+        self.status = status
+        self.raw_body = raw_body
+        self.body = body
 
 
 if __name__ == "__main__":
