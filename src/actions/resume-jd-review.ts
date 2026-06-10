@@ -1,6 +1,8 @@
 "use server";
 
+import OpenAI from "openai";
 import { getAdminClient } from "@/lib/auth/admin";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import {
   buildResumeJdReviewContext,
   buildResumeJdReviewPrompt,
@@ -12,14 +14,12 @@ import {
   type ResumeJdReviewState
 } from "@/lib/resume-jd-review";
 
-const openAiResponsesUrl = "https://api.openai.com/v1/responses";
-const defaultModel = "gpt-4.1-mini";
-
 export async function analyzeResumeJdAction(versionId: string, previousState: ResumeJdReviewState = defaultResumeJdReviewState, formData: FormData): Promise<ResumeJdReviewState> {
   void previousState;
   const jdText = readFormText(formData, "jd_text");
   const direction = normalizeDirection(readFormText(formData, "direction"));
-  const modelName = process.env.OPENAI_MODEL || defaultModel;
+  const aiConfig = getAiProviderConfig();
+  const modelName = aiConfig.model;
 
   if (jdText.length < 80) {
     return {
@@ -35,11 +35,10 @@ export async function analyzeResumeJdAction(versionId: string, previousState: Re
     };
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+  if (!aiConfig.isConfigured || !aiConfig.apiKey) {
     return {
       status: "error",
-      message: "AI JD 优化尚未配置，请在环境变量中设置 OPENAI_API_KEY。"
+      message: "AI JD 优化尚未配置。请在服务端环境变量中设置 AI_API_KEY，或继续使用 OPENAI_API_KEY。"
     };
   }
 
@@ -66,52 +65,34 @@ export async function analyzeResumeJdAction(versionId: string, previousState: Re
 
   const resumeContext = buildResumeJdReviewContext(version, version.resume_version_items ?? []);
   const prompt = buildResumeJdReviewPrompt({ jdText, direction, resumeContext });
+  const client = new OpenAI({
+    apiKey: aiConfig.apiKey,
+    baseURL: aiConfig.baseURL
+  });
 
   try {
-    const response = await fetch(openAiResponsesUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || defaultModel,
-        input: [
-          {
-            role: "system",
-            content: "你只做中文简历匹配分析。输出必须是符合 JSON schema 的对象，不要使用 Markdown 代码围栏。"
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "resume_jd_review",
-            schema: resumeJdReviewJsonSchema(),
-            strict: true
-          }
+    const response = await client.chat.completions.create({
+      model: aiConfig.model,
+      messages: [
+        {
+          role: "system",
+          content: [
+            "你只做中文简历匹配分析。",
+            "输出必须是一个 JSON object，不要使用 Markdown 代码围栏。",
+            "JSON object 必须符合以下 schema：",
+            JSON.stringify(resumeJdReviewJsonSchema())
+          ].join("\n")
+        },
+        {
+          role: "user",
+          content: prompt
         }
-      })
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2
     });
 
-    const payload = await response.json();
-
-    if (!response.ok) {
-      console.error("OpenAI JD review failed", {
-        status: response.status,
-        code: payload?.error?.code,
-        message: payload?.error?.message
-      });
-      return {
-        status: "error",
-        message: "AI 分析请求失败，请稍后重试或检查 OPENAI_API_KEY / OPENAI_MODEL 配置。"
-      };
-    }
-
-    const outputText = extractOutputText(payload);
+    const outputText = response.choices[0]?.message.content?.trim();
     if (!outputText) {
       return {
         status: "error",
@@ -140,12 +121,14 @@ export async function analyzeResumeJdAction(versionId: string, previousState: Re
       };
     }
   } catch (requestError) {
-    console.error("OpenAI JD review request error", {
+    console.error("AI JD review request error", {
+      provider: getAiProviderDisplayName(aiConfig.provider),
+      status: readErrorStatus(requestError),
       message: requestError instanceof Error ? requestError.message : "unknown"
     });
     return {
       status: "error",
-      message: "AI 分析请求无法完成，请稍后重试。"
+      message: "AI 分析请求无法完成，请稍后重试或检查 AI Provider / AI_MODEL 配置。"
     };
   }
 }
@@ -159,38 +142,10 @@ function normalizeDirection(value: string): ResumeJdDirection {
   return resumeJdDirectionOptions.some((option) => option.value === value) ? (value as ResumeJdDirection) : "general";
 }
 
-function extractOutputText(payload: unknown) {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    return "";
+function readErrorStatus(error: unknown) {
+  if (!error || typeof error !== "object" || Array.isArray(error)) {
+    return undefined;
   }
-
-  const record = payload as Record<string, unknown>;
-  if (typeof record.output_text === "string") {
-    return record.output_text.trim();
-  }
-
-  const output = record.output;
-  if (!Array.isArray(output)) {
-    return "";
-  }
-
-  return output
-    .flatMap((item) => {
-      if (!item || typeof item !== "object" || Array.isArray(item)) {
-        return [];
-      }
-      const content = (item as Record<string, unknown>).content;
-      if (!Array.isArray(content)) {
-        return [];
-      }
-      return content.map((part) => {
-        if (!part || typeof part !== "object" || Array.isArray(part)) {
-          return "";
-        }
-        const partRecord = part as Record<string, unknown>;
-        return typeof partRecord.text === "string" ? partRecord.text : "";
-      });
-    })
-    .join("\n")
-    .trim();
+  const status = (error as Record<string, unknown>).status;
+  return typeof status === "number" ? status : undefined;
 }

@@ -149,12 +149,12 @@ Phase 2J-A 已完成 Profile 真实编辑：后台 `/dashboard/profile` 维护�
 - Phase 2K-B：基于履历素材组合生成不同版本简历，并提供后台预览。
 - Phase 2K-C：将素材库升级为分区式简历管理，将后台预览优化为贴近参考 PDF 的 A4 中文简历模板，并支持浏览器打印 / 另存为 PDF。
 - Phase 2K-D：新增规则化简历质量检查、完整度评分、缺失项提示和投递方向提醒。
-- Phase 2K-E：AI JD 简历优化助手，基于当前版本和粘贴的 JD 生成匹配分析、关键词差距和 bullet 改写建议。
+- Phase 2K-E：AI JD 简历优化助手，基于当前版本和粘贴的 JD 生成匹配分析、关键词差距和 bullet 改写建议；支持 DeepSeek 等 OpenAI-compatible Provider，并继续兼容旧 OpenAI 环境变量。
 - Phase 2K-F：Word `.docx` 即时导出，基于当前简历版本生成可下载 Word 文件。
 - Phase 2K-G：Preview 与 Word 导出严格对齐 20260523 风格模板，使用统一模板模型。
 - Phase 2K-H：JD 分析历史与投递记录，保存单次 JD 分析、岗位信息、关键词缺口、风险、下一步行动和投递状态。
 
-Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 导出、AI 生成、模板系统、公开简历页或英文简历。Phase 2K-B 增加简历版本和素材选择关系，支持按区块排序、展示开关、版本语言/模板标记和后台预览。Phase 2K-C 补充更细的简历字段结构、个人信息展示开关、逐条素材可见字段控制和更贴近中文 PDF 简历的 A4 预览；导出仍采用浏览器打印，不引入后端 PDF 服务、Word 导出或公开简历页面。Phase 2K-D 只做规则检查，不调用 AI，辅助判断简历是否具备投递基础。Phase 2K-E 在此基础上增加 AI JD 优化建议，但不自动写回 Resume Items / Resume Versions，不保存分析历史，不做 Word 导出、公开简历页或自动投递。Phase 2K-F 只做管理员后台 `.docx` 即时导出，不保存文件、不上传 Storage、不创建公开简历页或分享链接。Phase 2K-G 将 Preview 和 Word 导出统一到同一套模板模型，补充照片位置、模块标题视觉符号、左时间 / 右内容布局和正式技能条目；仍不新增 migration、不提交模板原文件或字体文件。Phase 2K-H 在 AI JD 建议基础上增加后台私密分析历史和投递状态管理；保存记录不自动覆盖简历素材，不创建公开简历页面，不读取 Documents / Storage / signed URL。
+Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 导出、AI 生成、模板系统、公开简历页或英文简历。Phase 2K-B 增加简历版本和素材选择关系，支持按区块排序、展示开关、版本语言/模板标记和后台预览。Phase 2K-C 补充更细的简历字段结构、个人信息展示开关、逐条素材可见字段控制和更贴近中文 PDF 简历的 A4 预览；导出仍采用浏览器打印，不引入后端 PDF 服务、Word 导出或公开简历页面。Phase 2K-D 只做规则检查，不调用 AI，辅助判断简历是否具备投递基础。Phase 2K-E 在此基础上增加 AI JD 优化建议，AI 调用支持 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 通用配置，推荐 DeepSeek 配置为 `AI_PROVIDER=deepseek`、`AI_BASE_URL=https://api.deepseek.com`、`AI_MODEL=deepseek-v4-flash`，并继续兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`；该功能不自动写回 Resume Items / Resume Versions，不做 Word 导出、公开简历页或自动投递。Phase 2K-F 只做管理员后台 `.docx` 即时导出，不保存文件、不上传 Storage、不创建公开简历页或分享链接。Phase 2K-G 将 Preview 和 Word 导出统一到同一套模板模型，补充照片位置、模块标题视觉符号、左时间 / 右内容布局和正式简历条目；仍不新增 migration、不提交模板原文件或字体文件。Phase 2K-H 在 AI JD 建议基础上增加后台私密分析历史和投递状态管理；保存记录不自动覆盖简历素材，不创建公开简历页面，不读取 Documents / Storage / signed URL。
 
 ### Phase 2K-I - JD Review History Enhancements
 

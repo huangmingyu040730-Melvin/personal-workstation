@@ -7,6 +7,7 @@ import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { ResumeJdReviewForm } from "@/components/forms/resume-jd-review-form";
 import { PageHeader } from "@/components/page-header";
+import { getAiProviderPublicInfo } from "@/lib/ai-provider";
 import { getResumeVersionWithItems } from "@/lib/queries/resume";
 import { buildResumeJdReviewContext } from "@/lib/resume-jd-review";
 import { getTargetKeywords } from "@/lib/resume-quality";
@@ -21,6 +22,7 @@ export default async function ResumeVersionJdReviewPage({ params }: { params: Pr
 
   const reviewContext = buildResumeJdReviewContext(version, version.resume_version_items);
   const targetKeywords = getTargetKeywords(version);
+  const aiProvider = getAiProviderPublicInfo();
 
   return (
     <AppShell>
@@ -66,7 +68,7 @@ export default async function ResumeVersionJdReviewPage({ params }: { params: Pr
               <AdminFormHelpCard
                 title="配置提示"
                 tone="slate"
-                description="生产环境需要在 Vercel 中配置 OPENAI_API_KEY；OPENAI_MODEL 可选。未配置时页面仍可打开，但不能提交分析。"
+                description={`生产环境需要在 Vercel 中配置 AI_API_KEY，或继续使用 OPENAI_API_KEY。当前 AI Provider：${aiProvider.providerLabel}；当前模型：${aiProvider.model}。未配置 API Key 时页面仍可打开，但不能提交分析。`}
               />
             </>
           }
