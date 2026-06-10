@@ -992,3 +992,31 @@
 - 不读取 Documents / Storage，不发送 signed URL，不调用 AI，不保存外部 API key。
 - 不做真实 AkShare、Tushare、Wind、新闻爬虫、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
+
+## 2026-06-10 - Add Market Brief Skill Runner Jobs
+
+类型：decision
+
+决策：
+
+- Phase 2L-D-A 新增 `supabase/migrations/0015_market_brief_generation_jobs.sql`。
+- 新增 `market_brief_generation_jobs` 表，记录 `owner_id`、`brief_date`、`market`、`status`、`runner_name`、`request_payload`、`source_snapshot`、`result_payload`、关联 `market_brief_id`、错误信息和运行时间线。
+- “获取今日市场动态”按钮改为先创建生成任务；如果今日同市场简报已存在则跳转已有预览，如果已有 queued/running 任务则跳转任务详情。
+- 当前仍使用 `manual-skill-mock`，但 mock runner 通过 `src/lib/market-brief-runner.ts` 统一执行 queued -> running -> succeeded，并写入或更新 `market_briefs`。
+- `src/lib/market-brief-generator.ts` 的 mock `source_snapshot` 改为稳定结构：`meta`、`indices`、`styles`、`sectors`、`hot_topics`、`capital_flows`、`policy_news` 和 `risk_signals`。
+- 新增 `/dashboard/market-briefs/jobs` 与 `/dashboard/market-briefs/jobs/[id]`，后台查看生成任务、payload、数据快照、结果和错误。
+- 新增私有 POST `/api/market-briefs/skill-result`，通过 `x-market-brief-runner-secret` 和 `MARKET_BRIEF_RUNNER_SECRET` 鉴权，接收外部 Skill Runner 的 Markdown、source snapshot、标签和数据来源回写。
+
+原因：
+
+- 市场简报从“按钮直接插入草稿”升级为可追踪任务，后续接真实行情源、新闻源、Skill 或队列时可以保留审计、失败原因和数据快照。
+- 外部 Skill Runner 回写没有管理员浏览器会话，不能复用普通 Server Action 的登录管理员身份；该接口因此独立为 runner secret 保护的 server-only 回调，并且只在服务端读取必要写入凭据。
+- 先用同步 mock runner 保持本阶段可验收，不引入后台 worker、定时任务或真实外部数据依赖。
+
+影响：
+
+- 新增 migration `0015_market_brief_generation_jobs.sql`；合并后生产环境需要手动执行，不自动执行 SQL。
+- 市场简报和生成任务仍为后台私密数据，仅管理员或 owner 可读写，不进入公开页面、viewer、restricted 或 sitemap。
+- 普通后台页面继续使用 Supabase Auth、`public.is_admin()` 和 RLS；私有 runner API 需要 `MARKET_BRIEF_RUNNER_SECRET`，并且不得泄露 API key、Supabase key、Auth UUID、Documents、Storage 路径、signed URL、Access Requests 或 Access Grants。
+- 本阶段不做真实 AkShare、Tushare、Wind、新闻爬虫、AI 自动生成、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
+- 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。

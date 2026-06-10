@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
-import { generateMarketBriefDraft } from "@/lib/market-brief-generator";
+import {
+  createQueuedMarketBriefGenerationJob,
+  findActiveMarketBriefGenerationJob,
+  findExistingMarketBrief,
+  getTodayDateInShanghai,
+  normalizeBriefDate,
+  runMockMarketBriefGenerationJob
+} from "@/lib/market-brief-runner";
 import { marketBriefSchema, type MarketBriefInput } from "@/lib/validations/market-brief";
 
 function marketBriefPayloadFromForm(formData: FormData) {
@@ -152,86 +159,88 @@ export async function generateTodayMarketBriefAction(formData: FormData) {
     redirect(`/dashboard/market-briefs?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
   }
 
-  const { data: existing, error: existingError } = await supabase
-    .from("market_briefs")
-    .select("id")
-    .eq("owner_id", actorId)
-    .eq("brief_date", briefDate)
-    .eq("market", market)
-    .maybeSingle();
+  let existing;
 
-  if (existingError) {
-    redirect(`/dashboard/market-briefs?error=${encodeFormError(existingError.message || "检查今日市场简报失败。")}`);
+  try {
+    existing = await findExistingMarketBrief(supabase, { ownerId: actorId, briefDate, market });
+  } catch (checkError) {
+    redirect(`/dashboard/market-briefs?error=${encodeFormError(getActionErrorMessage(checkError, "检查今日市场简报失败。"))}`);
   }
 
   if (existing?.id) {
     redirect(`/dashboard/market-briefs/${existing.id}/preview?notice=exists`);
   }
 
-  const generated = await generateMarketBriefDraft({ market, briefDate });
+  let activeJob;
 
-  const { data, error: insertError } = await supabase
-    .from("market_briefs")
-    .insert({
-      owner_id: actorId,
-      brief_date: briefDate,
-      title: generated.title,
+  try {
+    activeJob = await findActiveMarketBriefGenerationJob(supabase, { ownerId: actorId, briefDate, market });
+  } catch (checkError) {
+    redirect(`/dashboard/market-briefs?error=${encodeFormError(getActionErrorMessage(checkError, "检查生成任务失败。"))}`);
+  }
+
+  if (activeJob?.id) {
+    redirect(`/dashboard/market-briefs/jobs/${activeJob.id}?notice=active`);
+  }
+
+  let job;
+
+  try {
+    job = await createQueuedMarketBriefGenerationJob(supabase, {
+      ownerId: actorId,
+      briefDate,
       market,
-      status: "draft",
-      summary: generated.summary,
-      markdown_content: generated.markdownContent,
-      generation_status: "generated",
-      generated_at: new Date().toISOString(),
-      generator_name: generated.generatorName,
-      source_snapshot: generated.sourceSnapshot,
-      tags: generated.tags,
-      data_sources: generated.dataSources
-    })
-    .select("id,title,brief_date,market,status,generation_status,generator_name")
-    .single();
+      requestPayload: { triggered_by: "dashboard" }
+    });
+  } catch (createError) {
+    redirect(`/dashboard/market-briefs?error=${encodeFormError(getActionErrorMessage(createError, "创建生成任务失败。"))}`);
+  }
 
-  if (insertError) {
-    if (insertError.code === "23505") {
-      const { data: duplicated } = await supabase
-        .from("market_briefs")
-        .select("id")
-        .eq("owner_id", actorId)
-        .eq("brief_date", briefDate)
-        .eq("market", market)
-        .maybeSingle();
+  let result;
 
-      if (duplicated?.id) {
-        redirect(`/dashboard/market-briefs/${duplicated.id}/preview?notice=exists`);
-      }
-    }
-
-    redirect(`/dashboard/market-briefs?error=${encodeFormError(getMarketBriefErrorMessage(insertError))}`);
+  try {
+    result = await runMockMarketBriefGenerationJob(supabase, job);
+  } catch (runError) {
+    revalidateMarketBriefPaths();
+    revalidateMarketBriefJobPaths(job.id);
+    redirect(`/dashboard/market-briefs/jobs/${job.id}?notice=failed&error=${encodeFormError(getActionErrorMessage(runError, "市场简报生成任务失败。"))}`);
   }
 
   await writeActivityLog({
     action: "market_brief.generate",
     entityType: "market_brief",
-    entityId: data.id,
+    entityId: result.brief.id,
     metadata: {
-      title: data.title,
-      brief_date: data.brief_date,
-      market: data.market,
-      status: data.status,
-      generation_status: data.generation_status,
-      generator_name: data.generator_name
+      title: result.brief.title,
+      brief_date: result.brief.brief_date,
+      market: result.brief.market,
+      status: result.brief.status,
+      generation_status: result.brief.generation_status,
+      generator_name: result.brief.generator_name,
+      job_id: result.job.id,
+      job_status: result.job.status
     }
   });
 
-  revalidateMarketBriefPaths(data.id);
-  redirect(`/dashboard/market-briefs/${data.id}/preview?notice=generated`);
+  revalidateMarketBriefPaths(result.brief.id);
+  revalidateMarketBriefJobPaths(result.job.id);
+  redirect(`/dashboard/market-briefs/${result.brief.id}/preview?notice=generated&job=${result.job.id}`);
 }
 
 function revalidateMarketBriefPaths(id?: string) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/market-briefs");
+  revalidatePath("/dashboard/market-briefs/jobs");
   if (id) {
     revalidatePath(`/dashboard/market-briefs/${id}`);
     revalidatePath(`/dashboard/market-briefs/${id}/preview`);
+  }
+}
+
+function revalidateMarketBriefJobPaths(id?: string) {
+  revalidatePath("/dashboard/market-briefs/jobs");
+  if (id) {
+    revalidatePath(`/dashboard/market-briefs/jobs/${id}`);
   }
 }
 
@@ -243,15 +252,10 @@ function normalizeMarketBriefPayload(data: MarketBriefInput) {
   };
 }
 
-function getTodayDateInShanghai() {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(new Date());
-}
+function getActionErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
 
-function normalizeBriefDate(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+  return fallback;
 }
