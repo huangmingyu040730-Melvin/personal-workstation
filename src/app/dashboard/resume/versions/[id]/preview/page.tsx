@@ -41,7 +41,7 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
           <PageHeader
             eyebrow="Resume Preview"
             title={`${version.title} · 简历预览`}
-            description="预览和 Word 导出共用 20260523 风格模板模型，打印后可在浏览器中另存为 PDF。"
+            description="网页预览用于快速检查内容结构，最终排版以导出的 Word 文件为准。"
             action={
               <div className="flex flex-wrap gap-2">
                 <Link href={`/dashboard/resume/versions/${version.id}`} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
@@ -66,7 +66,7 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
           />
 
           <AdminSecurityNote>
-            这是后台预览页，仅管理员可访问。A4 预览与 Word 导出共用同一套模板数据；Word 文件即时生成，不创建公开简历页面、分享链接或长期文件。
+            这是后台预览页，仅管理员可访问。最终投递排版以 20260523 脱敏 Word 模板导出的文件为准；网页预览、浏览器打印和 WPS 可能存在渲染差异。
           </AdminSecurityNote>
 
           <ResumeQualityPreviewNotice report={quality} />
