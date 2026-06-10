@@ -225,6 +225,7 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
       requestPayload: {
         triggered_by: "dashboard",
         generator_mode: generatorMode,
+        generator_name: generatorMode === "ai" ? aiMarketBriefRunnerName : generatorMode === "external" ? externalMarketBriefRunnerName : "manual-skill-mock",
         is_historical: isHistorical
       }
     });

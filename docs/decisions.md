@@ -1132,3 +1132,30 @@
 - 如果 AI Provider 没有联网搜索或可靠来源，输出必须标记 `data_quality=ai_unverified` 或 `ai_partial`，并保持 `needs_review`。
 - 不做行情接口抓取、新闻爬虫、邮件发送、Notion 同步、定时任务、公开市场简报页、股票推荐或投资建议。
 - 不修改 Resume、Career、Calendar、Documents、Profile、Storage、RLS 或旧 migrations。
+
+## 2026-06-11 - Clean Up Legacy Market Data Runner Path
+
+类型：decision
+
+决策：
+
+- Phase 2M-B 不新增 migration，不删除 `market_briefs` 或 `market_brief_generation_jobs`，继续复用现有任务表、状态流转、取消 / 重排能力、今日生成和历史交易日生成。
+- 后台 `/dashboard/market-briefs`、任务列表和任务详情的主文案全面收口为 AI-first Market Brief Generator，不再把旧 external 任务领取、回写接口或 Python 数据源脚本展示为推荐主流程。
+- 新建 AI 生成任务的 `request_payload` 写入 `generator_mode=ai` 和 `generator_name=ai-market-brief-generator`，方便后续区分 AI 任务与历史兼容任务。
+- `MARKET_BRIEF_GENERATOR` 未配置时继续默认 `ai`；如果生产环境仍配置为 `external`，后台显示旧模式提示并建议改为 `MARKET_BRIEF_GENERATOR=ai`。
+- `scripts/market-brief-runner/` 和 `scripts/market-brief-runner/python/` 只保留为 deprecated 历史诊断和兼容资料，不再作为市场简报推荐生成路线。
+- README、current-status、roadmap、decisions 和 Python runner README 更新为 AI-first 口径；旧 external / runner / 数据源抓取相关说明只保留在明确 deprecated 的历史上下文中。
+
+原因：
+
+- Phase 2M-A 已确认市场简报主路线转向服务端 AI 生成，继续在后台和主文档中展示旧 runner / 数据抓取路线会造成配置和验收混乱。
+- 旧数据源路线依赖不稳定外部接口，且已经不再符合当前“固定模板、AI 生成、人工复核”的产品方向。
+- 仍保留历史任务表和兼容接口，可以避免破坏已存在任务记录、排查资料和旧 PR 证据。
+
+影响：
+
+- 不新增 SQL 或 migration；生产环境不需要执行数据库变更。
+- 不删除 claim/result/fail 兼容 API 或 runner 脚本，但它们不再出现在后台主操作说明中。
+- 不改变 AI 生成、Markdown 预览、图表预览、下载、交易日校验、任务取消 / 重排和历史补生成能力。
+- 不读取 Documents、Storage、cookie、signed URL、Access Requests、Access Grants；不保存外部 API key，不打印 AI key、runner secret 或 Supabase key。
+- 不修改 Resume、Career、Calendar、Documents、Profile、Storage、RLS 或旧 migrations。

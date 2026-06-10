@@ -149,7 +149,7 @@ export default async function MarketBriefDetailPage({
                     <Link key={job.id} href={`/dashboard/market-briefs/jobs/${job.id}`} className="block rounded-2xl border border-slate-200 bg-slate-50 p-3 hover:border-blue-200 hover:bg-blue-50">
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
-                        <span className="text-xs font-medium text-slate-500">{job.runner_name}</span>
+                        <span className="text-xs font-medium text-slate-500">{getGeneratorDisplayName(job)}</span>
                       </div>
                       <p className="text-xs text-slate-500">创建于 {formatDateTime(job.created_at)}</p>
                     </Link>
@@ -173,6 +173,22 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <dd className="text-right font-medium text-slate-800">{value}</dd>
     </div>
   );
+}
+
+function getGeneratorDisplayName(job: { runner_name: string; request_payload: Record<string, unknown> }) {
+  if (job.request_payload.generator_mode === "ai" || job.runner_name === "ai-market-brief-generator") {
+    return "AI 市场简报生成器";
+  }
+
+  if (job.request_payload.generator_mode === "external" || job.runner_name.includes("external")) {
+    return "历史任务：旧 external runner";
+  }
+
+  if (job.runner_name === "manual-skill-mock") {
+    return "历史任务：mock 生成器";
+  }
+
+  return "历史任务：旧生成器";
 }
 
 function BadgeList({ values, emptyText }: { values: string[]; emptyText: string }) {

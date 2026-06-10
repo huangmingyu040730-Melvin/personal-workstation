@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Eye, FileText, RotateCcw, XCircle } from "lucide-react";
 import { cancelMarketBriefGenerationJobAction, requeueMarketBriefGenerationJobAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
-import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
+import { AdminPageSurface } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { PageHeader } from "@/components/page-header";
@@ -36,7 +36,7 @@ export default async function MarketBriefJobDetailPage({
         <PageHeader
           eyebrow="Market Brief Job"
           title={`${formatDate(job.brief_date)} ${job.market}生成任务`}
-          description="生成任务详情仅在后台展示，用于追踪 Skill Runner 输入、数据快照和生成结果。"
+          description="生成任务详情仅在后台展示，用于追踪 AI 生成输入、结构化数据和生成结果。"
           action={
             <div className="flex flex-wrap gap-2">
               {job.market_brief_id ? (
@@ -55,11 +55,12 @@ export default async function MarketBriefJobDetailPage({
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "active" ? <NoticeBanner message="今日同市场已有排队中或运行中的生成任务，暂不重复创建。" /> : null}
-        {notice === "queued" ? <NoticeBanner message="任务已创建，等待外部 Skill Runner 处理。" /> : null}
+        {notice === "queued" ? <NoticeBanner message="任务已创建，等待 AI 生成器处理。" /> : null}
         {notice === "failed" ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">生成任务失败，请查看错误信息后手动处理。</div> : null}
         {notice === "cancelled" ? <NoticeBanner message="任务已取消。" /> : null}
-        {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次运行 runner 领取。" /> : null}
+        {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次由 AI 生成器处理。" /> : null}
         {isHistoricalJob(job) ? <NoticeBanner message="该任务为历史日期补生成，部分热点、新闻、资金流数据可能无法完整回溯。" /> : null}
+        {isLegacyExternalJob(job) ? <NoticeBanner message="该记录来自历史 external runner 兼容模式。当前推荐使用 AI-first 生成。" /> : null}
 
         <div className="grid gap-5 xl:grid-cols-[1fr_0.4fr]">
           <div className="space-y-5">
@@ -73,18 +74,6 @@ export default async function MarketBriefJobDetailPage({
               <CardHeader title="下一步" />
               <p className={`text-sm leading-6 ${job.status === "failed" ? "text-rose-700" : "text-slate-600"}`}>{getJobNextStep(job.status, job.error_message)}</p>
               <JobManagementActions jobId={job.id} status={job.status} returnTo={`/dashboard/market-briefs/jobs/${job.id}`} />
-              {isExternalJob(job) ? (
-                <div className="mt-4 space-y-3">
-                  <AdminSecurityNote>
-                    <p>该任务等待外部 Skill Runner 通过私有 API 领取、处理并回写。页面只展示调用路径，不展示 runner secret。</p>
-                  </AdminSecurityNote>
-                  <div className="rounded-2xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                    <div>领取任务：POST /api/market-briefs/skill-jobs/claim</div>
-                    <div>成功回写：POST /api/market-briefs/skill-result</div>
-                    <div>失败回写：POST /api/market-briefs/skill-jobs/fail</div>
-                  </div>
-                </div>
-              ) : null}
             </Card>
 
             <Card>
@@ -103,7 +92,7 @@ export default async function MarketBriefJobDetailPage({
                 <InfoRow label="任务类型" value={isHistoricalJob(job) ? "历史日期补生成" : "今日生成"} />
                 <InfoRow label="市场" value={job.market} />
                 <InfoRow label="状态" value={getMarketBriefJobStatusLabel(job.status)} />
-                <InfoRow label="Runner" value={job.runner_name} />
+                <InfoRow label="生成器" value={getGeneratorDisplayName(job)} />
                 <InfoRow label="创建时间" value={formatDateTime(job.created_at)} />
                 <InfoRow label="开始时间" value={job.started_at ? formatDateTime(job.started_at) : "未开始"} />
                 <InfoRow label="完成时间" value={job.completed_at ? formatDateTime(job.completed_at) : "未完成"} />
@@ -160,20 +149,36 @@ function NoticeBanner({ message }: { message: string }) {
 }
 
 function getJobNextStep(status: string, errorMessage: string | null) {
-  if (status === "queued") return "等待外部 Skill Runner 领取任务。";
-  if (status === "running") return "外部 Skill Runner 正在处理。如果外部 runner 已中断或任务长时间未完成，可以手动取消或重置为排队后重新运行 runner。";
-  if (status === "succeeded") return "已生成市场简报。";
-  if (status === "failed") return errorMessage ? `任务失败：${errorMessage}。该任务失败，可重新排队后再次运行。` : "该任务失败，可重新排队后再次运行。";
-  if (status === "cancelled") return "该任务已取消，可重新排队后再次由 runner 领取。";
+  if (status === "queued") return "等待 AI 生成器处理任务。";
+  if (status === "running") return "AI 正在生成市场简报。若任务长时间未完成，可以手动取消或重置为排队后重新生成。";
+  if (status === "succeeded") return "AI 市场简报已生成，可进入预览页复核正文和图表。";
+  if (status === "failed") return errorMessage ? `AI 生成失败：${errorMessage}。可查看错误信息后重新排队。` : "AI 生成失败，可查看错误信息后重新排队。";
+  if (status === "cancelled") return "该任务已取消，可重新排队后再次生成。";
   return "任务已归档，无需继续处理。";
 }
 
-function isExternalJob(job: { runner_name: string; request_payload: Record<string, unknown> }) {
+function isLegacyExternalJob(job: { runner_name: string; request_payload: Record<string, unknown> }) {
   return job.runner_name.includes("external") || job.request_payload.generator_mode === "external";
 }
 
 function isHistoricalJob(job: { request_payload: Record<string, unknown> }) {
   return job.request_payload?.is_historical === true;
+}
+
+function getGeneratorDisplayName(job: { runner_name: string; request_payload: Record<string, unknown> }) {
+  if (job.request_payload.generator_mode === "ai" || job.runner_name === "ai-market-brief-generator") {
+    return "AI 市场简报生成器";
+  }
+
+  if (isLegacyExternalJob(job)) {
+    return "历史任务：旧 external runner";
+  }
+
+  if (job.runner_name === "manual-skill-mock") {
+    return "历史任务：mock 生成器";
+  }
+
+  return "历史任务：旧生成器";
 }
 
 function getSearchValue(value: string | string[] | undefined) {

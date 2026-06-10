@@ -12,6 +12,7 @@ import type { MarketBriefRecord } from "@/lib/content-types";
 import { formatDate, formatRelative } from "@/lib/format";
 import { getNearestPreviousAShareTradingDay } from "@/lib/a-share-trading-calendar";
 import { hasMarketBriefMarkdownContent } from "@/lib/market-brief-markdown";
+import { getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
 import { getTodayDateInShanghai } from "@/lib/market-brief-runner";
 import { getMarketBriefGenerationStatusTone, getMarketBriefStatusTone } from "@/lib/market-briefs";
 import { getMarketBriefFilterOptions, getMarketBriefs } from "@/lib/queries/market-briefs";
@@ -28,6 +29,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
   const notice = params.notice;
   const today = getTodayDateInShanghai();
   const nearestTradingDay = getNearestPreviousAShareTradingDay(today);
+  const generatorMode = getMarketBriefGeneratorMode();
   const [briefs, filterOptions] = await Promise.all([
     getMarketBriefs(filters),
     getMarketBriefFilterOptions()
@@ -39,7 +41,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
         <PageHeader
           eyebrow="Market Briefs"
           title="市场简报"
-          description="手工维护与 AI 生成每日市场收评。当前阶段不自动抓取行情、不发送邮件、不公开发布。"
+          description="系统将调用 AI 根据公开市场信息生成固定模板市场简报，并附带结构化图表数据。生成结果默认需要人工复核，不构成投资建议。"
           action={
             <div className="flex flex-wrap gap-2">
               <form action={generateTodayMarketBriefAction}>
@@ -104,6 +106,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "exists" ? <NoticeBanner tone="blue" message="该日期市场简报已存在，已保留原记录。" /> : null}
+        {generatorMode === "external" ? <NoticeBanner tone="blue" message="当前配置为旧 external runner 模式，建议改为 MARKET_BRIEF_GENERATOR=ai。" /> : null}
 
         <AdminSection title="筛选" description="按日期倒序展示；可搜索标题 / 摘要，并按状态、市场和标签过滤。">
           <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_160px_160px_auto]">

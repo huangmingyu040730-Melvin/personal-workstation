@@ -1,14 +1,24 @@
 # Deprecated Python AkShare Market Brief Runner
 
-> Deprecated: Phase 2M-A switches Market Brief generation to the server-side AI-first generator. This Python runner is kept only for historical diagnostics and fallback experiments. It is no longer the recommended way to generate market briefs.
+> Deprecated: Phase 2M-A / 2M-B switches Market Brief generation to the server-side AI-first generator. This Python runner is kept only for historical diagnostics and compatibility checks. It is no longer the recommended way to generate market briefs.
 
 Phase 2L-D-C adds a first real-data runner for A-share market briefs. Phase 2L-D-D adds fallback brief generation when AkShare or Eastmoney endpoints are unavailable. Phase 2L-D-E adds multi-source mode and historical trading-day jobs.
 
 The runner claims queued jobs from the workstation, fetches market data with lightweight HTTP sources and/or AkShare, writes a stable `source_snapshot`, generates Markdown, and sends the result back through the existing private API.
 
-It does not need a Supabase key. It only needs the workstation base URL and runner secret. For the current AI-first flow, configure `MARKET_BRIEF_GENERATOR=ai` and AI provider environment variables on the web app instead of running this script.
+For the current AI-first flow, configure the web app instead of running this script:
 
-## Install
+```bash
+MARKET_BRIEF_GENERATOR=ai
+AI_PROVIDER=deepseek
+AI_API_KEY="your_api_key"
+AI_BASE_URL="https://api.deepseek.com"
+AI_MODEL="deepseek-v4-flash"
+```
+
+The legacy runner does not need a Supabase key. It only needs the workstation base URL and runner secret when diagnosing historical external-runner jobs.
+
+## Legacy Install
 
 ```bash
 cd scripts/market-brief-runner/python
@@ -17,9 +27,9 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Environment
+## Legacy Environment
 
-Recommended local setup:
+Historical diagnostic setup:
 
 ```bash
 cp .env.example .env.local
@@ -55,7 +65,7 @@ The runner automatically checks the current shell plus `.env.local` / `.env` in:
 
 Shell exports still win over file values. Do not commit real secrets. Do not pass Supabase keys to this runner.
 
-## Run
+## Run Legacy Diagnostics
 
 ```bash
 cd scripts/market-brief-runner/python
