@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Download, Eye, FileText, Plus, Sparkles } from "lucide-react";
+import { BarChart3, Download, Eye, FileText, ListChecks, Plus, Sparkles } from "lucide-react";
 import { generateTodayMarketBriefAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
@@ -51,6 +51,10 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
                 <Plus size={16} />
                 新建手工简报
               </Link>
+              <Link href="/dashboard/market-briefs/jobs" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">
+                <ListChecks size={16} />
+                生成任务
+              </Link>
             </div>
           }
         />
@@ -59,7 +63,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
           <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
             <Badge className="bg-blue-50 text-blue-700 ring-blue-100">默认市场：A股</Badge>
             <Badge className="bg-slate-50 text-slate-600 ring-slate-200">生成器：manual-skill-mock</Badge>
-            <span>如果今日同市场简报已存在，会直接跳转到已有预览页，不重复创建。</span>
+            <span>点击后会先创建生成任务；如果今日同市场简报或运行中任务已存在，会直接跳转到对应记录。</span>
           </div>
         </AdminSection>
 

@@ -1,4 +1,4 @@
-import type { MarketBriefGenerationStatus, MarketBriefRecord, MarketBriefStatus } from "@/lib/content-types";
+import type { MarketBriefGenerationStatus, MarketBriefJobStatus, MarketBriefRecord, MarketBriefStatus } from "@/lib/content-types";
 
 export const marketBriefContentFields: Array<{ key: keyof MarketBriefRecord; label: string; description: string }> = [
   { key: "summary", label: "摘要", description: "当天市场结论和最值得关注的变化。" },
@@ -27,6 +27,14 @@ export function getMarketBriefGenerationStatusTone(status: MarketBriefGeneration
   if (status === "archived") return "bg-slate-100 text-slate-600 ring-slate-200";
   if (status === "draft") return "bg-amber-50 text-amber-700 ring-amber-100";
   return "bg-slate-50 text-slate-600 ring-slate-200";
+}
+
+export function getMarketBriefJobStatusTone(status: MarketBriefJobStatus | string | null | undefined) {
+  if (status === "succeeded") return "bg-emerald-50 text-emerald-700 ring-emerald-100";
+  if (status === "running") return "bg-blue-50 text-blue-700 ring-blue-100";
+  if (status === "failed") return "bg-rose-50 text-rose-700 ring-rose-100";
+  if (status === "cancelled") return "bg-slate-100 text-slate-600 ring-slate-200";
+  return "bg-amber-50 text-amber-700 ring-amber-100";
 }
 
 export function marketBriefArrayToText(values: string[] | null | undefined) {

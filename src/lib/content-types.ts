@@ -12,6 +12,7 @@ export type AccessGrantContentType = "project" | "publication" | "skill" | "know
 export type CalendarEventType = "general" | "meeting" | "research" | "deadline" | "review" | "reminder";
 export type MarketBriefStatus = "draft" | "reviewed" | "published" | "archived";
 export type MarketBriefGenerationStatus = "manual" | "draft" | "generated" | "failed" | "needs_review" | "archived";
+export type MarketBriefJobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 export type ResumeItemType = "basic" | "education" | "experience" | "project" | "research" | "skill" | "certification" | "award" | "language" | "other";
 export type ResumeVersionLanguage = "zh" | "en";
 export type ResumeTemplateKey = "classic" | "compact" | "research";
@@ -186,6 +187,25 @@ export type MarketBriefRecord = {
   artifact_files: Array<Record<string, unknown>>;
   created_at: string;
   updated_at: string;
+};
+
+export type MarketBriefGenerationJobRecord = {
+  id: string;
+  owner_id: string;
+  brief_date: string;
+  market: string;
+  status: MarketBriefJobStatus;
+  runner_name: string;
+  request_payload: Record<string, unknown>;
+  source_snapshot: Record<string, unknown>;
+  result_payload: Record<string, unknown>;
+  market_brief_id: string | null;
+  error_message: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  market_briefs?: Pick<MarketBriefRecord, "id" | "title" | "brief_date" | "market"> | null;
 };
 
 export type ResumeItemRecord = {

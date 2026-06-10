@@ -8,12 +8,13 @@ import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
-import { getMarketBriefGenerationStatusLabel, getMarketBriefStatusLabel } from "@/lib/content-options";
+import { getMarketBriefGenerationStatusLabel, getMarketBriefJobStatusLabel, getMarketBriefStatusLabel } from "@/lib/content-options";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { getMarketBriefMarkdownSourceLabel, hasMarketBriefMarkdownContent } from "@/lib/market-brief-markdown";
-import { getMarketBriefGenerationStatusTone, getMarketBriefStatusTone, marketBriefContentFields } from "@/lib/market-briefs";
+import { getMarketBriefGenerationStatusTone, getMarketBriefJobStatusTone, getMarketBriefStatusTone, marketBriefContentFields } from "@/lib/market-briefs";
 import { MarkdownPreview } from "@/lib/markdown";
+import { getMarketBriefGenerationJobsForBrief } from "@/lib/queries/market-brief-jobs";
 import { getMarketBriefById } from "@/lib/queries/market-briefs";
 
 export default async function MarketBriefDetailPage({
@@ -24,7 +25,10 @@ export default async function MarketBriefDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const brief = await getMarketBriefById(id);
+  const [brief, relatedJobs] = await Promise.all([
+    getMarketBriefById(id),
+    getMarketBriefGenerationJobsForBrief(id, 3)
+  ]);
 
   if (!brief) {
     notFound();
@@ -135,6 +139,25 @@ export default async function MarketBriefDetailPage({
             <Card>
               <CardHeader title="数据来源" />
               <BadgeList values={brief.data_sources} emptyText="暂无数据来源。" />
+            </Card>
+
+            <Card>
+              <CardHeader title="最近生成任务" />
+              {relatedJobs.length > 0 ? (
+                <div className="space-y-3">
+                  {relatedJobs.map((job) => (
+                    <Link key={job.id} href={`/dashboard/market-briefs/jobs/${job.id}`} className="block rounded-2xl border border-slate-200 bg-slate-50 p-3 hover:border-blue-200 hover:bg-blue-50">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
+                        <span className="text-xs font-medium text-slate-500">{job.runner_name}</span>
+                      </div>
+                      <p className="text-xs text-slate-500">创建于 {formatDateTime(job.created_at)}</p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm leading-6 text-slate-500">暂无关联生成任务。</p>
+              )}
             </Card>
           </div>
         </div>

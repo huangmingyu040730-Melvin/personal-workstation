@@ -1,6 +1,7 @@
 export type MarketBriefGenerationInput = {
   market: string;
   briefDate: string;
+  runnerName?: string;
 };
 
 export type GeneratedMarketBrief = {
@@ -13,7 +14,7 @@ export type GeneratedMarketBrief = {
   generatorName: string;
 };
 
-const mockGeneratorName = "manual-skill-mock";
+export const defaultMarketBriefRunnerName = "manual-skill-mock";
 
 export async function generateMarketBriefDraft(input: MarketBriefGenerationInput): Promise<GeneratedMarketBrief> {
   const generator = process.env.MARKET_BRIEF_GENERATOR ?? "mock";
@@ -26,7 +27,7 @@ export async function generateMarketBriefDraft(input: MarketBriefGenerationInput
   return generateMockMarketBrief(input);
 }
 
-function generateMockMarketBrief({ market, briefDate }: MarketBriefGenerationInput): GeneratedMarketBrief {
+function generateMockMarketBrief({ market, briefDate, runnerName = defaultMarketBriefRunnerName }: MarketBriefGenerationInput): GeneratedMarketBrief {
   const title = `${market}市场收评简报｜${briefDate}`;
   const summary = "本简报由测试生成器生成，当前尚未接入真实行情数据。内容用于验证市场简报生成、预览和下载流程。";
   const generatedAt = new Date().toISOString();
@@ -102,17 +103,26 @@ function generateMockMarketBrief({ market, briefDate }: MarketBriefGenerationInp
       ""
     ].join("\n"),
     sourceSnapshot: {
-      generator: mockGeneratorName,
-      mode: "mock",
-      market,
-      briefDate,
-      generatedAt,
-      dataQuality: "mock_only",
-      disclaimer: "本阶段未接入真实行情、新闻源、AI、邮件或 Notion。",
+      meta: {
+        market,
+        brief_date: briefDate,
+        runner_name: runnerName,
+        generated_at: generatedAt,
+        mode: "mock",
+        data_quality: "mock_only",
+        disclaimer: "本阶段未接入真实行情、新闻源、AI、邮件或 Notion。"
+      },
+      indices: [{ name: "上证指数", code: "000001.SH", close: null, change_pct: null, turnover: null }],
+      styles: [],
+      sectors: [],
+      hot_topics: [],
+      capital_flows: [],
+      policy_news: [],
+      risk_signals: [],
       sections
     },
     tags: ["市场简报", market, "mock", "待复核"],
     dataSources: ["Mock generator fixture", "未接入真实行情数据"],
-    generatorName: mockGeneratorName
+    generatorName: runnerName
   };
 }
