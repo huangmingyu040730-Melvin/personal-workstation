@@ -17,12 +17,20 @@ pip install -r requirements.txt
 
 ## Environment
 
+Recommended local setup:
+
 ```bash
-export WORKSTATION_BASE_URL="http://localhost:3000"
-export MARKET_BRIEF_RUNNER_SECRET="your_runner_secret"
-export MARKET_BRIEF_MARKET="A股"
-export MARKET_BRIEF_RUNNER_NAME="akshare-runner"
-export MARKET_BRIEF_DATA_MODE="akshare"
+cp .env.example .env.local
+```
+
+Then edit `.env.local`:
+
+```bash
+WORKSTATION_BASE_URL="https://personal-workstation.vercel.app"
+MARKET_BRIEF_RUNNER_SECRET="your_runner_secret"
+MARKET_BRIEF_MARKET="A股"
+MARKET_BRIEF_RUNNER_NAME="akshare-runner"
+MARKET_BRIEF_DATA_MODE="akshare"
 ```
 
 Defaults:
@@ -31,7 +39,13 @@ Defaults:
 - `MARKET_BRIEF_RUNNER_NAME=akshare-runner`
 - `MARKET_BRIEF_DATA_MODE=akshare`
 
-Do not commit real secrets. Do not pass Supabase keys to this runner.
+The runner automatically checks the current shell plus `.env.local` / `.env` in:
+
+- the current working directory;
+- `scripts/market-brief-runner/python`;
+- the project root.
+
+Shell exports still win over file values. Do not commit real secrets. Do not pass Supabase keys to this runner.
 
 ## Run
 

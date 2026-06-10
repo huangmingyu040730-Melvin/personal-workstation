@@ -7,6 +7,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 from market_brief_writer import build_market_brief_payload
@@ -14,7 +15,7 @@ from market_data_sources import fetch_a_share_market_snapshot
 
 
 def main() -> int:
-    load_dotenv_if_available()
+    env_files = load_dotenv_if_available()
     args = parse_args()
 
     base_url = normalize_base_url(os.getenv("WORKSTATION_BASE_URL"))
@@ -24,11 +25,11 @@ def main() -> int:
     data_mode = os.getenv("MARKET_BRIEF_DATA_MODE", "akshare")
 
     if not base_url:
-        print("WORKSTATION_BASE_URL is required, for example http://localhost:3000", file=sys.stderr)
+        print_missing_env_help("WORKSTATION_BASE_URL", env_files)
         return 1
 
     if not runner_secret:
-        print("MARKET_BRIEF_RUNNER_SECRET is required.", file=sys.stderr)
+        print_missing_env_help("MARKET_BRIEF_RUNNER_SECRET", env_files)
         return 1
 
     if args.diagnose:
@@ -167,13 +168,60 @@ def fail_job(base_url: str, runner_secret: str, job_id: str, message: str) -> No
         print(f"Failed to mark job as failed: {safe_error(exc)}", file=sys.stderr)
 
 
-def load_dotenv_if_available() -> None:
+def load_dotenv_if_available() -> list[str]:
+    load_dotenv = None
     try:
         from dotenv import load_dotenv
-
-        load_dotenv()
     except Exception:
-        return
+        load_dotenv = None
+
+    loaded: list[str] = []
+    script_dir = Path(__file__).resolve().parent
+    project_root = script_dir.parents[2]
+    search_dirs = [Path.cwd(), script_dir, project_root]
+    seen: set[Path] = set()
+
+    for filename in (".env.local", ".env"):
+        for directory in search_dirs:
+            path = (directory / filename).resolve()
+            if path in seen:
+                continue
+            seen.add(path)
+            if path.exists():
+                if load_dotenv:
+                    load_dotenv(path, override=False)
+                else:
+                    load_simple_env_file(path)
+                loaded.append(str(path))
+
+    return loaded
+
+
+def load_simple_env_file(path: Path) -> None:
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        os.environ[key] = value.strip().strip('"').strip("'")
+
+
+def print_missing_env_help(name: str, env_files: list[str]) -> None:
+    print(f"{name} is required.", file=sys.stderr)
+    print("The runner checked the current shell and these env files:", file=sys.stderr)
+    if env_files:
+        for path in env_files:
+            print(f"- {path}", file=sys.stderr)
+    else:
+        print("- no .env.local or .env file was found", file=sys.stderr)
+    print("", file=sys.stderr)
+    print("Quick fix:", file=sys.stderr)
+    print("1. Copy scripts/market-brief-runner/python/.env.example to scripts/market-brief-runner/python/.env.local.", file=sys.stderr)
+    print("2. Fill WORKSTATION_BASE_URL and MARKET_BRIEF_RUNNER_SECRET in .env.local.", file=sys.stderr)
+    print("3. Run python run_market_brief_runner.py again.", file=sys.stderr)
 
 
 def normalize_base_url(value: str | None) -> str | None:
