@@ -51,6 +51,12 @@ export default async function ResumeVersionsPage() {
           <Link href="/dashboard/resume/versions" className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
             简历版本
           </Link>
+          <Link href="/dashboard/resume/applications" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
+            投递看板
+          </Link>
+          <Link href="/dashboard/resume/jd-reviews" className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
+            JD 分析记录
+          </Link>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
