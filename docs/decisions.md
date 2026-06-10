@@ -939,3 +939,30 @@
 - 本阶段不读取 Documents / Storage，不保存外部 API Key，不发送 AI 请求，不生成邮件，不创建定时任务。
 - 本阶段不做 AkShare、Tushare、Wind、AI 自动生成、Notion 同步、GitHub Actions、n8n、公开市场简报页、PDF/Word 导出、图表、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、Word 导出、AI Provider、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
+
+## 2026-06-10 - Add Market Brief Artifacts And Markdown Preview
+
+类型：decision
+
+决策：
+
+- Phase 2L-B 新增 `supabase/migrations/0014_market_brief_artifacts.sql`。
+- 在 `market_briefs` 上补充 `markdown_content`、`generation_status`、`generated_at`、`generator_name`、`source_snapshot` 和 `artifact_files`。
+- Markdown 成为市场简报主内容源：如果 `markdown_content` 存在，预览和下载优先使用它；如果为空，则通过结构化字段按固定章节顺序实时合成 Markdown。
+- 新增 `/dashboard/market-briefs/[id]/preview`，用于后台站内预览和浏览器打印 / 保存 PDF。
+- 新增 Markdown、HTML、JSON 和 Word `.docx` 即时下载 route；下载只在请求时生成，不写入 Storage，不创建 public download URL。
+- 编辑页增加“Markdown 主内容”区域，并提供“从结构化字段生成 Markdown 草稿”按钮，草稿需由管理员保存后才成为主内容。
+
+原因：
+
+- 市场简报需要从“后台表单记录”升级为可预览、可下载、可交付的研究报告 artifact。
+- Markdown 作为主内容源便于后续接 Skill 自动生成、人工复核、邮件正文、Notion 同步和多格式导出。
+- 本阶段保持手工维护和即时生成，可以先验证报告内容模型和权限边界，避免提前引入行情抓取、AI、邮件或任务编排复杂度。
+
+影响：
+
+- 市场简报仍是私密后台数据，仅管理员可访问，不进入公开站点或 sitemap。
+- Download routes 同样进行管理员鉴权。
+- HTML / JSON / DOCX 文件为即时响应，不保存到 Documents、Storage 或公开 bucket，不生成 signed URL。
+- 本阶段不读取 Documents / Storage，不调用 AI，不保存外部 API key，不做自动抓取、AkShare、Tushare、Wind、邮件发送、Notion 同步、GitHub Actions、n8n、定时任务、股票推荐或投资建议。
+- 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。

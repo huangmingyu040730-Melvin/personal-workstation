@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { BarChart3, Plus } from "lucide-react";
+import { BarChart3, Download, Eye, FileText, Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Select, TextInput } from "@/components/forms/form-fields";
 import { PageHeader } from "@/components/page-header";
-import { getMarketBriefStatusLabel, marketBriefStatuses } from "@/lib/content-options";
+import { getMarketBriefGenerationStatusLabel, getMarketBriefStatusLabel, marketBriefStatuses } from "@/lib/content-options";
 import type { MarketBriefRecord } from "@/lib/content-types";
 import { formatDate, formatRelative } from "@/lib/format";
-import { getMarketBriefStatusTone } from "@/lib/market-briefs";
+import { hasMarketBriefMarkdownContent } from "@/lib/market-brief-markdown";
+import { getMarketBriefGenerationStatusTone, getMarketBriefStatusTone } from "@/lib/market-briefs";
 import { getMarketBriefFilterOptions, getMarketBriefs } from "@/lib/queries/market-briefs";
 
 export default async function MarketBriefsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -90,13 +91,15 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
 
 function MarketBriefCard({ brief }: { brief: MarketBriefRecord }) {
   return (
-    <AdminContentCard href={`/dashboard/market-briefs/${brief.id}`} className="hover:border-blue-200">
+    <AdminContentCard className="hover:border-blue-200">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap gap-2">
             <Badge className={getMarketBriefStatusTone(brief.status)}>{getMarketBriefStatusLabel(brief.status)}</Badge>
+            <Badge className={getMarketBriefGenerationStatusTone(brief.generation_status)}>{getMarketBriefGenerationStatusLabel(brief.generation_status)}</Badge>
             <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{brief.market}</Badge>
             {brief.is_featured ? <Badge className="bg-amber-50 text-amber-700 ring-amber-100">精选</Badge> : null}
+            {hasMarketBriefMarkdownContent(brief) ? <Badge className="bg-violet-50 text-violet-700 ring-violet-100">有 Markdown</Badge> : <Badge className="bg-slate-50 text-slate-500 ring-slate-200">结构化合成</Badge>}
           </div>
           <h2 className="text-lg font-semibold text-slate-950">{brief.title}</h2>
           {brief.summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{brief.summary}</p> : null}
@@ -109,6 +112,24 @@ function MarketBriefCard({ brief }: { brief: MarketBriefRecord }) {
       <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-xs text-slate-500">
         <span>{formatDate(brief.brief_date)}</span>
         <span>更新于 {formatRelative(brief.updated_at)}</span>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+        <Link href={`/dashboard/market-briefs/${brief.id}`} className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+          <FileText size={14} />
+          详情
+        </Link>
+        <Link href={`/dashboard/market-briefs/${brief.id}/preview`} className="inline-flex items-center gap-1.5 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
+          <Eye size={14} />
+          预览
+        </Link>
+        <Link href={`/dashboard/market-briefs/${brief.id}/download/markdown`} className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+          <Download size={14} />
+          下载 MD
+        </Link>
+        <Link href={`/dashboard/market-briefs/${brief.id}/download/docx`} className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 hover:border-emerald-200 hover:bg-emerald-100">
+          <Download size={14} />
+          下载 Word
+        </Link>
       </div>
     </AdminContentCard>
   );

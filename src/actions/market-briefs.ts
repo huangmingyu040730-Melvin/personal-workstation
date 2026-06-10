@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
-import { marketBriefSchema } from "@/lib/validations/market-brief";
+import { marketBriefSchema, type MarketBriefInput } from "@/lib/validations/market-brief";
 
 function marketBriefPayloadFromForm(formData: FormData) {
   return marketBriefSchema.safeParse({
@@ -24,7 +24,10 @@ function marketBriefPayloadFromForm(formData: FormData) {
     tomorrow_watch: getOptionalString(formData, "tomorrow_watch"),
     data_sources: getArrayFromText(formData, "data_sources"),
     tags: getArrayFromText(formData, "tags"),
-    is_featured: getBoolean(formData, "is_featured")
+    is_featured: getBoolean(formData, "is_featured"),
+    markdown_content: getOptionalString(formData, "markdown_content"),
+    generation_status: getString(formData, "generation_status") || "manual",
+    generator_name: getOptionalString(formData, "generator_name")
   });
 }
 
@@ -55,7 +58,7 @@ export async function createMarketBriefAction(formData: FormData) {
 
   const { data, error: insertError } = await supabase
     .from("market_briefs")
-    .insert({ ...parsed.data, owner_id: actorId })
+    .insert({ ...normalizeMarketBriefPayload(parsed.data), owner_id: actorId })
     .select("id,title,brief_date,market,status")
     .single();
 
@@ -90,7 +93,7 @@ export async function updateMarketBriefAction(id: string, formData: FormData) {
 
   const { data, error: updateError } = await supabase
     .from("market_briefs")
-    .update(parsed.data)
+    .update(normalizeMarketBriefPayload(parsed.data))
     .eq("id", id)
     .select("id,title,brief_date,market,status")
     .single();
@@ -144,5 +147,14 @@ function revalidateMarketBriefPaths(id?: string) {
   revalidatePath("/dashboard/market-briefs");
   if (id) {
     revalidatePath(`/dashboard/market-briefs/${id}`);
+    revalidatePath(`/dashboard/market-briefs/${id}/preview`);
   }
+}
+
+function normalizeMarketBriefPayload(data: MarketBriefInput) {
+  return {
+    ...data,
+    generation_status: data.generation_status ?? "manual",
+    generator_name: data.generator_name ?? (data.markdown_content ? "manual" : null)
+  };
 }

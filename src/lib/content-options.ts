@@ -1,4 +1,4 @@
-import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentRelatedType, MarketBriefStatus, ProjectStatus, PublicationType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
+import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentRelatedType, MarketBriefGenerationStatus, MarketBriefStatus, ProjectStatus, PublicationType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -105,6 +105,15 @@ export const marketBriefStatuses: Array<{ value: MarketBriefStatus; label: strin
   { value: "archived", label: "已归档" }
 ];
 
+export const marketBriefGenerationStatuses: Array<{ value: MarketBriefGenerationStatus; label: string }> = [
+  { value: "manual", label: "手工维护" },
+  { value: "draft", label: "草稿" },
+  { value: "generated", label: "已生成" },
+  { value: "failed", label: "生成失败" },
+  { value: "needs_review", label: "待复核" },
+  { value: "archived", label: "已归档" }
+];
+
 export const resumeItemTypes: Array<{ value: ResumeItemType; label: string }> = [
   { value: "basic", label: "基本信息" },
   { value: "education", label: "教育经历" },
@@ -175,6 +184,10 @@ export function getCalendarEventTypeLabel(value: string | null | undefined) {
 
 export function getMarketBriefStatusLabel(value: string | null | undefined) {
   return marketBriefStatuses.find((item) => item.value === value)?.label ?? "草稿";
+}
+
+export function getMarketBriefGenerationStatusLabel(value: string | null | undefined) {
+  return marketBriefGenerationStatuses.find((item) => item.value === value)?.label ?? "手工维护";
 }
 
 export function getResumeItemTypeLabel(value: string | null | undefined) {
