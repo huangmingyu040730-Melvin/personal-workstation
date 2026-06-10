@@ -163,7 +163,8 @@ export async function runMockMarketBriefGenerationJob(supabase: RunnerSupabaseCl
     const generated = await generateMarketBriefDraft({
       market: runningJob.market,
       briefDate: runningJob.brief_date,
-      runnerName: runningJob.runner_name
+      runnerName: runningJob.runner_name,
+      isHistorical: runningJob.request_payload?.is_historical === true
     });
     const brief = await createOrUpdateMarketBriefFromGenerated(supabase, runningJob, generated);
     const completedAt = new Date().toISOString();

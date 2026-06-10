@@ -1,10 +1,12 @@
-# Python AkShare Market Brief Runner
+# Deprecated Python AkShare Market Brief Runner
+
+> Deprecated: Phase 2M-A switches Market Brief generation to the server-side AI-first generator. This Python runner is kept only for historical diagnostics and fallback experiments. It is no longer the recommended way to generate market briefs.
 
 Phase 2L-D-C adds a first real-data runner for A-share market briefs. Phase 2L-D-D adds fallback brief generation when AkShare or Eastmoney endpoints are unavailable. Phase 2L-D-E adds multi-source mode and historical trading-day jobs.
 
 The runner claims queued jobs from the workstation, fetches market data with lightweight HTTP sources and/or AkShare, writes a stable `source_snapshot`, generates Markdown, and sends the result back through the existing private API.
 
-It does not need a Supabase key. It only needs the workstation base URL and runner secret.
+It does not need a Supabase key. It only needs the workstation base URL and runner secret. For the current AI-first flow, configure `MARKET_BRIEF_GENERATOR=ai` and AI provider environment variables on the web app instead of running this script.
 
 ## Install
 
