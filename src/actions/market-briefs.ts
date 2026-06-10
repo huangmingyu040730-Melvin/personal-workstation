@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getNearestPreviousAShareTradingDay, validateAShareTradingDay } from "@/lib/a-share-trading-calendar";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { externalMarketBriefRunnerName, getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
@@ -152,9 +153,33 @@ export async function deleteMarketBriefAction(id: string) {
 }
 
 export async function generateTodayMarketBriefAction(formData: FormData) {
+  return generateMarketBriefAction(formData, { mode: "today" });
+}
+
+export async function generateMarketBriefForDateAction(formData: FormData) {
+  return generateMarketBriefAction(formData, { mode: "selected-date" });
+}
+
+async function generateMarketBriefAction(formData: FormData, options: { mode: "today" | "selected-date" }) {
   const market = getString(formData, "market") || "A股";
-  const briefDate = normalizeBriefDate(getString(formData, "brief_date")) ?? getTodayDateInShanghai();
+  const today = getTodayDateInShanghai();
+  const rawBriefDate = options.mode === "today" ? today : getString(formData, "brief_date");
+  const briefDate = normalizeBriefDate(rawBriefDate);
   const generatorMode = getMarketBriefGeneratorMode();
+
+  if (!briefDate) {
+    redirect(`/dashboard/market-briefs?error=${encodeFormError("请选择有效日期。")}`);
+  }
+
+  const dateValidation = validateAShareTradingDay(briefDate, today);
+  if (!dateValidation.ok) {
+    const message = options.mode === "today" && dateValidation.reason === "non_trading_day"
+      ? `今日不是 A 股交易日，无法生成今日市场简报。你可以选择最近一个交易日补生成。${formatNearestTradingDay(dateValidation.nearestPreviousTradingDay ?? getNearestPreviousAShareTradingDay(today))}`
+      : `${dateValidation.message}${formatNearestTradingDay(dateValidation.nearestPreviousTradingDay)}`;
+    redirect(`/dashboard/market-briefs?error=${encodeFormError(message)}`);
+  }
+
+  const isHistorical = briefDate !== today;
   const { supabase, isAdmin, actorId, error } = await getAdminClient();
 
   if (!supabase || !isAdmin || !actorId) {
@@ -193,7 +218,11 @@ export async function generateTodayMarketBriefAction(formData: FormData) {
       briefDate,
       market,
       runnerName: generatorMode === "external" ? externalMarketBriefRunnerName : undefined,
-      requestPayload: { triggered_by: "dashboard", generator_mode: generatorMode }
+      requestPayload: {
+        triggered_by: "dashboard",
+        generator_mode: generatorMode,
+        is_historical: isHistorical
+      }
     });
   } catch (createError) {
     redirect(`/dashboard/market-briefs?error=${encodeFormError(getActionErrorMessage(createError, "创建生成任务失败。"))}`);
@@ -209,7 +238,8 @@ export async function generateTodayMarketBriefAction(formData: FormData) {
         market: job.market,
         status: job.status,
         runner_name: job.runner_name,
-        generator_mode: generatorMode
+        generator_mode: generatorMode,
+        is_historical: isHistorical
       }
     });
 
@@ -367,4 +397,8 @@ function getSafeReturnPath(formData: FormData | undefined, fallback: string) {
   }
 
   return value;
+}
+
+function formatNearestTradingDay(date: string | null) {
+  return date ? ` 最近一个交易日：${date}` : "";
 }

@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
+
+from http_market_sources import fetch_indices_from_http_sources
 
 
 TARGET_INDICES = [
@@ -25,14 +28,18 @@ def fetch_a_share_market_snapshot(
     data_mode: str = "akshare",
 ) -> dict[str, Any]:
     generated_at = datetime.now(timezone.utc).isoformat()
+    is_historical = brief_date != today_in_asia_shanghai()
     warnings: list[str] = []
+    source_status: dict[str, str] = {}
     snapshot: dict[str, Any] = {
         "meta": {
             "market": market,
             "brief_date": brief_date,
+            "is_historical": is_historical,
             "runner_name": runner_name,
             "data_mode": data_mode,
             "generated_at": generated_at,
+            "source_status": source_status,
             "warnings": warnings,
         },
         "indices": [],
@@ -52,21 +59,60 @@ def fetch_a_share_market_snapshot(
         "risk_signals": [],
     }
 
-    if data_mode != "akshare":
+    normalized_data_mode = (data_mode or "multi").strip().lower()
+    snapshot["meta"]["data_mode"] = normalized_data_mode
+
+    if normalized_data_mode == "mock":
+        warnings.append("MARKET_BRIEF_DATA_MODE=mock; using fallback snapshot for manual review.")
+        source_status["mock"] = "fallback"
+        apply_data_quality(snapshot)
+        return snapshot
+
+    if normalized_data_mode not in ("akshare", "multi"):
         warnings.append(f"Unsupported MARKET_BRIEF_DATA_MODE={data_mode}; using fallback snapshot.")
+        source_status["data_mode"] = "unsupported"
+        apply_data_quality(snapshot)
+        return snapshot
+
+    if normalized_data_mode == "multi":
+        http_indices = fetch_indices_from_http_sources(brief_date, warnings, is_historical=is_historical)
+        if http_indices:
+            snapshot["indices"] = http_indices
+            source_status["http_indices"] = "success"
+        else:
+            source_status["http_indices"] = "skipped_historical" if is_historical else "failed"
+
+    if is_historical:
+        warnings.append("AkShare spot sources only support latest snapshot in this runner version; skipped for historical brief_date.")
+        source_status.setdefault("akshare_indices", "skipped_historical")
+        source_status["akshare_breadth"] = "skipped_historical"
+        source_status["akshare_sectors"] = "skipped_historical"
+        source_status["akshare_hot_topics"] = "skipped_historical"
         apply_data_quality(snapshot)
         return snapshot
 
     ak = _load_akshare(warnings)
     if ak is None:
+        source_status["akshare_import"] = "failed"
         apply_data_quality(snapshot)
         return snapshot
 
-    snapshot["indices"] = fetch_indices(ak, warnings)
+    akshare_indices = fetch_indices(ak, warnings)
+    if akshare_indices:
+        snapshot["indices"] = merge_indices(snapshot["indices"], akshare_indices)
+        source_status["akshare_indices"] = "success"
+    else:
+        source_status["akshare_indices"] = "failed"
+
     snapshot["market_breadth"] = fetch_market_breadth(ak, warnings)
+    source_status["akshare_breadth"] = "success" if has_market_breadth(snapshot["market_breadth"]) else "failed"
+
     sectors = fetch_sectors(ak, warnings)
     snapshot["sectors"] = sectors
+    source_status["akshare_sectors"] = "success" if has_sectors(sectors) else "failed"
+
     snapshot["hot_topics"] = fetch_hot_topics(ak, sectors, warnings)
+    source_status["akshare_hot_topics"] = "success" if snapshot["hot_topics"] else "failed"
     apply_data_quality(snapshot)
 
     return snapshot
@@ -84,14 +130,14 @@ def classify_data_quality(snapshot: dict[str, Any]) -> str:
 
     if indices:
         real_modules += 1
-    if any(breadth.get(key) is not None for key in ("up_count", "down_count", "total_turnover")):
+    if has_market_breadth(breadth):
         real_modules += 1
-    if sectors.get("top_gainers") or sectors.get("top_losers"):
+    if has_sectors(sectors):
         real_modules += 1
 
-    if real_modules >= 2:
+    if real_modules >= 2 and len(indices) >= 5:
         return "real"
-    if real_modules == 1:
+    if real_modules >= 1 or len(indices) >= 3:
         return "partial"
     return "fallback"
 
@@ -102,6 +148,28 @@ def apply_data_quality(snapshot: dict[str, Any]) -> dict[str, Any]:
     meta["data_quality"] = data_quality
     meta["is_fallback"] = data_quality == "fallback"
     return snapshot
+
+
+def today_in_asia_shanghai() -> str:
+    return datetime.now(ZoneInfo("Asia/Shanghai")).date().isoformat()
+
+
+def has_market_breadth(breadth: dict[str, Any]) -> bool:
+    return any(breadth.get(key) is not None for key in ("up_count", "down_count", "total_turnover"))
+
+
+def has_sectors(sectors: dict[str, Any]) -> bool:
+    return bool(sectors.get("top_gainers") or sectors.get("top_losers"))
+
+
+def merge_indices(primary: list[dict[str, Any]], secondary: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged = list(primary)
+    seen = {item.get("name") for item in merged}
+    for item in secondary:
+        if item.get("name") not in seen:
+            merged.append(item)
+            seen.add(item.get("name"))
+    return merged
 
 
 def fetch_indices(ak: Any, warnings: list[str]) -> list[dict[str, Any]]:

@@ -1076,3 +1076,31 @@
 - Python runner 不需要 Supabase key，只通过 `WORKSTATION_BASE_URL` 和 `MARKET_BRIEF_RUNNER_SECRET` 调网站私有 API；不读取 Documents、Storage、cookie、浏览器会话或 signed URL。
 - 本阶段不做 AI 自动成稿、DeepSeek/OpenAI 调用、新闻爬虫、邮件发送、Notion 同步、GitHub Actions、n8n、后端 PDF、复杂图表、股票推荐、个股买卖建议或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
+
+## 2026-06-10 - Add Historical Market Brief Generation And Multi Source Fallback
+
+类型：decision
+
+决策：
+
+- Phase 2L-D-E 不新增 migration，继续复用 `market_brief_generation_jobs.brief_date`、`request_payload`、`source_snapshot` 和已有任务状态。
+- `/dashboard/market-briefs` 保留“获取今日市场动态”，并新增“生成指定日期市场简报”表单；两者共用生成 action，创建 job 前会校验管理员权限、日期格式、未来日期和 A 股交易日。
+- 新增 `src/data/a-share-trading-days.json` 与 `src/lib/a-share-trading-calendar.ts`，第一版用本地 2025/2026 A 股交易日白名单校验周末、法定节假日和休市日；交易日历未覆盖年份时返回明确错误，不创建 job。
+- `request_payload` 写入 `brief_date`、`market`、`triggered_by=dashboard`、`generator_mode` 和 `is_historical`；任务列表和详情页展示“历史补生成”标记。
+- Python runner 默认 `MARKET_BRIEF_DATA_MODE=multi`，先尝试轻量 HTTP 指数源，再尝试 AkShare，最后生成 partial / fallback 待复核简报；`source_snapshot.meta.source_status` 记录各数据源成功、失败或跳过。
+- Python runner 始终使用 claim API 返回的 `job.brief_date`，并写入 `source_snapshot.meta.is_historical`；历史日期会跳过只支持最新快照的数据源，不用今日数据冒充历史数据。
+- `data_quality` 规则调整为：`real` 需要至少两个核心模块且指数不少于 5 个，`partial` 需要至少一个核心模块或指数不少于 3 个，`fallback` 表示没有核心模块可用；partial / fallback 都写入 `generation_status=needs_review`。
+
+原因：
+
+- 市场简报不能在周末、节假日或未来日期创建无效任务，也不能把实时快照误标为历史行情。
+- AkShare / 东方财富接口存在网络和上游稳定性问题，runner 应尽量完成一份可复核 artifact，而不是让任务长期停留在 running 或 failed。
+- 本地交易日 JSON 让后台能先有强校验边界，后续可用 AkShare、交易所日历或维护脚本刷新。
+
+影响：
+
+- 不新增 SQL 或 migration；生产环境不需要执行数据库变更。
+- 不改变 claim/result/fail API 协议，只增强 request payload、source snapshot 和 runner 数据模式。
+- 市场简报仍为后台私密数据，不进入公开页面、viewer、restricted 或 sitemap。
+- 不读取 Documents、Storage、cookie、signed URL、Access Requests、Access Grants；不保存外部 API key，不打印 runner secret 或 Supabase key。
+- 本阶段不做 AI、新闻爬虫、邮件发送、Notion 同步、GitHub Actions、n8n、定时任务、公开市场简报页、股票推荐或投资建议。

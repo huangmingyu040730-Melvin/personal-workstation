@@ -21,7 +21,7 @@ def build_market_brief_payload(job: dict[str, Any], snapshot: dict[str, Any]) ->
         "summary": summary,
         "markdown_content": build_markdown(title, summary, snapshot),
         "source_snapshot": snapshot,
-        "tags": ["市场简报", market, "akshare", "真实数据第一版", "待复核", str(data_quality)],
+        "tags": build_tags(market, snapshot),
         "data_sources": data_sources(snapshot),
         "generation_status": "needs_review" if data_quality == "partial" else "generated",
     }
@@ -42,8 +42,8 @@ def build_fallback_market_brief_payload(
         "summary": "真实行情数据源暂不可用，本简报为 fallback 草稿，需人工复核。",
         "markdown_content": build_fallback_markdown(title, snapshot),
         "source_snapshot": snapshot,
-        "tags": [market, "市场收评", "fallback", "待复核"],
-        "data_sources": ["AkShare", "东方财富接口", "fallback"],
+        "tags": build_tags(market, snapshot),
+        "data_sources": data_sources(snapshot),
         "generation_status": "needs_review",
     }
 
@@ -77,12 +77,14 @@ def build_markdown(title: str, summary: str, snapshot: dict[str, Any]) -> str:
     meta = snapshot.get("meta") or {}
     runner_name = meta.get("runner_name") or "akshare-runner"
     warnings = meta.get("warnings") or []
+    notices = render_quality_notices(snapshot)
 
     return "\n".join(
         [
             f"# {title}",
             "",
             f"> 本简报由 {runner_name} 生成，当前为真实行情数据接入第一版；内容仅供研究记录，不构成投资建议。",
+            *notices,
             "",
             "## 一、摘要",
             "",
@@ -139,10 +141,11 @@ def build_fallback_markdown(title: str, snapshot: dict[str, Any]) -> str:
             f"# {title}",
             "",
             f"> 本简报由 {runner_name} 生成。当前真实行情数据源暂不可用，本简报为 fallback 草稿，仅用于记录生成任务和后续人工复核，不构成投资建议。",
+            *render_quality_notices(snapshot, include_fallback=False),
             "",
             "## 一、摘要",
             "",
-            "今日市场简报生成任务已成功执行，但真实行情数据源暂时不可用，未能获取宽基指数、市场宽度和行业板块数据。系统已保存本次数据源失败信息，建议稍后重新运行 runner 或人工补充行情数据。",
+            "市场简报生成任务已成功执行，但真实行情数据源暂时不可用，未能获取宽基指数、市场宽度和行业板块数据。系统已保存本次数据源失败信息，建议稍后重新运行 runner 或人工补充行情数据。",
             "",
             "## 二、数据源状态",
             "",
@@ -293,7 +296,49 @@ def data_sources(snapshot: dict[str, Any]) -> list[str]:
             sources.add(item["source"])
     if snapshot.get("market_breadth", {}).get("up_count") is not None:
         sources.add("akshare.stock_zh_a_spot_em")
-    return sorted(sources) or ["AkShare 暂不可用，使用 fallback source snapshot"]
+    source_status = snapshot.get("meta", {}).get("source_status") or {}
+    if source_status.get("http_indices"):
+        sources.add("http.eastmoney.push2.latest")
+    if any(str(value).startswith("skipped") or value == "failed" for value in source_status.values()):
+        sources.add("source_status diagnostics")
+    return sorted(sources) or ["AkShare / 东方财富暂不可用，使用 fallback source snapshot"]
+
+
+def build_tags(market: str, snapshot: dict[str, Any]) -> list[str]:
+    meta = snapshot.get("meta") or {}
+    data_quality = str(meta.get("data_quality") or "fallback")
+    tags = ["市场简报", market, "multi-source", data_quality]
+    if data_quality in ("partial", "fallback"):
+        tags.append("待复核")
+    if meta.get("is_historical"):
+        tags.append("历史补生成")
+    return tags
+
+
+def render_quality_notices(snapshot: dict[str, Any], *, include_fallback: bool = True) -> list[str]:
+    meta = snapshot.get("meta") or {}
+    data_quality = meta.get("data_quality")
+    notices: list[str] = []
+
+    if meta.get("is_historical"):
+        notices.extend([
+            "",
+            "> 本简报为历史日期补生成版本，部分盘中热点、新闻和资金流数据可能无法完整回溯。",
+        ])
+
+    if data_quality == "partial":
+        notices.extend([
+            "",
+            "> 本简报为待复核版本。系统已获取部分行情数据，但行业板块、市场宽度或资金流数据暂未接入或暂不可用。",
+        ])
+
+    if data_quality == "fallback" and include_fallback:
+        notices.extend([
+            "",
+            "> 当前真实行情数据源暂不可用，本简报为 fallback 草稿，仅用于记录生成任务和后续人工复核，不构成投资建议。",
+        ])
+
+    return notices
 
 
 def _format_pct(value: Any) -> str:

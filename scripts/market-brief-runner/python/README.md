@@ -1,8 +1,8 @@
 # Python AkShare Market Brief Runner
 
-Phase 2L-D-C adds a first real-data runner for A-share market briefs. Phase 2L-D-D adds fallback brief generation when AkShare or Eastmoney endpoints are unavailable.
+Phase 2L-D-C adds a first real-data runner for A-share market briefs. Phase 2L-D-D adds fallback brief generation when AkShare or Eastmoney endpoints are unavailable. Phase 2L-D-E adds multi-source mode and historical trading-day jobs.
 
-The runner claims queued jobs from the workstation, fetches market data with AkShare, writes a stable `source_snapshot`, generates Markdown, and sends the result back through the existing private API.
+The runner claims queued jobs from the workstation, fetches market data with lightweight HTTP sources and/or AkShare, writes a stable `source_snapshot`, generates Markdown, and sends the result back through the existing private API.
 
 It does not need a Supabase key. It only needs the workstation base URL and runner secret.
 
@@ -30,14 +30,20 @@ WORKSTATION_BASE_URL="https://personal-workstation.vercel.app"
 MARKET_BRIEF_RUNNER_SECRET="your_runner_secret"
 MARKET_BRIEF_MARKET="A股"
 MARKET_BRIEF_RUNNER_NAME="akshare-runner"
-MARKET_BRIEF_DATA_MODE="akshare"
+MARKET_BRIEF_DATA_MODE="multi"
 ```
 
 Defaults:
 
 - `MARKET_BRIEF_MARKET=A股`
 - `MARKET_BRIEF_RUNNER_NAME=akshare-runner`
-- `MARKET_BRIEF_DATA_MODE=akshare`
+- `MARKET_BRIEF_DATA_MODE=multi`
+
+Supported data modes:
+
+- `multi`: try lightweight HTTP index data first, then AkShare, then fallback.
+- `akshare`: use AkShare only.
+- `mock`: return a fallback snapshot for manual review without calling market data sources.
 
 The runner automatically checks the current shell plus `.env.local` / `.env` in:
 
@@ -66,7 +72,7 @@ Flow:
 
 1. `POST /api/market-briefs/skill-jobs/claim`
 2. If no queued job exists, print `No queued market brief generation job found. This usually means the site has no queued job, or MARKET_BRIEF_GENERATOR is not external.` and exit 0.
-3. Fetch A-share market data through AkShare.
+3. Fetch A-share market data with the configured data mode.
 4. Classify `source_snapshot.meta.data_quality` as `real`, `partial`, or `fallback`.
 5. Build Markdown. If all core data sources fail, build a fallback Markdown draft for manual review.
 6. `POST /api/market-briefs/skill-result`
@@ -95,11 +101,31 @@ Unavailable fields are saved as `null` or empty arrays. Module-level failures ar
 
 Data quality rules:
 
-- `real`: at least two core modules have data.
-- `partial`: exactly one core module has data.
+- `real`: at least two core modules have data and at least five target indices are available.
+- `partial`: at least one core module has data, or at least three target indices are available.
 - `fallback`: no core module has data.
 
 Core modules are `indices`, `market_breadth`, and `sectors`.
+
+## Historical Jobs
+
+The website can create jobs for a specified A-share trading day. The server validates that the selected `brief_date` is not in the future and is included in the local A-share trading calendar before creating the job.
+
+The runner always uses `job["brief_date"]` from the claim response. It does not replace the job date with the local current date.
+
+If `job["brief_date"]` is not today in Asia/Shanghai, the runner writes:
+
+```text
+source_snapshot.meta.is_historical = true
+```
+
+Latest-only sources are skipped for historical jobs. For example, the HTTP Eastmoney index snapshot is not used for historical dates and records:
+
+```text
+HTTP index source only supports latest snapshot; skipped for historical brief_date.
+```
+
+If historical data is incomplete, the runner still returns a `partial` or `fallback` Markdown brief with `generation_status=needs_review` for manual review. It must not use latest market snapshots as historical data.
 
 ## Snapshot Shape
 
@@ -108,9 +134,16 @@ Core modules are `indices`, `market_breadth`, and `sectors`.
   "meta": {
     "market": "A股",
     "brief_date": "2026-06-10",
+    "is_historical": false,
     "runner_name": "akshare-runner",
-    "data_mode": "akshare",
+    "data_mode": "multi",
     "generated_at": "...",
+    "source_status": {
+      "http_indices": "success",
+      "akshare_indices": "success",
+      "akshare_breadth": "success",
+      "akshare_sectors": "success"
+    },
     "data_quality": "fallback",
     "is_fallback": true,
     "warnings": []
