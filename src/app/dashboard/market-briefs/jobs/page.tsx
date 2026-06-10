@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, FileText, ListChecks } from "lucide-react";
+import { ArrowLeft, Eye, FileText, ListChecks, RotateCcw, XCircle } from "lucide-react";
+import { cancelMarketBriefGenerationJobAction, requeueMarketBriefGenerationJobAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
@@ -45,6 +46,8 @@ export default async function MarketBriefJobsPage({ searchParams }: { searchPara
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "active" ? <NoticeBanner message="今日同市场已有排队中或运行中的生成任务，已跳转到任务记录。" /> : null}
+        {notice === "cancelled" ? <NoticeBanner message="任务已取消。" /> : null}
+        {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次运行 runner 领取。" /> : null}
 
         <AdminSection title="筛选" description="按任务创建时间倒序展示；可按状态、市场和简报日期过滤。">
           <form className="grid gap-3 md:grid-cols-[180px_180px_180px_auto]">
@@ -132,12 +135,51 @@ function MarketBriefJobRow({ job }: { job: MarketBriefGenerationJobRecord }) {
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-xs text-slate-500">{formatRelative(job.created_at)}</td>
       <td className="whitespace-nowrap px-3 py-4">
-        <Link href={`/dashboard/market-briefs/jobs/${job.id}`} className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
-          <ListChecks size={14} />
-          详情
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/dashboard/market-briefs/jobs/${job.id}`} className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+            <ListChecks size={14} />
+            详情
+          </Link>
+          <MarketBriefJobQuickActions job={job} />
+        </div>
       </td>
     </tr>
+  );
+}
+
+function MarketBriefJobQuickActions({ job }: { job: MarketBriefGenerationJobRecord }) {
+  const returnTo = "/dashboard/market-briefs/jobs";
+
+  if (job.status === "succeeded") {
+    return job.market_briefs ? (
+      <Link href={`/dashboard/market-briefs/${job.market_briefs.id}/preview`} className="inline-flex items-center gap-1.5 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
+        <Eye size={14} />
+        查看简报
+      </Link>
+    ) : null;
+  }
+
+  return (
+    <>
+      {job.status === "queued" || job.status === "running" ? (
+        <form action={cancelMarketBriefGenerationJobAction.bind(null, job.id)}>
+          <input type="hidden" name="return_to" value={returnTo} />
+          <button className="inline-flex items-center gap-1.5 rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 hover:border-rose-300 hover:bg-rose-50">
+            <XCircle size={14} />
+            取消
+          </button>
+        </form>
+      ) : null}
+      {job.status === "running" || job.status === "failed" || job.status === "cancelled" ? (
+        <form action={requeueMarketBriefGenerationJobAction.bind(null, job.id)}>
+          <input type="hidden" name="return_to" value={returnTo} />
+          <button className="inline-flex items-center gap-1.5 rounded-2xl border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 hover:border-blue-300 hover:bg-blue-50">
+            <RotateCcw size={14} />
+            {job.status === "running" ? "重置" : "重新排队"}
+          </button>
+        </form>
+      ) : null}
+    </>
   );
 }
 
