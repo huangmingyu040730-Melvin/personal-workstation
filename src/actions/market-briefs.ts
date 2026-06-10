@@ -249,6 +249,83 @@ export async function generateTodayMarketBriefAction(formData: FormData) {
   redirect(`/dashboard/market-briefs/${result.brief.id}/preview?notice=generated&job=${result.job.id}`);
 }
 
+export async function cancelMarketBriefGenerationJobAction(jobId: string, formData?: FormData) {
+  const { supabase, isAdmin, error } = await getAdminClient();
+  const returnTo = getSafeReturnPath(formData, `/dashboard/market-briefs/jobs/${jobId}`);
+
+  if (!supabase || !isAdmin) {
+    redirect(`${returnTo}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const now = new Date().toISOString();
+  const { data, error: updateError } = await supabase
+    .from("market_brief_generation_jobs")
+    .update({
+      status: "cancelled",
+      completed_at: now,
+      error_message: "Manually cancelled by admin.",
+      updated_at: now
+    })
+    .eq("id", jobId)
+    .in("status", ["queued", "running"])
+    .select("id,brief_date,market,status,market_brief_id")
+    .maybeSingle();
+
+  if (updateError || !data) {
+    redirect(`${returnTo}?error=${encodeFormError(updateError?.message ?? "只能取消排队中或运行中的任务。")}`);
+  }
+
+  await writeActivityLog({
+    action: "market_brief_generation_job.cancel",
+    entityType: "market_brief_generation_job",
+    entityId: data.id,
+    metadata: { brief_date: data.brief_date, market: data.market, status: data.status }
+  });
+
+  revalidateMarketBriefPaths(data.market_brief_id ?? undefined);
+  revalidateMarketBriefJobPaths(data.id);
+  redirect(`${returnTo}?notice=cancelled`);
+}
+
+export async function requeueMarketBriefGenerationJobAction(jobId: string, formData?: FormData) {
+  const { supabase, isAdmin, error } = await getAdminClient();
+  const returnTo = getSafeReturnPath(formData, `/dashboard/market-briefs/jobs/${jobId}`);
+
+  if (!supabase || !isAdmin) {
+    redirect(`${returnTo}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const now = new Date().toISOString();
+  const { data, error: updateError } = await supabase
+    .from("market_brief_generation_jobs")
+    .update({
+      status: "queued",
+      started_at: null,
+      completed_at: null,
+      error_message: null,
+      updated_at: now
+    })
+    .eq("id", jobId)
+    .in("status", ["running", "failed", "cancelled"])
+    .select("id,brief_date,market,status,market_brief_id")
+    .maybeSingle();
+
+  if (updateError || !data) {
+    redirect(`${returnTo}?error=${encodeFormError(updateError?.message ?? "只能将运行中、失败或已取消的任务重新排队。")}`);
+  }
+
+  await writeActivityLog({
+    action: "market_brief_generation_job.requeue",
+    entityType: "market_brief_generation_job",
+    entityId: data.id,
+    metadata: { brief_date: data.brief_date, market: data.market, status: data.status }
+  });
+
+  revalidateMarketBriefPaths(data.market_brief_id ?? undefined);
+  revalidateMarketBriefJobPaths(data.id);
+  redirect(`${returnTo}?notice=requeued`);
+}
+
 function revalidateMarketBriefPaths(id?: string) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/market-briefs");
@@ -280,4 +357,14 @@ function getActionErrorMessage(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+function getSafeReturnPath(formData: FormData | undefined, fallback: string) {
+  const value = formData?.get("return_to");
+
+  if (typeof value !== "string" || !value.startsWith("/dashboard/market-briefs/jobs")) {
+    return fallback;
+  }
+
+  return value;
 }
