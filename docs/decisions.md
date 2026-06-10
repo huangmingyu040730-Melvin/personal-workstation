@@ -1104,3 +1104,31 @@
 - 市场简报仍为后台私密数据，不进入公开页面、viewer、restricted 或 sitemap。
 - 不读取 Documents、Storage、cookie、signed URL、Access Requests、Access Grants；不保存外部 API key，不打印 runner secret 或 Supabase key。
 - 本阶段不做 AI、新闻爬虫、邮件发送、Notion 同步、GitHub Actions、n8n、定时任务、公开市场简报页、股票推荐或投资建议。
+
+## 2026-06-11 - Switch Market Briefs To AI First Generation
+
+类型：decision
+
+决策：
+
+- Phase 2M-A 不新增 migration，继续复用 `market_briefs` 和 `market_brief_generation_jobs`。
+- `MARKET_BRIEF_GENERATOR` 扩展为 `mock | external | ai`，未配置时默认 `ai`；`mock` 仅用于本地占位测试，`external` 保留历史 runner 协议。
+- Market Brief 主生成链路从 AkShare / 东方财富抓取切换为服务端 AI-first：点击“获取今日市场动态”或“生成指定日期市场简报”后，仍先创建 generation job，再调用 OpenAI-compatible AI Provider 生成固定模板 Markdown、structured JSON、`source_snapshot` 和 charts。
+- 继续复用 `src/lib/ai-provider.ts`，支持 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL`，并兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`；AI key 只在服务端读取，不进入客户端、HTML、日志或文档。
+- 新增 `src/lib/market-brief-ai-prompt.ts` 固定中文金融研究员风格 prompt，要求 JSON 输出、不做投资建议、不推荐个股、不能编造精确涨跌幅、无法确认的数据写 null 或需人工复核。
+- AI 输出默认 `generation_status=needs_review`；只有模型明确给出 `ai_verified` 且来源说明足够时才允许标记 `generated`。
+- 图表数据保存在 `source_snapshot.charts`，预览页新增图表区域；bar / pie / line 第一版不新增前端依赖，空数据展示“暂无可靠数据，需人工复核”。
+- Python AkShare / multi-source runner 标记为 deprecated，仅保留为历史诊断和 fallback 实验，不再作为推荐主流程。
+
+原因：
+
+- AkShare / 东方财富网页接口不稳定且覆盖不完整，继续维护多源抓取的性价比低。
+- 市场简报更需要稳定生成、固定结构、来源边界和人工复核，而不是在不稳定免费接口上追求伪完整数据。
+- 使用 AI structured output 可以在不新增表结构的情况下同时保存正文、图表配置、数据可信度和来源说明。
+
+影响：
+
+- 不新增 SQL 或 migration；生产环境只需配置 AI Provider 环境变量。
+- 如果 AI Provider 没有联网搜索或可靠来源，输出必须标记 `data_quality=ai_unverified` 或 `ai_partial`，并保持 `needs_review`。
+- 不做行情接口抓取、新闻爬虫、邮件发送、Notion 同步、定时任务、公开市场简报页、股票推荐或投资建议。
+- 不修改 Resume、Career、Calendar、Documents、Profile、Storage、RLS 或旧 migrations。

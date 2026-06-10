@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getNearestPreviousAShareTradingDay, validateAShareTradingDay } from "@/lib/a-share-trading-calendar";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
-import { externalMarketBriefRunnerName, getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
+import { aiMarketBriefRunnerName, externalMarketBriefRunnerName, getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
 import {
   createQueuedMarketBriefGenerationJob,
   findActiveMarketBriefGenerationJob,
@@ -160,6 +160,10 @@ export async function generateMarketBriefForDateAction(formData: FormData) {
   return generateMarketBriefAction(formData, { mode: "selected-date" });
 }
 
+export async function generateMarketBriefWithAiAction(formData: FormData) {
+  return generateMarketBriefAction(formData, { mode: "selected-date" });
+}
+
 async function generateMarketBriefAction(formData: FormData, options: { mode: "today" | "selected-date" }) {
   const market = getString(formData, "market") || "A股";
   const today = getTodayDateInShanghai();
@@ -217,7 +221,7 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
       ownerId: actorId,
       briefDate,
       market,
-      runnerName: generatorMode === "external" ? externalMarketBriefRunnerName : undefined,
+      runnerName: generatorMode === "external" ? externalMarketBriefRunnerName : generatorMode === "ai" ? aiMarketBriefRunnerName : undefined,
       requestPayload: {
         triggered_by: "dashboard",
         generator_mode: generatorMode,
