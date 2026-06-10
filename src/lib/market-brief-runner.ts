@@ -25,6 +25,11 @@ export type SkillResultPayload = {
   data_sources?: string[];
 };
 
+export type ClaimMarketBriefJobInput = {
+  market?: string;
+  runnerName?: string;
+};
+
 export async function findExistingMarketBrief(
   supabase: RunnerSupabaseClient,
   { ownerId, briefDate, market }: { ownerId: string; briefDate: string; market: string }
@@ -92,6 +97,49 @@ export async function createQueuedMarketBriefGenerationJob(supabase: RunnerSupab
   }
 
   return data as MarketBriefGenerationJobRecord;
+}
+
+export async function claimQueuedMarketBriefGenerationJob(supabase: RunnerSupabaseClient, input: ClaimMarketBriefJobInput = {}) {
+  let query = supabase
+    .from("market_brief_generation_jobs")
+    .select("*")
+    .eq("status", "queued")
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (input.market) {
+    query = query.eq("market", input.market);
+  }
+
+  const { data: queuedJob, error: queuedError } = await query.maybeSingle();
+
+  if (queuedError) {
+    throw new Error("读取待领取任务失败。");
+  }
+
+  if (!queuedJob) {
+    return null;
+  }
+
+  const startedAt = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("market_brief_generation_jobs")
+    .update({
+      status: "running",
+      runner_name: input.runnerName ?? queuedJob.runner_name,
+      started_at: startedAt,
+      error_message: null
+    })
+    .eq("id", queuedJob.id)
+    .eq("status", "queued")
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("领取市场简报生成任务失败。");
+  }
+
+  return data as MarketBriefGenerationJobRecord | null;
 }
 
 export async function runMockMarketBriefGenerationJob(supabase: RunnerSupabaseClient, job: MarketBriefGenerationJobRecord) {
@@ -208,14 +256,22 @@ export async function applySkillResultToMarketBriefJob(supabase: RunnerSupabaseC
 }
 
 export async function markMarketBriefGenerationJobFailed(supabase: RunnerSupabaseClient, jobId: string, errorMessage: string) {
-  await supabase
+  const { data, error } = await supabase
     .from("market_brief_generation_jobs")
     .update({
       status: "failed",
-      error_message: errorMessage,
+      error_message: errorMessage.slice(0, 500),
       completed_at: new Date().toISOString()
     })
-    .eq("id", jobId);
+    .eq("id", jobId)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("标记生成任务失败。");
+  }
+
+  return data as MarketBriefGenerationJobRecord | null;
 }
 
 export function getTodayDateInShanghai() {

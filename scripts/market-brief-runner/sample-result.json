@@ -1,0 +1,35 @@
+{
+  "job_id": "00000000-0000-0000-0000-000000000000",
+  "brief_date": "2026-06-10",
+  "market": "A股",
+  "title": "A股市场收评简报｜2026-06-10",
+  "summary": "本简报由外部 runner 骨架生成，当前仍使用 mock 数据。",
+  "markdown_content": "# A股市场收评简报｜2026-06-10\n\n本内容为 external runner mock fixture。",
+  "source_snapshot": {
+    "meta": {
+      "market": "A股",
+      "brief_date": "2026-06-10",
+      "runner_name": "external-skill-runner",
+      "generated_at": "2026-06-10T00:00:00.000Z",
+      "mode": "external_mock",
+      "data_quality": "mock_only"
+    },
+    "indices": [
+      {
+        "name": "上证指数",
+        "code": "000001.SH",
+        "close": null,
+        "change_pct": null,
+        "turnover": null
+      }
+    ],
+    "styles": [],
+    "sectors": [],
+    "hot_topics": [],
+    "capital_flows": [],
+    "policy_news": [],
+    "risk_signals": []
+  },
+  "tags": ["市场简报", "A股", "external-runner", "mock", "待复核"],
+  "data_sources": ["External runner mock fixture", "未接入真实行情数据"]
+}

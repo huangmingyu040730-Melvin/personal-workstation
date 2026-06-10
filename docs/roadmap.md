@@ -181,11 +181,12 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 - Phase 2L-B：Market Brief artifact / 文件化与站内预览，新增 Markdown 主内容、生成状态和 artifact 元数据字段，支持 `/dashboard/market-briefs/[id]/preview`、Markdown / HTML / JSON / Word 即时下载和浏览器打印 / 保存 PDF。
 - Phase 2L-C：新增“获取今日市场动态”按钮，当前使用 `manual-skill-mock` 生成器创建今日 A 股 Markdown 草稿并保存到 `market_briefs`；若今日同市场简报已存在则跳转已有预览页，不重复创建。
 - Phase 2L-D-A：新增 `market_brief_generation_jobs`、`/dashboard/market-briefs/jobs` 和私有 `/api/market-briefs/skill-result`，把“获取今日市场动态”改成先创建任务、记录 request/source/result payload，再同步运行 mock runner 并写入简报。
-- Phase 2L-D 后续可继续接入 AkShare / Tushare / 新闻源 / Skill，把 mock 生成替换为可审核的真实数据生成流程。
+- Phase 2L-D-B：新增 `MARKET_BRIEF_GENERATOR=external`、claim/fail 私有 API 和 `scripts/market-brief-runner/` 外部 runner 骨架；external 模式下站内按钮只创建 queued job，外部 runner 通过 API 领取并回写 mock 结果。
+- Phase 2L-D-C 后续可继续接入 AkShare / Tushare / 新闻源 / Skill，把 mock 生成替换为可审核的真实数据生成流程。
 - 后续：每日 A 股市场收评自动生成。
 - 后续：AkShare / Tushare / Wind 等数据源接入。
 - 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。
-- 当前 2L-D-A 不做真实抓取、AI、邮件、Notion、公开市场简报页、图表、股票推荐或投资建议；外部 Skill Runner 回写接口必须使用 `MARKET_BRIEF_RUNNER_SECRET`，并保持 server-only 写入边界。
+- 当前 2L-D-B 不做真实抓取、AI、邮件、Notion、公开市场简报页、图表、股票推荐或投资建议；外部 Skill Runner 的 claim/fail/result 接口必须使用 `MARKET_BRIEF_RUNNER_SECRET`，并保持 server-only 写入边界。
 
 ### Phase 2L - Notion / Google Calendar / AI 辅助研究
 

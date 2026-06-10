@@ -30,7 +30,7 @@
 - Resume Word `.docx` 即时导出
 - Resume Preview 与 Word 导出共用 20260523 风格模板
 - Supabase Storage 私密文件上传与下载
-- Market Briefs 市场简报后台手工 CRUD、Markdown 主内容、站内预览、多格式下载、mock 生成按钮与生成任务记录
+- Market Briefs 市场简报后台手工 CRUD、Markdown 主内容、站内预览、多格式下载、mock / external runner 生成模式与生成任务记录
 
 ## 本地启动
 
@@ -79,11 +79,12 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 如需启用市场简报外部 Skill Runner 回写接口，只在服务端环境配置：
 
 ```text
+MARKET_BRIEF_GENERATOR=mock
 MARKET_BRIEF_RUNNER_SECRET=your_runner_secret
 SUPABASE_SERVICE_ROLE_KEY=server_only_service_role_key
 ```
 
-`MARKET_BRIEF_RUNNER_SECRET` 用于 `/api/market-briefs/skill-result` 私有接口鉴权；`SUPABASE_SERVICE_ROLE_KEY` 仅用于该无用户会话的服务端回调写入，不得暴露到客户端、日志或仓库。普通后台页面和“获取今日市场动态”按钮仍使用登录管理员身份与 RLS。
+`MARKET_BRIEF_GENERATOR` 未配置时默认 `mock`；设置为 `external` 后，“获取今日市场动态”只创建 queued job 并跳转任务详情，等待外部 runner 通过 `/api/market-briefs/skill-jobs/claim` 领取，再通过 `/api/market-briefs/skill-result` 或 `/api/market-briefs/skill-jobs/fail` 回写。`MARKET_BRIEF_RUNNER_SECRET` 用于这些私有 runner API 鉴权；`SUPABASE_SERVICE_ROLE_KEY` 仅用于无用户会话的服务端回调写入，不得暴露到客户端、日志或仓库。普通后台页面仍使用登录管理员身份与 RLS。
 
 如需使用 AI JD 简历优化助手，推荐只在服务端环境配置通用 AI Provider：
 
@@ -203,7 +204,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
 - Calendar 已接入站内 `calendar_events` CRUD；管理员可在 `/dashboard/calendar` 新建、编辑、删除日程，Dashboard 会展示近期日程。
-- Market Briefs 已接入后台私密 `market_briefs` CRUD；管理员可在 `/dashboard/market-briefs` 手工维护每日市场收评，字段包括日期、标题、市场、状态、标签、数据来源和摘要 / 市场概览 / 指数表现 / 风格表现 / 行业板块 / 热点 / 资金流向 / 政策新闻 / 风险提示 / 明日关注等模块。Phase 2L-B 进一步增加 Markdown 主内容源、`/dashboard/market-briefs/[id]/preview` 站内预览、Markdown / HTML / JSON / Word 即时下载，以及浏览器打印 / 保存 PDF；如果 `markdown_content` 为空，预览和下载会从结构化字段实时合成 Markdown。Phase 2L-C 在列表页新增“获取今日市场动态”按钮，当前使用 `manual-skill-mock` 生成器生成今日 A 股 Markdown 草稿并写入 `market_briefs`，如果今日同市场简报已存在则跳转已有预览页，不重复创建。Phase 2L-D-A 新增 `market_brief_generation_jobs` 和 `/dashboard/market-briefs/jobs`，按钮会先创建生成任务，再由 mock runner 同步写入简报；私有 API `/api/market-briefs/skill-result` 可接收外部 Skill Runner 的 secret-authenticated 结果回写。本阶段不做真实行情抓取、AI 生成、邮件发送、Notion 同步、定时任务、公开页面、股票推荐或投资建议。
+- Market Briefs 已接入后台私密 `market_briefs` CRUD；管理员可在 `/dashboard/market-briefs` 手工维护每日市场收评，字段包括日期、标题、市场、状态、标签、数据来源和摘要 / 市场概览 / 指数表现 / 风格表现 / 行业板块 / 热点 / 资金流向 / 政策新闻 / 风险提示 / 明日关注等模块。Phase 2L-B 进一步增加 Markdown 主内容源、`/dashboard/market-briefs/[id]/preview` 站内预览、Markdown / HTML / JSON / Word 即时下载，以及浏览器打印 / 保存 PDF；如果 `markdown_content` 为空，预览和下载会从结构化字段实时合成 Markdown。Phase 2L-C 在列表页新增“获取今日市场动态”按钮，当前使用 `manual-skill-mock` 生成器生成今日 A 股 Markdown 草稿并写入 `market_briefs`，如果今日同市场简报已存在则跳转已有预览页，不重复创建。Phase 2L-D-A 新增 `market_brief_generation_jobs` 和 `/dashboard/market-briefs/jobs`，按钮会先创建生成任务，再由 mock runner 同步写入简报；私有 API `/api/market-briefs/skill-result` 可接收外部 Skill Runner 的 secret-authenticated 结果回写。Phase 2L-D-B 新增 `MARKET_BRIEF_GENERATOR=external` 模式、claim/fail 私有 API 和 `scripts/market-brief-runner/` 外部 runner 骨架，支持“站内创建 queued job -> 外部 runner 领取 -> mock 生成 -> result 回写”的闭环。本阶段不做真实行情抓取、AI 生成、邮件发送、Notion 同步、定时任务、公开页面、股票推荐或投资建议。
 - Resume 已接入履历素材库与版本组合；管理员可在 `/dashboard/career` 进入求职中心，并继续通过 `/dashboard/resume`、`/dashboard/resume/versions`、`/dashboard/resume/applications` 和 `/dashboard/resume/jd-reviews` 使用原有子模块路径。管理员可在 `/dashboard/resume` 按个人信息、教育、实习、在校、项目、研究、技能、证书和奖项等区块维护结构化素材，并在 `/dashboard/resume/versions` 组合不同简历版本。版本编辑页可选择进入简历顶部的个人字段，并为每条素材控制日期、机构、角色、摘要、bullets、技能和核心课程等字段是否展示。版本详情、列表和预览页提供规则化简历质量检查、完整度评分、缺失项和投递方向提示。Phase 2K-E 新增 AI JD 简历优化助手，可基于当前版本已选素材和管理员粘贴的 JD 生成关键词差距、经历强化和 bullet 改写建议；该能力支持 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 通用配置，可接入 DeepSeek 等 OpenAI-compatible Provider，并继续兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`。Hotfix 进一步将 AI JD 输入与页面“版本内容概览”统一到 `resume-template-model` 派生的 `resume-ai-input`，确保教育、实习、项目、研究和技能等可见字段与预览 / Word 导出的核心内容一致。AI JD 优化只生成建议，不自动写回 Resume Items 或 Resume Versions。Phase 2K-H 新增 JD 分析历史与投递记录，管理员可保存单次 AI JD 分析、公司/岗位信息、缺失关键词、风险、下一步行动和投递状态；该记录仍为后台私密数据，不公开展示。Phase 2K-I 新增 `/dashboard/resume/applications` 投递看板，基于 `resume_jd_reviews.application_status` 按草稿、已分析、准备投递、已投递、面试中、被拒、Offer 和已归档管理求职 pipeline，并支持列表筛选和快速改状态；本阶段不自动投递、不发送邮件、不公开记录，也不新增 migration。Phase 2K-J 新增 `/dashboard/career` 求职中心首页，将简历素材、简历版本、投递看板和 JD 分析记录收拢到一个侧边栏入口，并在子页面顶部提供统一 Career tabs；原有子模块路径保持不变。版本预览页提供贴近中文金融简历 PDF 的 A4 样式和浏览器打印 / 另存为 PDF 能力；Phase 2K-F 新增 Word `.docx` 即时导出，导出只读取当前版本已选素材、Profile/basic 信息和字段可见性设置，不写入 Storage，不创建公开简历页面或分享链接。Phase 2K-G 将 Preview 与 Word 导出统一到 20260523 风格模板模型，补充照片位置、模块标题视觉符号和左时间 / 右内容的正式简历布局。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化；管理后台 UI 已完成工作台式视觉优化。
 - Dashboard 已读取真实项目、笔记、Skill、Publications、Calendar 与 Activity Logs。

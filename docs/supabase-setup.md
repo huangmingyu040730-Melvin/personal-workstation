@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Phase 2L-B 新增 Market Brief artifact / Markdown 主内容、站内预览和多格式下载。Phase 2L-D-A 新增 Market Brief generation jobs / Skill Runner 任务记录。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、市场数据源和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Phase 2L-B 新增 Market Brief artifact / Markdown 主内容、站内预览和多格式下载。Phase 2L-D-A 新增 Market Brief generation jobs / Skill Runner 任务记录。Phase 2L-D-B 新增 external runner 模式和任务领取 / 失败回写接口。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、市场数据源和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -28,11 +28,12 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 市场简报外部 Skill Runner 回写接口需要额外的服务端环境变量：
 
 ```text
+MARKET_BRIEF_GENERATOR=mock
 MARKET_BRIEF_RUNNER_SECRET=your_runner_secret
 SUPABASE_SERVICE_ROLE_KEY=server_only_service_role_key
 ```
 
-`MARKET_BRIEF_RUNNER_SECRET` 用于 `/api/market-briefs/skill-result` 的 header 鉴权。`SUPABASE_SERVICE_ROLE_KEY` 仅供该无用户会话的私有 API 在服务端写入任务结果，不得进入浏览器、日志、`.env.example` 或仓库；普通后台页面继续使用登录管理员身份和 RLS。
+`MARKET_BRIEF_GENERATOR` 未配置时默认 `mock`。设置为 `external` 后，站内按钮只创建 queued job，不立即生成市场简报，等待外部 runner 通过 `/api/market-briefs/skill-jobs/claim` 领取并回写。`MARKET_BRIEF_RUNNER_SECRET` 用于 `/api/market-briefs/skill-jobs/claim`、`/api/market-briefs/skill-jobs/fail` 和 `/api/market-briefs/skill-result` 的 header 鉴权。`SUPABASE_SERVICE_ROLE_KEY` 仅供这些无用户会话的私有 API 在服务端写入任务结果，不得进入浏览器、日志、`.env.example` 或仓库；普通后台页面继续使用登录管理员身份和 RLS。
 
 ## Auth 设置
 
@@ -413,6 +414,20 @@ Phase 2L-D-A 权限边界：
 - 普通后台按钮仍通过管理员登录身份和 RLS 创建任务；外部 runner 回调因无用户会话，仅在服务端使用必要写入凭据，不暴露到客户端。
 - 不读取 Documents、Storage、signed URL、Access Requests、Access Grants、viewer/restricted 数据，不提交 API key、Supabase key、Auth UUID 或 `.env.local`。
 - 当前仍不自动抓取行情、不调用 AI、不发送邮件、不同步 Notion、不做股票推荐或投资建议。
+
+Phase 2L-D-B 新增 external runner 模式，不新增 migration，继续依赖 `0015_market_brief_generation_jobs.sql`。核心流程：
+
+1. `MARKET_BRIEF_GENERATOR=external` 时，管理员点击“获取今日市场动态”只创建 queued job 并跳转任务详情。
+2. 外部 runner 调用 `POST /api/market-briefs/skill-jobs/claim`，用 `x-market-brief-runner-secret` 领取最早 queued job，并将状态改为 running。
+3. 成功时外部 runner 调用 `POST /api/market-briefs/skill-result` 回写 Markdown、source snapshot、标签和数据来源。
+4. 失败时外部 runner 调用 `POST /api/market-briefs/skill-jobs/fail`，写入失败原因并标记 failed。
+
+Phase 2L-D-B 权限边界：
+
+- claim / fail / result API 都要求 `MARKET_BRIEF_RUNNER_SECRET`；未配置 secret 返回 503，wrong secret 返回 401。
+- 外部 runner 脚本只需要 `WORKSTATION_BASE_URL` 和 `MARKET_BRIEF_RUNNER_SECRET`，不需要 Supabase key。
+- `SUPABASE_SERVICE_ROLE_KEY` 只用于网站服务端 API route，不暴露给外部 runner、客户端、日志或仓库。
+- 任务领取和回写不提供 GET 公共读取，不进入 sitemap，不创建 public URL，不读取 Documents 或 Storage，不调用 AI。
 
 ## 创建管理员
 
