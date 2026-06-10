@@ -1,0 +1,142 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, Edit, Tag } from "lucide-react";
+import { deleteMarketBriefAction } from "@/actions/market-briefs";
+import { AppShell } from "@/components/app-shell";
+import { AdminDangerZone, AdminPageSurface } from "@/components/admin-ui";
+import { Badge } from "@/components/badge";
+import { Card, CardHeader } from "@/components/card";
+import { DeleteButton } from "@/components/forms/submit-button";
+import { PageHeader } from "@/components/page-header";
+import { getMarketBriefStatusLabel } from "@/lib/content-options";
+import { formatDate, formatDateTime } from "@/lib/format";
+import { getFormError } from "@/lib/forms";
+import { getMarketBriefStatusTone, marketBriefContentFields } from "@/lib/market-briefs";
+import { MarkdownPreview } from "@/lib/markdown";
+import { getMarketBriefById } from "@/lib/queries/market-briefs";
+
+export default async function MarketBriefDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const brief = await getMarketBriefById(id);
+
+  if (!brief) {
+    notFound();
+  }
+
+  const deleteAction = deleteMarketBriefAction.bind(null, brief.id);
+  const error = getFormError(query);
+  const visibleContentFields = marketBriefContentFields.filter((field) => {
+    const value = brief[field.key];
+    return typeof value === "string" && value.trim().length > 0;
+  });
+
+  return (
+    <AppShell>
+      <AdminPageSurface>
+        <PageHeader
+          eyebrow="Market Brief Detail"
+          title={brief.title}
+          description="市场简报详情。当前为私密后台数据，不进入公开站点。"
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/dashboard/market-briefs/${brief.id}/edit`} className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">
+                <Edit size={16} />
+                编辑
+              </Link>
+              <Link href="/dashboard/market-briefs" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+                <ArrowLeft size={16} />
+                返回列表
+              </Link>
+            </div>
+          }
+        />
+
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+
+        <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
+          <div className="space-y-5">
+            {visibleContentFields.length > 0 ? (
+              visibleContentFields.map((field) => {
+                const value = brief[field.key];
+
+                return (
+                  <Card key={field.key}>
+                    <CardHeader title={field.label} description={field.description} />
+                    <MarkdownPreview content={typeof value === "string" ? value : null} emptyText="暂无内容。" />
+                  </Card>
+                );
+              })
+            ) : (
+              <Card>
+                <CardHeader title="正文模块" />
+                <p className="text-sm leading-6 text-slate-500">尚未填写正文模块。</p>
+              </Card>
+            )}
+            <AdminDangerZone description="删除市场简报会移除这条后台记录，不会影响项目、知识库、文件中心或任何外部系统。">
+              <form action={deleteAction}>
+                <DeleteButton label="删除市场简报" />
+              </form>
+            </AdminDangerZone>
+          </div>
+
+          <div className="space-y-5">
+            <Card>
+              <CardHeader title="基础信息" />
+              <div className="mb-4 flex flex-wrap gap-2">
+                <Badge className={getMarketBriefStatusTone(brief.status)}>{getMarketBriefStatusLabel(brief.status)}</Badge>
+                <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{brief.market}</Badge>
+                {brief.is_featured ? <Badge className="bg-amber-50 text-amber-700 ring-amber-100">精选</Badge> : null}
+              </div>
+              <dl className="space-y-3 text-sm">
+                <InfoRow label="日期" value={formatDate(brief.brief_date)} />
+                <InfoRow label="市场" value={brief.market} />
+                <InfoRow label="状态" value={getMarketBriefStatusLabel(brief.status)} />
+                <InfoRow label="创建时间" value={formatDateTime(brief.created_at)} />
+                <InfoRow label="更新时间" value={formatDateTime(brief.updated_at)} />
+              </dl>
+            </Card>
+
+            <Card>
+              <CardHeader title="标签" action={<Tag size={18} className="text-blue-700" />} />
+              <BadgeList values={brief.tags} emptyText="暂无标签。" />
+            </Card>
+
+            <Card>
+              <CardHeader title="数据来源" />
+              <BadgeList values={brief.data_sources} emptyText="暂无数据来源。" />
+            </Card>
+          </div>
+        </div>
+      </AdminPageSurface>
+    </AppShell>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4 rounded-2xl bg-slate-50 p-3">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="text-right font-medium text-slate-800">{value}</dd>
+    </div>
+  );
+}
+
+function BadgeList({ values, emptyText }: { values: string[]; emptyText: string }) {
+  if (values.length === 0) {
+    return <p className="text-sm text-slate-500">{emptyText}</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {values.map((value) => (
+        <Badge key={value} className="bg-slate-50 text-slate-600 ring-slate-200">{value}</Badge>
+      ))}
+    </div>
+  );
+}

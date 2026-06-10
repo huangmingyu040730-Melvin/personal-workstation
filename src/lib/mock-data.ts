@@ -11,6 +11,7 @@ import {
   Home,
   KeyRound,
   Library,
+  Newspaper,
   Settings,
   UserRound,
   WandSparkles
@@ -42,6 +43,7 @@ export const sidebarGroups = [
     label: "研究中心",
     items: [
       { label: "日历", href: "/dashboard/calendar", icon: CalendarDays },
+      { label: "市场简报", href: "/dashboard/market-briefs", icon: Newspaper },
       { label: "研究项目", href: "/dashboard/projects", icon: FolderOpen },
       { label: "学术成果", href: "/dashboard/publications", icon: BarChart3 },
       { label: "知识库", href: "/dashboard/knowledge", icon: BookOpen }

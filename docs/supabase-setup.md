@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar 和外部 API 尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、市场数据源和外部 API 尚未实现。
 
 ## 环境变量
 
@@ -47,7 +47,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。已执行过的 migration 不应修改或重跑。执行 0012 后，后续数据库变更应新增 `0013_*`，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。Phase 2L-A 合并后还需要执行 `0013_market_briefs.sql`。已执行过的 migration 不应修改或重跑。执行 0013 后，后续数据库变更应新增 `0014_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -342,6 +342,27 @@ JD Review 权限边界：
 - 不读取 Documents、Storage、signed URL、Access Requests、Access Grants、viewer/restricted 数据或未选择的 Resume Items。
 - 保存记录不会自动写回 Resume Items 或 Resume Versions。
 
+Phase 2L-A 新增 Market Briefs 市场简报后台。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0013_market_briefs.sql
+```
+
+`0013` 会：
+
+- 新建 `public.market_briefs`，保存日期、标题、状态、市场、摘要、市场概览、指数表现、风格表现、行业板块、市场热点、资金流向、政策新闻、风险提示、明日关注、数据来源、标签和精选标记。
+- 增加 `owner_id + brief_date + market` 唯一约束，避免同一管理员同一市场同一日期重复录入。
+- 为 `owner_id`、`brief_date desc`、`status` 和 `tags` GIN 建立索引。
+- 启用 RLS，并允许 `public.is_admin()` 或记录 owner 管理。
+- 不向 `anon` 授予权限，只给 `authenticated` 授予表级 `select, insert, update, delete`，最终行级权限仍由 RLS 管理。
+
+Market Briefs 权限边界：
+
+- 市场简报当前是后台私密数据，不进入公开页面、sitemap、viewer 或 restricted 内容页。
+- 不读取 Documents、Storage、signed URL、Access Requests、Access Grants、viewer/restricted 数据。
+- 不保存外部 API key，不调用 AI，不自动抓取行情，不发送邮件，不同步 Notion。
+- 不提供公开市场简报页，不做 PDF / Word 导出、图表、股票推荐或投资建议。
+
 ## 创建管理员
 
 在 Supabase SQL Editor 中插入管理员 UUID：
@@ -430,6 +451,7 @@ Phase 2C 使用：
 - Resume Versions 后台由 `/dashboard/resume/versions` 接入真实 `resume_versions` 与 `resume_version_items`；未执行 0010 时，简历版本列表、版本表单、详情与预览无法完成真实读写。
 - Resume Template 字段依赖 0011 migration；未执行 0011 时，简历素材详情字段、版本顶部个人字段开关、逐条素材可见字段控制和贴近 PDF 的打印预览会因为缺少列而无法稳定保存或读取。
 - Resume JD 分析历史依赖 0012 migration；未执行 0012 时，AI JD 分析仍可生成当前页建议，但无法保存为历史记录或投递状态。
+- Market Briefs 依赖 0013 migration；未执行 0013 时，`/dashboard/market-briefs` 无法完成真实读写，Dashboard 最近市场简报会降级为空。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。

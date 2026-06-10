@@ -177,10 +177,11 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 
 目标：
 
-- 每日 A 股市场收评。
-- 邮件发送。
-- 网站 / Knowledge / Publications 归档。
-- 未来接入 Notion。
+- Phase 2L-A：Market Briefs / 市场简报后台管理，新增 `market_briefs` 表和 `/dashboard/market-briefs` 手工 CRUD，支持日期、市场、状态、标签、数据来源、摘要和模块化正文，并在 Dashboard 展示最近 3 条。
+- 后续：每日 A 股市场收评自动生成。
+- 后续：AkShare / Tushare / Wind 等数据源接入。
+- 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。
+- 当前 2L-A 不做自动抓取、AI、邮件、Notion、公开市场简报页、图表、股票推荐或投资建议。
 
 ### Phase 2L - Notion / Google Calendar / AI 辅助研究
 
