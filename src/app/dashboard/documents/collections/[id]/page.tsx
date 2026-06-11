@@ -133,16 +133,25 @@ export default async function DocumentCollectionDetailPage({
               </Card>
             ) : null}
 
-            <AdminDangerZone description="删除空文档包只会清理文档包记录，不删除任何文件或 Storage 对象；如果文档包仍包含文件，系统会阻止删除。">
-              <div className="space-y-4">
-                <p className="text-sm leading-6 text-rose-700">
+            {documents.length === 0 ? (
+              <AdminDangerZone description="删除空文档包只会清理文档包记录，不删除任何文件或 Storage 对象。">
+                <div className="space-y-4">
+                  <p className="text-sm leading-6 text-rose-700">
+                    该文档包当前不包含文件，可以删除空文档包记录。
+                  </p>
+                  <form action={deleteAction}>
+                    <DeleteButton label="删除空文档包" />
+                  </form>
+                </div>
+              </AdminDangerZone>
+            ) : (
+              <Card className="overflow-hidden border-amber-100 bg-amber-50">
+                <CardHeader title="文档包删除" />
+                <p className="text-sm leading-6 text-amber-800">
                   当前文档包包含 {documents.length} 个文件。需要先删除文件后，才能删除文档包记录。
                 </p>
-                <form action={deleteAction}>
-                  <DeleteButton label="删除空文档包" />
-                </form>
-              </div>
-            </AdminDangerZone>
+              </Card>
+            )}
           </aside>
         </div>
       </AdminPageSurface>
