@@ -181,6 +181,7 @@ export async function runMockMarketBriefGenerationJob(
       isHistorical: runningJob.request_payload?.is_historical === true,
       onProgress: updateProgress
     });
+    await assertMarketBriefJobStillRunning(supabase, runningJob.id);
     await updateProgress("saving", "正在保存简报...");
     const brief = await createOrUpdateMarketBriefFromGenerated(supabase, runningJob, generated);
     const completedAt = new Date().toISOString();
@@ -198,7 +199,7 @@ export async function runMockMarketBriefGenerationJob(
         error_message: null
       })
       .eq("id", runningJob.id)
-      .neq("status", "cancelled")
+      .eq("status", "running")
       .select("*")
       .maybeSingle();
 
@@ -287,8 +288,13 @@ export async function applySkillResultToMarketBriefJob(supabase: RunnerSupabaseC
   }
 }
 
-export async function markMarketBriefGenerationJobFailed(supabase: RunnerSupabaseClient, jobId: string, errorMessage: string) {
-  const requestPayload = await mergeJobPayloadWithProgress(supabase, jobId, "failed", "AI 生成失败");
+export async function markMarketBriefGenerationJobFailed(
+  supabase: RunnerSupabaseClient,
+  jobId: string,
+  errorMessage: string,
+  progressMessage = "AI 生成失败"
+) {
+  const requestPayload = await mergeJobPayloadWithProgress(supabase, jobId, "failed", progressMessage);
   const { data, error } = await supabase
     .from("market_brief_generation_jobs")
     .update({
@@ -298,7 +304,7 @@ export async function markMarketBriefGenerationJobFailed(supabase: RunnerSupabas
       request_payload: requestPayload
     })
     .eq("id", jobId)
-    .neq("status", "cancelled")
+    .in("status", ["queued", "running"])
     .select("*")
     .maybeSingle();
 
@@ -320,7 +326,7 @@ export async function updateMarketBriefGenerationJobProgress(
     .from("market_brief_generation_jobs")
     .update({ request_payload: requestPayload })
     .eq("id", jobId)
-    .neq("status", "cancelled")
+    .in("status", ["queued", "running"])
     .select("*")
     .maybeSingle();
 
@@ -420,6 +426,22 @@ async function updateMarketBriefGenerationJobStatus(
   }
 
   return data as MarketBriefGenerationJobRecord;
+}
+
+async function assertMarketBriefJobStillRunning(supabase: RunnerSupabaseClient, jobId: string) {
+  const { data, error } = await supabase
+    .from("market_brief_generation_jobs")
+    .select("status")
+    .eq("id", jobId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || "检查市场简报生成任务状态失败。");
+  }
+
+  if (!data || data.status !== "running") {
+    throw new Error("市场简报生成任务已停止，迟到的 AI 结果不会保存。");
+  }
 }
 
 async function mergeJobPayloadWithProgress(

@@ -197,7 +197,7 @@ export function buildMarketBriefAiPrompt(input: {
             warnings: [],
             source_notes: []
           },
-          sources: input.grounding.sources,
+          sources: [{ id: "S1", title: "按 Grounding sources 中的来源复制", url: "https://example.com", publisher: "source", published_at: null, snippet: "摘要", query: "query", relevance: "high" }],
           extracted_facts: {
             indices: [],
             sectors: [],

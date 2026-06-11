@@ -1210,3 +1210,27 @@
 - `failed` / `cancelled` 任务不会继续轮询；`succeeded` 任务展示预览跳转。
 - 本阶段不改变 `market_briefs` 或 `market_brief_generation_jobs` 表结构，不改 RLS，不恢复 external / Python runner 主流程。
 - 不影响 Resume、Career、Calendar、Documents、Profile 或公开页面。
+
+## 2026-06-11 - Prevent AI Market Brief Generation From Stalling
+
+类型：decision
+
+决策：
+
+- 不新增 migration，继续复用 `market_brief_generation_jobs.status`、`error_message` 和 `request_payload.progress`。
+- `POST /api/market-briefs/jobs/[id]/generate-ai` 对完整 AI 生成流程增加 45 秒主动超时；超时或异常会尝试把 job 标记为 failed，并把 progress 更新为 failed / 100%。
+- 成功写回 job 只允许覆盖仍处于 running 的任务，避免超时后迟到的生成流程把 failed 又改成 succeeded。
+- `GET /api/market-briefs/jobs/[id]/status` 对 running 且 progress 超过 2 分钟未更新的任务返回 `stale=true` 和管理员提示；前端显示 stale 提示，不自动重复触发生成，避免重复扣费。
+- 搜索 query 最多 4 条，每条 top 3；去重 sources 最多 8 个，snippet 最多 500 字符；prompt 示例不再重复嵌入完整 sources。
+- AI JSON 解析支持去掉 markdown code fence，并从第一个 `{` 到最后一个 `}` 提取 JSON 后再解析。
+
+原因：
+
+- Vercel 函数可能在 Tavily + DeepSeek + JSON parse + Supabase 保存过程中被 maxDuration 杀掉，导致任务停留在 running / writing 且没有机会落库为 failed。
+- 刷新页面后旧逻辑对 running 任务只返回 already_running，用户看不到超时边界，也不能判断是否需要重置。
+
+影响：
+
+- 搜索、AI、解析、保存或未知错误都会尽力落库为 failed；错误信息只保存 safe summary。
+- 日志只允许记录 job_id、stage、source_count、prompt_length_estimate、provider 和安全错误摘要；不记录 key、cookies、Authorization、完整 prompt 或完整 AI 原始输出。
+- 不改 RLS、Storage、Documents、Resume、Career、Calendar、Profile 或公开页面。

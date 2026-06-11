@@ -13,6 +13,8 @@ type MarketBriefJobProgressStatus = {
   error_message: string | null;
   market_brief_id: string | null;
   preview_url: string | null;
+  stale?: boolean;
+  stale_message?: string | null;
 };
 
 export function MarketBriefJobProgressPanel({
@@ -39,13 +41,15 @@ export function MarketBriefJobProgressPanel({
     progress: initialProgress,
     error_message: initialErrorMessage ?? null,
     market_brief_id: null,
-    preview_url: initialPreviewUrl ?? null
+    preview_url: initialPreviewUrl ?? null,
+    stale: false,
+    stale_message: null
   });
   const [requestState, setRequestState] = useState<"idle" | "starting" | "polling" | "error">("idle");
   const [requestError, setRequestError] = useState<string | null>(null);
 
   const terminalState = jobStatus.status === "succeeded" || jobStatus.status === "failed" || jobStatus.status === "cancelled";
-  const canStart = jobStatus.status === "queued" || jobStatus.status === "running";
+  const canStart = (jobStatus.status === "queued" || jobStatus.status === "running") && !jobStatus.stale;
 
   const refreshStatus = useCallback(async () => {
     const response = await fetch(`/api/market-briefs/jobs/${jobId}/status`, {
@@ -80,7 +84,7 @@ export function MarketBriefJobProgressPanel({
       }
 
       if (!response.ok && response.status !== 202) {
-        throw new Error(getPayloadError(payload) ?? "AI 市场简报生成启动失败。");
+        throw new Error(getPayloadError(payload) ?? (isJobStatusPayload(payload) && payload.stale ? "生成任务长时间未更新，可能已超时。" : "AI 市场简报生成启动失败。"));
       }
 
       setRequestState("polling");
@@ -199,7 +203,14 @@ export function MarketBriefJobProgressPanel({
         </div>
       ) : null}
 
-      {requestError && jobStatus.status !== "failed" ? (
+      {jobStatus.stale ? (
+        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-700">
+          {jobStatus.stale_message ?? "生成任务长时间未更新，可能已超时。为避免重复消耗额度，请先重置为排队后再重新生成。"}
+          <div className="mt-1 font-semibold">为避免重复消耗额度，请先取消任务或重置为排队后再重新生成。</div>
+        </div>
+      ) : null}
+
+      {requestError && jobStatus.status !== "failed" && !jobStatus.stale ? (
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-700">
           {requestError}
         </div>

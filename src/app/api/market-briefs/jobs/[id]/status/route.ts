@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/auth/admin";
 import type { MarketBriefGenerationJobRecord } from "@/lib/content-types";
 import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
-import { getMarketBriefJobProgressFromPayload } from "@/lib/market-brief-job-progress";
+import { getMarketBriefJobProgressFromPayload, isMarketBriefJobProgressStale, marketBriefJobStaleMessage } from "@/lib/market-brief-job-progress";
 
 export const runtime = "nodejs";
 
@@ -42,6 +42,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 function serializeMarketBriefJobStatus(job: MarketBriefGenerationJobRecord) {
   const progress = getMarketBriefJobProgressFromPayload(job.request_payload, getFallbackProgressStage(job.status));
   const marketBriefId = job.market_brief_id ?? job.market_briefs?.id ?? null;
+  const stale = job.status === "running" && isMarketBriefJobProgressStale(progress);
 
   return {
     id: job.id,
@@ -52,6 +53,8 @@ function serializeMarketBriefJobStatus(job: MarketBriefGenerationJobRecord) {
     error_message: job.error_message,
     market_brief_id: marketBriefId,
     preview_url: marketBriefId ? `/dashboard/market-briefs/${marketBriefId}/preview` : null,
+    stale,
+    stale_message: stale ? marketBriefJobStaleMessage : null,
     updated_at: job.updated_at
   };
 }

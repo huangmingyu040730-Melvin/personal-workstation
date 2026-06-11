@@ -28,6 +28,11 @@ type RawSearchResult = {
   score?: number | null;
 };
 
+const MAX_MARKET_BRIEF_SEARCH_QUERIES = 4;
+const MAX_MARKET_BRIEF_SEARCH_RESULTS_PER_QUERY = 3;
+const MAX_MARKET_BRIEF_SEARCH_SOURCES = 8;
+const MAX_MARKET_BRIEF_SOURCE_SNIPPET_LENGTH = 500;
+
 export class MarketBriefSearchNotConfiguredError extends Error {
   constructor() {
     super("未配置市场简报搜索服务，请配置 MARKET_BRIEF_SEARCH_PROVIDER 和 MARKET_BRIEF_SEARCH_API_KEY。");
@@ -80,7 +85,7 @@ export function buildMarketBriefSearchQueries(input: { market: string; briefDate
     `${datePrefix} ${market} 盘后 市场热点 政策 宏观 海外影响`,
     `${datePrefix} 沪深300 中证500 中证1000 科创50 北证50 涨跌幅`,
     `${datePrefix} ${market} 资金流向 涨跌家数 市场情绪`
-  ];
+  ].slice(0, MAX_MARKET_BRIEF_SEARCH_QUERIES);
 }
 
 export async function searchMarketBriefSources(input: { market: string; briefDate: string; isHistorical: boolean }) {
@@ -96,11 +101,16 @@ export async function searchMarketBriefSources(input: { market: string; briefDat
 
   for (const query of queries) {
     try {
-      const results = await searchWithProvider(config, query, 4);
+      const results = await searchWithProvider(config, query, MAX_MARKET_BRIEF_SEARCH_RESULTS_PER_QUERY);
       rawSources.push(...results.map((result) => ({ ...result, query })));
     } catch (error) {
       warnings.push(`搜索失败：${query}；${getSafeSearchErrorMessage(error)}`);
     }
+  }
+
+  const sources = normalizeSearchSources(rawSources, MAX_MARKET_BRIEF_SEARCH_SOURCES);
+  if (rawSources.length > sources.length) {
+    warnings.push("Grounding sources were truncated to fit AI prompt budget.");
   }
 
   return {
@@ -108,7 +118,7 @@ export async function searchMarketBriefSources(input: { market: string; briefDat
     providerLabel: config.providerLabel,
     queries,
     warnings,
-    sources: normalizeSearchSources(rawSources, 20)
+    sources
   };
 }
 
@@ -245,7 +255,7 @@ function normalizeSearchSources(values: Array<RawSearchResult & { query: string 
       url,
       publisher: value.publisher || getPublisherFromUrl(url),
       published_at: value.published_at || null,
-      snippet: snippet.slice(0, 800),
+      snippet: truncateText(snippet, MAX_MARKET_BRIEF_SOURCE_SNIPPET_LENGTH),
       query: value.query,
       relevance: getRelevance(value.score, title, snippet)
     });
@@ -256,6 +266,10 @@ function normalizeSearchSources(values: Array<RawSearchResult & { query: string 
   }
 
   return normalized;
+}
+
+function truncateText(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, maxLength).trim()}...` : value;
 }
 
 function normalizeSearchProvider(value: string | undefined): MarketBriefSearchProvider {
