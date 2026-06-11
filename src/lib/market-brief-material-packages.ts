@@ -55,8 +55,8 @@ export async function createOrUpdateMarketBriefMaterialPackage(
   });
   const sources = [...officialCollection.sources, ...searchResult.sources];
   const warnings = buildMaterialPackageWarnings(officialCollection, searchResult.warnings);
-  const status = getMaterialPackageStatus(officialCollection, searchResult.sources);
-  const errorMessage = status === "failed" ? "官方交易所 summary 与 supplemental search 均未取得可用素材，请稍后重试或改用手动录入。" : null;
+  const status = getMaterialPackageStatus(officialCollection);
+  const errorMessage = status === "failed" ? "未取得可用官方交易所 summary，supplemental search 不能单独支撑市场素材包。" : null;
   const sourceNotes = buildSourceNotes({
     officialCollection,
     searchProviderLabel: searchResult.providerLabel,
@@ -351,18 +351,26 @@ async function collectSupplementalSearchSources(input: {
 }
 
 function buildMaterialPackageWarnings(officialCollection: OfficialExchangeCollectionResult, searchWarnings: string[]) {
-  return Array.from(new Set([...officialCollection.warnings, ...searchWarnings].map((warning) => warning.trim()).filter(Boolean)));
+  const usableOfficialResults = getUsableOfficialResults(officialCollection);
+  const officialAvailabilityWarnings = usableOfficialResults.length === 0
+    ? ["未取得可用官方交易所 summary；supplemental search sources are supplemental only，不能单独支撑可生成的 A 股素材包。"]
+    : ["Supplemental search sources are supplemental only，不作为行情事实来源。"];
+
+  return Array.from(new Set([...officialCollection.warnings, ...searchWarnings, ...officialAvailabilityWarnings].map((warning) => warning.trim()).filter(Boolean)));
 }
 
-function getMaterialPackageStatus(officialCollection: OfficialExchangeCollectionResult, searchSources: MarketBriefSearchSource[]): MarketBriefMaterialPackageStatus {
-  const hasOfficialUsable = officialCollection.results.some((result) => result.status === "ok" || result.status === "partial");
-  const hasSearchSources = searchSources.length > 0;
+function getMaterialPackageStatus(officialCollection: OfficialExchangeCollectionResult): MarketBriefMaterialPackageStatus {
+  const usableOfficialResults = getUsableOfficialResults(officialCollection);
 
-  if (!hasOfficialUsable && !hasSearchSources) return "failed";
+  if (usableOfficialResults.length === 0) return "failed";
 
   // Phase 2N-C1 only validates exchange summary fields. Breadth, sectors and flows are still missing,
   // so a newly collected package should stay partial until a human review or a later collector fills gaps.
   return "partial";
+}
+
+function getUsableOfficialResults(officialCollection: OfficialExchangeCollectionResult) {
+  return officialCollection.results.filter((result) => result.status === "ok" || result.status === "partial");
 }
 
 function buildSourceNotes(input: {
@@ -374,9 +382,14 @@ function buildSourceNotes(input: {
   const officialNotes = input.officialCollection.sourceNotes;
 
   if (input.status === "failed") {
+    const supplementalNote = input.searchSources.length > 0
+      ? `${input.searchProviderLabel} supplemental search 返回了 ${input.searchSources.length} 条来源，这些来源已保存用于诊断，但 search sources are supplemental only，不能单独支撑市场素材包生成。`
+      : `已调用 ${input.searchProviderLabel} supplemental search，但本次没有可用搜索来源；即使存在搜索来源，也不能在缺少官方交易所 summary 时支撑生成。`;
+
     return [
       ...officialNotes,
-      `已调用 ${input.searchProviderLabel} supplemental search，但本次没有可用搜索来源。`
+      "未取得可用官方交易所 summary，因此该素材包不可用于生成。",
+      supplementalNote
     ];
   }
 
