@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { MarketBriefMaterialPackageRecord, MarketBriefMaterialPackageStatus } from "@/lib/content-types";
+import type { MarketBriefGroundingContext } from "@/lib/market-brief-grounding";
 import {
   buildMarketBriefSearchQueries,
   getMarketBriefSearchConfig,
@@ -24,6 +25,9 @@ export type MarketBriefMaterialPackageCollectionResult = {
 };
 
 const MIN_READY_SOURCE_COUNT = 3;
+export const usableMarketBriefMaterialPackageStatuses: MarketBriefMaterialPackageStatus[] = ["ready", "partial", "reviewed"];
+export const missingMarketBriefMaterialPackageMessage = "未找到可用市场素材包，请先采集素材包后再生成简报。";
+export const missingMarketBriefMaterialPackageForJobMessage = "未找到可用市场素材包，请先采集素材包后重新排队。";
 
 export async function createOrUpdateMarketBriefMaterialPackage(
   supabase: MaterialPackageSupabaseClient,
@@ -123,6 +127,108 @@ export function getMarketBriefMaterialPackageStatusTone(status: MarketBriefMater
   if (status === "reviewed") return "bg-blue-50 text-blue-700 ring-blue-100";
   if (status === "archived") return "bg-slate-50 text-slate-500 ring-slate-200";
   return "bg-indigo-50 text-indigo-700 ring-indigo-100";
+}
+
+export type ResolveUsableMarketBriefMaterialPackageInput = {
+  ownerId: string;
+  packageDate: string;
+  market: string;
+  materialPackageId?: string | null;
+};
+
+export async function resolveUsableMarketBriefMaterialPackage(
+  supabase: MaterialPackageSupabaseClient,
+  input: ResolveUsableMarketBriefMaterialPackageInput
+) {
+  const materialPackageId = normalizeOptionalId(input.materialPackageId);
+
+  if (materialPackageId) {
+    const { data, error } = await supabase
+      .from("market_brief_material_packages")
+      .select("*")
+      .eq("id", materialPackageId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(error.message || "读取市场素材包失败。");
+    }
+
+    const materialPackage = data as MarketBriefMaterialPackageRecord | null;
+    if (!materialPackage || !isMaterialPackageMatchingInput(materialPackage, input) || !isUsableMarketBriefMaterialPackage(materialPackage)) {
+      return null;
+    }
+
+    return materialPackage;
+  }
+
+  const { data, error } = await supabase
+    .from("market_brief_material_packages")
+    .select("*")
+    .eq("owner_id", input.ownerId)
+    .eq("package_date", input.packageDate)
+    .eq("market", input.market)
+    .in("status", usableMarketBriefMaterialPackageStatuses)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || "读取市场素材包失败。");
+  }
+
+  return data as MarketBriefMaterialPackageRecord | null;
+}
+
+export function isUsableMarketBriefMaterialPackage(materialPackage: Pick<MarketBriefMaterialPackageRecord, "status">) {
+  return usableMarketBriefMaterialPackageStatuses.includes(materialPackage.status);
+}
+
+export function buildMarketBriefGroundingContextFromMaterialPackage(
+  materialPackage: MarketBriefMaterialPackageRecord,
+  input: { isHistorical: boolean }
+): MarketBriefGroundingContext {
+  const partialWarnings = materialPackage.status === "partial"
+    ? ["素材包状态为 partial：来源部分可用，生成内容必须标记需人工复核。"]
+    : [];
+  const sourceNotes = [
+    "本简报基于已保存的市场素材包生成，不在生成时实时搜索。",
+    ...materialPackage.source_notes
+  ];
+
+  return {
+    market: materialPackage.market,
+    briefDate: materialPackage.package_date,
+    isHistorical: input.isHistorical,
+    groundingMode: "material_package",
+    searchProvider: materialPackage.provider ?? "material_package",
+    searchProviderLabel: materialPackage.provider_label ?? "已保存市场素材包",
+    groundingEnabled: true,
+    queries: materialPackage.queries,
+    sources: materialPackage.sources,
+    warnings: [...partialWarnings, ...materialPackage.warnings],
+    sourceNotes,
+    extractedFacts: materialPackage.extracted_facts,
+    materialPackageId: materialPackage.id,
+    materialPackageStatus: materialPackage.status,
+    materialPackageCollectedAt: materialPackage.collected_at
+  };
+}
+
+export function getMarketBriefMaterialPackageDataQuality(status: MarketBriefMaterialPackageStatus) {
+  return status === "partial" ? "ai_grounded_partial" : "ai_grounded";
+}
+
+function isMaterialPackageMatchingInput(
+  materialPackage: MarketBriefMaterialPackageRecord,
+  input: ResolveUsableMarketBriefMaterialPackageInput
+) {
+  return materialPackage.owner_id === input.ownerId
+    && materialPackage.package_date === input.packageDate
+    && materialPackage.market === input.market;
+}
+
+function normalizeOptionalId(value: string | null | undefined) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 type UpsertMaterialPackageInput = {

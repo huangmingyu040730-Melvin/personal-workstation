@@ -2,6 +2,11 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/auth/admin";
 import type { MarketBriefGenerationJobRecord } from "@/lib/content-types";
+import {
+  buildMarketBriefGroundingContextFromMaterialPackage,
+  missingMarketBriefMaterialPackageForJobMessage,
+  resolveUsableMarketBriefMaterialPackage
+} from "@/lib/market-brief-material-packages";
 import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
 import { getMarketBriefJobProgressFromPayload, isMarketBriefJobProgressStale, marketBriefJobStaleMessage } from "@/lib/market-brief-job-progress";
 import { markMarketBriefGenerationJobFailed, runMockMarketBriefGenerationJob, updateMarketBriefGenerationJobProgress } from "@/lib/market-brief-runner";
@@ -71,8 +76,42 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
 
   try {
+    const materialPackage = await resolveUsableMarketBriefMaterialPackage(supabase, {
+      ownerId: job.owner_id,
+      packageDate: job.brief_date,
+      market: job.market,
+      materialPackageId: getOptionalPayloadText(job.request_payload.material_package_id)
+    });
+
+    if (!materialPackage) {
+      await markFailedSafely(supabase, job.id, missingMarketBriefMaterialPackageForJobMessage, missingMarketBriefMaterialPackageForJobMessage);
+      const failedJob = await readJobSafely(supabase, job.id);
+      return NextResponse.json(
+        {
+          error: missingMarketBriefMaterialPackageForJobMessage,
+          ...(failedJob ? serializeMarketBriefJobStatus(failedJob) : { status: "failed", progress: createFallbackFailedProgress() })
+        },
+        { status: 409 }
+      );
+    }
+
+    await updateMarketBriefGenerationJobMaterialPackagePayload(supabase, job.id, job.request_payload, materialPackage);
+    const grounding = buildMarketBriefGroundingContextFromMaterialPackage(materialPackage, {
+      isHistorical: job.request_payload?.is_historical === true
+    });
+    const materialPackageJob = {
+      ...job,
+      request_payload: {
+        ...job.request_payload,
+        grounding_mode: "material_package",
+        material_package_id: materialPackage.id,
+        material_package_status: materialPackage.status,
+        material_package_sources_count: materialPackage.sources.length
+      }
+    };
     const result = await withTimeout(
-      runMockMarketBriefGenerationJob(supabase, job, {
+      runMockMarketBriefGenerationJob(supabase, materialPackageJob, {
+        grounding,
         onProgress: async (stage, message) => {
           await updateMarketBriefGenerationJobProgress(supabase, job.id, stage, message);
         }
@@ -107,6 +146,30 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
 }
 
+async function updateMarketBriefGenerationJobMaterialPackagePayload(
+  supabase: NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>,
+  jobId: string,
+  requestPayload: Record<string, unknown>,
+  materialPackage: { id: string; status: string; sources: unknown[] }
+) {
+  const nextPayload = {
+    ...requestPayload,
+    grounding_mode: "material_package",
+    material_package_id: materialPackage.id,
+    material_package_status: materialPackage.status,
+    material_package_sources_count: materialPackage.sources.length
+  };
+  const { error } = await supabase
+    .from("market_brief_generation_jobs")
+    .update({ request_payload: nextPayload })
+    .eq("id", jobId)
+    .eq("status", "queued");
+
+  if (error) {
+    throw new Error(error.message || "更新素材包生成任务上下文失败。");
+  }
+}
+
 function serializeMarketBriefJobStatus(job: MarketBriefGenerationJobRecord) {
   const progress = getMarketBriefJobProgressFromPayload(job.request_payload, getFallbackProgressStage(job.status));
   const marketBriefId = job.market_brief_id ?? job.market_briefs?.id ?? null;
@@ -125,6 +188,10 @@ function serializeMarketBriefJobStatus(job: MarketBriefGenerationJobRecord) {
     stale_message: stale ? marketBriefJobStaleMessage : null,
     updated_at: job.updated_at
   };
+}
+
+function getOptionalPayloadText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function getFallbackProgressStage(status: string): MarketBriefJobProgressStage {

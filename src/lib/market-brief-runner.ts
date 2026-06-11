@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GeneratedMarketBrief } from "@/lib/market-brief-generator";
 import { defaultMarketBriefRunnerName, generateMarketBriefDraft } from "@/lib/market-brief-generator";
 import type { MarketBriefGenerationJobRecord, MarketBriefJobStatus, MarketBriefRecord } from "@/lib/content-types";
+import type { MarketBriefGroundingContext } from "@/lib/market-brief-grounding";
 import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
 import { createMarketBriefJobProgress, mergeProgressIntoPayload } from "@/lib/market-brief-job-progress";
 
@@ -90,7 +91,7 @@ export async function createQueuedMarketBriefGenerationJob(supabase: RunnerSupab
 export async function runMockMarketBriefGenerationJob(
   supabase: RunnerSupabaseClient,
   job: MarketBriefGenerationJobRecord,
-  options: { onProgress?: MarketBriefGenerationProgressHandler } = {}
+  options: { grounding?: MarketBriefGroundingContext; onProgress?: MarketBriefGenerationProgressHandler } = {}
 ) {
   let runningJob = job;
   const updateProgress = async (stage: MarketBriefJobProgressStage, message?: string) => {
@@ -110,6 +111,7 @@ export async function runMockMarketBriefGenerationJob(
       briefDate: runningJob.brief_date,
       runnerName: runningJob.runner_name,
       isHistorical: runningJob.request_payload?.is_historical === true,
+      grounding: options.grounding,
       onProgress: updateProgress
     });
     await assertMarketBriefJobStillRunning(supabase, runningJob.id);

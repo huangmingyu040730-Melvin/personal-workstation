@@ -41,7 +41,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
         <PageHeader
           eyebrow="Market Briefs"
           title="市场简报"
-          description="系统会先检索公开市场信息，再调用 AI 生成固定模板市场简报，并附带结构化图表数据。生成结果默认需要人工复核，不构成投资建议。"
+          description="先采集市场素材包，再基于已保存素材包调用 AI 生成固定模板市场简报。生成阶段不再默认实时搜索，结果仍需人工复核。"
           action={
             <div className="flex flex-wrap gap-2">
               <form action={generateTodayMarketBriefAction}>
@@ -49,7 +49,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
                 <SubmitButton pendingLabel="生成中...">
                   <span className="inline-flex items-center gap-2">
                     <Sparkles size={16} />
-                    获取今日市场动态
+                    基于素材包生成今日简报
                   </span>
                 </SubmitButton>
               </form>
@@ -69,7 +69,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
           }
         />
 
-        <AdminSection title="AI 市场动态生成" description="保留今日生成入口，也支持指定历史交易日补生成。生成前会先检索公开市场信息；若搜索服务未配置，生成任务会失败并提示配置方式。">
+        <AdminSection title="基于素材包生成简报" description="生成简报前请先采集市场素材包；生成阶段只读取 ready / partial / reviewed 素材包，不再默认实时搜索。">
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-slate-100 bg-white p-4">
               <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
@@ -77,13 +77,13 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
                 <Badge className="bg-slate-50 text-slate-600 ring-slate-200">默认市场：A股</Badge>
                 <Badge className="bg-violet-50 text-violet-700 ring-violet-100">生成器：AI-first</Badge>
               </div>
-              <p className="mb-4 text-sm leading-6 text-slate-600">仅当今天为 A 股交易日时创建任务；如果已有同日同市场简报或排队 / 运行中任务，会直接跳转到对应记录。</p>
+              <p className="mb-4 text-sm leading-6 text-slate-600">仅当今天为 A 股交易日且已有可用素材包时创建任务；如果已有同日同市场简报或排队 / 运行中任务，会直接跳转到对应记录。</p>
               <form action={generateTodayMarketBriefAction}>
                 <input type="hidden" name="market" value="A股" />
                 <SubmitButton pendingLabel="生成中...">
                   <span className="inline-flex items-center gap-2">
                     <Sparkles size={16} />
-                    获取今日市场动态
+                    基于素材包生成今日简报
                   </span>
                 </SubmitButton>
               </form>
@@ -94,7 +94,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
                 <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-100">历史补生成</Badge>
                 {nearestTradingDay ? <Badge className="bg-slate-50 text-slate-600 ring-slate-200">最近交易日：{nearestTradingDay}</Badge> : null}
               </div>
-              <p className="mb-4 text-sm leading-6 text-slate-600">仅支持选择 A 股交易日。周末、节假日、未来日期不可生成；历史日期会提示可能无法完整回溯。</p>
+              <p className="mb-4 text-sm leading-6 text-slate-600">仅支持选择已有可用素材包的 A 股交易日。周末、节假日、未来日期不可生成；历史日期会提示可能无法完整回溯。</p>
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px]">
                 <TextInput type="date" name="brief_date" defaultValue={nearestTradingDay ?? today} max={today} required />
                 <Select name="market" defaultValue="A股">
@@ -102,7 +102,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
                 </Select>
               </div>
               <div className="mt-4">
-                <SubmitButton pendingLabel="创建中...">生成历史市场动态</SubmitButton>
+                <SubmitButton pendingLabel="创建中...">基于素材包生成指定日期简报</SubmitButton>
               </div>
             </form>
           </div>
@@ -110,7 +110,7 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "exists" ? <NoticeBanner tone="blue" message="该日期市场简报已存在，已保留原记录。" /> : null}
-        {!searchInfo.isConfigured ? <NoticeBanner tone="blue" message="市场简报搜索服务未配置，AI 无法生成可靠行情数据；点击生成后任务会失败并提示配置 MARKET_BRIEF_SEARCH_PROVIDER 和 MARKET_BRIEF_SEARCH_API_KEY。" /> : null}
+        {!searchInfo.isConfigured ? <NoticeBanner tone="blue" message="市场简报搜索服务未配置时不能采集新素材包；但已保存的 ready / partial / reviewed 素材包仍可用于 AI 生成。" /> : null}
 
         <AdminSection title="筛选" description="按日期倒序展示；可搜索标题 / 摘要，并按状态、市场和标签过滤。">
           <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_160px_160px_auto]">

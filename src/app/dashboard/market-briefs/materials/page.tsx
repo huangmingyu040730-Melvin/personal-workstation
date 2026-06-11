@@ -8,6 +8,7 @@ import { Select, TextInput } from "@/components/forms/form-fields";
 import { PageHeader } from "@/components/page-header";
 import type { MarketBriefMaterialPackageRecord, MarketBriefMaterialPackageStatus } from "@/lib/content-types";
 import { formatDate, formatDateTime, formatRelative } from "@/lib/format";
+import { getFormError } from "@/lib/forms";
 import {
   getMarketBriefMaterialPackageStatusLabel,
   getMarketBriefMaterialPackageStatusTone
@@ -27,6 +28,7 @@ export default async function MarketBriefMaterialPackagesPage({ searchParams }: 
     market: getSearchValue(params.market) ?? "all",
     packageDate: getSearchValue(params.package_date) ?? ""
   };
+  const error = getFormError(params);
   const today = getTodayDateInShanghai();
   const [packages, filterOptions] = await Promise.all([
     getMarketBriefMaterialPackages(filters),
@@ -57,6 +59,8 @@ export default async function MarketBriefMaterialPackagesPage({ searchParams }: 
         <AdminSection title="手动采集" description="当前只采集并保存素材包，不生成正式 market_brief，也不会触发 AI 简报主链路。">
           <MarketBriefMaterialPackageCollectForm today={today} />
         </AdminSection>
+
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
 
         <AdminSection title="筛选" description="按素材日期倒序展示，可按状态、市场和日期过滤。">
           <form className="grid gap-3 md:grid-cols-[180px_180px_180px_auto]">

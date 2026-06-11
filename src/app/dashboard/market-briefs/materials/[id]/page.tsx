@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
+import { generateMarketBriefForDateAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { SubmitButton } from "@/components/forms/submit-button";
 import type { MarketBriefMaterialPackageSource } from "@/lib/content-types";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
   getMarketBriefMaterialPackageStatusLabel,
-  getMarketBriefMaterialPackageStatusTone
+  getMarketBriefMaterialPackageStatusTone,
+  isUsableMarketBriefMaterialPackage
 } from "@/lib/market-brief-material-packages";
 import { getMarketBriefMaterialPackageById } from "@/lib/queries/market-brief-material-packages";
 import { PageHeader } from "@/components/page-header";
@@ -89,6 +92,21 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
                 <InfoRow label="复核时间" value={materialPackage.reviewed_at ? formatDateTime(materialPackage.reviewed_at) : "未复核"} />
                 <InfoRow label="更新时间" value={formatDateTime(materialPackage.updated_at)} />
               </dl>
+            </Card>
+
+            <Card>
+              <CardHeader title="生成简报" action={<Sparkles size={18} className="text-blue-700" />} />
+              {isUsableMarketBriefMaterialPackage(materialPackage) ? (
+                <form action={generateMarketBriefForDateAction} className="space-y-3">
+                  <input type="hidden" name="brief_date" value={materialPackage.package_date} />
+                  <input type="hidden" name="market" value={materialPackage.market} />
+                  <input type="hidden" name="material_package_id" value={materialPackage.id} />
+                  <p className="text-sm leading-6 text-slate-600">使用此素材包创建生成任务。生成阶段只读取素材包来源，不再实时搜索。</p>
+                  <SubmitButton pendingLabel="创建中...">基于此素材包生成简报</SubmitButton>
+                </form>
+              ) : (
+                <p className="text-sm leading-6 text-slate-500">当前素材包状态不可用于生成。请重新采集或复核后再生成简报。</p>
+              )}
             </Card>
 
             <TextListCard title="Warnings" values={materialPackage.warnings} emptyText="暂无 warning。" tone="rose" />

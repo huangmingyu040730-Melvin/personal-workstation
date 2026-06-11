@@ -7,6 +7,10 @@ import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { aiMarketBriefRunnerName, getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
 import {
+  missingMarketBriefMaterialPackageMessage,
+  resolveUsableMarketBriefMaterialPackage
+} from "@/lib/market-brief-material-packages";
+import {
   createQueuedMarketBriefGenerationJob,
   findActiveMarketBriefGenerationJob,
   findExistingMarketBrief,
@@ -170,6 +174,7 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
   const rawBriefDate = options.mode === "today" ? today : getString(formData, "brief_date");
   const briefDate = normalizeBriefDate(rawBriefDate);
   const generatorMode = getMarketBriefGeneratorMode();
+  const requestedMaterialPackageId = getOptionalString(formData, "material_package_id");
 
   if (!briefDate) {
     redirect(`/dashboard/market-briefs?error=${encodeFormError("请选择有效日期。")}`);
@@ -215,6 +220,23 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
     redirect(`/dashboard/market-briefs/jobs/${activeJob.id}?notice=active${autoGenerate}`);
   }
 
+  let materialPackage;
+
+  try {
+    materialPackage = await resolveUsableMarketBriefMaterialPackage(supabase, {
+      ownerId: actorId,
+      packageDate: briefDate,
+      market,
+      materialPackageId: requestedMaterialPackageId
+    });
+  } catch (packageError) {
+    redirect(`/dashboard/market-briefs/materials?error=${encodeFormError(getActionErrorMessage(packageError, "检查市场素材包失败。"))}&package_date=${briefDate}&market=${encodeURIComponent(market)}`);
+  }
+
+  if (!materialPackage) {
+    redirect(`/dashboard/market-briefs/materials?error=${encodeFormError(missingMarketBriefMaterialPackageMessage)}&package_date=${briefDate}&market=${encodeURIComponent(market)}`);
+  }
+
   let job;
 
   try {
@@ -227,7 +249,11 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
         triggered_by: "dashboard",
         generator_mode: generatorMode,
         generator_name: generatorMode === "ai" ? aiMarketBriefRunnerName : "manual-skill-mock",
-        is_historical: isHistorical
+        is_historical: isHistorical,
+        grounding_mode: "material_package",
+        material_package_id: materialPackage.id,
+        material_package_status: materialPackage.status,
+        material_package_sources_count: materialPackage.sources.length
       }
     });
   } catch (createError) {
@@ -244,7 +270,11 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
       status: job.status,
       runner_name: job.runner_name,
       generator_mode: generatorMode,
-      is_historical: isHistorical
+      is_historical: isHistorical,
+      grounding_mode: "material_package",
+      material_package_id: materialPackage.id,
+      material_package_status: materialPackage.status,
+      material_package_sources_count: materialPackage.sources.length
     }
   });
 
