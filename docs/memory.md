@@ -140,8 +140,8 @@ Phase 2K-C 本轮 PR 合并后需执行：
 1. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 2. Phase 2K-C：A4 中文模板化预览与浏览器打印 PDF。
 3. Phase 2K-D：AI JD 优化与更复杂模板。
-4. Phase 2K-E：自动化与市场简报。
-5. Phase 2L：Notion / Google Calendar / AI 辅助研究。
+4. Phase 2K-E：自动化与 AI 辅助研究。
+5. Phase 2L：Notion / Google Calendar 集成。
 
 ## Stale Or Superseded Notes
 

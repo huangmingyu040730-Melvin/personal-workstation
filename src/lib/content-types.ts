@@ -10,10 +10,6 @@ export type AccessRequestContentType = "project" | "publication" | "skill" | "kn
 export type AccessGrantStatus = "active" | "revoked";
 export type AccessGrantContentType = "project" | "publication" | "skill" | "knowledge";
 export type CalendarEventType = "general" | "meeting" | "research" | "deadline" | "review" | "reminder";
-export type MarketBriefStatus = "draft" | "reviewed" | "published" | "archived";
-export type MarketBriefGenerationStatus = "manual" | "draft" | "generated" | "failed" | "needs_review" | "archived";
-export type MarketBriefJobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
-export type MarketBriefMaterialPackageStatus = "collecting" | "ready" | "partial" | "failed" | "reviewed" | "archived";
 export type ResumeItemType = "basic" | "education" | "experience" | "project" | "research" | "skill" | "certification" | "award" | "language" | "other";
 export type ResumeVersionLanguage = "zh" | "en";
 export type ResumeTemplateKey = "classic" | "compact" | "research";
@@ -158,89 +154,6 @@ export type CalendarEventRecord = {
   publications?: Pick<PublicationRecord, "id" | "title" | "slug"> | null;
   knowledge_notes?: Pick<KnowledgeNoteRecord, "id" | "title" | "slug"> | null;
   skills?: Pick<SkillRecord, "id" | "name" | "slug"> | null;
-};
-
-export type MarketBriefRecord = {
-  id: string;
-  owner_id: string;
-  brief_date: string;
-  title: string;
-  status: MarketBriefStatus;
-  market: string;
-  summary: string | null;
-  market_overview: string | null;
-  index_performance: string | null;
-  style_performance: string | null;
-  sector_performance: string | null;
-  hot_topics: string | null;
-  capital_flows: string | null;
-  policy_news: string | null;
-  risk_alerts: string | null;
-  tomorrow_watch: string | null;
-  data_sources: string[];
-  tags: string[];
-  is_featured: boolean;
-  markdown_content: string | null;
-  generation_status: MarketBriefGenerationStatus;
-  generated_at: string | null;
-  generator_name: string | null;
-  source_snapshot: Record<string, unknown>;
-  artifact_files: Array<Record<string, unknown>>;
-  created_at: string;
-  updated_at: string;
-};
-
-export type MarketBriefGenerationJobRecord = {
-  id: string;
-  owner_id: string;
-  brief_date: string;
-  market: string;
-  status: MarketBriefJobStatus;
-  runner_name: string;
-  request_payload: Record<string, unknown>;
-  source_snapshot: Record<string, unknown>;
-  result_payload: Record<string, unknown>;
-  market_brief_id: string | null;
-  error_message: string | null;
-  started_at: string | null;
-  completed_at: string | null;
-  created_at: string;
-  updated_at: string;
-  market_briefs?: Pick<MarketBriefRecord, "id" | "title" | "brief_date" | "market"> | null;
-};
-
-export type MarketBriefMaterialPackageSource = {
-  id: string;
-  title: string;
-  url: string;
-  publisher: string | null;
-  published_at: string | null;
-  snippet: string;
-  query: string;
-  relevance: "high" | "medium" | "low";
-  source_type?: "official_exchange_summary" | "supplemental_search" | string;
-};
-
-export type MarketBriefMaterialPackageRecord = {
-  id: string;
-  owner_id: string;
-  package_date: string;
-  market: string;
-  status: MarketBriefMaterialPackageStatus;
-  provider: string | null;
-  provider_label: string | null;
-  queries: string[];
-  sources: MarketBriefMaterialPackageSource[];
-  source_snapshot: Record<string, unknown>;
-  extracted_facts: Record<string, unknown>;
-  warnings: string[];
-  source_notes: string[];
-  quality_score: number | null;
-  error_message: string | null;
-  collected_at: string | null;
-  reviewed_at: string | null;
-  created_at: string;
-  updated_at: string;
 };
 
 export type ResumeItemRecord = {

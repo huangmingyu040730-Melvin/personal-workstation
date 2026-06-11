@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { countPendingAccessRequests } from "./access-requests";
 import { getUpcomingCalendarEvents } from "./calendar";
 import { countPublicKnowledgeNotes, getRecentKnowledgeNotes } from "./knowledge";
-import { getRecentMarketBriefs } from "./market-briefs";
 import { countPublicProjects, getProjects } from "./projects";
 import { getPublicationStats, getRecentPublications } from "./publications";
 import { getRecentResumeItems, getRecentResumeVersions, getResumeStats, getResumeVersionStats } from "./resume";
@@ -38,8 +37,7 @@ export async function getDashboardData() {
     resumeStats,
     recentResumeItems,
     resumeVersionStats,
-    recentResumeVersions,
-    recentMarketBriefs
+    recentResumeVersions
   ] = await Promise.all([
     getProjects(),
     getRecentKnowledgeNotes(4),
@@ -56,8 +54,7 @@ export async function getDashboardData() {
     getResumeStats(),
     getRecentResumeItems(3),
     getResumeVersionStats(),
-    getRecentResumeVersions(3),
-    getRecentMarketBriefs(3)
+    getRecentResumeVersions(3)
   ]);
 
   const inProgressProjects = projects.filter((project) => project.status === "in_progress");
@@ -82,7 +79,6 @@ export async function getDashboardData() {
     recentResumeItems,
     resumeVersionStats,
     recentResumeVersions,
-    recentMarketBriefs,
     activityLogs
   };
 }

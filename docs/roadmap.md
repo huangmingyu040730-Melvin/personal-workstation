@@ -173,32 +173,6 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 - 数据统计图表。
 - 后续如有需要，再设计确认后写回简历素材的半自动流程。
 
-### Phase 2L - 自动化与市场简报
-
-目标：
-
-- Phase 2L-A：Market Briefs / 市场简报后台管理，新增 `market_briefs` 表和 `/dashboard/market-briefs` 手工 CRUD，支持日期、市场、状态、标签、数据来源、摘要和模块化正文，并在 Dashboard 展示最近 3 条。
-- Phase 2L-B：Market Brief artifact / 文件化与站内预览，新增 Markdown 主内容、生成状态和 artifact 元数据字段，支持 `/dashboard/market-briefs/[id]/preview`、Markdown / HTML / JSON / Word 即时下载和浏览器打印 / 保存 PDF。
-- Phase 2L-C：新增“获取今日市场动态”按钮，当前使用 `manual-skill-mock` 生成器创建今日 A 股 Markdown 草稿并保存到 `market_briefs`；若今日同市场简报已存在则跳转已有预览页，不重复创建。
-- Phase 2L-D-A：新增 `market_brief_generation_jobs`、`/dashboard/market-briefs/jobs` 和任务状态记录，把“获取今日市场动态”改成先创建任务、记录 request/source/result payload，再同步运行 mock 生成器并写入简报。
-- Phase 2L-D-B / D-C：曾新增旧外部 runner 兼容与 Python 数据源实验；Phase 2N-0 后可执行路径已移除。
-- Phase 2L-D-D：真实行情源不可用时生成 fallback / partial 待复核简报，不让任务因旧数据源不稳定而长期卡住。
-- Phase 2L-D-E：新增多数据源模式、轻量 HTTP 指数源和指定日期历史补生成；今日与历史生成都先校验 A 股交易日，周末、节假日、未来日期不创建 job。
-- Phase 2M-A：切换为 AI-first Market Brief Generator，后台按钮直接创建 generation job 并由服务端 AI 生成固定模板 Markdown、structured JSON、source snapshot 和预览图表；旧 Python 数据源 runner 标记为 deprecated。
-- Phase 2M-B：清理旧数据源 / runner 路线，后台主流程、任务页面和推荐文档全面收口为 AI-first。
-- Phase 2M-C：新增 Market Brief AI Web Search Grounding，生成前按日期和市场检索公开来源，AI 只能基于 sources 生成 Markdown、structured JSON 和 charts；preview 展示来源列表，图表数据项必须带 `source_ids`。
-- Phase 2M-D：新增 Market Brief AI 生成进度体验，生成按钮创建 queued job 后进入任务详情页，客户端启动 AI 生成、轮询任务状态、展示阶段进度动画，并在 succeeded 后自动跳转预览页；hotfix 增加默认 105 秒主动超时、5 分钟 stale running 检测、failed 落库保护、JSON / loose JSON 解析增强、格式异常 fallback 草稿、输出 token 限制和 prompt/source 限制，避免卡在 writing / 70% 或因格式问题整单失败。
-- Phase 2N-0：移除旧外部 / Python runner API 与脚本目录，不新增素材包、不新增 cron、不改 AI 生成主链路。
-- Phase 2N-A：新增每日市场研究素材包基础层，包括 `market_brief_material_packages`、手动采集 API、素材包列表和详情页；当前只沉淀公开市场资料，不改 AI 生成主链路，不新增 cron。
-- Phase 2N-B：默认生成路径改为读取 ready / partial / reviewed 素材包；没有可用素材包时不创建或不继续执行 AI 生成，不默认实时搜索，并保留人工编辑确认。
-- Phase 2N-C0：新增 diagnostics-only A-share data source probe，验证 AKShare、Eastmoney 和交易所官方直连源可用性，不接入生产链路。
-- Phase 2N-C1：手动素材包采集接入上交所 / 深交所官方 summary / overview 总貌字段，写入 `extracted_facts.exchange_summary`；Tavily 仍为 supplemental search，AKShare / Eastmoney 不作为生产依赖。
-- 后续 Phase 2N-C：完善市场宽度、行业板块、资金流、素材包复核状态、来源质量评分和基于素材包的编辑确认工作流。
-- 后续：扩展更可靠的可验证来源引用、授权数据供应商和来源质量评分。
-- 后续：扩展稳定交易日历刷新、来源审计和人工复核工作流。
-- 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。
-- 当前 2N-C1 只做官方交易所总貌 summary，不做完整自动行情采集、新闻爬虫、邮件、Notion、公开市场简报页、股票推荐、投资建议、自动发布或 cron；AI 和搜索 key 只在服务端读取，素材包与生成输出默认需要后台人工复核。
-
 ### Phase 2L - Notion / Google Calendar / AI 辅助研究
 
 目标：
