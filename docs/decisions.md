@@ -1043,3 +1043,25 @@
 - 附件仍保持 private，不进入公开页面，不生成公开下载入口或 signed URL。
 - 不做自动上传、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
 - 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。
+
+## 2026-06-12 - Keep Document Storage Object Keys ASCII Safe
+
+类型：decision
+
+决策：
+
+- Documents 的 `storage_path` 只使用 ASCII-safe object key。
+- 最终 Storage 文件名使用 `documentId + extension`，避免中文文件名、空格或特殊字符触发 Supabase Storage `Invalid key`。
+- 文件显示名、`original_name`、`relative_path` 和 `folder_path` 仍可保留中文，用于后台展示。
+- 中文文件夹名进入 Storage key 时降级为 `folder`、`folder-1` 等安全 segment；不迁移已上传对象。
+
+原因：
+
+- Supabase Storage object key 对字符集更严格，中文文件名或中文目录可能导致 400 `Invalid key`。
+- 展示字段和 Storage key 分离可以同时保留后台可读性和上传稳定性。
+
+影响：
+
+- 只影响新上传文件的 Storage path 生成。
+- 不新增 migration，不修改 Storage policy，不改 Documents 数据模型。
+- 不影响 Project、Publication、Knowledge、Skill、Resume 或 Career 业务逻辑。

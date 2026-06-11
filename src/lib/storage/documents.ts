@@ -98,6 +98,61 @@ export function sanitizePathSegment(segment: string) {
   return safeSegment || "folder";
 }
 
+function sanitizeStoragePathSegmentWithMetadata(segment: string, fallback = "folder") {
+  const cleanSegment = segment
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter(Boolean)
+    .pop() ?? "";
+  const safeSegment = cleanSegment
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\.\.+/g, ".")
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[._-]+|[._-]+$/g, "")
+    .replace(/^\.+$/, "")
+    .slice(0, 90);
+
+  return safeSegment
+    ? { segment: safeSegment, usedFallback: false }
+    : { segment: fallback, usedFallback: true };
+}
+
+export function sanitizeStoragePathSegment(segment: string, fallback = "folder") {
+  return sanitizeStoragePathSegmentWithMetadata(segment, fallback).segment;
+}
+
+export function sanitizeStorageFileName(documentId: string, fileName: string) {
+  const safeDocumentId = sanitizeStoragePathSegment(documentId, "document");
+  const extension = getExtension(fileName).replace(/[^a-z0-9]/g, "");
+
+  return extension ? `${safeDocumentId}.${extension}` : safeDocumentId;
+}
+
+function sanitizeStorageFolderPath(relativePath: string) {
+  const folderSegments = relativePath
+    .replace(/\\/g, "/")
+    .split("/")
+    .map((segment) => segment.trim())
+    .filter((segment) => segment && segment !== "." && segment !== "..")
+    .slice(0, -1);
+  const fallbackCounts = new Map<string, number>();
+
+  return folderSegments.map((segment) => {
+    const sanitized = sanitizeStoragePathSegmentWithMetadata(segment, "folder");
+
+    if (!sanitized.usedFallback) {
+      return sanitized.segment;
+    }
+
+    const nextCount = fallbackCounts.get(sanitized.segment) ?? 0;
+    fallbackCounts.set(sanitized.segment, nextCount + 1);
+
+    return nextCount === 0 ? sanitized.segment : `${sanitized.segment}-${nextCount}`;
+  });
+}
+
 export function sanitizeRelativePath(relativePath: string, fallbackName = "document") {
   const normalizedPath = relativePath.replace(/\\/g, "/");
   const segments = normalizedPath
@@ -201,21 +256,24 @@ export function buildDocumentStoragePath({
   collectionId?: string | null;
   relativePath?: string | null;
 }) {
+  const storageFileName = sanitizeStorageFileName(documentId, fileName);
+
   if (collectionId) {
-    const safeRelativePath = sanitizeRelativePath(relativePath || fileName, fileName);
+    const safeFolderPath = sanitizeStorageFolderPath(relativePath || fileName);
+    const storageRelativePath = [...safeFolderPath, storageFileName].join("/");
 
     if (relatedType && relatedId) {
-      return `documents/${sanitizePathSegment(relatedType)}/${sanitizePathSegment(relatedId)}/${sanitizePathSegment(collectionId)}/${safeRelativePath}`;
+      return `documents/${sanitizeStoragePathSegment(relatedType)}/${sanitizeStoragePathSegment(relatedId, "related")}/${sanitizeStoragePathSegment(collectionId, "collection")}/${storageRelativePath}`;
     }
 
-    return `documents/general/${sanitizePathSegment(collectionId)}/${safeRelativePath}`;
+    return `documents/general/${sanitizeStoragePathSegment(collectionId, "collection")}/${storageRelativePath}`;
   }
 
   if (relatedType && relatedId) {
-    return `documents/${sanitizePathSegment(relatedType)}/${sanitizePathSegment(relatedId)}/${sanitizePathSegment(documentId)}/${sanitizeFileName(fileName)}`;
+    return `documents/${sanitizeStoragePathSegment(relatedType)}/${sanitizeStoragePathSegment(relatedId, "related")}/${sanitizeStoragePathSegment(documentId, "document")}/${storageFileName}`;
   }
 
-  return `documents/${sanitizePathSegment(documentId)}/${sanitizeFileName(fileName)}`;
+  return `documents/${sanitizeStoragePathSegment(documentId, "document")}/${storageFileName}`;
 }
 
 export async function createDocumentSignedUrl(supabase: SupabaseClient, storagePath: string) {

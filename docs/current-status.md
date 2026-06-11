@@ -90,6 +90,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - Project / Publication / Knowledge / Skill 新建表单支持“保存并上传附件”操作：对象先创建成功，再跳转统一上传页并预选新对象。
 - `document_collections` 文档包记录上传批次、文件夹、附件包或 Skill 包。
 - `documents.relative_path` / `documents.folder_path` 保存文件夹上传的相对路径信息。
+- `documents.storage_path` 使用 ASCII-safe object key；中文文件名和文件夹名只保存在显示名、`original_name`、`relative_path` 等展示字段中。
 - 单文件最大 50 MB；批量 / 文件夹上传单次最多 100 个文件，总量 200 MB。
 - Publication 有附件时禁止直接删除。
 - 公开页面不展示 Documents。
