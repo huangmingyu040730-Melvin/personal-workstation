@@ -75,10 +75,10 @@ export default async function MarketBriefPreviewPage({
             这是后台私密预览页，仅管理员可访问。下载文件即时生成，不写入 Storage，不创建公开下载链接，不公开市场简报。
           </AdminSecurityNote>
 
-          {notice === "generated" ? <PreviewNotice tone="emerald" message="市场简报已生成。AI 输出默认需要人工复核，图表来自 structured output。" /> : null}
+          {notice === "generated" ? <PreviewNotice tone="emerald" message="市场简报草稿已生成。请人工复核正文、来源和图表后再使用。" /> : null}
           {notice === "exists" ? <PreviewNotice tone="blue" message="该日期市场简报已存在，已跳转到已有预览页，未重复创建。" /> : null}
           {brief.generator_name === "manual-skill-mock" ? <PreviewNotice tone="slate" message="本简报由 manual-skill-mock 生成，当前尚未接入真实行情数据。" /> : null}
-          {brief.generator_name === "ai-market-brief-generator" ? <PreviewNotice tone="slate" message="本简报由 AI 基于检索来源生成，精确行情数据、来源和图表需人工复核。" /> : null}
+          {brief.generator_name === "ai-market-brief-generator" ? <PreviewNotice tone="slate" message="本草稿由 AI 基于已保存素材包生成，精确行情数据、来源和图表需人工复核。" /> : null}
         </div>
 
         <div className="market-brief-paper-wrap">

@@ -116,7 +116,7 @@ export async function runMockMarketBriefGenerationJob(
       onProgress: updateProgress
     });
     await assertMarketBriefJobStillRunning(supabase, runningJob.id);
-    await updateProgress("saving", "正在保存简报...");
+    await updateProgress("saving", "正在保存简报草稿...");
     const brief = await createOrUpdateMarketBriefFromGenerated(supabase, runningJob, generated);
     const completedAt = new Date().toISOString();
     const succeededPayload = await mergeJobPayloadWithProgress(supabase, runningJob.id, "succeeded");
@@ -143,7 +143,7 @@ export async function runMockMarketBriefGenerationJob(
 
     return { job: data as MarketBriefGenerationJobRecord, brief };
   } catch (error) {
-    await updateProgress("failed", "AI 生成失败");
+    await updateProgress("failed", "简报草稿生成失败");
     await markMarketBriefGenerationJobFailed(supabase, runningJob.id, getSafeRunnerErrorMessage(error));
     throw error;
   }
@@ -153,7 +153,7 @@ export async function markMarketBriefGenerationJobFailed(
   supabase: RunnerSupabaseClient,
   jobId: string,
   errorMessage: string,
-  progressMessage = "AI 生成失败"
+  progressMessage = "简报草稿生成失败"
 ) {
   const requestPayload = await mergeJobPayloadWithProgress(supabase, jobId, "failed", progressMessage);
   const { data, error } = await supabase

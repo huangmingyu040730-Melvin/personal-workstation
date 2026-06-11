@@ -44,13 +44,13 @@ export default async function MarketBriefJobDetailPage({
         <PageHeader
           eyebrow="Market Brief Job"
           title={`${formatDate(job.brief_date)} ${job.market}生成任务`}
-          description="生成任务详情仅在后台展示，用于追踪 AI 生成输入、结构化数据和生成结果。"
+          description="生成任务详情仅在后台展示，用于追踪素材包输入、草稿生成进度和人工复核入口。"
           action={
             <div className="flex flex-wrap gap-2">
               {job.market_brief_id ? (
                 <Link href={`/dashboard/market-briefs/${job.market_brief_id}/preview`} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
                   <Eye size={16} />
-                  查看生成的市场简报
+                  查看生成的草稿
                 </Link>
               ) : null}
               <Link href="/dashboard/market-briefs/jobs" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
@@ -63,10 +63,10 @@ export default async function MarketBriefJobDetailPage({
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "active" ? <NoticeBanner message="今日同市场已有排队中或运行中的生成任务，暂不重复创建。" /> : null}
-        {notice === "queued" ? <NoticeBanner message="任务已创建，等待 AI 生成器处理。" /> : null}
-        {notice === "failed" ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">生成任务失败，请查看错误信息后手动处理。</div> : null}
+        {notice === "queued" ? <NoticeBanner message="任务已创建，等待素材包简报草稿生成器处理。" /> : null}
+        {notice === "failed" ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">简报草稿生成失败，请查看错误信息后手动处理。</div> : null}
         {notice === "cancelled" ? <NoticeBanner message="任务已取消。" /> : null}
-        {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次由 AI 生成器处理。" /> : null}
+        {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次生成简报草稿。" /> : null}
         {isHistoricalJob(job) ? <NoticeBanner message="该任务为历史日期补生成，部分热点、新闻、资金流数据可能无法完整回溯。" /> : null}
         {isLegacyExternalJob(job) ? <NoticeBanner message="该记录来自旧外部生成兼容模式，当前仅作为历史任务展示。" /> : null}
 
@@ -179,11 +179,11 @@ function NoticeBanner({ message }: { message: string }) {
 }
 
 function getJobNextStep(status: string, errorMessage: string | null) {
-  if (status === "queued") return "等待 AI 生成器处理任务。";
-  if (status === "running") return "AI 正在生成市场简报。若任务长时间未完成，可以手动取消或重置为排队后重新生成。";
-  if (status === "succeeded") return "AI 市场简报已生成，可进入预览页复核正文和图表。";
-  if (status === "failed") return errorMessage ? `AI 生成失败：${errorMessage}。可查看错误信息后重新排队。` : "AI 生成失败，可查看错误信息后重新排队。";
-  if (status === "cancelled") return "该任务已取消，可重新排队后再次生成。";
+  if (status === "queued") return "等待素材包简报草稿生成器处理任务。";
+  if (status === "running") return "系统正在基于素材包生成市场简报草稿。若任务长时间未完成，可以手动取消或重置为排队后重新生成草稿。";
+  if (status === "succeeded") return "市场简报草稿已生成，可进入预览页复核正文和图表。";
+  if (status === "failed") return errorMessage ? `简报草稿生成失败：${errorMessage}。可查看错误信息后重新排队。` : "简报草稿生成失败，可查看错误信息后重新排队。";
+  if (status === "cancelled") return "该任务已取消，可重新排队后再次生成草稿。";
   return "任务已归档，无需继续处理。";
 }
 
@@ -197,7 +197,7 @@ function isHistoricalJob(job: { request_payload: Record<string, unknown> }) {
 
 function getGeneratorDisplayName(job: { runner_name: string; request_payload: Record<string, unknown> }) {
   if (job.request_payload.generator_mode === "ai" || job.runner_name === "ai-market-brief-generator") {
-    return "AI 市场简报生成器";
+    return "AI 辅助简报草稿生成器";
   }
 
   if (isLegacyExternalJob(job)) {

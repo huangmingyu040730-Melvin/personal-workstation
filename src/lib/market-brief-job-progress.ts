@@ -32,9 +32,9 @@ export const marketBriefJobWorkflowSteps: MarketBriefJobProgressStep[] = [
   { stage: "validating", label: "正在校验交易日与任务参数", percent: 10 },
   { stage: "preparing", label: "正在读取已保存市场素材包", percent: 20 },
   { stage: "analyzing", label: "正在整理素材包来源与事实", percent: 50 },
-  { stage: "writing", label: "正在生成市场简报正文", percent: 70 },
-  { stage: "charting", label: "正在生成图表数据", percent: 85 },
-  { stage: "saving", label: "正在保存简报", percent: 95 }
+  { stage: "writing", label: "正在生成简报草稿正文", percent: 70 },
+  { stage: "charting", label: "正在整理图表草稿数据", percent: 85 },
+  { stage: "saving", label: "正在保存简报草稿", percent: 95 }
 ];
 
 export const marketBriefJobLegacyProgressSteps: MarketBriefJobProgressStep[] = [
@@ -42,8 +42,8 @@ export const marketBriefJobLegacyProgressSteps: MarketBriefJobProgressStep[] = [
 ];
 
 export const marketBriefJobTerminalOutcomes: MarketBriefJobProgressStep[] = [
-  { stage: "succeeded", label: "生成完成", percent: 100 },
-  { stage: "failed", label: "生成失败", percent: 100 },
+  { stage: "succeeded", label: "草稿生成完成", percent: 100 },
+  { stage: "failed", label: "草稿生成失败", percent: 100 },
   { stage: "cancelled", label: "任务已取消", percent: 100 }
 ];
 

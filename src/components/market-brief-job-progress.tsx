@@ -85,14 +85,14 @@ export function MarketBriefJobProgressPanel({
       }
 
       if (!response.ok && response.status !== 202) {
-        throw new Error(getPayloadError(payload) ?? (isJobStatusPayload(payload) && payload.stale ? "生成任务长时间未更新，可能已超时。" : "AI 市场简报生成启动失败。"));
+        throw new Error(getPayloadError(payload) ?? (isJobStatusPayload(payload) && payload.stale ? "草稿生成任务长时间未更新，可能已超时。" : "市场简报草稿生成启动失败。"));
       }
 
       setRequestState("polling");
       await refreshStatus();
     } catch (error) {
       setRequestState("error");
-      setRequestError(error instanceof Error && error.message.trim() ? error.message : "AI 市场简报生成启动失败。");
+      setRequestError(error instanceof Error && error.message.trim() ? error.message : "市场简报草稿生成启动失败。");
       generateStartedRef.current = false;
     }
   }, [canStart, jobId, refreshStatus]);
@@ -140,7 +140,7 @@ export function MarketBriefJobProgressPanel({
     <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/40">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-500">AI Generation Progress</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-500">市场简报草稿进度</p>
           <h2 className="mt-2 text-xl font-semibold text-slate-950">{getPanelTitle(jobStatus.status)}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">{getPanelDescription(jobStatus.status, requestState)}</p>
         </div>
@@ -153,7 +153,7 @@ export function MarketBriefJobProgressPanel({
               className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
             >
               {requestState === "starting" ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-              开始生成
+              开始生成草稿
             </button>
           ) : null}
           {jobStatus.status === "failed" ? (
@@ -207,8 +207,8 @@ export function MarketBriefJobProgressPanel({
 
       {jobStatus.stale ? (
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-700">
-          {jobStatus.stale_message ?? "生成任务长时间未更新，可能已超时。为避免重复消耗额度，请先重置为排队后再重新生成。"}
-          <div className="mt-1 font-semibold">为避免重复消耗额度，请先取消任务或重置为排队后再重新生成。</div>
+          {jobStatus.stale_message ?? "草稿生成任务长时间未更新，可能已超时。为避免重复消耗额度，请先重置为排队后再重新生成草稿。"}
+          <div className="mt-1 font-semibold">为避免重复消耗额度，请先取消任务或重置为排队后再重新生成草稿。</div>
         </div>
       ) : null}
 
@@ -222,18 +222,18 @@ export function MarketBriefJobProgressPanel({
 }
 
 function getPanelTitle(status: string) {
-  if (status === "succeeded") return "市场简报已生成";
-  if (status === "failed") return "AI 生成失败";
+  if (status === "succeeded") return "市场简报草稿已生成";
+  if (status === "failed") return "简报草稿生成失败";
   if (status === "cancelled") return "任务已取消";
-  return "AI 正在生成市场简报";
+  return "正在基于素材包生成简报草稿";
 }
 
 function getPanelDescription(status: string, requestState: string) {
-  if (status === "succeeded") return "简报已保存，稍后会自动进入预览页。";
-  if (status === "failed") return "可在右侧任务操作中重新排队，再次启动生成。";
-  if (status === "cancelled") return "该任务不会继续生成，可重新排队后再次启动。";
-  if (requestState === "starting") return "正在启动 AI 生成流程，页面会自动刷新进度。";
-  return "页面会持续轮询任务状态，生成完成后自动跳转到预览页。";
+  if (status === "succeeded") return "草稿已保存，稍后会自动进入预览页，请人工复核后再使用。";
+  if (status === "failed") return "可在右侧任务操作中重新排队，再次生成草稿。";
+  if (status === "cancelled") return "该任务不会继续生成，可重新排队后再次生成草稿。";
+  if (requestState === "starting") return "正在启动素材包简报草稿生成流程，页面会自动刷新进度。";
+  return "页面会持续轮询任务状态，草稿生成完成后自动跳转到预览页。";
 }
 
 function getProgressBarClassName(status: string) {
@@ -282,15 +282,15 @@ function getStepIcon(index: number, currentIndex: number, status: string) {
 function getTerminalOutcome(status: string, previewUrl: string | null, errorMessage: string | null) {
   if (status === "succeeded") {
     return {
-      title: "生成完成",
-      description: previewUrl ? "生成完成，正在跳转预览页。" : "生成完成，可进入关联简报查看结果。",
+      title: "草稿生成完成",
+      description: previewUrl ? "草稿已生成，正在跳转预览页，请人工复核。" : "草稿已生成，可进入关联简报查看结果，请人工复核。",
       className: "border-emerald-200 bg-emerald-50 text-emerald-700"
     };
   }
 
   if (status === "failed") {
     return {
-      title: "生成失败",
+      title: "草稿生成失败",
       description: errorMessage ?? "请查看错误信息后重新排队。",
       className: "border-rose-200 bg-rose-50 text-rose-700"
     };

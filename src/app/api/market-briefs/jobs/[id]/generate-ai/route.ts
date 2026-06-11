@@ -15,8 +15,8 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const DEFAULT_AI_GENERATION_TIMEOUT_MS = 105_000;
-const AI_GENERATION_TIMEOUT_MESSAGE = "AI 生成耗时过长，请稍后重试。";
-const AI_GENERATION_TIMEOUT_PROGRESS_MESSAGE = "AI 生成超时，请重新排队后重试。";
+const AI_GENERATION_TIMEOUT_MESSAGE = "简报草稿生成耗时过长，请稍后重试。";
+const AI_GENERATION_TIMEOUT_PROGRESS_MESSAGE = "简报草稿生成超时，请重新排队后重试。";
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -62,7 +62,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
 
   if (job.status !== "queued" && job.status !== "running") {
-    return NextResponse.json({ error: "该任务状态不支持 AI 生成。", ...serializeMarketBriefJobStatus(job) }, { status: 409 });
+    return NextResponse.json({ error: "该任务状态不支持生成草稿。", ...serializeMarketBriefJobStatus(job) }, { status: 409 });
   }
 
   const currentProgress = getMarketBriefJobProgressFromPayload(job.request_payload, getFallbackProgressStage(job.status));
@@ -133,12 +133,12 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     await markFailedSafely(supabase, job.id, safeErrorMessage, generationError instanceof MarketBriefGenerationTimeoutError
       ? AI_GENERATION_TIMEOUT_PROGRESS_MESSAGE
-      : "AI 生成失败，请重新排队后重试。");
+      : "简报草稿生成失败，请重新排队后重试。");
 
     const failedJob = await readJobSafely(supabase, job.id);
     return NextResponse.json(
       {
-        error: "Failed to generate market brief.",
+        error: "Failed to generate market brief draft.",
         ...(failedJob ? serializeMarketBriefJobStatus(failedJob) : { status: "failed", progress: createFallbackFailedProgress() })
       },
       { status: 500 }
@@ -206,7 +206,7 @@ function createFallbackFailedProgress() {
   return {
     stage: "failed",
     percent: 100,
-    message: "生成失败",
+    message: "草稿生成失败",
     updated_at: new Date().toISOString()
   };
 }
@@ -287,14 +287,14 @@ function getSafeGenerationErrorMessage(error: unknown) {
 
   if (error instanceof Error && error.message.trim()) {
     const message = error.message.trim();
-    if (message.includes("AI 返回格式无法解析")) return "AI 返回格式无法解析，请重新生成。";
-    if (message.includes("AI 未返回市场简报内容")) return "AI 未返回市场简报内容，请重新生成。";
+    if (message.includes("AI 返回格式无法解析")) return "草稿生成返回格式无法解析，请重新生成。";
+    if (message.includes("AI 未返回市场简报内容")) return "草稿生成未返回市场简报内容，请重新生成。";
     if (message.includes("搜索") || message.includes("search") || message.includes("Tavily") || message.includes("Serper")) return message.slice(0, 500);
     if (message.includes("保存") || message.includes("Supabase") || message.includes("生成任务")) return message.slice(0, 500);
     return message.slice(0, 500);
   }
 
-  return "市场简报 AI 生成失败，请重新排队后重试。";
+  return "市场简报草稿生成失败，请重新排队后重试。";
 }
 
 function getAiGenerationTimeoutMs() {
