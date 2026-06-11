@@ -6,7 +6,7 @@ import { Badge, VisibilityBadge } from "@/components/badge";
 import { PageHeader } from "@/components/page-header";
 import { calendarEventTypes, getCalendarEventTypeLabel } from "@/lib/content-options";
 import type { CalendarEventRecord, CalendarEventType } from "@/lib/content-types";
-import { formatDateTime, formatRelative } from "@/lib/format";
+import { formatDateInputValue, formatDateTime, formatRelative, formatTime } from "@/lib/format";
 import { getCalendarEvents, getCalendarEventRelation, getCalendarRelationOptions } from "@/lib/queries/calendar";
 import { cn } from "@/lib/utils";
 
@@ -310,12 +310,7 @@ function getMonthKey(date: Date) {
 }
 
 function getMonthDayKey(date: Date) {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(date);
+  return formatDateInputValue(date);
 }
 
 function groupEventsByDate(events: CalendarEventRecord[]) {
@@ -338,21 +333,6 @@ function toShanghaiStartIso(dateKey: string) {
 
 function toShanghaiEndIso(dateKey: string) {
   return new Date(`${dateKey}T23:59:59+08:00`).toISOString();
-}
-
-function formatTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat("zh-CN", {
-    timeZone: "Asia/Shanghai",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  }).format(date);
 }
 
 function calendarHref({

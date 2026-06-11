@@ -3,6 +3,7 @@ import { AdminFormSection } from "@/components/admin-ui";
 import { MarketBriefMarkdownDraftButton } from "@/components/forms/market-brief-markdown-draft-button";
 import { marketBriefGenerationStatuses, marketBriefStatuses } from "@/lib/content-options";
 import type { MarketBriefRecord } from "@/lib/content-types";
+import { formatDateInputValue } from "@/lib/format";
 import { buildMarketBriefMarkdownDraft } from "@/lib/market-brief-markdown";
 import { marketBriefArrayToText, marketBriefContentFields } from "@/lib/market-briefs";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
@@ -121,10 +122,5 @@ export function MarketBriefForm({
 }
 
 function getTodayDate() {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(new Date());
+  return formatDateInputValue();
 }

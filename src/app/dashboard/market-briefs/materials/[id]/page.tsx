@@ -97,7 +97,7 @@ export default async function MarketBriefMaterialPackageDetailPage({
 
           <div className="min-w-0 space-y-5">
             <Card className="overflow-hidden">
-              <CardHeader title="素材包信息" />
+              <CardHeader title="素材包信息（北京时间）" />
               <div className="mb-4 flex flex-wrap gap-2">
                 <Badge className={getMarketBriefMaterialPackageStatusTone(materialPackage.status)}>
                   {getMarketBriefMaterialPackageStatusLabel(materialPackage.status)}
@@ -168,7 +168,7 @@ function SourceCard({ source }: { source: MarketBriefMaterialPackageSource }) {
         {source.source_type ? <Badge className="max-w-full break-all bg-emerald-50 text-emerald-700 ring-emerald-100">{source.source_type}</Badge> : null}
         <Badge className="bg-slate-50 text-slate-600 ring-slate-200">{source.relevance}</Badge>
         {source.publisher ? <span className="min-w-0 break-all text-xs font-medium text-slate-500">{source.publisher}</span> : null}
-        {source.published_at ? <span className="min-w-0 break-words text-xs text-slate-400">{source.published_at}</span> : null}
+        {source.published_at ? <span className="min-w-0 break-words text-xs text-slate-400">{formatSourcePublishedAt(source.published_at)}</span> : null}
       </div>
       <h2 className="min-w-0 break-words text-sm font-semibold text-slate-950">{source.title}</h2>
       <p className="mt-2 min-w-0 break-words text-sm leading-6 text-slate-600">{source.snippet}</p>
@@ -344,4 +344,8 @@ function getMaterialPackageDetailNotice(searchParams: Record<string, string | st
 
 function getSearchValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function formatSourcePublishedAt(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(value) : formatDateTime(value);
 }

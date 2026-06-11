@@ -60,7 +60,7 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
     throw new Error("未找到可用市场素材包，请先采集素材包后重新排队。");
   }
 
-  await input.onProgress?.("analyzing", "正在整理已保存素材包与来源...");
+  await input.onProgress?.("analyzing", "正在整理素材包来源与事实...");
   const aiConfig = getAiProviderConfig();
   const providerLabel = getAiProviderDisplayName(aiConfig.provider);
 

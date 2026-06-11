@@ -6,7 +6,7 @@ import { Card, CardHeader } from "@/components/card";
 import { Progress } from "@/components/progress";
 import { StatCard } from "@/components/stat-card";
 import { getCalendarEventTypeLabel, getMarketBriefStatusLabel, getPublicationTypeLabel, getResumeItemTypeLabel, getResumeTemplateLabel } from "@/lib/content-options";
-import { formatDate, formatDateTime, formatRelative } from "@/lib/format";
+import { formatDate, formatDateInputValue, formatDateTime, formatRelative } from "@/lib/format";
 import { profile, quickActions } from "@/lib/mock-data";
 import { getDashboardData } from "@/lib/queries/dashboard";
 import { getResumeItemDisplay } from "@/lib/resume-display";
@@ -278,8 +278,5 @@ function isToday(value: string | null | undefined) {
     return false;
   }
 
-  const date = new Date(value);
-  const now = new Date();
-
-  return date.toDateString() === now.toDateString();
+  return formatDateInputValue(value) === formatDateInputValue();
 }

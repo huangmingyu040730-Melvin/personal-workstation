@@ -99,7 +99,7 @@ export default async function MarketBriefMaterialPackagesPage({ searchParams }: 
                     <th className="px-3 py-3 font-semibold">来源</th>
                     <th className="px-3 py-3 font-semibold">Provider</th>
                     <th className="px-3 py-3 font-semibold">质量</th>
-                    <th className="px-3 py-3 font-semibold">采集时间</th>
+                    <th className="px-3 py-3 font-semibold">采集时间（北京时间）</th>
                     <th className="px-3 py-3 font-semibold">更新</th>
                     <th className="px-3 py-3 font-semibold">操作</th>
                   </tr>

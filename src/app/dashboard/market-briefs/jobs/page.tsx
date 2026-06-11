@@ -88,7 +88,7 @@ export default async function MarketBriefJobsPage({ searchParams }: { searchPara
                     <th className="px-3 py-3 font-semibold">来源模式</th>
                     <th className="px-3 py-3 font-semibold">生成简报</th>
                     <th className="px-3 py-3 font-semibold">错误</th>
-                    <th className="px-3 py-3 font-semibold">运行时间</th>
+                    <th className="px-3 py-3 font-semibold">运行时间（北京时间）</th>
                     <th className="px-3 py-3 font-semibold">创建</th>
                     <th className="px-3 py-3 font-semibold">操作</th>
                   </tr>

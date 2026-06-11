@@ -1,5 +1,6 @@
 import { Bot, Layers3 } from "lucide-react";
 import type { Skill } from "@/lib/types";
+import { formatDate } from "@/lib/format";
 import { StatusBadge, VisibilityBadge } from "./badge";
 import { Card } from "./card";
 
@@ -33,7 +34,7 @@ export function SkillCard({ skill }: { skill: Skill }) {
           <div className="text-xs text-slate-500">
             <span className="font-medium text-slate-700">{skill.version}</span>
             <span className="mx-2">·</span>
-            {skill.updatedAt}
+            {formatDate(skill.updatedAt)}
           </div>
           <VisibilityBadge visibility={skill.visibility} />
         </div>

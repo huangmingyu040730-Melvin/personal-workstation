@@ -50,6 +50,7 @@ export const calendarEventSchema = z
   });
 
 function toShanghaiIso(value: string) {
+  // Persist calendar form values as UTC/ISO; display conversion stays in src/lib/format.ts.
   if (/[zZ]|[+-]\d{2}:\d{2}$/.test(value)) {
     return new Date(value).toISOString();
   }

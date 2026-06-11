@@ -94,7 +94,7 @@ export default async function MarketBriefJobDetailPage({
             </Card>
 
             <Card>
-              <CardHeader title="任务信息" />
+              <CardHeader title="任务信息（北京时间）" />
               <div className="mb-4 flex flex-wrap gap-2">
                 <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
                 <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{job.market}</Badge>
