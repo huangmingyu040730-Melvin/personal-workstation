@@ -79,6 +79,7 @@ export function buildGroundingSourceSnapshotBase(input: MarketBriefGroundingCont
 function createEmptyGroundingFacts() {
   return {
     indices: [],
+    exchange_summary: {},
     market_breadth: {},
     sectors: [],
     hot_topics: [],
@@ -99,6 +100,7 @@ export function serializeGroundingSourcesForPrompt(sources: MarketBriefSearchSou
       `发布方：${source.publisher || "未知"}`,
       source.published_at ? `发布时间：${source.published_at}` : null,
       `URL：${source.url}`,
+      source.source_type ? `来源类型：${source.source_type}` : null,
       `检索 query：${source.query}`,
       `相关性：${source.relevance}`,
       `摘要：${source.snippet}`

@@ -9,6 +9,7 @@ export type MarketBriefSearchSource = {
   snippet: string;
   query: string;
   relevance: "high" | "medium" | "low";
+  source_type?: "official_exchange_summary" | "supplemental_search" | string;
 };
 
 export type MarketBriefSearchConfig = {
@@ -257,7 +258,8 @@ function normalizeSearchSources(values: Array<RawSearchResult & { query: string 
       published_at: value.published_at || null,
       snippet: truncateText(snippet, MAX_MARKET_BRIEF_SOURCE_SNIPPET_LENGTH),
       query: value.query,
-      relevance: getRelevance(value.score, title, snippet)
+      relevance: getRelevance(value.score, title, snippet),
+      source_type: "supplemental_search"
     });
 
     if (normalized.length >= limit) {

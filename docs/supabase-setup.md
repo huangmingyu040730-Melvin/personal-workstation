@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Phase 2L-B 新增 Market Brief artifact / Markdown 主内容、站内预览和多格式下载。Phase 2L-D-A 新增 Market Brief generation jobs / 生成任务记录。Phase 2M 后市场简报主路线为 AI-first 生成。Phase 2N-0 已移除旧外部 / Python runner API 与脚本。Phase 2N-A 新增每日市场研究素材包基础层。Phase 2N-B 后生成主链路默认读取 ready / partial / reviewed 素材包，生成阶段不再默认实时搜索，也没有新增 cron。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Phase 2L-B 新增 Market Brief artifact / Markdown 主内容、站内预览和多格式下载。Phase 2L-D-A 新增 Market Brief generation jobs / 生成任务记录。Phase 2M 后市场简报主路线为 AI-first 生成。Phase 2N-0 已移除旧外部 / Python runner API 与脚本。Phase 2N-A 新增每日市场研究素材包基础层。Phase 2N-B 后生成主链路默认读取 ready / partial / reviewed 素材包，生成阶段不再默认实时搜索，也没有新增 cron。Phase 2N-C1 手动素材包采集接入上交所 / 深交所官方 summary 总貌字段，不新增 migration、cron 或生产 AKShare / Eastmoney 依赖。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -37,7 +37,7 @@ AI_BASE_URL=https://api.deepseek.com
 AI_MODEL=deepseek-v4-flash
 ```
 
-`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`，也可在本地设置为 `mock` 做占位测试。AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 配置，并继续兼容旧 `OPENAI_API_KEY` / `OPENAI_MODEL`。`MARKET_BRIEF_SEARCH_PROVIDER` / `MARKET_BRIEF_SEARCH_API_KEY` 只用于采集素材包；Phase 2N-B 后，AI 生成阶段默认读取已保存素材包，不再默认实时搜索。未配置 `MARKET_BRIEF_SEARCH_API_KEY` 时不能采集新素材包，但已有 ready / partial / reviewed 素材包仍可用于生成。Phase 2N-0 后不再配置旧外部 runner secret 或本地 runner 数据模式；普通后台页面继续使用登录管理员身份和 RLS。
+`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`，也可在本地设置为 `mock` 做占位测试。AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 配置，并继续兼容旧 `OPENAI_API_KEY` / `OPENAI_MODEL`。`MARKET_BRIEF_SEARCH_PROVIDER` / `MARKET_BRIEF_SEARCH_API_KEY` 只用于素材包的 supplemental search；Phase 2N-C1 后，交易所总貌字段来自上交所 / 深交所官方公开 summary 接口，不需要 API key。AI 生成阶段默认读取已保存素材包，不再默认实时搜索。未配置 `MARKET_BRIEF_SEARCH_API_KEY` 时不能补充新闻 / 热点搜索来源，但官方 summary 采集仍可尝试运行，已有 ready / partial / reviewed 素材包仍可用于生成。Phase 2N-0 后不再配置旧外部 runner secret 或本地 runner 数据模式；普通后台页面继续使用登录管理员身份和 RLS。
 
 ## Auth 设置
 
@@ -61,7 +61,7 @@ AI_MODEL=deepseek-v4-flash
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。Phase 2L-A 合并后还需要执行 `0013_market_briefs.sql`。Phase 2L-B 合并后还需要执行 `0014_market_brief_artifacts.sql`。Phase 2L-D-A 合并后还需要执行 `0015_market_brief_generation_jobs.sql`。`0016_market_brief_runner_service_role_grants.sql` 是历史 runner 权限迁移文件，Phase 2N-0 不新增 migration，也不修改或重跑旧 migration。Phase 2N-A 合并后还需要执行 `0017_market_brief_material_packages.sql`。后续数据库变更应新增 `0018_*`，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。Phase 2L-A 合并后还需要执行 `0013_market_briefs.sql`。Phase 2L-B 合并后还需要执行 `0014_market_brief_artifacts.sql`。Phase 2L-D-A 合并后还需要执行 `0015_market_brief_generation_jobs.sql`。`0016_market_brief_runner_service_role_grants.sql` 是历史 runner 权限迁移文件，Phase 2N-0 不新增 migration，也不修改或重跑旧 migration。Phase 2N-A 合并后还需要执行 `0017_market_brief_material_packages.sql`。Phase 2N-C1 不新增 migration，继续复用 `market_brief_material_packages.source_snapshot`、`extracted_facts`、`warnings`、`source_notes` 和 `sources`。后续数据库变更应新增 `0018_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -457,6 +457,7 @@ Phase 2N-A 权限边界：
 - `/dashboard/market-briefs/materials`、素材包详情页和采集 API 仅限管理员后台访问，不进入公开页面、sitemap、viewer 或 restricted 内容页。
 - 素材包只保存公开来源元数据和安全错误信息，不保存搜索 API key、AI key、Supabase key、请求头、cookie、signed URL、Auth UUID 或 service role key。
 - Phase 2N-B 起，ready / partial / reviewed 素材包可驱动 AI 生成主链路；collecting / failed / archived 不可用于生成。
+- Phase 2N-C1 起，官方交易所 summary 结果写入同一张素材包表的 `sources`、`source_snapshot` 和 `extracted_facts.exchange_summary`；该阶段不新增表、不新增 RLS policy、不需要 AKShare、Eastmoney、runner secret 或 Supabase service role key。
 - 生成阶段没有可用素材包时，不调用搜索服务或 AI Provider，并提示管理员先采集素材包后重新排队。
 - 当前不新增 cron，不自动发布，不做股票推荐或投资建议。
 

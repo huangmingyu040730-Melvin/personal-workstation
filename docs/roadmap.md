@@ -191,11 +191,13 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 - Phase 2N-0：移除旧外部 / Python runner API 与脚本目录，不新增素材包、不新增 cron、不改 AI 生成主链路。
 - Phase 2N-A：新增每日市场研究素材包基础层，包括 `market_brief_material_packages`、手动采集 API、素材包列表和详情页；当前只沉淀公开市场资料，不改 AI 生成主链路，不新增 cron。
 - Phase 2N-B：默认生成路径改为读取 ready / partial / reviewed 素材包；没有可用素材包时不创建或不继续执行 AI 生成，不默认实时搜索，并保留人工编辑确认。
-- 后续 Phase 2N-C：完善素材包复核状态、来源质量评分和基于素材包的编辑确认工作流。
+- Phase 2N-C0：新增 diagnostics-only A-share data source probe，验证 AKShare、Eastmoney 和交易所官方直连源可用性，不接入生产链路。
+- Phase 2N-C1：手动素材包采集接入上交所 / 深交所官方 summary / overview 总貌字段，写入 `extracted_facts.exchange_summary`；Tavily 仍为 supplemental search，AKShare / Eastmoney 不作为生产依赖。
+- 后续 Phase 2N-C：完善市场宽度、行业板块、资金流、素材包复核状态、来源质量评分和基于素材包的编辑确认工作流。
 - 后续：扩展更可靠的可验证来源引用、授权数据供应商和来源质量评分。
 - 后续：扩展稳定交易日历刷新、来源审计和人工复核工作流。
 - 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。
-- 当前 2N-B 不做行情接口抓取、新闻爬虫、邮件、Notion、公开市场简报页、股票推荐、投资建议、自动发布或 cron；AI 和搜索 key 只在服务端读取，素材包与生成输出默认需要后台人工复核。
+- 当前 2N-C1 只做官方交易所总貌 summary，不做完整自动行情采集、新闻爬虫、邮件、Notion、公开市场简报页、股票推荐、投资建议、自动发布或 cron；AI 和搜索 key 只在服务端读取，素材包与生成输出默认需要后台人工复核。
 
 ### Phase 2L - Notion / Google Calendar / AI 辅助研究
 

@@ -1174,6 +1174,33 @@
 - 不恢复 external / Python / AkShare runner，不新增 cron，不新增外部依赖，不修改 Storage/RLS/历史 migration。
 - 不影响 Resume、Career、Calendar、Documents、Profile 或公开页面；不做股票推荐、投资建议、邮件、Notion 同步或自动发布。
 
+## 2026-06-11 - Add Official Exchange Summary Collectors
+
+类型：decision
+
+决策：
+
+- Phase 2N-C1 不新增 migration，继续复用 `market_brief_material_packages.source_snapshot`、`sources`、`extracted_facts`、`warnings` 和 `source_notes`。
+- 新增 `src/lib/market-brief-official-exchange-collectors.ts`，用 Node `fetch` 采集上交所每日股票情况、深交所市场总貌和深交所日度概况等官方 summary / overview 公开接口。
+- 手动素材包采集先运行官方交易所 collectors，再运行现有 `searchMarketBriefSources()` 作为 supplemental search；Tavily / Serper / custom search 只补充新闻、热点和政策线索，不作为行情事实来源。
+- 官方 summary sources 以 `source_type=official_exchange_summary` 写入素材包 sources，结构化字段写入 `extracted_facts.exchange_summary`，并在 source snapshot meta 中记录 collector status / latency / source id。
+- 素材包详情页新增“交易所总貌”摘要卡片，展示 SSE / SZSE 的日期、turnover、market value、listed count、source id 和 `verification_status=official_direct`；字段缺失时直接显示 warning。
+- 新采集素材包最多标记为 `partial`，因为 market breadth、sectors、capital flows 仍缺；后续人工 review 或更多 collector 才能提升完整性。
+- AI 生成 normalization 保留 `exchange_summary`，使基于素材包生成后的 `source_snapshot.extracted_facts.exchange_summary` 不被丢弃。
+
+原因：
+
+- Phase 2N-C0 证明官方上交所 / 深交所直连 summary 源对近期交易日和历史交易日的总貌字段更可用；相比 AKShare wrapper 和 Eastmoney fallback，更适合作为下一步素材包核心事实源。
+- 当前素材包只靠搜索来源，容易把新闻/网页检索结果误当行情事实；官方 summary 字段可以先补齐交易所总貌的可复核基础。
+- C1 仍不具备完整 A 股自动采集能力，必须明确保留 partial 和人工复核边界。
+
+影响：
+
+- 不接 AKShare 生产依赖，不接 Eastmoney 生产依赖，不恢复 external runner / Python runner / skill-result，不新增 cron，不新增 migration。
+- `MARKET_BRIEF_SEARCH_PROVIDER` / `MARKET_BRIEF_SEARCH_API_KEY` 只影响 supplemental search；官方 summary 采集不需要 API key 或 secret。
+- 生成主链路不变：仍由素材包驱动 AI 生成，缺失素材包时不调用 Tavily / AI。
+- 不影响 Resume、Career、Calendar、Documents、Profile 或公开页面；不做股票推荐、投资建议、自动发布、邮件或 Notion 同步。
+
 ## 2026-06-11 - Add Web Grounding To AI Market Brief Generation
 
 类型：decision

@@ -482,6 +482,7 @@ function normalizeExtractedFacts(sourceSnapshotInput: Record<string, unknown>) {
   const extractedFacts = asRecord(sourceSnapshotInput.extracted_facts);
   return {
     indices: Array.isArray(extractedFacts.indices) ? extractedFacts.indices : Array.isArray(sourceSnapshotInput.indices) ? sourceSnapshotInput.indices : [],
+    exchange_summary: asRecord(extractedFacts.exchange_summary ?? sourceSnapshotInput.exchange_summary),
     market_breadth: asRecord(extractedFacts.market_breadth ?? sourceSnapshotInput.market_breadth),
     sectors: Array.isArray(extractedFacts.sectors) ? extractedFacts.sectors : Array.isArray(sourceSnapshotInput.sectors) ? sourceSnapshotInput.sectors : [],
     hot_topics: Array.isArray(extractedFacts.hot_topics) ? extractedFacts.hot_topics : Array.isArray(sourceSnapshotInput.hot_topics) ? sourceSnapshotInput.hot_topics : [],
@@ -496,6 +497,7 @@ function normalizeExtractedFactsForGrounding(grounding: MarketBriefGroundingCont
   if (Object.keys(groundingFacts).length > 0) {
     return {
       indices: Array.isArray(groundingFacts.indices) ? groundingFacts.indices : [],
+      exchange_summary: asRecord(groundingFacts.exchange_summary),
       market_breadth: asRecord(groundingFacts.market_breadth),
       sectors: Array.isArray(groundingFacts.sectors) ? groundingFacts.sectors : [],
       hot_topics: Array.isArray(groundingFacts.hot_topics) ? groundingFacts.hot_topics : [],

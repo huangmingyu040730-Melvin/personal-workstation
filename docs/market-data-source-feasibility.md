@@ -74,3 +74,13 @@ AKShare should not be adopted as the core collection source yet. It is useful as
 Eastmoney should remain an optional fallback probe only. Prior lock/block behavior means it cannot be the sole basis for a `ready` material package conclusion.
 
 If official-source repeat checks fail or field coverage stays incomplete, the safer next phase is manual entry / CSV import for exchange summary tables, then AI generation from reviewed material packages.
+
+## Phase 2N-C1 Adoption
+
+Phase 2N-C1 promotes only the official SSE / SZSE summary and overview probes into the manual material package collection flow. The implementation uses Node `fetch`, not Python, AKShare, or Eastmoney, and writes results into existing `market_brief_material_packages.source_snapshot`, `sources`, `extracted_facts.exchange_summary`, `warnings`, and `source_notes`.
+
+The collector records official summary sources as `source_type=official_exchange_summary`. Tavily / Serper / custom search remains supplemental search for news and topic context only; it is not treated as a market facts source.
+
+Newly collected packages remain at most `partial` because market breadth, sector performance, and capital flow coverage are still missing. A package can still be used for AI generation, but the generated output keeps `needs_review` / `ai_grounded_partial` semantics and must preserve `exchange_summary` in `source_snapshot.extracted_facts`.
+
+Phase 2N-C1 does not add cron, migrations, secrets, AKShare production dependency, Eastmoney production dependency, investment advice, stock recommendations, or automatic publishing.
