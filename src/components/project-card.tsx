@@ -1,4 +1,5 @@
 import type { Project } from "@/lib/types";
+import { formatDate } from "@/lib/format";
 import { StatusBadge, VisibilityBadge } from "./badge";
 import { Card } from "./card";
 import { Progress } from "./progress";
@@ -26,7 +27,7 @@ export function ProjectCard({ project }: { project: Project }) {
         ))}
       </div>
       <div className="mt-auto flex items-center justify-between pt-5">
-        <span className="text-xs text-slate-500">更新于 {project.updatedAt}</span>
+        <span className="text-xs text-slate-500">更新于 {formatDate(project.updatedAt)}</span>
         <VisibilityBadge visibility={project.visibility} />
       </div>
     </Card>

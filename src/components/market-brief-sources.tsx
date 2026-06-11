@@ -1,4 +1,5 @@
 import type { MarketBriefRecord } from "@/lib/content-types";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 type MarketBriefSource = {
   id: string;
@@ -28,7 +29,7 @@ export function MarketBriefSources({ brief }: { brief: Pick<MarketBriefRecord, "
             <article key={source.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-blue-700">[{source.id}] {source.publisher || "未知来源"}{source.published_at ? ` · ${source.published_at}` : ""}</p>
+                  <p className="text-xs font-semibold text-blue-700">[{source.id}] {source.publisher || "未知来源"}{source.published_at ? ` · ${formatSourcePublishedAt(source.published_at)}` : ""}</p>
                   <a href={source.url} target="_blank" rel="noreferrer" className="mt-1 block text-sm font-semibold leading-6 text-slate-950 hover:text-blue-700">
                     {source.title}
                   </a>
@@ -81,4 +82,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function asText(value: unknown) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function formatSourcePublishedAt(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(value) : formatDateTime(value);
 }

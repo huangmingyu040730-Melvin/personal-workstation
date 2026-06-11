@@ -23,6 +23,7 @@ function parseExpiresAt(value: string | null) {
     return "invalid";
   }
 
+  // Store grants as UTC/ISO; display conversion stays in src/lib/format.ts.
   return parsed.toISOString();
 }
 

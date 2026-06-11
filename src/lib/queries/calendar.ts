@@ -1,4 +1,5 @@
 import type { CalendarEventRecord, CalendarEventType } from "@/lib/content-types";
+import { formatDateInputValue } from "@/lib/format";
 import { todayItems } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 import type { Visibility } from "@/lib/types";
@@ -23,11 +24,11 @@ export type CalendarEventRelationOptions = {
 };
 
 function mockCalendarFallback(): CalendarEventRecord[] {
-  const today = new Date();
+  const todayKey = formatDateInputValue();
 
   return todayItems.map((item, index) => {
-    const startsAt = new Date(today);
-    startsAt.setHours(9 + index * 2, 0, 0, 0);
+    const hour = String(9 + index * 2).padStart(2, "0");
+    const startsAt = new Date(`${todayKey}T${hour}:00:00+08:00`);
 
     return {
       id: item.id,
@@ -43,6 +44,7 @@ function mockCalendarFallback(): CalendarEventRecord[] {
       skill_id: null,
       visibility: item.visibility === "public" ? "public" : "private",
       owner_id: null,
+      // Storage fallback mirrors database UTC/ISO timestamps; UI formatting happens in src/lib/format.ts.
       created_at: startsAt.toISOString(),
       updated_at: startsAt.toISOString()
     };
@@ -58,6 +60,7 @@ export async function getCalendarEvents(filters?: CalendarFilters) {
 
   let query = supabase.from("calendar_events").select("*").order("starts_at", { ascending: true });
 
+  // Supabase range filters stay in UTC/ISO; user-facing display is normalized separately.
   const now = new Date();
 
   if (filters?.startsAfter) {
@@ -123,6 +126,7 @@ export async function getUpcomingCalendarEvents(limit = 5) {
   const { data, error } = await supabase
     .from("calendar_events")
     .select("*")
+    // Supabase range filters stay in UTC/ISO; user-facing display is normalized separately.
     .gte("starts_at", new Date().toISOString())
     .order("starts_at", { ascending: true })
     .limit(limit);
