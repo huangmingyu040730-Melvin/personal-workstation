@@ -79,25 +79,25 @@ export default async function MarketBriefJobDetailPage({
           initialErrorMessage={job.error_message}
         />
 
-        <div className="grid gap-5 xl:grid-cols-[1fr_0.4fr]">
-          <div className="space-y-5">
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+          <div className="min-w-0 space-y-5">
             <JsonCard title="Request Payload" value={job.request_payload} />
             <JsonCard title="Source Snapshot" value={job.source_snapshot} />
             <JsonCard title="Result Payload" value={job.result_payload} />
           </div>
 
-          <div className="space-y-5">
-            <Card>
+          <div className="min-w-0 space-y-5">
+            <Card className="min-w-0 overflow-hidden">
               <CardHeader title="下一步" />
-              <p className={`text-sm leading-6 ${job.status === "failed" ? "text-rose-700" : "text-slate-600"}`}>{getJobNextStep(job.status, job.error_message)}</p>
+              <p className={`min-w-0 break-words text-sm leading-6 ${job.status === "failed" ? "text-rose-700" : "text-slate-600"}`}>{getJobNextStep(job.status, job.error_message)}</p>
               <JobManagementActions jobId={job.id} status={job.status} returnTo={`/dashboard/market-briefs/jobs/${job.id}`} />
             </Card>
 
-            <Card>
+            <Card className="min-w-0 overflow-hidden">
               <CardHeader title="任务信息（北京时间）" />
-              <div className="mb-4 flex flex-wrap gap-2">
+              <div className="mb-4 flex min-w-0 flex-wrap gap-2">
                 <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
-                <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{job.market}</Badge>
+                <Badge className="max-w-full break-all bg-blue-50 text-blue-700 ring-blue-100">{job.market}</Badge>
                 {groundingMode === "material_package" ? <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-100">素材包生成</Badge> : null}
                 {isHistoricalJob(job) ? (
                   <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-100">历史补生成</Badge>
@@ -119,31 +119,31 @@ export default async function MarketBriefJobDetailPage({
               </dl>
             </Card>
 
-            <Card>
+            <Card className="min-w-0 overflow-hidden">
               <CardHeader title="素材包" />
               {materialPackageId ? (
-                <Link href={`/dashboard/market-briefs/materials/${materialPackageId}`} className="block rounded-2xl border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
+                <Link href={`/dashboard/market-briefs/materials/${materialPackageId}`} className="block min-w-0 break-all rounded-2xl border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
                   查看素材包：{materialPackageId}
                 </Link>
               ) : (
-                <p className="text-sm leading-6 text-slate-500">该任务没有记录素材包 ID，可能是历史任务。</p>
+                <p className="min-w-0 break-words text-sm leading-6 text-slate-500">该任务没有记录素材包 ID，可能是历史任务。</p>
               )}
             </Card>
 
-            <Card>
+            <Card className="min-w-0 overflow-hidden">
               <CardHeader title="关联简报" action={<FileText size={18} className="text-blue-700" />} />
               {job.market_briefs ? (
-                <Link href={`/dashboard/market-briefs/${job.market_briefs.id}`} className="block rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-50">
+                <Link href={`/dashboard/market-briefs/${job.market_briefs.id}`} className="block min-w-0 break-words rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-50">
                   {job.market_briefs.title}
                 </Link>
               ) : (
-                <p className="text-sm leading-6 text-slate-500">暂无关联市场简报。</p>
+                <p className="min-w-0 break-words text-sm leading-6 text-slate-500">暂无关联市场简报。</p>
               )}
             </Card>
 
-            <Card>
+            <Card className="min-w-0 overflow-hidden">
               <CardHeader title="错误信息" />
-              <p className={job.error_message ? "text-sm leading-6 text-rose-700" : "text-sm leading-6 text-slate-500"}>
+              <p className={job.error_message ? "min-w-0 break-words text-sm leading-6 text-rose-700" : "text-sm leading-6 text-slate-500"}>
                 {job.error_message ?? "暂无错误。"}
               </p>
             </Card>
@@ -156,9 +156,9 @@ export default async function MarketBriefJobDetailPage({
 
 function JsonCard({ title, value }: { title: string; value: Record<string, unknown> }) {
   return (
-    <Card>
+    <Card className="min-w-0 overflow-hidden">
       <CardHeader title={title} />
-      <pre className="max-h-[520px] overflow-auto rounded-2xl bg-slate-950 p-4 text-xs leading-5 text-slate-100">
+      <pre className="max-h-[520px] max-w-full overflow-x-auto overflow-y-auto rounded-2xl bg-slate-950 p-4 text-xs leading-5 text-slate-100">
         {JSON.stringify(value ?? {}, null, 2)}
       </pre>
     </Card>
@@ -167,9 +167,9 @@ function JsonCard({ title, value }: { title: string; value: Record<string, unkno
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4 rounded-2xl bg-slate-50 p-3">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="text-right font-medium text-slate-800">{value}</dd>
+    <div className="flex min-w-0 justify-between gap-4 rounded-2xl bg-slate-50 p-3">
+      <dt className="shrink-0 text-slate-500">{label}</dt>
+      <dd className="min-w-0 break-words text-right font-medium text-slate-800">{value}</dd>
     </div>
   );
 }
