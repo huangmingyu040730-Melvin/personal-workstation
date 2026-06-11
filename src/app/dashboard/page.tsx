@@ -1,4 +1,4 @@
-import { BookOpen, CalendarCheck, ClipboardCheck, FileText, FileUser, FolderKanban, Sparkles } from "lucide-react";
+import { Archive, BookOpen, BriefcaseBusiness, CalendarCheck, ClipboardCheck, FileText, FolderKanban, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
@@ -27,7 +27,7 @@ export default async function DashboardPage() {
           <div>
             <p className="text-sm font-semibold text-blue-700">个人研究与 AI 工作台</p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-950 md:text-4xl">你好，{profile.name}</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">维护公开研究主页、真实内容库、私密文件中心与访问审批。Projects、Knowledge、Skills 与 Publications 已接入 Supabase 真实数据。</p>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">维护公开研究主页、研究资产、私密文件中心、知识库与求职闭环。Projects、Knowledge、Skills、Publications、Documents、Calendar 与 Career 已作为当前稳定工作台主线。</p>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
             <Link href="/dashboard/projects/new" className="rounded-2xl bg-navy-900 px-4 py-3 text-center font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-800">新建项目</Link>
@@ -37,13 +37,14 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <StatCard label="近期日程" value={String(data.upcomingCalendarEvents.length)} helper="未来即将开始的站内日程" icon={CalendarCheck} />
-        <StatCard label="今日日程" value={String(data.upcomingCalendarEvents.filter((event) => isToday(event.starts_at)).length)} helper="基于 calendar_events 真实数据" icon={CalendarCheck} />
-        <StatCard label="进行中项目" value={String(data.inProgressProjects.length)} helper={`项目总数 ${data.projects.length}`} icon={FolderKanban} />
-        <StatCard label="已收录成果" value={String(data.publicationStats.total)} helper={`公开 ${data.publicationStats.publicCount} · 精选 ${data.publicationStats.featuredCount}`} icon={FileText} />
-        <StatCard label="可用 Skill" value={String(data.availableSkillCount)} helper={`Skill 总数 ${data.skills.length}`} icon={Sparkles} />
-        <StatCard label="简历素材" value={String(data.resumeStats.total)} helper={`版本 ${data.resumeVersionStats.total} · 启用 ${data.resumeVersionStats.active}`} icon={FileUser} />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
+        <StatCard label="站内日程" value={String(data.upcomingCalendarEvents.length)} helper={`今日 ${data.upcomingCalendarEvents.filter((event) => isToday(event.starts_at)).length} · 近期事项`} icon={CalendarCheck} />
+        <StatCard label="研究项目" value={String(data.projects.length)} helper={`进行中 ${data.inProgressProjects.length}`} icon={FolderKanban} />
+        <StatCard label="知识文章" value={String(data.publicCounts.knowledge)} helper="公开可浏览知识内容" icon={BookOpen} />
+        <StatCard label="Skill 库" value={String(data.availableSkillCount)} helper={`公开 ${data.publicCounts.skills} · 可用 Skill`} icon={Sparkles} />
+        <StatCard label="学术成果" value={String(data.publicationStats.total)} helper={`公开 ${data.publicationStats.publicCount} · 精选 ${data.publicationStats.featuredCount}`} icon={FileText} />
+        <StatCard label="私密文件" value={String(data.documentCount)} helper="Documents 私密资产" icon={Archive} />
+        <StatCard label="求职闭环" value={String(data.resumeVersionStats.total)} helper={`素材 ${data.resumeStats.total} · 启用 ${data.resumeVersionStats.active}`} icon={BriefcaseBusiness} />
       </div>
 
       <AdminSection title="公开内容质量提示" description="公开内容越完整，公开研究工作站越适合分享给外部访客。">

@@ -1,6 +1,6 @@
 # Current Status
 
-日期：2026-06-11
+日期：2026-06-12
 
 ## Product Positioning
 
@@ -15,7 +15,7 @@
 3. 私密文件中心。
 4. 访问申请与审批。
 5. restricted 内容授权基础。
-6. 未来可继续扩展 Viewer 受限访问、Calendar、自动化、Notion / Google Calendar 等能力。
+6. 研究资产沉淀、公开展示、文件 / 知识管理和求职闭环维护。
 
 ## Completed Capabilities
 
@@ -62,12 +62,15 @@
 - Resume JD 分析历史与投递记录。
 - Resume 投递看板与求职 Pipeline 管理。
 - Career Center / 求职中心导航整合。
+- AI JD 分析完成后自动保存为 JD 分析记录，并在求职中心继续维护投递状态。
 - Resume Word `.docx` 即时导出。
 - Resume Preview 与 Word 导出共用 20260523 风格模板模型。
 - 管理后台 UI 已优化。
 - 后台新建 / 编辑 / 上传 / 授权页已调整为更平衡的工作台布局。
 
 后台仍只允许管理员访问。后台写入继续通过 Server Actions 验证管理员身份，并依赖 Supabase RLS 作为数据库权限边界。
+
+Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Calendar、Career、Profile、Access Requests 和 Access Grants；Market Brief 已弃用并移除产品入口；求职中心后续只做 bugfix、文案修正和 broken link 修复，不主动扩展新的求职自动化功能。
 
 ### Documents And Storage
 
@@ -185,52 +188,18 @@ Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行�
 
 - Phase 2I: Viewer login and restricted access stabilization
 
-## Next Recommended Phases
+## Stabilization Direction
 
-### Phase 2I - Viewer 登录与 restricted 访问专项修复
+Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有工作台”：
 
-目标：
+- 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系。
+- 公开展示：保持公开首页、About、Projects、Publications、Knowledge 和 Skills 的只读展示稳定。
+- 文件 / 知识管理：继续维护 Documents 私密文件中心和 Knowledge Base，不开放公开附件下载。
+- 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
+- 受限访问：Viewer magic link 和 restricted 访问可作为独立 bugfix 专项处理，但不得开放 Documents 或 signed URL。
 
-- 稳定 viewer magic link。
-- 验证授权邮箱登录。
-- 验证 restricted 内容只读访问。
-- 验证撤销授权后失效。
-- 确认 viewer 不能进后台。
-- 不开放 Documents 附件。
+不主动推进：
 
-### Phase 2J - Calendar / Profile 基础能力
-
-目标：
-
-- Profile 真实编辑已完成。
-- Calendar 站内 CRUD 已完成。
-- Dashboard 近期日程已接入。
-- Google Calendar 同步与提醒系统尚未实现。
-
-### Phase 2K - Resume 履历素材库与简历生成
-
-目标：
-
-- Phase 2K-A：Resume 履历素材库，维护教育、实习、项目、研究、Skill、证书和奖项等结构化素材。
-- Phase 2K-B：简历版本组合生成与后台预览。
-- Phase 2K-C：分区式素材管理、A4 中文简历模板化预览与浏览器打印 PDF。
-- Phase 2K-D：规则化简历质量检查、完整度评分、缺失项提示和投递方向提醒。
-- Phase 2K-E：AI JD 简历优化建议。
-- Phase 2K-F：Word `.docx` 即时导出。
-- Phase 2K-G：Preview 与 Word 导出对齐到 20260523 风格模板。
-- Phase 2K-H：JD 分析历史与投递记录。
-- Phase 2K-I：投递看板与求职 Pipeline 管理。
-- Phase 2K-J：Career Center / 求职中心导航整合。
-- Hotfix：AI JD 页面“版本内容概览”和模型输入复用统一 Resume AI 输入模型。
-
-Phase 2K-A 当前新增 `resume_items` 数据模型和后台 `/dashboard/resume` 管理入口。Phase 2K-B 新增 `resume_versions`、`resume_version_items` 和 `/dashboard/resume/versions` 管理入口，用于组合素材、排序、分区和后台预览。Phase 2K-C 进一步补充 `resume_items.details`、`resume_versions.profile_fields`、`resume_versions.section_order`、`resume_versions.template_options` 和 `resume_version_items.visible_fields`，把素材库从混合条目列表升级为按个人信息、教育、实习、在校、项目、研究、技能等区块维护，并将预览页调整为更接近上传 PDF 的中文 A4 简历排版。Phase 2K-D 新增基于规则的简历质量检查，检查姓名、联系方式、教育、实习、项目/研究、技能、目标岗位、bullet 数量、量化表达和一页过长风险。Phase 2K-E 新增 `/dashboard/resume/versions/[id]/jd-review`，管理员可粘贴目标岗位 JD 并获取 AI 生成的匹配摘要、关键词差距、经历强化建议和 bullet 改写草稿；该能力通过 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 支持 DeepSeek 等 OpenAI-compatible Provider，并继续兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`。Hotfix 新增 `src/lib/resume-ai-input.ts`，复用 `resume-template-model` 生成 AI JD 输入和页面“版本内容概览”，避免教育、实习、项目、研究、技能等结构化字段被旧摘要逻辑漏掉；AI JD 分析只发送当前版本已选且可见的 Profile/basic 与正文素材、目标岗位设置和 JD，不发送 Documents、Storage 路径、signed URL、Access Requests 或 Access Grants，也不会自动覆盖原始简历数据。Phase 2K-F 新增 `/dashboard/resume/versions/[id]/export/docx`，管理员可即时下载 Word `.docx` 简历；导出只包含当前版本已选并展示的素材，尊重顶部个人字段开关和逐条素材可见字段，不写入 Storage、不创建长期下载链接、不新增 migration。Phase 2K-G 新增统一 `resume-template-model`，让 A4 Preview 和 Word 导出共享同一套 20260523 风格模板结构，包括照片位置、模块标题视觉符号、左侧时间列、右侧学校/公司/项目内容和正式简历条目布局。Phase 2K-H 新增 `/dashboard/resume/jd-reviews`，管理员可以保存 AI JD 分析结果、公司/岗位、关键词缺口、风险、下一步行动和投递状态，并在简历版本详情页查看最近记录；分析历史为后台私密数据，不自动修改 Resume Items 或 Resume Versions。Phase 2K-I 新增 `/dashboard/resume/applications` 投递看板，基于 `resume_jd_reviews.application_status` 按状态分组展示求职 pipeline，提供看板视图、列表视图、公司/岗位搜索、状态/版本/方向/渠道筛选、快速改状态和投递统计；该页面仍为后台私密数据，不展示 JD 原文，不自动投递，不发送邮件，不读取 Documents / Storage，不新增 migration。Phase 2K-J 新增 `/dashboard/career` 求职中心首页，侧边栏只保留一个“求职中心”入口，并通过统一 Career tabs 进入 `/dashboard/resume`、`/dashboard/resume/versions`、`/dashboard/resume/applications` 和 `/dashboard/resume/jd-reviews`；原有子模块路径保持兼容，不新增 migration。
-
-### Phase 2L - Notion / Google Calendar / AI 辅助研究
-
-目标：
-
-- Notion 辅助同步。
-- Google Calendar 集成。
-- AI 摘要。
-- 项目阶段总结。
-- 文件和知识自动关联。
+- Market Brief / 市场简报模块。
+- 新的求职自动化，如面试记录、自动提醒、投递邮件、Notion 同步或自动投递。
+- 新增 cron、migration 或 AI 生成产品线。
