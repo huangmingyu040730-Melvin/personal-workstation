@@ -50,6 +50,7 @@
 - Knowledge 后台 CRUD。
 - Skills 后台 CRUD。
 - Documents 文件中心。
+- Documents 文档包、多文件 / 文件夹上传与统一私密附件底座。
 - Access Requests 访问申请管理。
 - Access Grants 授权管理基础。
 - Profile 个人公开信息编辑基础。
@@ -78,15 +79,20 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 
 - private Supabase Storage bucket：`workspace-files`。
 - 管理员上传。
+- 多文件上传。
+- 文件夹上传 metadata。
 - 管理员下载。
 - signed URL 短时下载。
-- 文件关联 Publication / Project / Skill。
+- 文件关联 Publication / Project / Knowledge / Skill。
+- `document_collections` 文档包记录上传批次、文件夹、附件包或 Skill 包。
+- `documents.relative_path` / `documents.folder_path` 保存文件夹上传的相对路径信息。
+- 单文件最大 50 MB；批量 / 文件夹上传单次最多 100 个文件，总量 200 MB。
 - Publication 有附件时禁止直接删除。
 - 公开页面不展示 Documents。
 - 公开页面不展示 signed URL。
 - 公开页面不展示 Storage 路径。
 
-文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 不对外开放。
+文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。
 
 ### Access Requests
 
@@ -170,6 +176,12 @@ Phase 2K-H 合并后需要继续执行：
 
 0013 至 0017 是已保留的旧迁移。当前产品代码不再依赖这些旧表；本轮不修改历史 migration，也不新增 drop table migration。
 
+Phase 2P-A 新增 Documents 文档包与文件夹上传能力后需要继续执行：
+
+- `0018_document_collections_and_folder_uploads.sql`
+
+`0018` 创建 `document_collections`，为 `documents` 增加 `collection_id`、`original_name`、`relative_path`、`folder_path`，扩展 `workspace-files` bucket 的文件大小上限与 MIME 白名单。该 migration 不公开附件、不修改历史 migration、不放宽 Storage/RLS。
+
 规则：
 
 - 已执行过的 migration 不应修改。
@@ -194,7 +206,7 @@ Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有
 
 - 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系。
 - 公开展示：保持公开首页、About、Projects、Publications、Knowledge 和 Skills 的只读展示稳定。
-- 文件 / 知识管理：继续维护 Documents 私密文件中心和 Knowledge Base，不开放公开附件下载。
+- 文件 / 知识管理：Documents 作为统一私密附件底座，服务 Projects、Publications、Knowledge 和 Skills；Knowledge Base 继续维护内容本身，不开放公开附件下载。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 受限访问：Viewer magic link 和 restricted 访问可作为独立 bugfix 专项处理，但不得开放 Documents 或 signed URL。
 

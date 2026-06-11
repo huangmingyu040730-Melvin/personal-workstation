@@ -330,13 +330,13 @@
 原因：
 
 - Next.js Server Actions 默认请求体限制约 1 MB。
-- Vercel Function request/response payload 限制无法可靠承载 20 MB 文件。
+- Vercel Function request/response payload 限制无法可靠承载大文件。
 - 浏览器直传 Supabase Storage 可以绕开 Vercel Function payload 限制，同时保持 Auth + RLS + Storage policy 的权限边界。
 
 影响：
 
 - Server Actions 只接收文件名、MIME type、大小和业务 metadata，不接收完整 File。
-- 20 MB 上限由客户端预检、服务端 metadata 校验、bucket 文件大小限制和 Storage policy 共同保障。
+- 当时的 20 MB 上限由客户端预检、服务端 metadata 校验、bucket 文件大小限制和 Storage policy 共同保障；Phase 2P-A 通过 0018 将当前单文件上限提升到 50 MB。
 - finalize 失败时会尽力删除刚上传的 Storage 对象，减少未登记对象残留。
 
 ## 2026-06-04 - Reposition As Public Research Workstation And Private Admin Backend
@@ -964,3 +964,31 @@
 - 通用 AI Provider 配置继续保留给 Resume JD 分析。
 - 不推荐任何 `MARKET_BRIEF_*` 环境变量。
 - 不修改历史 migrations，不新增 drop table migration，不改变 Supabase RLS 或 Storage 边界。
+
+## 2026-06-12 - Use Documents As Unified Private Attachment Base
+
+类型：decision
+
+决策：
+
+- Phase 2P-A 将 Documents 升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
+- 新增 `public.document_collections` 表，用于表示一次上传批次、文件夹、附件包或 Skill 包。
+- `public.documents` 新增 `collection_id`、`original_name`、`relative_path` 和 `folder_path`，用于保留多文件 / 文件夹上传的目录信息。
+- `documents.related_type` 扩展支持 `knowledge`，与 `publication`、`project`、`skill` 保持同级。
+- 上传继续采用两阶段浏览器直传 Supabase Storage：Server Action 只负责管理员验证、metadata 校验、安全路径生成和 finalize 写库，文件二进制不经过 Vercel Function。
+- `workspace-files` 仍是 private bucket；单文件上限提升到 50 MB，批次限制为 100 个文件 / 200 MB。
+- 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。
+- 明确不支持 exe、dmg、app、msi、bat、cmd；上传的代码和 Skill 包只作为私密文件存储，不执行、不解析、不安装。
+
+原因：
+
+- Documents 应成为整个个人工作台的统一附件层，避免 Project、Publication、Knowledge 和 Skill 各自重复实现文件系统。
+- 研究资料常以文件夹、数据包、Notebook、代码和压缩包形式出现，单文件上传不足以承载真实研究资产。
+- 统一 collection 层可以先在文件中心验证批量/文件夹能力，后续再按需把入口嵌入各模块详情页。
+
+影响：
+
+- 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`；不修改历史 migration。
+- 本阶段不公开附件，不生成公开下载链接，不做批量 zip 下载、OCR、文件内容索引或 AI 总结。
+- 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。
+- Documents 和 Storage 继续只允许管理员通过短时 signed URL 下载，即使关联对象本身是 public。

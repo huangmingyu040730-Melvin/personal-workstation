@@ -1,4 +1,4 @@
-import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentRelatedType, ProjectStatus, PublicationType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
+import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentCollectionType, DocumentRelatedType, ProjectStatus, PublicationType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -60,7 +60,15 @@ export const documentCategories: Array<{ value: DocumentCategory; label: string 
 export const documentRelatedTypes: Array<{ value: DocumentRelatedType; label: string }> = [
   { value: "publication", label: "学术成果" },
   { value: "project", label: "研究项目" },
+  { value: "knowledge", label: "知识文章" },
   { value: "skill", label: "Skill" }
+];
+
+export const documentCollectionTypes: Array<{ value: DocumentCollectionType; label: string }> = [
+  { value: "folder_upload", label: "文件夹上传" },
+  { value: "attachment_bundle", label: "附件包" },
+  { value: "skill_package", label: "Skill 包" },
+  { value: "general_batch", label: "通用批次" }
 ];
 
 export const accessRequestContentTypes: Array<{ value: AccessRequestContentType; label: string }> = [
@@ -144,6 +152,10 @@ export function getDocumentCategoryLabel(value: string | null | undefined) {
 
 export function getDocumentRelatedTypeLabel(value: string | null | undefined) {
   return documentRelatedTypes.find((item) => item.value === value)?.label ?? "未关联";
+}
+
+export function getDocumentCollectionTypeLabel(value: string | null | undefined) {
+  return documentCollectionTypes.find((item) => item.value === value)?.label ?? "通用批次";
 }
 
 export function getAccessRequestContentTypeLabel(value: string | null | undefined) {

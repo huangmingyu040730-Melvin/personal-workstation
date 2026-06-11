@@ -4,7 +4,8 @@ export type ProjectStatus = "planning" | "in_progress" | "completed" | "archived
 export type SkillStatus = "idea" | "developing" | "testing" | "available" | "archived";
 export type PublicationType = "research_report" | "academic_paper" | "strategy_report" | "market_analysis" | "data_analysis" | "meeting_notes" | "reading_review" | "other";
 export type DocumentCategory = "research_material" | "publication_attachment" | "data_file" | "final_report" | "meeting_material" | "skill_attachment" | "other";
-export type DocumentRelatedType = "publication" | "project" | "skill";
+export type DocumentRelatedType = "publication" | "project" | "skill" | "knowledge";
+export type DocumentCollectionType = "folder_upload" | "attachment_bundle" | "skill_package" | "general_batch";
 export type AccessRequestStatus = "pending" | "approved" | "rejected";
 export type AccessRequestContentType = "project" | "publication" | "skill" | "knowledge" | "other";
 export type AccessGrantStatus = "active" | "revoked";
@@ -109,6 +110,10 @@ export type DocumentRecord = {
   storage_path: string;
   file_size: number;
   mime_type: string;
+  collection_id: string | null;
+  original_name: string | null;
+  relative_path: string | null;
+  folder_path: string | null;
   related_type: DocumentRelatedType | null;
   related_id: string | null;
   visibility: Visibility;
@@ -117,7 +122,32 @@ export type DocumentRecord = {
   updated_at: string;
 };
 
+export type DocumentCollectionRecord = {
+  id: string;
+  owner_id: string | null;
+  title: string;
+  description: string | null;
+  collection_type: DocumentCollectionType;
+  related_type: DocumentRelatedType | null;
+  related_id: string | null;
+  root_folder_name: string | null;
+  file_count: number;
+  total_size: number;
+  visibility: Visibility;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DocumentWithRelation = DocumentRecord & {
+  related?: {
+    type: DocumentRelatedType;
+    title: string;
+    href: string;
+  } | null;
+  collection?: Pick<DocumentCollectionRecord, "id" | "title" | "collection_type" | "root_folder_name" | "file_count" | "total_size"> | null;
+};
+
+export type DocumentCollectionWithRelation = DocumentCollectionRecord & {
   related?: {
     type: DocumentRelatedType;
     title: string;

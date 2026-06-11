@@ -9,7 +9,7 @@
 网站同时承担：
 
 - 对外公开展示研究方向、公开项目、学术成果、知识文章和 AI Skill。
-- 对内管理全部项目、知识、成果、文件、日程、访问申请与授权基础。
+- 对内管理全部项目、知识、成果、统一私密附件、日程、访问申请与授权基础。
 - 维护求职中心 / Resume / AI JD / 投递看板的闭环，但后续只做 bugfix 和必要文案修正。
 
 Notion 可作为草稿、临时研究笔记、日常记录和自动化中间层，但正式公开门户、权限系统、私密资产库和统一浏览体验继续由个人网站承担。
@@ -41,7 +41,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - 查看全部 public / unlisted / restricted / private 内容。
 - 新建、编辑和删除 Projects、Publications、Knowledge、Skills。
-- 上传与管理私密 Documents。
+- 上传与管理私密 Documents、文档包和文件夹上传。
 - 管理访问申请与访问授权基础。
 - 查看 Dashboard、公开内容维护提示和 Activity Logs。
 
@@ -68,7 +68,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 | restricted | 管理员可见，未来授权 viewer 只读 | 否 | 基础代码已实现，viewer 登录待修 |
 | private | 仅管理员本人可查看 | 否 | 已稳定使用 |
 
-文件附件默认比正文更严格。即使 Publication 或其他内容设置为 public，关联 Documents 仍保持 private，不在公开页面提供下载入口。即使未来 viewer 可以查看 restricted 正文，也不自动获得 Documents 权限。
+文件附件默认比正文更严格。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座；即使 Publication 或其他内容设置为 public，关联 Documents 仍保持 private，不在公开页面提供下载入口。即使未来 viewer 可以查看 restricted 正文，也不自动获得 Documents 权限。
 
 ## Phase Status
 
@@ -87,6 +87,19 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 ### Phase 2C - Publications And Secure Documents
 
 已完成并通过生产验收。Publications 真实 CRUD、Documents 私密文件上传/下载/删除、private `workspace-files` bucket、Publication 附件关联、删除保护、Dashboard 成果统计与 Activity Logs 已完成。
+
+### Phase 2P-A - Document Collections And Folder Uploads
+
+已完成代码实现。Documents 升级为统一私密附件底座，新增 `document_collections` 文档包、多文件上传、文件夹上传、relative_path / folder_path 保存、Knowledge 关联、研究工作台常见文件格式白名单、50 MB 单文件上限和 100 文件 / 200 MB 批次限制。
+
+边界：
+
+- 不公开附件。
+- 不生成公开下载链接。
+- 不做批量 zip 下载。
+- 不做 OCR、文件内容索引或 AI 总结。
+- 不解析、不执行、不安装上传的代码或 Skill 包。
+- 不修改 Resume / Career 逻辑。
 
 ### Phase 2D - Public Research Workstation
 
@@ -148,6 +161,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - public 页面只展示明确设为 `public` 的内容。
 - Documents 继续保持私密，不开放公开下载或 viewer signed URL。
+- Documents 作为统一附件底座承载 Project、Publication、Knowledge 和 Skill 的私密附件，避免每个模块重复实现文件系统。
 - Access Requests / Access Grants 继续作为 restricted 访问基础。
 - Viewer magic link 和 restricted 访问可以另开 bugfix，但不得扩大 Documents 权限。
 

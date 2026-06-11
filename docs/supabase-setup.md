@@ -135,8 +135,8 @@ supabase/migrations/0003_publications_documents_storage.sql
 
 - bucket id/name：`workspace-files`
 - `public = false`
-- 文件大小限制：20 MB
-- 允许 MIME type：PDF、Word、Excel、PowerPoint、Markdown、文本、CSV、PNG、JPEG、WebP
+- 文件大小限制：20 MB；执行 0018 后提升到 50 MB
+- 允许 MIME type：PDF、Word、Excel、PowerPoint、Markdown、文本、CSV、PNG、JPEG、WebP；执行 0018 后扩展到 CSV/TSV、JSON/YAML、Notebook、代码文件、GIF、SVG 和 zip/tar/gz/7z
 
 并为 `storage.objects` 创建限定 `bucket_id = 'workspace-files'` 的管理员 policies：
 
@@ -355,6 +355,30 @@ JD Review 权限边界：
 
 0013 至 0017 是已执行环境可能仍保留的旧迁移。本 PR 只移除产品代码和入口，不修改历史 migration，也不在这里清理生产数据；如需删除旧表，应另开数据库清理 PR 并先备份。
 
+Phase 2P-A 新增 Documents 文档包与文件夹上传。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0018_document_collections_and_folder_uploads.sql
+```
+
+`0018` 会：
+
+- 创建 `public.document_collections`，用于表示一次上传批次、文件夹、附件包或 Skill 包。
+- 为 `public.documents` 增加 `collection_id`、`original_name`、`relative_path` 和 `folder_path`。
+- 为 `document_collections.related_type / related_id`、`owner_id`、`updated_at` 和 `documents.collection_id` 增加索引。
+- 为 `document_collections` 启用 RLS，并通过 `public.is_admin()` 限定管理员管理。
+- 给 `authenticated` 授予 `document_collections` 表级 `select, insert, update, delete`，最终行级权限仍由 RLS 控制。
+- 撤销 `anon` 对 `document_collections` 的权限。
+- 将 `workspace-files` bucket 的单文件上限提升到 50 MB，并扩展 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码、图片和 zip/tar/gz/7z 等 MIME 白名单。
+
+Document Collection 权限边界：
+
+- Documents 仍是管理员私密文件中心，不进入公开页面、sitemap、viewer 或 restricted 内容页。
+- 即使附件关联 public Project、Publication、Knowledge 或 Skill，也不会开放公开下载。
+- Skill 包只作为文件存储，不执行、不解析、不安装。
+- 本阶段不做批量 zip 下载、OCR、文件内容索引或 AI 总结。
+- 不修改 Resume / Career 逻辑，不恢复 Market Brief。
+
 ## 创建管理员
 
 在 Supabase SQL Editor 中插入管理员 UUID：
@@ -405,18 +429,20 @@ Phase 2C 使用：
 - 文件二进制不经过 Server Action 或 Vercel Function；浏览器使用当前管理员 Supabase Auth 会话直接上传到 private bucket。
 - Server Actions 只负责 prepare/finalize：校验 metadata、生成 UUID 路径、确认对象存在、写入 documents 与 activity_logs。
 - Storage policy 继续以 `public.is_admin()` 作为最终防线。
-- 文件路径由服务端生成，使用 document UUID 和清理后的文件名，避免路径穿越与同名覆盖。
+- 文件路径由服务端生成，使用 document UUID 或 document collection UUID，并清理每一层 path segment，避免路径穿越与同名覆盖。
 - 上传使用 `upsert: false`。
-- 服务端同时校验扩展名、MIME type 和 20 MB 大小限制。
+- 服务端同时校验扩展名、MIME type 和 50 MB 单文件大小限制。
+- 多文件 / 文件夹上传在应用层限制为单次最多 100 个文件、总量 200 MB；文件夹上传保存 `relative_path` 和 `folder_path`，但普通浏览器文件选择器不会稳定上传空文件夹。
 - 管理员下载通过 60 秒 signed URL，不保存 signed URL，不在公开页面输出。
-- 附件即使关联到 public Publication，本轮仍保持私密。
+- 附件即使关联到 public Project、Publication、Knowledge 或 Skill，本轮仍保持私密。
 - 删除文件时先删除 Storage 对象，再删除 documents 记录；失败时向管理员显示中文提示。
 
 ## Phase 2B / 2C 真实 CRUD
 
 - `projects`、`knowledge_notes`、`skills` 和 `skill_versions` 使用现有 `0001_initial_schema.sql` 字段实现 CRUD。
 - `publications` 使用现有 `0001_initial_schema.sql` 字段实现 CRUD，不新增复杂中间表。
-- `documents.related_type` + `documents.related_id` 用于关联 Publication、Project 或 Skill。
+- `documents.related_type` + `documents.related_id` 用于关联 Publication、Project、Knowledge 或 Skill。
+- `document_collections` 用于统一承载批量上传、文件夹上传、附件包和 Skill 包；`documents.collection_id` 指向所属文档包。
 - Publication 详情页展示关联附件；如果仍有关联附件，Publication 删除会被阻止。
 - `activity_logs` 记录创建、更新、删除和 Skill 版本新增等核心操作。
 - Phase 2C 新增记录 Publication 创建/更新/删除、Document 上传/下载/删除等后台摘要日志。
@@ -443,6 +469,7 @@ Phase 2C 使用：
 - Resume Versions 后台由 `/dashboard/resume/versions` 接入真实 `resume_versions` 与 `resume_version_items`；未执行 0010 时，简历版本列表、版本表单、详情与预览无法完成真实读写。
 - Resume Template 字段依赖 0011 migration；未执行 0011 时，简历素材详情字段、版本顶部个人字段开关、逐条素材可见字段控制和贴近 PDF 的打印预览会因为缺少列而无法稳定保存或读取。
 - Resume JD 分析历史依赖 0012 migration；未执行 0012 时，AI JD 分析仍可生成当前页建议，但无法保存为历史记录或投递状态。
+- Document collections 和文件夹上传 metadata 依赖 0018 migration；未执行 0018 时，多文件 / 文件夹上传、Knowledge 附件关联和 collection 详情页无法完成真实读写。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。
@@ -461,7 +488,7 @@ npm run build
 - 登录后仍无权限：确认 Auth 用户 UUID 已插入 `public.admin_users`。
 - 后台一直跳回登录页：确认 `.env.local` 中 URL 和 publishable key 正确。
 - 查询不到 private 数据：确认当前登录用户是管理员，并确认 RLS migration 已执行。
-- 文件上传失败：确认生产 Supabase 已执行 `0003_publications_documents_storage.sql`，bucket 为 private，且当前用户在 `admin_users` 中。
-- 文件类型被拒绝：确认扩展名和 MIME type 都在白名单中，且文件不超过 20 MB。
+- 文件上传失败：确认生产 Supabase 已执行 `0003_publications_documents_storage.sql` 和 `0018_document_collections_and_folder_uploads.sql`，bucket 为 private，且当前用户在 `admin_users` 中。
+- 文件类型被拒绝：确认扩展名和 MIME type 都在白名单中，单文件不超过 50 MB，批次不超过 100 个文件 / 200 MB，且不是 exe、dmg、app、msi、bat 或 cmd。
 - Viewer 登录失败：已知问题，后续 Phase 2I 专项排查。先确认 0005、0006 已执行，Auth callback URL 已配置，再结合 Supabase Auth 日志与 Vercel Function 日志定位。
 - 本地构建没有 Supabase 环境变量：这是预期行为，未配置时会保留 mock preview。
