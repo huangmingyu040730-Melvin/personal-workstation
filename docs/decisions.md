@@ -1222,7 +1222,7 @@
 - 成功写回 job 只允许覆盖仍处于 running 的任务，避免超时后迟到的生成流程把 failed 又改成 succeeded。
 - `GET /api/market-briefs/jobs/[id]/status` 对 running 且 progress 超过 5 分钟未更新的任务返回 `stale=true` 和管理员提示；前端显示 stale 提示，不自动重复触发生成，避免重复扣费。
 - 搜索 query 最多 4 条，每条 top 3；去重 sources 最多 8 个，snippet 最多 500 字符；prompt 示例不再重复嵌入完整 sources。
-- AI JSON 解析支持去掉 markdown code fence，并从第一个 `{` 到最后一个 `}` 提取 JSON 后再解析。
+- AI JSON 解析支持去掉 markdown code fence，并从第一个 `{` 到最后一个 `}` 提取 JSON 后再解析；如果仍无法解析，会尽量提取 title / summary / markdown_content 并保存为 `needs_review` 待复核草稿。
 
 原因：
 
