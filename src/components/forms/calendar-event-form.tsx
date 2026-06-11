@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
 import { calendarEventTypes } from "@/lib/content-options";
 import type { CalendarEventRecord } from "@/lib/content-types";
+import { formatDateTimeLocalInputValue } from "@/lib/format";
 import type { CalendarEventRelationOptions } from "@/lib/queries/calendar";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
 import { SubmitButton } from "./submit-button";
@@ -115,25 +116,5 @@ function RelationSelect({
 }
 
 function toDateTimeLocal(value: string | null | undefined) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const parts = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  }).format(date);
-
-  return parts.replace(" ", "T");
+  return formatDateTimeLocalInputValue(value);
 }

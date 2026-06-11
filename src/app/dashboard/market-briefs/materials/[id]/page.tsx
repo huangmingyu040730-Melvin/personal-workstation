@@ -97,7 +97,7 @@ export default async function MarketBriefMaterialPackageDetailPage({
 
           <div className="min-w-0 space-y-5">
             <Card className="overflow-hidden">
-              <CardHeader title="素材包信息" />
+              <CardHeader title="素材包信息（北京时间）" />
               <div className="mb-4 flex flex-wrap gap-2">
                 <Badge className={getMarketBriefMaterialPackageStatusTone(materialPackage.status)}>
                   {getMarketBriefMaterialPackageStatusLabel(materialPackage.status)}

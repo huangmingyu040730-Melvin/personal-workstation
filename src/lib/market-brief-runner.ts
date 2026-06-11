@@ -5,6 +5,7 @@ import type { MarketBriefGenerationJobRecord, MarketBriefJobStatus, MarketBriefR
 import type { MarketBriefGroundingContext } from "@/lib/market-brief-grounding";
 import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
 import { createMarketBriefJobProgress, mergeProgressIntoPayload } from "@/lib/market-brief-job-progress";
+import { formatDateInputValue } from "@/lib/format";
 
 type RunnerSupabaseClient = SupabaseClient;
 
@@ -104,7 +105,7 @@ export async function runMockMarketBriefGenerationJob(
       started_at: new Date().toISOString(),
       error_message: null
     });
-    await updateProgress("preparing", "正在准备 AI 生成上下文...");
+    await updateProgress("preparing", "正在读取已保存市场素材包...");
 
     const generated = await generateMarketBriefDraft({
       market: runningJob.market,
@@ -198,12 +199,7 @@ export async function updateMarketBriefGenerationJobProgress(
 }
 
 export function getTodayDateInShanghai() {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(new Date());
+  return formatDateInputValue();
 }
 
 export function normalizeBriefDate(value: string) {

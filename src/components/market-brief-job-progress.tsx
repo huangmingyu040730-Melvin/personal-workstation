@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Circle, Loader2, Play, RotateCcw, XCircle } from "lucide-react";
 import type { MarketBriefJobProgress } from "@/lib/market-brief-job-progress";
-import { marketBriefJobProgressSteps } from "@/lib/market-brief-job-progress";
+import { marketBriefJobLegacyProgressSteps, marketBriefJobWorkflowSteps } from "@/lib/market-brief-job-progress";
+import { APP_DISPLAY_TIME_ZONE_LABEL, formatDateTimeSeconds } from "@/lib/format";
 
 type MarketBriefJobProgressStatus = {
   id: string;
@@ -125,10 +126,15 @@ export function MarketBriefJobProgressPanel({
     return () => window.clearTimeout(timeout);
   }, [jobStatus.preview_url, jobStatus.status, router]);
 
-  const currentStepIndex = useMemo(
-    () => marketBriefJobProgressSteps.findIndex((step) => step.stage === jobStatus.progress.stage),
+  const currentWorkflowStepIndex = useMemo(
+    () => marketBriefJobWorkflowSteps.findIndex((step) => step.stage === jobStatus.progress.stage),
     [jobStatus.progress.stage]
   );
+  const legacyStep = useMemo(
+    () => marketBriefJobLegacyProgressSteps.find((step) => step.stage === jobStatus.progress.stage) ?? null,
+    [jobStatus.progress.stage]
+  );
+  const terminalOutcome = getTerminalOutcome(jobStatus.status, jobStatus.preview_url, jobStatus.error_message ?? requestError);
 
   return (
     <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-100/40">
@@ -161,7 +167,7 @@ export function MarketBriefJobProgressPanel({
 
       <div className="mt-5">
         <div className="flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold text-slate-800">{jobStatus.progress.message}</p>
+          <p className="min-w-0 break-words text-sm font-semibold text-slate-800">{jobStatus.progress.message}</p>
           <span className="text-sm font-semibold tabular-nums text-blue-700">{jobStatus.progress.percent}%</span>
         </div>
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100">
@@ -170,36 +176,32 @@ export function MarketBriefJobProgressPanel({
             style={{ width: `${jobStatus.progress.percent}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-slate-400">更新时间：{formatProgressTime(jobStatus.progress.updated_at)}</p>
+        <p className="mt-2 text-xs text-slate-400">更新时间（{APP_DISPLAY_TIME_ZONE_LABEL}）：{formatDateTimeSeconds(jobStatus.progress.updated_at)}</p>
       </div>
 
       <div className="mt-5 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-        {marketBriefJobProgressSteps.map((step, index) => (
+        {marketBriefJobWorkflowSteps.map((step, index) => (
           <div
             key={step.stage}
-            className={`flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs ${getStepClassName(jobStatus.progress.stage, index, currentStepIndex, jobStatus.status)}`}
+            className={`flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs ${getStepClassName(index, currentWorkflowStepIndex, jobStatus.status)}`}
           >
-            {getStepIcon(jobStatus.progress.stage, step.stage, index, currentStepIndex, jobStatus.status)}
+            {getStepIcon(index, currentWorkflowStepIndex, jobStatus.status)}
             <span className="font-medium">{step.label}</span>
           </div>
         ))}
       </div>
 
-      {jobStatus.status === "succeeded" && jobStatus.preview_url ? (
-        <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          生成完成，正在跳转预览页。
+      {legacyStep ? (
+        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-700">
+          <div className="font-semibold">{legacyStep.label}</div>
+          <div>这是旧任务阶段；当前素材包主路径不会在生成时实时检索公开市场信息。</div>
         </div>
       ) : null}
 
-      {jobStatus.status === "failed" ? (
-        <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-700">
-          生成失败：{jobStatus.error_message ?? requestError ?? "请查看错误信息后重新排队。"}
-        </div>
-      ) : null}
-
-      {jobStatus.status === "cancelled" ? (
-        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-          任务已取消，页面已停止轮询。
+      {terminalOutcome ? (
+        <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm leading-6 ${terminalOutcome.className}`}>
+          <div className="font-semibold">{terminalOutcome.title}</div>
+          <div>{terminalOutcome.description}</div>
         </div>
       ) : null}
 
@@ -241,21 +243,24 @@ function getProgressBarClassName(status: string) {
   return "bg-blue-600";
 }
 
-function getStepClassName(
-  currentStage: string,
-  index: number,
-  currentIndex: number,
-  status: string
-) {
-  if (currentStage === "failed" && marketBriefJobProgressSteps[index].stage === "failed") {
-    return "border-rose-200 bg-rose-50 text-rose-700";
+function getStepClassName(index: number, currentIndex: number, status: string) {
+  if (status === "succeeded") {
+    return "border-emerald-100 bg-emerald-50 text-emerald-700";
   }
 
-  if (currentStage === "cancelled" && marketBriefJobProgressSteps[index].stage === "cancelled") {
-    return "border-slate-200 bg-slate-100 text-slate-700";
+  if (status === "failed") {
+    if (currentIndex >= 0 && index < currentIndex) return "border-emerald-100 bg-emerald-50 text-emerald-700";
+    if (currentIndex >= 0 && index === currentIndex) return "border-rose-200 bg-rose-50 text-rose-700";
+    return "border-slate-100 bg-slate-50 text-slate-500";
   }
 
-  if (status === "succeeded" || index < currentIndex) {
+  if (status === "cancelled") {
+    if (currentIndex >= 0 && index < currentIndex) return "border-emerald-100 bg-emerald-50 text-emerald-700";
+    if (currentIndex >= 0 && index === currentIndex) return "border-slate-200 bg-slate-100 text-slate-700";
+    return "border-slate-100 bg-slate-50 text-slate-500";
+  }
+
+  if (index < currentIndex) {
     return "border-emerald-100 bg-emerald-50 text-emerald-700";
   }
 
@@ -266,36 +271,40 @@ function getStepClassName(
   return "border-slate-100 bg-slate-50 text-slate-500";
 }
 
-function getStepIcon(
-  currentStage: string,
-  stepStage: string,
-  index: number,
-  currentIndex: number,
-  status: string
-) {
-  if (stepStage === "failed" && currentStage === "failed") return <XCircle size={14} className="shrink-0" />;
-  if (stepStage === "cancelled" && currentStage === "cancelled") return <XCircle size={14} className="shrink-0" />;
+function getStepIcon(index: number, currentIndex: number, status: string) {
   if (status === "succeeded" || index < currentIndex) return <CheckCircle2 size={14} className="shrink-0" />;
+  if (status === "failed" && currentIndex >= 0 && index === currentIndex) return <XCircle size={14} className="shrink-0" />;
+  if (status === "cancelled" && currentIndex >= 0 && index === currentIndex) return <XCircle size={14} className="shrink-0" />;
   if (index === currentIndex && status !== "failed" && status !== "cancelled") return <Loader2 size={14} className="shrink-0 animate-spin" />;
   return <Circle size={14} className="shrink-0" />;
 }
 
-function formatProgressTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
+function getTerminalOutcome(status: string, previewUrl: string | null, errorMessage: string | null) {
+  if (status === "succeeded") {
+    return {
+      title: "生成完成",
+      description: previewUrl ? "生成完成，正在跳转预览页。" : "生成完成，可进入关联简报查看结果。",
+      className: "border-emerald-200 bg-emerald-50 text-emerald-700"
+    };
   }
 
-  return date.toLocaleString("zh-CN", {
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  });
+  if (status === "failed") {
+    return {
+      title: "生成失败",
+      description: errorMessage ?? "请查看错误信息后重新排队。",
+      className: "border-rose-200 bg-rose-50 text-rose-700"
+    };
+  }
+
+  if (status === "cancelled") {
+    return {
+      title: "任务已取消",
+      description: "任务已取消，页面已停止轮询。",
+      className: "border-slate-200 bg-slate-50 text-slate-600"
+    };
+  }
+
+  return null;
 }
 
 function isJobStatusPayload(value: unknown): value is MarketBriefJobProgressStatus {
