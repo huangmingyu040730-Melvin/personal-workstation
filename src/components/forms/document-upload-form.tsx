@@ -49,7 +49,7 @@ type StorageUploadErrorLike = {
   statusCode?: unknown;
 };
 
-const STORAGE_UPLOAD_FALLBACK_MESSAGE = "请确认 0018 migration 已执行、workspace-files bucket 为 private、文件未超过 50MB，且当前账号是管理员。";
+const STORAGE_UPLOAD_FALLBACK_MESSAGE = "请确认 0018 migration 已执行、workspace-files bucket file_size_limit 为 52428800，且当前账号是管理员。";
 
 export type DocumentUploadInitialValues = {
   mode?: UploadMode;
@@ -434,7 +434,7 @@ export function DocumentUploadForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="文件选择" description="浏览器会直接上传到私密 workspace-files bucket，文件二进制不经过 Vercel Function。如果 20-50MB 文件失败，请确认 production Supabase 已执行 0018，bucket file_size_limit 为 52428800。">
+      <AdminFormSection title="文件选择" description="浏览器会直接上传到私密 workspace-files bucket，文件二进制不经过 Vercel Function。如果 20-50MB 文件失败，请确认生产 Supabase 已执行 0018，workspace-files.file_size_limit 为 52428800。">
         {mode === "single" ? (
           <Field label="选择文件" hint={`最大 ${formatFileSize(MAX_DOCUMENT_FILE_SIZE)}。`}>
             <input
