@@ -6,10 +6,13 @@ import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { MarketBriefJobProgressPanel } from "@/components/market-brief-job-progress";
 import { PageHeader } from "@/components/page-header";
 import { getMarketBriefJobStatusLabel } from "@/lib/content-options";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
+import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
+import { getMarketBriefJobProgressFromPayload } from "@/lib/market-brief-job-progress";
 import { getMarketBriefJobStatusTone } from "@/lib/market-briefs";
 import { getMarketBriefGenerationJobById } from "@/lib/queries/market-brief-jobs";
 
@@ -29,6 +32,9 @@ export default async function MarketBriefJobDetailPage({
 
   const error = getFormError(query);
   const notice = getSearchValue(query.notice);
+  const autoGenerate = getSearchValue(query.auto_generate) === "1";
+  const progress = getMarketBriefJobProgressFromPayload(job.request_payload, getFallbackProgressStage(job.status));
+  const previewUrl = job.market_brief_id ? `/dashboard/market-briefs/${job.market_brief_id}/preview` : null;
 
   return (
     <AppShell>
@@ -61,6 +67,15 @@ export default async function MarketBriefJobDetailPage({
         {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次由 AI 生成器处理。" /> : null}
         {isHistoricalJob(job) ? <NoticeBanner message="该任务为历史日期补生成，部分热点、新闻、资金流数据可能无法完整回溯。" /> : null}
         {isLegacyExternalJob(job) ? <NoticeBanner message="该记录来自历史 external runner 兼容模式。当前推荐使用 AI-first 生成。" /> : null}
+
+        <MarketBriefJobProgressPanel
+          jobId={job.id}
+          autoGenerate={autoGenerate}
+          initialStatus={job.status}
+          initialProgress={progress}
+          initialPreviewUrl={previewUrl}
+          initialErrorMessage={job.error_message}
+        />
 
         <div className="grid gap-5 xl:grid-cols-[1fr_0.4fr]">
           <div className="space-y-5">
@@ -185,6 +200,14 @@ function getSearchValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function getFallbackProgressStage(status: string): MarketBriefJobProgressStage {
+  if (status === "running") return "preparing";
+  if (status === "succeeded") return "succeeded";
+  if (status === "failed") return "failed";
+  if (status === "cancelled") return "cancelled";
+  return "queued";
+}
+
 function JobManagementActions({ jobId, status, returnTo }: { jobId: string; status: string; returnTo: string }) {
   const canCancel = status === "queued" || status === "running";
   const canRequeue = status === "running" || status === "failed" || status === "cancelled";
@@ -194,7 +217,7 @@ function JobManagementActions({ jobId, status, returnTo }: { jobId: string; stat
   }
 
   return (
-    <div className="mt-4 flex flex-wrap gap-2">
+    <div id="job-management-actions" className="mt-4 flex flex-wrap gap-2">
       {canCancel ? (
         <form action={cancelMarketBriefGenerationJobAction.bind(null, jobId)}>
           <input type="hidden" name="return_to" value={returnTo} />

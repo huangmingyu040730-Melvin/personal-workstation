@@ -11,9 +11,9 @@ import {
   findActiveMarketBriefGenerationJob,
   findExistingMarketBrief,
   getTodayDateInShanghai,
-  normalizeBriefDate,
-  runMockMarketBriefGenerationJob
+  normalizeBriefDate
 } from "@/lib/market-brief-runner";
+import { createMarketBriefJobProgress, mergeProgressIntoPayload } from "@/lib/market-brief-job-progress";
 import { marketBriefSchema, type MarketBriefInput } from "@/lib/validations/market-brief";
 
 function marketBriefPayloadFromForm(formData: FormData) {
@@ -211,7 +211,8 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
   }
 
   if (activeJob?.id) {
-    redirect(`/dashboard/market-briefs/jobs/${activeJob.id}?notice=active`);
+    const autoGenerate = generatorMode !== "external" && activeJob.status === "queued" ? "&auto_generate=1" : "";
+    redirect(`/dashboard/market-briefs/jobs/${activeJob.id}?notice=active${autoGenerate}`);
   }
 
   let job;
@@ -253,35 +254,23 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
     redirect(`/dashboard/market-briefs/jobs/${job.id}?notice=queued`);
   }
 
-  let result;
-
-  try {
-    result = await runMockMarketBriefGenerationJob(supabase, job);
-  } catch (runError) {
-    revalidateMarketBriefPaths();
-    revalidateMarketBriefJobPaths(job.id);
-    redirect(`/dashboard/market-briefs/jobs/${job.id}?notice=failed&error=${encodeFormError(getActionErrorMessage(runError, "市场简报生成任务失败。"))}`);
-  }
-
   await writeActivityLog({
-    action: "market_brief.generate",
-    entityType: "market_brief",
-    entityId: result.brief.id,
+    action: "market_brief_generation_job.create",
+    entityType: "market_brief_generation_job",
+    entityId: job.id,
     metadata: {
-      title: result.brief.title,
-      brief_date: result.brief.brief_date,
-      market: result.brief.market,
-      status: result.brief.status,
-      generation_status: result.brief.generation_status,
-      generator_name: result.brief.generator_name,
-      job_id: result.job.id,
-      job_status: result.job.status
+      brief_date: job.brief_date,
+      market: job.market,
+      status: job.status,
+      runner_name: job.runner_name,
+      generator_mode: generatorMode,
+      is_historical: isHistorical
     }
   });
 
-  revalidateMarketBriefPaths(result.brief.id);
-  revalidateMarketBriefJobPaths(result.job.id);
-  redirect(`/dashboard/market-briefs/${result.brief.id}/preview?notice=generated&job=${result.job.id}`);
+  revalidateMarketBriefPaths();
+  revalidateMarketBriefJobPaths(job.id);
+  redirect(`/dashboard/market-briefs/jobs/${job.id}?notice=queued&auto_generate=1`);
 }
 
 export async function cancelMarketBriefGenerationJobAction(jobId: string, formData?: FormData) {
@@ -293,13 +282,23 @@ export async function cancelMarketBriefGenerationJobAction(jobId: string, formDa
   }
 
   const now = new Date().toISOString();
+  const { data: existingJob } = await supabase
+    .from("market_brief_generation_jobs")
+    .select("request_payload")
+    .eq("id", jobId)
+    .maybeSingle();
+  const requestPayload = mergeProgressIntoPayload(
+    isPlainRecord(existingJob?.request_payload) ? existingJob.request_payload : {},
+    createMarketBriefJobProgress("cancelled", "任务已取消")
+  );
   const { data, error: updateError } = await supabase
     .from("market_brief_generation_jobs")
     .update({
       status: "cancelled",
       completed_at: now,
       error_message: "Manually cancelled by admin.",
-      updated_at: now
+      updated_at: now,
+      request_payload: requestPayload
     })
     .eq("id", jobId)
     .in("status", ["queued", "running"])
@@ -331,6 +330,15 @@ export async function requeueMarketBriefGenerationJobAction(jobId: string, formD
   }
 
   const now = new Date().toISOString();
+  const { data: existingJob } = await supabase
+    .from("market_brief_generation_jobs")
+    .select("request_payload")
+    .eq("id", jobId)
+    .maybeSingle();
+  const requestPayload = mergeProgressIntoPayload(
+    isPlainRecord(existingJob?.request_payload) ? existingJob.request_payload : {},
+    createMarketBriefJobProgress("queued", "任务已重新排队")
+  );
   const { data, error: updateError } = await supabase
     .from("market_brief_generation_jobs")
     .update({
@@ -338,7 +346,8 @@ export async function requeueMarketBriefGenerationJobAction(jobId: string, formD
       started_at: null,
       completed_at: null,
       error_message: null,
-      updated_at: now
+      updated_at: now,
+      request_payload: requestPayload
     })
     .eq("id", jobId)
     .in("status", ["running", "failed", "cancelled"])
@@ -406,4 +415,8 @@ function getSafeReturnPath(formData: FormData | undefined, fallback: string) {
 
 function formatNearestTradingDay(date: string | null) {
   return date ? ` 最近一个交易日：${date}` : "";
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

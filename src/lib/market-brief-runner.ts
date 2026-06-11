@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GeneratedMarketBrief } from "@/lib/market-brief-generator";
 import { defaultMarketBriefRunnerName, generateMarketBriefDraft } from "@/lib/market-brief-generator";
 import type { MarketBriefGenerationJobRecord, MarketBriefJobStatus, MarketBriefRecord } from "@/lib/content-types";
+import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
+import { createMarketBriefJobProgress, mergeProgressIntoPayload } from "@/lib/market-brief-job-progress";
 
 type RunnerSupabaseClient = SupabaseClient;
 
@@ -30,6 +32,8 @@ export type ClaimMarketBriefJobInput = {
   market?: string;
   runnerName?: string;
 };
+
+export type MarketBriefGenerationProgressHandler = (stage: MarketBriefJobProgressStage, message?: string) => Promise<void> | void;
 
 export async function findExistingMarketBrief(
   supabase: RunnerSupabaseClient,
@@ -87,6 +91,7 @@ export async function createQueuedMarketBriefGenerationJob(supabase: RunnerSupab
         market: input.market,
         brief_date: input.briefDate,
         runner_name: runnerName,
+        progress: createMarketBriefJobProgress("queued"),
         ...(input.requestPayload ?? {})
       }
     })
@@ -151,28 +156,41 @@ export async function claimQueuedMarketBriefGenerationJob(supabase: RunnerSupaba
   return data as MarketBriefGenerationJobRecord | null;
 }
 
-export async function runMockMarketBriefGenerationJob(supabase: RunnerSupabaseClient, job: MarketBriefGenerationJobRecord) {
+export async function runMockMarketBriefGenerationJob(
+  supabase: RunnerSupabaseClient,
+  job: MarketBriefGenerationJobRecord,
+  options: { onProgress?: MarketBriefGenerationProgressHandler } = {}
+) {
   let runningJob = job;
+  const updateProgress = async (stage: MarketBriefJobProgressStage, message?: string) => {
+    await options.onProgress?.(stage, message);
+  };
 
   try {
+    await updateProgress("validating", "正在校验交易日与任务参数...");
     runningJob = await updateMarketBriefGenerationJobStatus(supabase, job.id, "running", {
       started_at: new Date().toISOString(),
       error_message: null
     });
+    await updateProgress("preparing", "正在准备 AI 生成上下文...");
 
     const generated = await generateMarketBriefDraft({
       market: runningJob.market,
       briefDate: runningJob.brief_date,
       runnerName: runningJob.runner_name,
-      isHistorical: runningJob.request_payload?.is_historical === true
+      isHistorical: runningJob.request_payload?.is_historical === true,
+      onProgress: updateProgress
     });
+    await updateProgress("saving", "正在保存简报...");
     const brief = await createOrUpdateMarketBriefFromGenerated(supabase, runningJob, generated);
     const completedAt = new Date().toISOString();
+    const succeededPayload = await mergeJobPayloadWithProgress(supabase, runningJob.id, "succeeded");
 
     const { data, error } = await supabase
       .from("market_brief_generation_jobs")
       .update({
         status: "succeeded",
+        request_payload: succeededPayload,
         source_snapshot: generated.sourceSnapshot,
         result_payload: generated,
         market_brief_id: brief.id,
@@ -180,15 +198,17 @@ export async function runMockMarketBriefGenerationJob(supabase: RunnerSupabaseCl
         error_message: null
       })
       .eq("id", runningJob.id)
+      .neq("status", "cancelled")
       .select("*")
-      .single();
+      .maybeSingle();
 
-    if (error) {
-      throw new Error(error.message || "更新市场简报生成任务失败。");
+    if (error || !data) {
+      throw new Error(error?.message || "更新市场简报生成任务失败。");
     }
 
     return { job: data as MarketBriefGenerationJobRecord, brief };
   } catch (error) {
+    await updateProgress("failed", "AI 生成失败");
     await markMarketBriefGenerationJobFailed(supabase, runningJob.id, getSafeRunnerErrorMessage(error));
     throw error;
   }
@@ -268,19 +288,44 @@ export async function applySkillResultToMarketBriefJob(supabase: RunnerSupabaseC
 }
 
 export async function markMarketBriefGenerationJobFailed(supabase: RunnerSupabaseClient, jobId: string, errorMessage: string) {
+  const requestPayload = await mergeJobPayloadWithProgress(supabase, jobId, "failed", "AI 生成失败");
   const { data, error } = await supabase
     .from("market_brief_generation_jobs")
     .update({
       status: "failed",
       error_message: errorMessage.slice(0, 500),
-      completed_at: new Date().toISOString()
+      completed_at: new Date().toISOString(),
+      request_payload: requestPayload
     })
     .eq("id", jobId)
+    .neq("status", "cancelled")
     .select("*")
     .maybeSingle();
 
   if (error) {
     throw new Error("标记生成任务失败。");
+  }
+
+  return data as MarketBriefGenerationJobRecord | null;
+}
+
+export async function updateMarketBriefGenerationJobProgress(
+  supabase: RunnerSupabaseClient,
+  jobId: string,
+  stage: MarketBriefJobProgressStage,
+  message?: string
+) {
+  const requestPayload = await mergeJobPayloadWithProgress(supabase, jobId, stage, message);
+  const { data, error } = await supabase
+    .from("market_brief_generation_jobs")
+    .update({ request_payload: requestPayload })
+    .eq("id", jobId)
+    .neq("status", "cancelled")
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || "更新生成进度失败。");
   }
 
   return data as MarketBriefGenerationJobRecord | null;
@@ -377,6 +422,26 @@ async function updateMarketBriefGenerationJobStatus(
   return data as MarketBriefGenerationJobRecord;
 }
 
+async function mergeJobPayloadWithProgress(
+  supabase: RunnerSupabaseClient,
+  jobId: string,
+  stage: MarketBriefJobProgressStage,
+  message?: string
+) {
+  const { data, error } = await supabase
+    .from("market_brief_generation_jobs")
+    .select("request_payload")
+    .eq("id", jobId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || "读取生成任务进度失败。");
+  }
+
+  const payload = isPlainRecord(data?.request_payload) ? data.request_payload : {};
+  return mergeProgressIntoPayload(payload, createMarketBriefJobProgress(stage, message));
+}
+
 function normalizeTextArray(value: string[] | undefined, fallback: string[]) {
   const values = (value && value.length > 0 ? value : fallback)
     .map((item) => item.trim())
@@ -390,6 +455,10 @@ function getSafeRunnerErrorMessage(error: unknown) {
   }
 
   return "市场简报生成任务失败。";
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function logMarketBriefRunnerSupabaseError(
