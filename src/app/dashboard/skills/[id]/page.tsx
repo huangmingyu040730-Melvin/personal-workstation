@@ -8,6 +8,7 @@ import { Card, CardHeader } from "@/components/card";
 import { Field, Textarea, TextInput } from "@/components/forms/form-fields";
 import { DeleteButton, SubmitButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
+import { RelatedDocumentsPanel } from "@/components/related-documents-panel";
 import { formatDateTime } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { MarkdownPreview } from "@/lib/markdown";
@@ -28,6 +29,7 @@ export default async function SkillDetailPage({
   }
 
   const error = getFormError(query);
+  const notice = query.notice === "collection_deleted";
 
   return (
     <AppShell>
@@ -46,6 +48,11 @@ export default async function SkillDetailPage({
           }
         />
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {notice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            空文档包已删除。
+          </div>
+        ) : null}
         <div className="grid gap-5 xl:grid-cols-[1fr_0.4fr]">
         <div className="space-y-5">
           <Card><CardHeader title="详细说明" /><MarkdownPreview content={skill.content} /></Card>
@@ -68,6 +75,19 @@ export default async function SkillDetailPage({
             </dl>
             {skill.repository_url ? <Link href={skill.repository_url} className="mt-5 block text-sm font-medium text-blue-700">打开 GitHub 仓库</Link> : null}
           </Card>
+          <RelatedDocumentsPanel
+            relatedType="skill"
+            relatedId={skill.id}
+            title="Skill 包 / 文档包"
+            description="Skill 相关附件只作为私密文件保存，不会同步到任何外部环境。"
+            uploadFileLabel="上传文档"
+            uploadBatchLabel="上传 Skill 包"
+            uploadFileCategory="skill_attachment"
+            uploadBatchCategory="skill_attachment"
+            uploadBatchCollectionType="skill_package"
+            emptyText="还没有关联 Skill 文件。可以上传说明文档、zip 包或文件夹作为私密附件。"
+            securityNote="Skill 包只作为私密文件存储。不执行、不解析、不安装上传代码，也不会自动同步到任何外部环境。"
+          />
           <Card>
             <CardHeader title="平台" />
             <div className="flex flex-wrap gap-2">

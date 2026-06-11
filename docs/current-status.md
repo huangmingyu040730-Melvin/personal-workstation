@@ -51,6 +51,7 @@
 - Skills 后台 CRUD。
 - Documents 文件中心。
 - Documents 文档包、多文件 / 文件夹上传与统一私密附件底座。
+- Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
 - Access Requests 访问申请管理。
 - Access Grants 授权管理基础。
 - Profile 个人公开信息编辑基础。
@@ -84,6 +85,8 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 管理员下载。
 - signed URL 短时下载。
 - 文件关联 Publication / Project / Knowledge / Skill。
+- Project / Publication / Knowledge / Skill 后台详情页可直接查看关联文件和文档包。
+- 各内容详情页上传入口复用 `/dashboard/documents/upload`，并通过 query params 预填关联对象、上传模式、分类和文档包类型。
 - `document_collections` 文档包记录上传批次、文件夹、附件包或 Skill 包。
 - `documents.relative_path` / `documents.folder_path` 保存文件夹上传的相对路径信息。
 - 单文件最大 50 MB；批量 / 文件夹上传单次最多 100 个文件，总量 200 MB。
@@ -92,7 +95,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 公开页面不展示 signed URL。
 - 公开页面不展示 Storage 路径。
 
-文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。
+文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页，不新增 migration，不改 Storage policy。
 
 ### Access Requests
 

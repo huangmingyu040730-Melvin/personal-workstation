@@ -172,6 +172,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 
 - Phase 2O 以后主线：研究资产沉淀、公开展示质量、文件 / 知识管理和求职闭环维护。
 - Phase 2P-A 起 Documents 升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
+- Phase 2P-B 起 Project、Publication、Knowledge、Skill 后台详情页内嵌关联文件 / 文档包区域，并继续复用统一 Documents 上传页。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。
@@ -188,7 +189,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制；restricted 内容通过 `content_access_grants` 与登录用户邮箱匹配控制；后台写入、更新、删除权限通过 `public.is_admin()` 控制。
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
-- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。附件仍默认私密，不公开下载。
+- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。Phase 2P-B 将关联文件区域嵌入 Project、Publication、Knowledge 和 Skill 后台详情页，上传入口仍统一跳转到 `/dashboard/documents/upload` 并通过 query params 预填关联对象、分类、上传模式和文档包类型。附件仍默认私密，不公开下载。
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
@@ -200,7 +201,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Dashboard 已读取真实项目、笔记、Skill、Publications、Documents、Calendar、Career 与 Activity Logs。
 - Google Calendar、提醒系统和外部日历同步尚未实现，也不是当前主动扩展优先级。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
-- 文件附件默认比正文内容更严格；即使 Publication 设置为 public，关联 Documents 仍保持 private，本阶段不会在公开页面提供下载入口。
+- 文件附件默认比正文内容更严格；即使 Project、Publication、Knowledge 或 Skill 设置为 public，关联 Documents 仍保持 private，本阶段不会在公开页面提供下载入口。
 - Notion 的长期定位是草稿、临时研究笔记、日常记录和协作辅助，不替代个人网站的正式公开门户、权限系统与私密资产库。
 
 ## 已知问题

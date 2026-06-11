@@ -1,17 +1,26 @@
 import Link from "next/link";
 import { Download, FileText, Upload } from "lucide-react";
 import { notFound } from "next/navigation";
-import { AdminEmptyState, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
+import { deleteDocumentCollectionAction } from "@/actions/documents";
+import { AdminDangerZone, AdminEmptyState, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { getDocumentCategoryLabel, getDocumentCollectionTypeLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
 import { formatDateTime, formatFileSize } from "@/lib/format";
+import { getFormError } from "@/lib/forms";
 import { getDocumentCollectionById, getDocumentsByCollectionId } from "@/lib/queries/documents";
 
-export default async function DocumentCollectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function DocumentCollectionDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const [collection, documents] = await Promise.all([
     getDocumentCollectionById(id),
     getDocumentsByCollectionId(id)
@@ -20,6 +29,10 @@ export default async function DocumentCollectionDetailPage({ params }: { params:
   if (!collection) {
     notFound();
   }
+
+  const error = getFormError(query);
+  const notice = query.notice === "collection_deleted";
+  const deleteAction = deleteDocumentCollectionAction.bind(null, collection.id);
 
   return (
     <AppShell>
@@ -35,6 +48,12 @@ export default async function DocumentCollectionDetailPage({ params }: { params:
             </Link>
           }
         />
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {notice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            空文档包已删除。
+          </div>
+        ) : null}
         <AdminSecurityNote>文档包只是私密附件管理层。即使关联公开 Project、Publication、Knowledge 或 Skill，也不会在公开页面展示附件下载入口。</AdminSecurityNote>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
@@ -113,6 +132,26 @@ export default async function DocumentCollectionDetailPage({ params }: { params:
                 <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">{collection.description}</p>
               </Card>
             ) : null}
+
+            {documents.length === 0 ? (
+              <AdminDangerZone description="删除空文档包只会清理文档包记录，不删除任何文件或 Storage 对象。">
+                <div className="space-y-4">
+                  <p className="text-sm leading-6 text-rose-700">
+                    该文档包当前不包含文件，可以删除空文档包记录。
+                  </p>
+                  <form action={deleteAction}>
+                    <DeleteButton label="删除空文档包" />
+                  </form>
+                </div>
+              </AdminDangerZone>
+            ) : (
+              <Card className="overflow-hidden border-amber-100 bg-amber-50">
+                <CardHeader title="文档包删除" />
+                <p className="text-sm leading-6 text-amber-800">
+                  当前文档包包含 {documents.length} 个文件。需要先删除文件后，才能删除文档包记录。
+                </p>
+              </Card>
+            )}
           </aside>
         </div>
       </AdminPageSurface>

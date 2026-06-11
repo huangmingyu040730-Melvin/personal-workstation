@@ -992,3 +992,28 @@
 - 本阶段不公开附件，不生成公开下载链接，不做批量 zip 下载、OCR、文件内容索引或 AI 总结。
 - 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。
 - Documents 和 Storage 继续只允许管理员通过短时 signed URL 下载，即使关联对象本身是 public。
+
+## 2026-06-12 - Embed Private Attachments In Content Detail Pages
+
+类型：decision
+
+决策：
+
+- Phase 2P-B 在 Project、Publication、Knowledge 和 Skill 的后台详情页嵌入关联文件 / 文档包区域。
+- 各内容详情页只展示 `documents` 和 `document_collections` 的关联记录，并提供跳转到统一 `/dashboard/documents/upload` 的预填上传入口。
+- 上传页支持 `related_type`、`related_id`、`category`、`collection_type` 和 `mode` query params 作为默认值；query params 只用于预填，服务端仍通过 `ensureRelatedRecordExists` 做最终校验。
+- Publication 详情页复用统一附件组件，并将删除保护扩展到关联 `document_collections`，避免存在附件包时误删成果。
+- Skill 详情页明确提示 Skill 包只作为私密文件存储，不执行、不解析、不安装，也不自动同步到外部环境。
+
+原因：
+
+- Documents 已经是统一附件底座，Project / Publication / Knowledge / Skill 不应重复实现上传流程或文件系统。
+- 在内容详情页直接看到关联附件，可以让研究对象与私密资料形成闭环，同时保留统一文件中心作为底层管理面。
+- 预填上传入口减少误选关联对象，但不改变服务端权限边界。
+
+影响：
+
+- 本阶段不新增 migration，不修改 Storage policy，不改 Documents 底层上传流程。
+- 公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件、Storage 路径、signed URL 或下载入口。
+- 不做公开下载、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。

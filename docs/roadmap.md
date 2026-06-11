@@ -101,6 +101,19 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不解析、不执行、不安装上传的代码或 Skill 包。
 - 不修改 Resume / Career 逻辑。
 
+### Phase 2P-B - Embedded Content Attachments
+
+已完成代码实现。Project、Publication、Knowledge 和 Skill 后台详情页内嵌关联文件 / 文档包区域，管理员可以在内容对象内查看私密附件、跳转下载、打开文档包详情，并通过预填 query params 进入统一 `/dashboard/documents/upload` 上传文件、文件夹或文档包。
+
+边界：
+
+- 不重复实现上传逻辑。
+- 不新增 migration。
+- 不改 Storage policy。
+- 不公开附件或 signed URL。
+- Skill 包仍只作为私密文件存储，不执行、不解析、不安装。
+- 不修改 Resume / Career 逻辑。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -162,6 +175,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - public 页面只展示明确设为 `public` 的内容。
 - Documents 继续保持私密，不开放公开下载或 viewer signed URL。
 - Documents 作为统一附件底座承载 Project、Publication、Knowledge 和 Skill 的私密附件，避免每个模块重复实现文件系统。
+- 内容详情页只嵌入后台私密附件视图，公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件下载入口。
 - Access Requests / Access Grants 继续作为 restricted 访问基础。
 - Viewer magic link 和 restricted 访问可以另开 bugfix，但不得扩大 Documents 权限。
 
