@@ -18,6 +18,9 @@ export type MarketBriefJobProgress = {
   updated_at: string;
 };
 
+export const MARKET_BRIEF_JOB_STALE_AFTER_MS = 2 * 60 * 1000;
+export const marketBriefJobStaleMessage = "生成任务长时间未更新，可能已超时。你可以取消任务或重置为排队后重试。";
+
 export const marketBriefJobProgressSteps: Array<{ stage: MarketBriefJobProgressStage; label: string; percent: number }> = [
   { stage: "queued", label: "任务已创建", percent: 5 },
   { stage: "validating", label: "正在校验交易日与任务参数", percent: 10 },
@@ -71,6 +74,16 @@ export function normalizeProgressStage(value: unknown): MarketBriefJobProgressSt
   return typeof value === "string" && progressByStage.has(value as MarketBriefJobProgressStage)
     ? value as MarketBriefJobProgressStage
     : null;
+}
+
+export function isMarketBriefJobProgressStale(progress: Pick<MarketBriefJobProgress, "updated_at">, now = new Date()) {
+  const updatedAt = new Date(progress.updated_at);
+
+  if (Number.isNaN(updatedAt.getTime())) {
+    return false;
+  }
+
+  return now.getTime() - updatedAt.getTime() > MARKET_BRIEF_JOB_STALE_AFTER_MS;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

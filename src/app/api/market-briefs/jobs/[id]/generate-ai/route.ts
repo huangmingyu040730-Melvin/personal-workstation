@@ -3,11 +3,15 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/auth/admin";
 import type { MarketBriefGenerationJobRecord } from "@/lib/content-types";
 import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
-import { getMarketBriefJobProgressFromPayload } from "@/lib/market-brief-job-progress";
-import { runMockMarketBriefGenerationJob, updateMarketBriefGenerationJobProgress } from "@/lib/market-brief-runner";
+import { getMarketBriefJobProgressFromPayload, isMarketBriefJobProgressStale, marketBriefJobStaleMessage } from "@/lib/market-brief-job-progress";
+import { markMarketBriefGenerationJobFailed, runMockMarketBriefGenerationJob, updateMarketBriefGenerationJobProgress } from "@/lib/market-brief-runner";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+const AI_GENERATION_TIMEOUT_MS = 45_000;
+const AI_GENERATION_TIMEOUT_MESSAGE = "AI 生成超时，请减少检索来源或稍后重试。";
+const AI_GENERATION_TIMEOUT_PROGRESS_MESSAGE = "AI 生成超时，请重新排队后重试。";
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -58,26 +62,39 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   const currentProgress = getMarketBriefJobProgressFromPayload(job.request_payload, getFallbackProgressStage(job.status));
 
-  if (job.status === "running" && currentProgress.stage !== "queued") {
-    return NextResponse.json({ ...serializeMarketBriefJobStatus(job), already_running: true }, { status: 202 });
+  if (job.status === "running") {
+    const serialized = serializeMarketBriefJobStatus(job);
+    if (serialized.stale) {
+      return NextResponse.json({ ...serialized, already_running: true }, { status: 409 });
+    }
+    return NextResponse.json({ ...serialized, already_running: true }, { status: 202 });
   }
 
   try {
-    const result = await runMockMarketBriefGenerationJob(supabase, job, {
-      onProgress: async (stage, message) => {
-        await updateMarketBriefGenerationJobProgress(supabase, job.id, stage, message);
-      }
-    });
+    const result = await withTimeout(
+      runMockMarketBriefGenerationJob(supabase, job, {
+        onProgress: async (stage, message) => {
+          await updateMarketBriefGenerationJobProgress(supabase, job.id, stage, message);
+        }
+      }),
+      AI_GENERATION_TIMEOUT_MS
+    );
 
     revalidateMarketBriefPaths(result.brief.id, result.job.id);
     return NextResponse.json(serializeMarketBriefJobStatus(result.job));
   } catch (generationError) {
+    const safeErrorMessage = getSafeGenerationErrorMessage(generationError);
     console.error("marketBrief.generateAi.failed", {
       job_id: job.id,
       status: job.status,
       progress_stage: currentProgress.stage,
-      message: generationError instanceof Error ? generationError.message : "Unknown market brief generation failure."
+      provider: job.request_payload?.generator_name ?? job.runner_name,
+      message: safeErrorMessage
     });
+
+    await markFailedSafely(supabase, job.id, safeErrorMessage, generationError instanceof MarketBriefGenerationTimeoutError
+      ? AI_GENERATION_TIMEOUT_PROGRESS_MESSAGE
+      : "AI 生成失败，请重新排队后重试。");
 
     const failedJob = await readJobSafely(supabase, job.id);
     return NextResponse.json(
@@ -93,6 +110,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 function serializeMarketBriefJobStatus(job: MarketBriefGenerationJobRecord) {
   const progress = getMarketBriefJobProgressFromPayload(job.request_payload, getFallbackProgressStage(job.status));
   const marketBriefId = job.market_brief_id ?? job.market_briefs?.id ?? null;
+  const stale = job.status === "running" && isMarketBriefJobProgressStale(progress);
 
   return {
     id: job.id,
@@ -103,6 +121,8 @@ function serializeMarketBriefJobStatus(job: MarketBriefGenerationJobRecord) {
     error_message: job.error_message,
     market_brief_id: marketBriefId,
     preview_url: marketBriefId ? `/dashboard/market-briefs/${marketBriefId}/preview` : null,
+    stale,
+    stale_message: stale ? marketBriefJobStaleMessage : null,
     updated_at: job.updated_at
   };
 }
@@ -150,4 +170,62 @@ async function readJobSafely(supabase: NonNullable<Awaited<ReturnType<typeof get
   }
 
   return data as MarketBriefGenerationJobRecord | null;
+}
+
+async function markFailedSafely(
+  supabase: NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>,
+  jobId: string,
+  errorMessage: string,
+  progressMessage: string
+) {
+  try {
+    await markMarketBriefGenerationJobFailed(supabase, jobId, errorMessage, progressMessage);
+  } catch (markError) {
+    console.error("marketBrief.generateAi.markFailedFailed", {
+      job_id: jobId,
+      message: markError instanceof Error ? markError.message : "Unknown mark failed error."
+    });
+  }
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new MarketBriefGenerationTimeoutError());
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+  });
+}
+
+class MarketBriefGenerationTimeoutError extends Error {
+  constructor() {
+    super(AI_GENERATION_TIMEOUT_MESSAGE);
+    this.name = "MarketBriefGenerationTimeoutError";
+  }
+}
+
+function getSafeGenerationErrorMessage(error: unknown) {
+  if (error instanceof MarketBriefGenerationTimeoutError) {
+    return AI_GENERATION_TIMEOUT_MESSAGE;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    const message = error.message.trim();
+    if (message.includes("AI 返回格式无法解析")) return "AI 返回格式无法解析，请重新生成。";
+    if (message.includes("AI 未返回市场简报内容")) return "AI 未返回市场简报内容，请重新生成。";
+    if (message.includes("搜索") || message.includes("search") || message.includes("Tavily") || message.includes("Serper")) return message.slice(0, 500);
+    if (message.includes("保存") || message.includes("Supabase") || message.includes("生成任务")) return message.slice(0, 500);
+    return message.slice(0, 500);
+  }
+
+  return "市场简报 AI 生成失败，请重新排队后重试。";
 }

@@ -1,6 +1,8 @@
 import type { MarketBriefSearchSource } from "@/lib/market-brief-search";
 import { searchMarketBriefSources } from "@/lib/market-brief-search";
 
+const MAX_GROUNDING_PROMPT_LENGTH = 7600;
+
 export type MarketBriefGroundingContext = {
   market: string;
   briefDate: string;
@@ -75,7 +77,7 @@ export function serializeGroundingSourcesForPrompt(sources: MarketBriefSearchSou
     return "本次搜索未返回可用来源。";
   }
 
-  return sources
+  const serialized = sources
     .map((source) => [
       `[${source.id}] ${source.title}`,
       `发布方：${source.publisher || "未知"}`,
@@ -86,4 +88,8 @@ export function serializeGroundingSourcesForPrompt(sources: MarketBriefSearchSou
       `摘要：${source.snippet}`
     ].filter(Boolean).join("\n"))
     .join("\n\n");
+
+  return serialized.length > MAX_GROUNDING_PROMPT_LENGTH
+    ? `${serialized.slice(0, MAX_GROUNDING_PROMPT_LENGTH).trim()}\n\n[Grounding sources were truncated to fit AI prompt budget.]`
+    : serialized;
 }

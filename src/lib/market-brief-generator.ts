@@ -79,6 +79,11 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
     providerLabel,
     grounding
   });
+  console.info("marketBrief.aiGeneration.promptReady", {
+    provider: providerLabel,
+    source_count: grounding.sources.length,
+    prompt_length_estimate: prompt.length
+  });
 
   const response = await client.chat.completions.create({
     model: aiConfig.model,
@@ -122,19 +127,30 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
 }
 
 function parseAiJson(content: string) {
+  const normalized = stripMarkdownCodeFence(content);
   try {
-    return JSON.parse(content) as Record<string, unknown>;
+    return JSON.parse(normalized) as Record<string, unknown>;
   } catch {
-    const matched = content.match(/\{[\s\S]*\}/);
-    if (!matched) {
-      throw new Error("AI 返回格式无法解析，请重试。");
+    const firstBrace = normalized.indexOf("{");
+    const lastBrace = normalized.lastIndexOf("}");
+
+    if (firstBrace < 0 || lastBrace <= firstBrace) {
+      throw new Error("AI 返回格式无法解析，请重新生成。");
     }
+
+    const jsonCandidate = normalized.slice(firstBrace, lastBrace + 1);
     try {
-      return JSON.parse(matched[0]) as Record<string, unknown>;
+      return JSON.parse(jsonCandidate) as Record<string, unknown>;
     } catch {
-      throw new Error("AI 返回格式无法解析，请重试。");
+      throw new Error("AI 返回格式无法解析，请重新生成。");
     }
   }
+}
+
+function stripMarkdownCodeFence(content: string) {
+  const trimmed = content.trim();
+  const fenced = trimmed.match(/^```(?:json|JSON)?\s*([\s\S]*?)\s*```$/);
+  return fenced ? fenced[1].trim() : trimmed;
 }
 
 function normalizeAiMarketBriefOutput(
