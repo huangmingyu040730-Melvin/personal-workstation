@@ -11,7 +11,6 @@ import {
   Home,
   KeyRound,
   Library,
-  Newspaper,
   Settings,
   UserRound,
   WandSparkles
@@ -43,7 +42,6 @@ export const sidebarGroups = [
     label: "研究中心",
     items: [
       { label: "日历", href: "/dashboard/calendar", icon: CalendarDays },
-      { label: "市场简报", href: "/dashboard/market-briefs", icon: Newspaper },
       { label: "研究项目", href: "/dashboard/projects", icon: FolderOpen },
       { label: "学术成果", href: "/dashboard/publications", icon: BarChart3 },
       { label: "知识库", href: "/dashboard/knowledge", icon: BookOpen }
@@ -92,7 +90,7 @@ export const projects: Project[] = [
     milestones: ["样本池整理", "收益指标计算", "风格归因", "报告撰写"]
   },
   {
-    id: "a-share-factor-study",
+    id: "factor-effectiveness-study",
     name: "量化因子在 A 股中的有效性研究",
     summary: "测试估值、质量、动量与波动率因子在不同市场环境中的稳定性。",
     status: "进行中",
@@ -177,13 +175,13 @@ export const knowledgeNotes: KnowledgeNote[] = [
 
 export const skills: Skill[] = [
   {
-    id: "daily-a-share-review",
-    name: "每日 A 股市场收评生成器",
-    description: "汇总市场表现、行业轮动、核心指数与重点事件，生成结构化收评草稿。",
-    category: "市场研究",
-    platforms: ["Codex", "GitHub Actions", "Notion"],
+    id: "research-digest-assistant",
+    name: "研究资料摘要助手",
+    description: "将公开资料、会议记录和阅读笔记整理为结构化研究摘要草稿。",
+    category: "研究工作流",
+    platforms: ["Codex", "Notion"],
     status: "开发中",
-    version: "v0.3.0",
+    version: "v0.1.0",
     updatedAt: "2026-05-31",
     visibility: "private"
   },
@@ -247,7 +245,7 @@ export const documents: DocumentItem[] = [
 export const activityFeed = [
   "更新中国私募基金全指指增产品比较研究进度至 72%",
   "新增行情数据接口整理笔记",
-  "每日 A 股市场收评生成器完成 GitHub Actions 草案",
+  "研究资料摘要助手完成资料整理流程草案",
   "归档行业轮动策略回测分析报告"
 ];
 
