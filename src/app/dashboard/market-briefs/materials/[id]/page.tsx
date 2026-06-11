@@ -1,14 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
+import {
+  deleteMarketBriefMaterialPackageAction,
+  recollectMarketBriefMaterialPackageAction
+} from "@/actions/market-brief-material-packages";
 import { generateMarketBriefForDateAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { MarketBriefMaterialPackageActions } from "@/components/forms/market-brief-material-package-actions";
 import { SubmitButton } from "@/components/forms/submit-button";
 import type { MarketBriefMaterialPackageSource } from "@/lib/content-types";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { getFormError } from "@/lib/forms";
 import {
   getMarketBriefMaterialPackageStatusLabel,
   getMarketBriefMaterialPackageStatusTone,
@@ -17,8 +23,14 @@ import {
 import { getMarketBriefMaterialPackageById } from "@/lib/queries/market-brief-material-packages";
 import { PageHeader } from "@/components/page-header";
 
-export default async function MarketBriefMaterialPackageDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function MarketBriefMaterialPackageDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const materialPackage = await getMarketBriefMaterialPackageById(id);
 
   if (!materialPackage) {
@@ -26,6 +38,8 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
   }
 
   const exchangeSummaryItems = getExchangeSummaryItems(materialPackage.extracted_facts);
+  const error = getFormError(query);
+  const notice = getMaterialPackageDetailNotice(query);
 
   return (
     <AppShell>
@@ -41,6 +55,9 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
             </Link>
           }
         />
+
+        {error ? <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {notice ? <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div> : null}
 
         <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
           <div className="space-y-5">
@@ -96,6 +113,20 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
                 <InfoRow label="复核时间" value={materialPackage.reviewed_at ? formatDateTime(materialPackage.reviewed_at) : "未复核"} />
                 <InfoRow label="更新时间" value={formatDateTime(materialPackage.updated_at)} />
               </dl>
+            </Card>
+
+            <Card>
+              <CardHeader title="素材包操作" />
+              <div className="space-y-3">
+                <p className="text-sm leading-6 text-slate-600">
+                  重新采集会使用当前素材包的日期和市场更新同一条记录。删除只清理素材包记录，不会删除已生成简报、历史生成任务或 Storage 文件；删除后同日期同市场可以重新采集。
+                </p>
+                <MarketBriefMaterialPackageActions
+                  id={materialPackage.id}
+                  recollectAction={recollectMarketBriefMaterialPackageAction}
+                  deleteAction={deleteMarketBriefMaterialPackageAction}
+                />
+              </div>
             </Card>
 
             <Card>
@@ -303,4 +334,14 @@ function asOptionalText(value: unknown) {
 
 function asDisplayText(value: unknown) {
   return asOptionalText(value) ?? "缺失";
+}
+
+function getMaterialPackageDetailNotice(searchParams: Record<string, string | string[] | undefined>) {
+  const notice = getSearchValue(searchParams.notice);
+  if (notice === "recollected") return "素材包已重新采集，并已更新当前日期和市场对应的同一条记录。";
+  return null;
+}
+
+function getSearchValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }

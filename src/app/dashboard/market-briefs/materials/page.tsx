@@ -29,6 +29,7 @@ export default async function MarketBriefMaterialPackagesPage({ searchParams }: 
     packageDate: getSearchValue(params.package_date) ?? ""
   };
   const error = getFormError(params);
+  const notice = getMaterialPackageListNotice(params);
   const today = getTodayDateInShanghai();
   const [packages, filterOptions] = await Promise.all([
     getMarketBriefMaterialPackages(filters),
@@ -61,6 +62,7 @@ export default async function MarketBriefMaterialPackagesPage({ searchParams }: 
         </AdminSection>
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {notice ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div> : null}
 
         <AdminSection title="筛选" description="按素材日期倒序展示，可按状态、市场和日期过滤。">
           <form className="grid gap-3 md:grid-cols-[180px_180px_180px_auto]">
@@ -147,4 +149,11 @@ function MarketBriefMaterialPackageRow({ item }: { item: MarketBriefMaterialPack
 
 function getSearchValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function getMaterialPackageListNotice(searchParams: Record<string, string | string[] | undefined>) {
+  const notice = getSearchValue(searchParams.notice);
+  if (notice === "deleted") return "市场素材包已删除。已生成简报和历史生成任务未被删除。";
+  if (notice === "recollected") return "市场素材包已重新采集。";
+  return null;
 }
