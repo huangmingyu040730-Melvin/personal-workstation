@@ -1,14 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
+import {
+  deleteMarketBriefMaterialPackageAction,
+  recollectMarketBriefMaterialPackageAction
+} from "@/actions/market-brief-material-packages";
 import { generateMarketBriefForDateAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { MarketBriefMaterialPackageActions } from "@/components/forms/market-brief-material-package-actions";
 import { SubmitButton } from "@/components/forms/submit-button";
 import type { MarketBriefMaterialPackageSource } from "@/lib/content-types";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { getFormError } from "@/lib/forms";
 import {
   getMarketBriefMaterialPackageStatusLabel,
   getMarketBriefMaterialPackageStatusTone,
@@ -17,8 +23,14 @@ import {
 import { getMarketBriefMaterialPackageById } from "@/lib/queries/market-brief-material-packages";
 import { PageHeader } from "@/components/page-header";
 
-export default async function MarketBriefMaterialPackageDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function MarketBriefMaterialPackageDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const materialPackage = await getMarketBriefMaterialPackageById(id);
 
   if (!materialPackage) {
@@ -26,6 +38,8 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
   }
 
   const exchangeSummaryItems = getExchangeSummaryItems(materialPackage.extracted_facts);
+  const error = getFormError(query);
+  const notice = getMaterialPackageDetailNotice(query);
 
   return (
     <AppShell>
@@ -42,14 +56,17 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
           }
         />
 
-        <div className="grid gap-5 xl:grid-cols-[1fr_0.42fr]">
-          <div className="space-y-5">
+        {error ? <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {notice ? <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div> : null}
+
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+          <div className="min-w-0 space-y-5">
             <ExchangeSummaryCard items={exchangeSummaryItems} />
 
-            <Card>
+            <Card className="overflow-hidden">
               <CardHeader title="来源列表" description="来源只作为后台研究材料，不进入公开页面。" />
               {materialPackage.sources.length > 0 ? (
-                <div className="space-y-3">
+                <div className="min-w-0 space-y-3">
                   {materialPackage.sources.map((source) => (
                     <SourceCard key={`${source.id}-${source.url}`} source={source} />
                   ))}
@@ -59,12 +76,12 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
               )}
             </Card>
 
-            <Card>
+            <Card className="overflow-hidden">
               <CardHeader title="检索 Queries" />
               {materialPackage.queries.length > 0 ? (
                 <ol className="space-y-2 text-sm leading-6 text-slate-700">
                   {materialPackage.queries.map((query, index) => (
-                    <li key={`${query}-${index}`} className="rounded-2xl bg-slate-50 px-3 py-2">
+                    <li key={`${query}-${index}`} className="min-w-0 break-words rounded-2xl bg-slate-50 px-3 py-2">
                       {query}
                     </li>
                   ))}
@@ -78,8 +95,8 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
             <JsonCard title="Extracted Facts" value={materialPackage.extracted_facts} />
           </div>
 
-          <div className="space-y-5">
-            <Card>
+          <div className="min-w-0 space-y-5">
+            <Card className="overflow-hidden">
               <CardHeader title="素材包信息" />
               <div className="mb-4 flex flex-wrap gap-2">
                 <Badge className={getMarketBriefMaterialPackageStatusTone(materialPackage.status)}>
@@ -98,7 +115,21 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
               </dl>
             </Card>
 
-            <Card>
+            <Card className="overflow-hidden">
+              <CardHeader title="素材包操作" />
+              <div className="space-y-3">
+                <p className="text-sm leading-6 text-slate-600">
+                  重新采集会使用当前素材包的日期和市场更新同一条记录。删除只清理素材包记录，不会删除已生成简报、历史生成任务或 Storage 文件；删除后同日期同市场可以重新采集。
+                </p>
+                <MarketBriefMaterialPackageActions
+                  id={materialPackage.id}
+                  recollectAction={recollectMarketBriefMaterialPackageAction}
+                  deleteAction={deleteMarketBriefMaterialPackageAction}
+                />
+              </div>
+            </Card>
+
+            <Card className="overflow-hidden">
               <CardHeader title="生成简报" action={<Sparkles size={18} className="text-blue-700" />} />
               {isUsableMarketBriefMaterialPackage(materialPackage) ? (
                 <form action={generateMarketBriefForDateAction} className="space-y-3">
@@ -116,9 +147,9 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
             <TextListCard title="Warnings" values={materialPackage.warnings} emptyText="暂无 warning。" tone="rose" />
             <TextListCard title="Source Notes" values={materialPackage.source_notes} emptyText="暂无 source note。" tone="blue" />
 
-            <Card>
+            <Card className="overflow-hidden">
               <CardHeader title="错误信息" />
-              <p className={materialPackage.error_message ? "text-sm leading-6 text-rose-700" : "text-sm leading-6 text-slate-500"}>
+              <p className={materialPackage.error_message ? "break-words text-sm leading-6 text-rose-700" : "text-sm leading-6 text-slate-500"}>
                 {materialPackage.error_message ?? "暂无错误。"}
               </p>
             </Card>
@@ -131,20 +162,20 @@ export default async function MarketBriefMaterialPackageDetailPage({ params }: {
 
 function SourceCard({ source }: { source: MarketBriefMaterialPackageSource }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{source.id}</Badge>
-        {source.source_type ? <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-100">{source.source_type}</Badge> : null}
+    <article className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
+        <Badge className="max-w-full break-all bg-blue-50 text-blue-700 ring-blue-100">{source.id}</Badge>
+        {source.source_type ? <Badge className="max-w-full break-all bg-emerald-50 text-emerald-700 ring-emerald-100">{source.source_type}</Badge> : null}
         <Badge className="bg-slate-50 text-slate-600 ring-slate-200">{source.relevance}</Badge>
-        {source.publisher ? <span className="text-xs font-medium text-slate-500">{source.publisher}</span> : null}
-        {source.published_at ? <span className="text-xs text-slate-400">{source.published_at}</span> : null}
+        {source.publisher ? <span className="min-w-0 break-all text-xs font-medium text-slate-500">{source.publisher}</span> : null}
+        {source.published_at ? <span className="min-w-0 break-words text-xs text-slate-400">{source.published_at}</span> : null}
       </div>
-      <h2 className="text-sm font-semibold text-slate-950">{source.title}</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{source.snippet}</p>
-      <p className="mt-3 rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-500">Query：{source.query}</p>
-      <a href={source.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800">
-        打开来源
-        <ExternalLink size={13} />
+      <h2 className="min-w-0 break-words text-sm font-semibold text-slate-950">{source.title}</h2>
+      <p className="mt-2 min-w-0 break-words text-sm leading-6 text-slate-600">{source.snippet}</p>
+      <p className="mt-3 min-w-0 break-words rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-500">Query：{source.query}</p>
+      <a href={source.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex max-w-full items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800">
+        <span className="min-w-0 break-all">{source.url}</span>
+        <ExternalLink size={13} className="shrink-0" />
       </a>
     </article>
   );
@@ -166,17 +197,17 @@ type ExchangeSummaryItem = {
 
 function ExchangeSummaryCard({ items }: { items: ExchangeSummaryItem[] }) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader title="交易所总貌" description="官方交易所 summary 字段，仅覆盖总貌，不代表完整市场宽度或行业板块。" />
       {items.length > 0 ? (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid min-w-0 gap-3 lg:grid-cols-2">
           {items.map((item) => (
-            <section key={item.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <section key={item.key} className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-100">{item.title}</Badge>
-                <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{item.verificationStatus}</Badge>
+                <Badge className="max-w-full break-all bg-blue-50 text-blue-700 ring-blue-100">{item.verificationStatus}</Badge>
               </div>
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
+              <dl className="grid min-w-0 gap-2 text-sm sm:grid-cols-2">
                 <InlineFact label="日期" value={item.packageDate} />
                 <InlineFact label="Rows" value={item.rows} />
                 <InlineFact label="Turnover" value={item.turnover} />
@@ -204,7 +235,7 @@ function ExchangeSummaryCard({ items }: { items: ExchangeSummaryItem[] }) {
 
 function InlineFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-white px-3 py-2">
+    <div className="min-w-0 rounded-xl bg-white px-3 py-2">
       <dt className="text-xs font-medium text-slate-500">{label}</dt>
       <dd className="mt-1 break-words font-semibold text-slate-800">{value}</dd>
     </div>
@@ -213,9 +244,9 @@ function InlineFact({ label, value }: { label: string; value: string }) {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4 rounded-2xl bg-slate-50 p-3">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="text-right font-medium text-slate-800">{value}</dd>
+    <div className="flex min-w-0 justify-between gap-4 rounded-2xl bg-slate-50 p-3">
+      <dt className="shrink-0 text-slate-500">{label}</dt>
+      <dd className="min-w-0 break-words text-right font-medium text-slate-800">{value}</dd>
     </div>
   );
 }
@@ -224,12 +255,12 @@ function TextListCard({ title, values, emptyText, tone }: { title: string; value
   const itemClassName = tone === "rose" ? "bg-rose-50 text-rose-700" : "bg-blue-50 text-blue-700";
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader title={title} />
       {values.length > 0 ? (
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           {values.map((value, index) => (
-            <p key={`${value}-${index}`} className={`rounded-2xl px-3 py-2 text-sm leading-6 ${itemClassName}`}>
+            <p key={`${value}-${index}`} className={`min-w-0 break-words rounded-2xl px-3 py-2 text-sm leading-6 ${itemClassName}`}>
               {value}
             </p>
           ))}
@@ -243,9 +274,9 @@ function TextListCard({ title, values, emptyText, tone }: { title: string; value
 
 function JsonCard({ title, value }: { title: string; value: unknown }) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader title={title} />
-      <pre className="max-h-[520px] overflow-auto rounded-2xl bg-slate-950 p-4 text-xs leading-5 text-slate-100">
+      <pre className="max-h-[520px] max-w-full overflow-x-auto overflow-y-auto rounded-2xl bg-slate-950 p-4 text-xs leading-5 text-slate-100">
         {JSON.stringify(value ?? {}, null, 2)}
       </pre>
     </Card>
@@ -303,4 +334,14 @@ function asOptionalText(value: unknown) {
 
 function asDisplayText(value: unknown) {
   return asOptionalText(value) ?? "缺失";
+}
+
+function getMaterialPackageDetailNotice(searchParams: Record<string, string | string[] | undefined>) {
+  const notice = getSearchValue(searchParams.notice);
+  if (notice === "recollected") return "素材包已重新采集，并已更新当前日期和市场对应的同一条记录。";
+  return null;
+}
+
+function getSearchValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }
