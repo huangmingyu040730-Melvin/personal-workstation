@@ -7,12 +7,15 @@ import { Card } from "@/components/card";
 import { PageHeader } from "@/components/page-header";
 import { documentCategories, documentRelatedTypes, getDocumentCategoryLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
 import { formatDateTime, formatFileSize } from "@/lib/format";
+import { getFormError } from "@/lib/forms";
 import { getDocuments } from "@/lib/queries/documents";
 
 export default async function DocumentsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const category = params.category ?? "all";
   const relatedType = params.related_type ?? "all";
+  const error = getFormError(params);
+  const notice = params.notice === "collection_deleted";
   const documents = await getDocuments({ category, relatedType });
 
   return (
@@ -29,6 +32,12 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           </Link>
         }
       />
+      {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+      {notice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          空文档包已删除。
+        </div>
+      ) : null}
       <AdminSecurityNote>文件中心只面向管理员后台。文件默认私密，公开页面不会展示下载入口、Storage 路径或 signed URL。</AdminSecurityNote>
       <AdminSection>
       <form className="flex flex-wrap gap-3">

@@ -30,6 +30,7 @@ export default async function ProjectDetailPage({
 
   const deleteAction = deleteProjectAction.bind(null, project.id);
   const error = getFormError(query);
+  const notice = query.notice === "collection_deleted";
 
   return (
     <AppShell>
@@ -48,6 +49,11 @@ export default async function ProjectDetailPage({
           }
         />
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {notice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            空文档包已删除。
+          </div>
+        ) : null}
         <div className="grid gap-5 xl:grid-cols-[1fr_0.45fr]">
         <div className="space-y-5">
           <Card>

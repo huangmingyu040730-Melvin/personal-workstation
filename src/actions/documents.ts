@@ -197,6 +197,30 @@ function revalidateDocumentPaths(options: {
   }
 }
 
+function getRelatedDetailHref(relatedType: DocumentRelatedType | null, relatedId: string | null) {
+  if (!relatedType || !relatedId) {
+    return null;
+  }
+
+  if (relatedType === "publication") {
+    return `/dashboard/publications/${relatedId}`;
+  }
+
+  if (relatedType === "project") {
+    return `/dashboard/projects/${relatedId}`;
+  }
+
+  if (relatedType === "knowledge") {
+    return `/dashboard/knowledge/${relatedId}`;
+  }
+
+  if (relatedType === "skill") {
+    return `/dashboard/skills/${relatedId}`;
+  }
+
+  return null;
+}
+
 async function storageObjectExists(
   supabase: NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>,
   storagePath: string
@@ -541,6 +565,77 @@ export async function rollbackPreparedDocumentUploadAction(upload: PreparedDocum
   }
 
   return { ok: true };
+}
+
+export async function deleteDocumentCollectionAction(id: string) {
+  const { supabase, isAdmin, error } = await getAdminClient();
+  const collectionPath = `/dashboard/documents/collections/${id}`;
+
+  if (!supabase || !isAdmin) {
+    redirect(`${collectionPath}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const { data: collection, error: fetchError } = await supabase
+    .from("document_collections")
+    .select("id,title,collection_type,related_type,related_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    redirect(`${collectionPath}?error=${encodeFormError(fetchError.message || "读取文档包失败。")}`);
+  }
+
+  if (!collection) {
+    redirect(`/dashboard/documents?error=${encodeFormError("文档包不存在或已经被删除。")}`);
+  }
+
+  const { count, error: countError } = await supabase
+    .from("documents")
+    .select("id", { count: "exact", head: true })
+    .eq("collection_id", id);
+
+  if (countError) {
+    redirect(`${collectionPath}?error=${encodeFormError(countError.message || "检查文档包文件数量失败。")}`);
+  }
+
+  if ((count ?? 0) > 0) {
+    redirect(`${collectionPath}?error=${encodeFormError("该文档包仍包含文件，请先删除文件后再删除文档包。")}`);
+  }
+
+  const { error: deleteError } = await supabase.from("document_collections").delete().eq("id", id);
+
+  if (deleteError) {
+    redirect(`${collectionPath}?error=${encodeFormError(deleteError.message || "删除文档包失败。")}`);
+  }
+
+  const relatedType = collection.related_type as DocumentRelatedType | null;
+  const relatedId = collection.related_id;
+
+  await writeActivityLog({
+    action: "document_collection.delete",
+    entityType: "document_collection",
+    entityId: id,
+    metadata: {
+      title: collection.title,
+      collection_type: collection.collection_type,
+      related_type: collection.related_type,
+      related_id: collection.related_id
+    }
+  });
+
+  revalidateDocumentPaths({
+    collectionId: id,
+    relatedType,
+    relatedId
+  });
+
+  const relatedHref = getRelatedDetailHref(relatedType, relatedId);
+
+  if (relatedHref) {
+    redirect(`${relatedHref}?notice=collection_deleted`);
+  }
+
+  redirect("/dashboard/documents?notice=collection_deleted");
 }
 
 export async function deleteDocumentAction(id: string) {

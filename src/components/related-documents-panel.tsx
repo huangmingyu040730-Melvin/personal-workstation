@@ -126,6 +126,11 @@ export async function RelatedDocumentsPanel({
                         <p className="mt-1 text-xs leading-5 text-slate-500">
                           {getDocumentCollectionTypeLabel(collection.collection_type)} · {collection.file_count} 个文件 · {formatFileSize(collection.total_size)}
                         </p>
+                        {collection.file_count === 0 ? (
+                          <span className="mt-2 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            空文档包
+                          </span>
+                        ) : null}
                         <p className="mt-1 truncate text-xs text-slate-400">{collection.root_folder_name ?? "未记录根文件夹"} · {formatDateTime(collection.updated_at)}</p>
                       </div>
                     </div>
