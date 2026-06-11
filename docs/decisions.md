@@ -1017,3 +1017,29 @@
 - 公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件、Storage 路径、signed URL 或下载入口。
 - 不做公开下载、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
 - 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。
+
+## 2026-06-12 - Use Create And Upload Flow For New Content Attachments
+
+类型：decision
+
+决策：
+
+- Phase 2P-C 在 Project、Publication、Knowledge 和 Skill 新建表单增加 create-and-upload 操作。
+- 管理员点击“保存并上传文件 / 文件夹或文档包”后，Server Action 先创建内容对象。
+- 创建成功后跳转到统一 `/dashboard/documents/upload`，并用 query params 预填 `related_type`、`related_id`、`mode`、`category` 和 `collection_type`。
+- 普通“保存”按钮保持原有详情页跳转行为。
+- Skill 包上传入口继续明确：只作为私密文件存储，不执行、不解析、不安装。
+
+原因：
+
+- 新建表单提交前没有稳定对象 ID，不能把文件可靠关联到尚未创建的 Project、Publication、Knowledge 或 Skill。
+- create-and-upload 复用 Documents 现有两阶段浏览器直传流程，避免每个内容模块重复实现上传系统。
+- 比 pending upload、临时文件 staging 或先传后绑定更保守，也更符合当前私密附件底座的边界。
+
+影响：
+
+- 本阶段不新增 migration，不新增 staging 表，不修改 Storage policy。
+- Create action 不接收 File 或文件二进制，文件不经过 Vercel Function。
+- 附件仍保持 private，不进入公开页面，不生成公开下载入口或 signed URL。
+- 不做自动上传、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。

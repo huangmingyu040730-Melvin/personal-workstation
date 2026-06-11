@@ -74,8 +74,23 @@ export function PublicationForm({
         </div>
       </div>
       </AdminFormSection>
+      {!publication ? (
+        <p className="text-sm leading-6 text-slate-500">
+          需要上传附件时，可以先保存当前内容，系统会自动跳转到文件中心并预选当前成果。文件仍为私密附件，不会在公开页面展示。
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-3 pt-2">
-        <SubmitButton />
+        <SubmitButton name="after_create" value="detail">保存</SubmitButton>
+        {!publication ? (
+          <>
+            <SubmitButton name="after_create" value="upload_single" variant="secondary">
+              保存并上传附件
+            </SubmitButton>
+            <SubmitButton name="after_create" value="upload_batch" variant="secondary">
+              保存并上传附件包
+            </SubmitButton>
+          </>
+        ) : null}
         <Link href={publication ? `/dashboard/publications/${publication.id}` : "/dashboard/publications"} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
           取消
         </Link>

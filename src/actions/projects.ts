@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
+import { buildRelatedDocumentUploadHref, getAfterCreateUploadAction } from "@/lib/document-upload-hrefs";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { projectSchema } from "@/lib/validations/project";
 
@@ -67,6 +68,28 @@ export async function createProjectAction(formData: FormData) {
   revalidatePath("/projects");
   revalidatePath("/dashboard/projects");
   revalidatePath(`/projects/${data.slug}`);
+
+  const afterCreate = getAfterCreateUploadAction(formData.get("after_create"));
+
+  if (afterCreate === "upload_single") {
+    redirect(buildRelatedDocumentUploadHref({
+      relatedType: "project",
+      relatedId: data.id,
+      mode: "single",
+      category: "research_material"
+    }));
+  }
+
+  if (afterCreate === "upload_batch") {
+    redirect(buildRelatedDocumentUploadHref({
+      relatedType: "project",
+      relatedId: data.id,
+      mode: "batch",
+      category: "research_material",
+      collectionType: "folder_upload"
+    }));
+  }
+
   redirect(`/dashboard/projects/${data.id}`);
 }
 

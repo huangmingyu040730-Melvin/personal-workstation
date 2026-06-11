@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
+import { buildRelatedDocumentUploadHref, getAfterCreateUploadAction } from "@/lib/document-upload-hrefs";
 import { encodeFormError, getBoolean, getOptionalString, getString, getStringArray } from "@/lib/forms";
 import { skillSchema, skillVersionSchema } from "@/lib/validations/skill";
 
@@ -116,6 +117,28 @@ export async function createSkillAction(formData: FormData) {
   revalidatePath("/skills");
   revalidatePath("/dashboard/skills");
   revalidatePath(`/skills/${data.slug}`);
+
+  const afterCreate = getAfterCreateUploadAction(formData.get("after_create"));
+
+  if (afterCreate === "upload_single") {
+    redirect(buildRelatedDocumentUploadHref({
+      relatedType: "skill",
+      relatedId: data.id,
+      mode: "single",
+      category: "skill_attachment"
+    }));
+  }
+
+  if (afterCreate === "upload_batch") {
+    redirect(buildRelatedDocumentUploadHref({
+      relatedType: "skill",
+      relatedId: data.id,
+      mode: "batch",
+      category: "skill_attachment",
+      collectionType: "skill_package"
+    }));
+  }
+
   redirect(`/dashboard/skills/${data.id}`);
 }
 

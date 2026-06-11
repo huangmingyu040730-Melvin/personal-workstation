@@ -1,15 +1,35 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { cn } from "@/lib/utils";
 
-export function SubmitButton({ children = "保存", pendingLabel = "保存中..." }: { children?: React.ReactNode; pendingLabel?: string }) {
+export function SubmitButton({
+  children = "保存",
+  pendingLabel = "保存中...",
+  variant = "primary",
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  children?: React.ReactNode;
+  pendingLabel?: string;
+  variant?: "primary" | "secondary";
+}) {
   const { pending } = useFormStatus();
+  const variantClass =
+    variant === "primary"
+      ? "bg-navy-900 text-white shadow-sm hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-md"
+      : "border border-blue-200 bg-blue-50 text-blue-700 hover:-translate-y-0.5 hover:bg-blue-100";
 
   return (
     <button
       type="submit"
+      {...props}
       disabled={pending}
-      className="inline-flex items-center justify-center rounded-2xl bg-navy-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+      className={cn(
+        "inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
+        variantClass,
+        className
+      )}
     >
       {pending ? pendingLabel : children}
     </button>

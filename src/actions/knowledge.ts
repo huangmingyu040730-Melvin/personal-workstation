@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
+import { buildRelatedDocumentUploadHref, getAfterCreateUploadAction } from "@/lib/document-upload-hrefs";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { knowledgeSchema } from "@/lib/validations/knowledge";
 
@@ -63,6 +64,28 @@ export async function createKnowledgeAction(formData: FormData) {
   revalidatePath("/knowledge");
   revalidatePath("/dashboard/knowledge");
   revalidatePath(`/knowledge/${data.slug}`);
+
+  const afterCreate = getAfterCreateUploadAction(formData.get("after_create"));
+
+  if (afterCreate === "upload_single") {
+    redirect(buildRelatedDocumentUploadHref({
+      relatedType: "knowledge",
+      relatedId: data.id,
+      mode: "single",
+      category: "research_material"
+    }));
+  }
+
+  if (afterCreate === "upload_batch") {
+    redirect(buildRelatedDocumentUploadHref({
+      relatedType: "knowledge",
+      relatedId: data.id,
+      mode: "batch",
+      category: "research_material",
+      collectionType: "attachment_bundle"
+    }));
+  }
+
   redirect(`/dashboard/knowledge/${data.id}`);
 }
 

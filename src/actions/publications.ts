@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
+import { buildRelatedDocumentUploadHref, getAfterCreateUploadAction } from "@/lib/document-upload-hrefs";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { publicationSchema } from "@/lib/validations/publication";
 
@@ -68,6 +69,28 @@ export async function createPublicationAction(formData: FormData) {
   revalidatePath("/publications");
   revalidatePath("/dashboard/publications");
   revalidatePath(`/publications/${data.slug}`);
+
+  const afterCreate = getAfterCreateUploadAction(formData.get("after_create"));
+
+  if (afterCreate === "upload_single") {
+    redirect(buildRelatedDocumentUploadHref({
+      relatedType: "publication",
+      relatedId: data.id,
+      mode: "single",
+      category: "publication_attachment"
+    }));
+  }
+
+  if (afterCreate === "upload_batch") {
+    redirect(buildRelatedDocumentUploadHref({
+      relatedType: "publication",
+      relatedId: data.id,
+      mode: "batch",
+      category: "publication_attachment",
+      collectionType: "attachment_bundle"
+    }));
+  }
+
   redirect(`/dashboard/publications/${data.id}`);
 }
 
