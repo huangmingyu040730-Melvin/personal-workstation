@@ -42,6 +42,15 @@ type UploadFailure = {
   reason: string;
 };
 
+type StorageUploadErrorLike = {
+  message?: unknown;
+  name?: unknown;
+  status?: unknown;
+  statusCode?: unknown;
+};
+
+const STORAGE_UPLOAD_FALLBACK_MESSAGE = "请确认 0018 migration 已执行、workspace-files bucket 为 private、文件未超过 50MB，且当前账号是管理员。";
+
 export type DocumentUploadInitialValues = {
   mode?: UploadMode;
   category?: DocumentCategory;
@@ -100,6 +109,41 @@ function getFilesFromFormData(formData: FormData) {
     seen.add(key);
     return true;
   });
+}
+
+function safeStorageErrorPart(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") {
+    return "";
+  }
+
+  const text = String(value).trim();
+
+  if (!text) {
+    return "";
+  }
+
+  return text
+    .replace(/https?:\/\/[^\s"'<>]+/gi, "[URL 已隐藏]")
+    .replace(/\b(authorization|cookie|set-cookie|headers?|service[_-]?role|api[_-]?key|apikey|bearer|token|jwt|signed\s*url|signature|access[_-]?token|refresh[_-]?token)\b[^\n,;。]*/gi, "敏感信息已隐藏")
+    .slice(0, 500);
+}
+
+function formatStorageUploadError(error: StorageUploadErrorLike | null | undefined) {
+  const message = safeStorageErrorPart(error?.message);
+  const details = [
+    safeStorageErrorPart(error?.name),
+    safeStorageErrorPart(error?.statusCode ?? error?.status)
+  ].filter(Boolean);
+
+  if (!message && details.length === 0) {
+    return STORAGE_UPLOAD_FALLBACK_MESSAGE;
+  }
+
+  return [message || STORAGE_UPLOAD_FALLBACK_MESSAGE, ...details].join(" · ");
+}
+
+function storageUploadFailureMessage(error: StorageUploadErrorLike | null | undefined) {
+  return `上传到 Supabase Storage 失败：${formatStorageUploadError(error)}`;
 }
 
 async function rollback(upload: PreparedDocumentUpload) {
@@ -177,7 +221,7 @@ export function DocumentUploadForm({
 
     if (uploadError) {
       setPhase("idle");
-      setMessage("文件上传到 Supabase Storage 失败，请确认文件类型与大小后重试。");
+      setMessage(storageUploadFailureMessage(uploadError));
       return;
     }
 
@@ -282,8 +326,15 @@ export function DocumentUploadForm({
       });
 
       if (uploadError) {
-        nextFailures.push({ name: relativePath, reason: "上传到 Supabase Storage 失败。" });
+        nextFailures.push({ name: relativePath, reason: storageUploadFailureMessage(uploadError) });
         setFailures([...nextFailures]);
+        setProgress({
+          total: files.length,
+          current: index + 1,
+          currentFile: relativePath,
+          successCount,
+          failureCount: nextFailures.length
+        });
         continue;
       }
 
@@ -310,6 +361,13 @@ export function DocumentUploadForm({
 
     setPhase("idle");
     setFailures(nextFailures);
+    setProgress({
+      total: files.length,
+      current: files.length,
+      currentFile: "",
+      successCount,
+      failureCount: nextFailures.length
+    });
 
     if (nextFailures.length > 0) {
       setMessage(`批量上传完成：成功 ${successCount} 个，失败 ${nextFailures.length} 个。已成功文件会保留。`);
@@ -376,7 +434,7 @@ export function DocumentUploadForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="文件选择" description="浏览器会直接上传到私密 workspace-files bucket，文件二进制不经过 Vercel Function。">
+      <AdminFormSection title="文件选择" description="浏览器会直接上传到私密 workspace-files bucket，文件二进制不经过 Vercel Function。如果 20-50MB 文件失败，请确认 production Supabase 已执行 0018，bucket file_size_limit 为 52428800。">
         {mode === "single" ? (
           <Field label="选择文件" hint={`最大 ${formatFileSize(MAX_DOCUMENT_FILE_SIZE)}。`}>
             <input
