@@ -240,6 +240,28 @@ export async function getDocumentCollectionById(id: string) {
   return collection ?? null;
 }
 
+export async function getDocumentCollectionsByRelated(relatedType: DocumentRelatedType, relatedId: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("document_collections")
+    .select("*")
+    .eq("related_type", relatedType)
+    .eq("related_id", relatedId)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("getDocumentCollectionsByRelated failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  return resolveCollectionRelations((data ?? []) as DocumentCollectionRecord[]);
+}
+
 export async function getDocumentsByCollectionId(collectionId: string) {
   const supabase = await createClient();
 

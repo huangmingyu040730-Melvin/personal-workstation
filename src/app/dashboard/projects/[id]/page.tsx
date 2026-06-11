@@ -8,6 +8,7 @@ import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { Progress } from "@/components/progress";
+import { RelatedDocumentsPanel } from "@/components/related-documents-panel";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { MarkdownPreview } from "@/lib/markdown";
@@ -61,6 +62,17 @@ export default async function ProjectDetailPage({
             <CardHeader title="研究方法" />
             <MarkdownPreview content={project.methodology} emptyText="尚未填写研究方法。" />
           </Card>
+          <RelatedDocumentsPanel
+            relatedType="project"
+            relatedId={project.id}
+            title="项目文件"
+            uploadFileLabel="上传项目文件"
+            uploadBatchLabel="上传项目文件夹"
+            uploadFileCategory="research_material"
+            uploadBatchCategory="research_material"
+            uploadBatchCollectionType="folder_upload"
+            emptyText="还没有关联项目文件。可以上传研究资料、数据文件或项目文件夹作为私密附件。"
+          />
         </div>
         <div className="space-y-5">
           <Card>

@@ -7,6 +7,7 @@ import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
+import { RelatedDocumentsPanel } from "@/components/related-documents-panel";
 import { formatDateTime } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { MarkdownPreview } from "@/lib/markdown";
@@ -46,10 +47,23 @@ export default async function KnowledgeDetailPage({
         />
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         <div className="grid gap-5 xl:grid-cols-[1fr_0.35fr]">
-        <Card>
-          <CardHeader title="正文" action={<VisibilityBadge visibility={note.visibility} />} />
-          <MarkdownPreview content={note.content} />
-        </Card>
+        <div className="space-y-5">
+          <Card>
+            <CardHeader title="正文" action={<VisibilityBadge visibility={note.visibility} />} />
+            <MarkdownPreview content={note.content} />
+          </Card>
+          <RelatedDocumentsPanel
+            relatedType="knowledge"
+            relatedId={note.id}
+            title="笔记资料"
+            uploadFileLabel="上传资料"
+            uploadBatchLabel="上传资料文件夹"
+            uploadFileCategory="research_material"
+            uploadBatchCategory="research_material"
+            uploadBatchCollectionType="attachment_bundle"
+            emptyText="还没有关联笔记资料。可以上传参考文献、数据文件或资料包作为私密附件。"
+          />
+        </div>
         <div className="space-y-5">
           <Card>
             <CardHeader title="笔记信息" />

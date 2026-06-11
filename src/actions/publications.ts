@@ -119,18 +119,25 @@ export async function deletePublicationAction(id: string) {
     redirect(`/dashboard/publications/${id}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
   }
 
-  const { count, error: countError } = await supabase
-    .from("documents")
-    .select("id", { count: "exact", head: true })
-    .eq("related_type", "publication")
-    .eq("related_id", id);
+  const [documentsCountResult, collectionsCountResult] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("related_type", "publication")
+      .eq("related_id", id),
+    supabase
+      .from("document_collections")
+      .select("id", { count: "exact", head: true })
+      .eq("related_type", "publication")
+      .eq("related_id", id)
+  ]);
 
-  if (countError) {
-    redirect(`/dashboard/publications/${id}?error=${encodeFormError(countError.message || "检查关联附件失败。")}`);
+  if (documentsCountResult.error || collectionsCountResult.error) {
+    redirect(`/dashboard/publications/${id}?error=${encodeFormError(documentsCountResult.error?.message || collectionsCountResult.error?.message || "检查关联附件失败。")}`);
   }
 
-  if ((count ?? 0) > 0) {
-    redirect(`/dashboard/publications/${id}?error=${encodeFormError("该成果仍有关联附件，请先删除或解除关联附件后再删除成果。")}`);
+  if ((documentsCountResult.count ?? 0) > 0 || (collectionsCountResult.count ?? 0) > 0) {
+    redirect(`/dashboard/publications/${id}?error=${encodeFormError("该成果仍有关联附件或文档包，请先删除或解除关联后再删除成果。")}`);
   }
 
   const { data: existing } = await supabase.from("publications").select("title,slug").eq("id", id).maybeSingle();

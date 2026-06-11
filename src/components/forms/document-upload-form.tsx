@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AdminFormSection, AdminSecurityNote } from "@/components/admin-ui";
-import type { KnowledgeNoteRecord, ProjectRecord, PublicationRecord, SkillRecord } from "@/lib/content-types";
+import type { DocumentCategory, DocumentCollectionType, KnowledgeNoteRecord, ProjectRecord, PublicationRecord, SkillRecord } from "@/lib/content-types";
 import { documentCategories, documentCollectionTypes, documentRelatedTypes } from "@/lib/content-options";
 import { formatFileSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
@@ -40,6 +40,14 @@ type UploadProgress = {
 type UploadFailure = {
   name: string;
   reason: string;
+};
+
+export type DocumentUploadInitialValues = {
+  mode?: UploadMode;
+  category?: DocumentCategory;
+  collectionType?: DocumentCollectionType;
+  relatedKey?: string;
+  prefillWarning?: string;
 };
 
 function phaseLabel(phase: UploadPhase, mode: UploadMode) {
@@ -103,18 +111,20 @@ export function DocumentUploadForm({
   publications,
   knowledgeNotes,
   skills,
+  initialValues,
   error
 }: {
   projects: Pick<ProjectRecord, "id" | "title">[];
   publications: Pick<PublicationRecord, "id" | "title">[];
   knowledgeNotes: Pick<KnowledgeNoteRecord, "id" | "title">[];
   skills: Pick<SkillRecord, "id" | "name">[];
+  initialValues?: DocumentUploadInitialValues;
   error?: string;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState(error ?? "");
   const [phase, setPhase] = useState<UploadPhase>("idle");
-  const [mode, setMode] = useState<UploadMode>("single");
+  const [mode, setMode] = useState<UploadMode>(initialValues?.mode ?? "single");
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [failures, setFailures] = useState<UploadFailure[]>([]);
   const [collectionLink, setCollectionLink] = useState<string | null>(null);
@@ -331,6 +341,12 @@ export function DocumentUploadForm({
     <form onSubmit={onSubmit} className="space-y-5">
       <ErrorNotice message={message} />
 
+      {initialValues?.prefillWarning ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+          {initialValues.prefillWarning}
+        </div>
+      ) : null}
+
       {collectionLink ? (
         <Link href={collectionLink} className="inline-flex rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
           查看已创建的文档包
@@ -402,11 +418,11 @@ export function DocumentUploadForm({
       {mode === "batch" ? (
         <AdminFormSection title="文档包信息" description="文档包表示一次上传批次、文件夹或附件包；附件仍保持私密。">
           <div className="grid gap-5 md:grid-cols-2">
-            <Field label="文档包名称" hint="留空时会使用根文件夹名称或当前日期。">
+            <Field label="文档包名称" hint="留空时会使用根文件夹名称或默认文档包名称。">
               <TextInput name="collection_title" placeholder="例如 因子研究数据包" disabled={pending} />
             </Field>
             <Field label="文档包类型">
-              <Select name="collection_type" defaultValue="folder_upload" disabled={pending}>
+              <Select name="collection_type" defaultValue={initialValues?.collectionType ?? "folder_upload"} disabled={pending}>
                 {documentCollectionTypes.map((type) => (
                   <option key={type.value} value={type.value}>{type.label}</option>
                 ))}
@@ -427,7 +443,7 @@ export function DocumentUploadForm({
             </Field>
           ) : null}
           <Field label="文件分类">
-            <Select name="category" defaultValue="research_material" disabled={pending}>
+            <Select name="category" defaultValue={initialValues?.category ?? "research_material"} disabled={pending}>
               {documentCategories.map((category) => (
                 <option key={category.value} value={category.value}>{category.label}</option>
               ))}
@@ -438,7 +454,7 @@ export function DocumentUploadForm({
 
       <AdminFormSection title="关联对象" description="文件可关联到 Publication、Project、Knowledge 或 Skill；附件本轮仍保持私密。">
         <Field label="关联对象" hint="可选。关联类型与对象绑定在同一个选项中，避免误选。">
-          <Select name="related_key" defaultValue="" disabled={pending}>
+          <Select name="related_key" defaultValue={initialValues?.relatedKey ?? ""} disabled={pending}>
             <option value="">不关联对象</option>
             <optgroup label={documentRelatedTypes.find((type) => type.value === "publication")?.label}>
               {publications.map((publication) => (
