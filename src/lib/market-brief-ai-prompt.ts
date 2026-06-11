@@ -141,6 +141,8 @@ export function buildMarketBriefAiPrompt(input: {
     "7. Markdown 的“数据与来源说明”必须列出 [S1]、[S2] 这类来源编号、标题、发布方和 URL。",
     "8. data_quality 只能是 ai_grounded、ai_grounded_partial 或 ai_unverified。生成状态默认 needs_review。",
     "9. source_snapshot.sources 必须原样保留下方 sources；source_snapshot.extracted_facts 用结构化字段摘录已确认事实。",
+    "10. 为保证生成稳定，markdown_content 控制在 900-1400 个中文字符；每个章节只写关键结论，不要展开长篇解释。",
+    "11. charts 最多 3 个，每个 chart 最多 8 条 data；无法确认的数据不要填充。",
     "",
     "固定 Markdown 模板：",
     marketBriefAiTemplate,

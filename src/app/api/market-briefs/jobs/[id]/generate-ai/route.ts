@@ -7,10 +7,10 @@ import { getMarketBriefJobProgressFromPayload, isMarketBriefJobProgressStale, ma
 import { markMarketBriefGenerationJobFailed, runMockMarketBriefGenerationJob, updateMarketBriefGenerationJobProgress } from "@/lib/market-brief-runner";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
-const AI_GENERATION_TIMEOUT_MS = 45_000;
-const AI_GENERATION_TIMEOUT_MESSAGE = "AI 生成超时，请减少检索来源或稍后重试。";
+const DEFAULT_AI_GENERATION_TIMEOUT_MS = 105_000;
+const AI_GENERATION_TIMEOUT_MESSAGE = "AI 生成耗时过长，请稍后重试。";
 const AI_GENERATION_TIMEOUT_PROGRESS_MESSAGE = "AI 生成超时，请重新排队后重试。";
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -77,7 +77,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
           await updateMarketBriefGenerationJobProgress(supabase, job.id, stage, message);
         }
       }),
-      AI_GENERATION_TIMEOUT_MS
+      getAiGenerationTimeoutMs()
     );
 
     revalidateMarketBriefPaths(result.brief.id, result.job.id);
@@ -228,4 +228,14 @@ function getSafeGenerationErrorMessage(error: unknown) {
   }
 
   return "市场简报 AI 生成失败，请重新排队后重试。";
+}
+
+function getAiGenerationTimeoutMs() {
+  const rawValue = Number(process.env.MARKET_BRIEF_AI_TIMEOUT_MS);
+
+  if (!Number.isFinite(rawValue) || rawValue <= 0) {
+    return DEFAULT_AI_GENERATION_TIMEOUT_MS;
+  }
+
+  return Math.max(30_000, Math.min(Math.round(rawValue), 115_000));
 }
