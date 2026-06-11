@@ -95,6 +95,7 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
       { role: "user", content: prompt }
     ],
     temperature: 0.2,
+    max_tokens: 3500,
     response_format: { type: "json_object" }
   });
   const content = response.choices[0]?.message?.content;

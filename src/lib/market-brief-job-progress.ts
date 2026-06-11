@@ -18,7 +18,7 @@ export type MarketBriefJobProgress = {
   updated_at: string;
 };
 
-export const MARKET_BRIEF_JOB_STALE_AFTER_MS = 2 * 60 * 1000;
+export const MARKET_BRIEF_JOB_STALE_AFTER_MS = 5 * 60 * 1000;
 export const marketBriefJobStaleMessage = "生成任务长时间未更新，可能已超时。你可以取消任务或重置为排队后重试。";
 
 export const marketBriefJobProgressSteps: Array<{ stage: MarketBriefJobProgressStage; label: string; percent: number }> = [

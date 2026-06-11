@@ -188,7 +188,7 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 - Phase 2M-A：切换为 AI-first Market Brief Generator，后台按钮直接创建 generation job 并由服务端 AI 生成固定模板 Markdown、structured JSON、source snapshot 和预览图表；旧 Python 数据源 runner 标记为 deprecated。
 - Phase 2M-B：清理旧数据源 / runner 路线，后台主流程、任务页面和推荐文档全面收口为 AI-first；旧 external 兼容接口和 runner 目录只作为 deprecated 历史诊断资料保留。
 - Phase 2M-C：新增 Market Brief AI Web Search Grounding，生成前按日期和市场检索公开来源，AI 只能基于 sources 生成 Markdown、structured JSON 和 charts；preview 展示来源列表，图表数据项必须带 `source_ids`。
-- Phase 2M-D：新增 Market Brief AI 生成进度体验，生成按钮创建 queued job 后进入任务详情页，客户端启动 AI 生成、轮询任务状态、展示阶段进度动画，并在 succeeded 后自动跳转预览页；hotfix 增加 45 秒主动超时、stale running 检测、failed 落库保护、JSON 解析增强和 prompt/source 限制，避免卡在 writing / 70%。
+- Phase 2M-D：新增 Market Brief AI 生成进度体验，生成按钮创建 queued job 后进入任务详情页，客户端启动 AI 生成、轮询任务状态、展示阶段进度动画，并在 succeeded 后自动跳转预览页；hotfix 增加默认 105 秒主动超时、5 分钟 stale running 检测、failed 落库保护、JSON 解析增强、输出 token 限制和 prompt/source 限制，避免卡在 writing / 70% 或被过早中断。
 - 后续：每日 A 股市场收评自动生成。
 - 后续：扩展更可靠的可验证来源引用、授权数据供应商和来源质量评分。
 - 后续：扩展稳定交易日历刷新、来源审计和人工复核工作流。
