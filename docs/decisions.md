@@ -885,7 +885,7 @@
 - 不展示 JD 原文，不公开投递记录，不进入 sitemap。
 - 不自动投递，不发送邮件，不做 Notion 同步，不创建日历提醒，不自动生成投递邮件。
 - 不修改 Resume Items、Resume Versions、旧 migration、RLS 旧策略、Storage、Documents、Viewer、restricted、Calendar、Profile、AI JD prompt 或 Word 导出逻辑。
-- 后续可扩展日历提醒、面试记录、投递邮件草稿、Notion 同步和统计图表。
+- Phase 2O-A 后，投递看板与求职中心进入稳定维护状态；不默认扩展日历提醒、面试记录、投递邮件草稿、Notion 同步或统计图表。
 
 ## 2026-06-10 - Consolidate Career Navigation Into Career Center
 
@@ -905,7 +905,7 @@
 原因：
 
 - Resume / 求职相关功能已经形成完整业务模块，继续平铺在 Sidebar 会让后台导航变长且模块边界不清晰。
-- 单一“求职中心”入口更适合后续扩展面试记录、面试复盘、投递提醒、Offer 对比和求职统计。
+- 单一“求职中心”入口更适合稳定维护现有 Resume、AI JD 分析记录和投递看板流程。
 - 保留原 URL 可以避免破坏现有代码引用、文档链接和用户书签。
 
 影响：
@@ -938,3 +938,29 @@
 - `/dashboard/market-briefs*` 与 `/api/market-briefs*` 路由被删除；直接访问允许 404。
 - Resume、Career、Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications、Access Requests 和 Access Grants 不受影响。
 - 若未来需要清理历史生产数据，应另开 DB cleanup PR，先备份并新增独立 migration。
+
+## 2026-06-12 - Stabilize Workspace After Market Brief Removal
+
+类型：decision
+
+决策：
+
+- Phase 2O-A 将产品路线收口为“研究资产沉淀 + 公开展示 + 文件 / 知识管理 + 求职闭环维护”。
+- Dashboard 继续突出 Projects、Knowledge、Skills、Publications、Documents、Calendar 和 Career。
+- 侧边栏不新增入口，Career Center 保持现有结构。
+- Market Brief 继续作为已弃用模块，不恢复页面、API、runner、素材包、数据探针或推荐环境变量。
+- 求职中心当前体验标记为稳定维护；后续只做 bugfix、文案修正和 broken link 修复。
+- 不主动扩展新的求职自动化、cron、migration 或 AI 生成产品线。
+
+原因：
+
+- Market Brief 移除后，需要把工作台从探索性功能扩张切回稳定维护。
+- 当前核心价值已集中在公开研究资产、私密文件与知识管理、Calendar、Profile 和求职闭环。
+- 求职中心已有 Resume / AI JD / JD 分析记录 / 投递看板闭环，继续扩展自动化会增加维护面。
+
+影响：
+
+- README、current-status、roadmap 和 decisions 均以稳定维护路线为准。
+- 通用 AI Provider 配置继续保留给 Resume JD 分析。
+- 不推荐任何 `MARKET_BRIEF_*` 环境变量。
+- 不修改历史 migrations，不新增 drop table migration，不改变 Supabase RLS 或 Storage 边界。

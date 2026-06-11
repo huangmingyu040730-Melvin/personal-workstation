@@ -67,7 +67,7 @@ export function Sidebar() {
           <GraduationCap size={17} />
           研究 · 投资 · AI
         </div>
-        <p className="mt-2 text-xs leading-5 text-blue-100/62">统一管理研究项目、内容资产与 AI Skill 工作流。</p>
+        <p className="mt-2 text-xs leading-5 text-blue-100/62">统一管理研究资产、文件知识与求职闭环。</p>
         <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/[0.06] px-2.5 py-2 text-[11px] text-blue-100/70">
           <ShieldCheck size={14} />
           后台仅管理员可访问

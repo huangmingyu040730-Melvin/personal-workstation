@@ -6,7 +6,6 @@ import {
   CalendarDays,
   ClipboardCheck,
   FileText,
-  FileUser,
   FolderOpen,
   Home,
   KeyRound,
@@ -255,6 +254,6 @@ export const quickActions = [
   { label: "新增笔记", icon: Library, href: "/dashboard/knowledge/new" },
   { label: "新建 Skill", icon: WandSparkles, href: "/dashboard/skills/new" },
   { label: "上传文件", icon: FileText, href: "/dashboard/documents/upload" },
-  { label: "简历素材", icon: FileUser, href: "/dashboard/resume" },
+  { label: "求职中心", icon: BriefcaseBusiness, href: "/dashboard/career" },
   { label: "访问申请", icon: ClipboardCheck, href: "/dashboard/access-requests" }
 ];

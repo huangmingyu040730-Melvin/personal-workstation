@@ -111,6 +111,25 @@ export async function getDocuments(filters?: { category?: string; relatedType?: 
   return resolveDocumentRelations((data ?? []) as DocumentRecord[]);
 }
 
+export async function countDocuments() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockDocumentFallback().length;
+  }
+
+  const { count, error } = await supabase
+    .from("documents")
+    .select("id", { count: "exact", head: true });
+
+  if (error) {
+    console.error("countDocuments failed", { code: error.code, message: error.message });
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
 export async function getDocumentById(id: string) {
   const supabase = await createClient();
 
