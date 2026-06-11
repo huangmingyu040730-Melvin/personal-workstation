@@ -12,7 +12,6 @@ import type { MarketBriefRecord } from "@/lib/content-types";
 import { formatDate, formatRelative } from "@/lib/format";
 import { getNearestPreviousAShareTradingDay } from "@/lib/a-share-trading-calendar";
 import { hasMarketBriefMarkdownContent } from "@/lib/market-brief-markdown";
-import { getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
 import { getTodayDateInShanghai } from "@/lib/market-brief-runner";
 import { getMarketBriefGenerationStatusTone, getMarketBriefStatusTone } from "@/lib/market-briefs";
 import { getMarketBriefSearchPublicInfo } from "@/lib/market-brief-search";
@@ -30,7 +29,6 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
   const notice = params.notice;
   const today = getTodayDateInShanghai();
   const nearestTradingDay = getNearestPreviousAShareTradingDay(today);
-  const generatorMode = getMarketBriefGeneratorMode();
   const searchInfo = getMarketBriefSearchPublicInfo();
   const [briefs, filterOptions] = await Promise.all([
     getMarketBriefs(filters),
@@ -108,7 +106,6 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
 
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {notice === "exists" ? <NoticeBanner tone="blue" message="该日期市场简报已存在，已保留原记录。" /> : null}
-        {generatorMode === "external" ? <NoticeBanner tone="blue" message="当前配置为旧 external runner 模式，建议改为 MARKET_BRIEF_GENERATOR=ai。" /> : null}
         {!searchInfo.isConfigured ? <NoticeBanner tone="blue" message="市场简报搜索服务未配置，AI 无法生成可靠行情数据；点击生成后任务会失败并提示配置 MARKET_BRIEF_SEARCH_PROVIDER 和 MARKET_BRIEF_SEARCH_API_KEY。" /> : null}
 
         <AdminSection title="筛选" description="按日期倒序展示；可搜索标题 / 摘要，并按状态、市场和标签过滤。">

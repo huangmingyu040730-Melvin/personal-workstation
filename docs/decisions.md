@@ -937,7 +937,7 @@
 - 市场简报当前仅管理员后台可访问，不进入公开页面或 sitemap。
 - RLS 允许管理员或 owner 管理；不授予 anon 读取权限，不允许 viewer/public 访问。
 - 本阶段不读取 Documents / Storage，不保存外部 API Key，不发送 AI 请求，不生成邮件，不创建定时任务。
-- 本阶段不做 AkShare、Tushare、Wind、AI 自动生成、Notion 同步、GitHub Actions、n8n、公开市场简报页、PDF/Word 导出、图表、股票推荐或投资建议。
+- 本阶段不做本地行情接口、AI 自动生成、Notion 同步、GitHub Actions、n8n、公开市场简报页、PDF/Word 导出、图表、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、Word 导出、AI Provider、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
 
 ## 2026-06-10 - Add Market Brief Artifacts And Markdown Preview
@@ -964,7 +964,7 @@
 - 市场简报仍是私密后台数据，仅管理员可访问，不进入公开站点或 sitemap。
 - Download routes 同样进行管理员鉴权。
 - HTML / JSON / DOCX 文件为即时响应，不保存到 Documents、Storage 或公开 bucket，不生成 signed URL。
-- 本阶段不读取 Documents / Storage，不调用 AI，不保存外部 API key，不做自动抓取、AkShare、Tushare、Wind、邮件发送、Notion 同步、GitHub Actions、n8n、定时任务、股票推荐或投资建议。
+- 本阶段不读取 Documents / Storage，不调用 AI，不保存外部 API key，不做自动抓取、本地行情接口、邮件发送、Notion 同步、GitHub Actions、n8n、定时任务、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
 
 ## 2026-06-10 - Add Market Brief Generation Button With Mock Generator
@@ -990,7 +990,7 @@
 
 - 市场简报仍为后台私密数据，仅管理员可触发生成和访问预览。
 - 不读取 Documents / Storage，不发送 signed URL，不调用 AI，不保存外部 API key。
-- 不做真实 AkShare、Tushare、Wind、新闻爬虫、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
+- 不做真实本地行情接口、新闻爬虫、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
 
 ## 2026-06-10 - Add Market Brief Skill Runner Jobs
@@ -1002,79 +1002,21 @@
 - Phase 2L-D-A 新增 `supabase/migrations/0015_market_brief_generation_jobs.sql`。
 - 新增 `market_brief_generation_jobs` 表，记录 `owner_id`、`brief_date`、`market`、`status`、`runner_name`、`request_payload`、`source_snapshot`、`result_payload`、关联 `market_brief_id`、错误信息和运行时间线。
 - “获取今日市场动态”按钮改为先创建生成任务；如果今日同市场简报已存在则跳转已有预览，如果已有 queued/running 任务则跳转任务详情。
-- 当前仍使用 `manual-skill-mock`，但 mock runner 通过 `src/lib/market-brief-runner.ts` 统一执行 queued -> running -> succeeded，并写入或更新 `market_briefs`。
+- 当前仍使用 `manual-skill-mock` 本地占位生成器，通过 `src/lib/market-brief-runner.ts` 统一执行 queued -> running -> succeeded，并写入或更新 `market_briefs`。
 - `src/lib/market-brief-generator.ts` 的 mock `source_snapshot` 改为稳定结构：`meta`、`indices`、`styles`、`sectors`、`hot_topics`、`capital_flows`、`policy_news` 和 `risk_signals`。
 - 新增 `/dashboard/market-briefs/jobs` 与 `/dashboard/market-briefs/jobs/[id]`，后台查看生成任务、payload、数据快照、结果和错误。
-- 新增私有 POST `/api/market-briefs/skill-result`，通过 `x-market-brief-runner-secret` 和 `MARKET_BRIEF_RUNNER_SECRET` 鉴权，接收外部 Skill Runner 的 Markdown、source snapshot、标签和数据来源回写。
 
 原因：
 
 - 市场简报从“按钮直接插入草稿”升级为可追踪任务，后续接真实行情源、新闻源、Skill 或队列时可以保留审计、失败原因和数据快照。
-- 外部 Skill Runner 回写没有管理员浏览器会话，不能复用普通 Server Action 的登录管理员身份；该接口因此独立为 runner secret 保护的 server-only 回调，并且只在服务端读取必要写入凭据。
 - 先用同步 mock runner 保持本阶段可验收，不引入后台 worker、定时任务或真实外部数据依赖。
 
 影响：
 
 - 新增 migration `0015_market_brief_generation_jobs.sql`；合并后生产环境需要手动执行，不自动执行 SQL。
 - 市场简报和生成任务仍为后台私密数据，仅管理员或 owner 可读写，不进入公开页面、viewer、restricted 或 sitemap。
-- 普通后台页面继续使用 Supabase Auth、`public.is_admin()` 和 RLS；私有 runner API 需要 `MARKET_BRIEF_RUNNER_SECRET`，并且不得泄露 API key、Supabase key、Auth UUID、Documents、Storage 路径、signed URL、Access Requests 或 Access Grants。
-- 本阶段不做真实 AkShare、Tushare、Wind、新闻爬虫、AI 自动生成、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
-- 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
-
-## 2026-06-10 - Add External Market Brief Runner Mode
-
-类型：decision
-
-决策：
-
-- Phase 2L-D-B 不新增 migration，继续复用 `market_brief_generation_jobs`。
-- 新增 `MARKET_BRIEF_GENERATOR` 运行模式：未配置或 `mock` 时保持站内 mock runner 同步生成；`external` 时站内按钮只创建 queued job 并跳转任务详情。
-- 新增 `POST /api/market-briefs/skill-jobs/claim`，外部 runner 通过 `MARKET_BRIEF_RUNNER_SECRET` 领取最早一条 queued job，并将其更新为 running。
-- 新增 `POST /api/market-briefs/skill-jobs/fail`，外部 runner 可将任务标记为 failed，并写入可读错误原因。
-- 继续复用 `POST /api/market-briefs/skill-result` 作为成功回写接口，将 running job 标记为 succeeded 并创建或更新 `market_briefs`。
-- 新增 `scripts/market-brief-runner/`，提供 Node.js 外部 runner 骨架、README 和 sample result；脚本只调用网站 API，不需要 Supabase key。
-- `/dashboard/market-briefs/jobs/[id]` 增加下一步提示，queued/running/succeeded/failed 分别展示等待领取、处理中、已生成和失败原因；external 任务只展示 API 路径，不显示 secret。
-
-原因：
-
-- 在接入真实行情/新闻/AI 前，先固定“网站创建任务 -> 外部 runner 领取 -> 回写成功或失败”的协议，可以把数据源复杂度和网站后台状态机解耦。
-- 外部 runner 不应拿 Supabase key；它只需要 runner secret，并通过私有 API 与网站通信。
-- 保留 mock 模式可以继续支持无外部 runner 的本地验收和手工演示。
-
-影响：
-
-- 不新增 migration；合并后无需执行 SQL，前提是生产已执行 `0015_market_brief_generation_jobs.sql`。
-- claim/fail/result API 都要求 `MARKET_BRIEF_RUNNER_SECRET`；未配置返回 503，wrong secret 返回 401，不允许无 secret 写入。
-- `SUPABASE_SERVICE_ROLE_KEY` 仍只允许服务端 API route 使用，不进入客户端 bundle、日志或仓库；外部 runner 脚本不需要 Supabase key。
-- 本阶段不做真实 AkShare、Tushare、Wind、新闻爬虫、AI 自动生成、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
-- 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
-
-## 2026-06-10 - Add First Real Market Data Runner
-
-类型：decision
-
-决策：
-
-- Phase 2L-D-C 不新增 migration，不修改网站数据库结构，不修改 market brief 或 generation job 表结构。
-- 在 `scripts/market-brief-runner/python/` 新增 Python AkShare runner，包括 `run_market_brief_runner.py`、`market_data_sources.py`、`market_brief_writer.py`、`requirements.txt`、README 和 sample source snapshot。
-- Python runner 读取 `WORKSTATION_BASE_URL`、`MARKET_BRIEF_RUNNER_SECRET`、`MARKET_BRIEF_MARKET`、`MARKET_BRIEF_RUNNER_NAME` 和 `MARKET_BRIEF_DATA_MODE`，默认 `A股`、`akshare-runner` 和 `akshare`。
-- 数据源第一版尝试抓取宽基指数、A 股市场宽度、行业板块涨跌榜和行业 / 概念涨幅榜生成的热点方向。
-- `source_snapshot` 固定包含 `meta`、`indices`、`market_breadth`、`styles`、`sectors`、`hot_topics`、`capital_flows`、`policy_news` 和 `risk_signals`。
-- 单个 AkShare 接口失败时记录到 `source_snapshot.meta.warnings`，其余模块继续生成；若领取任务后完全没有核心指数、宽度或板块数据，则调用 fail API 标记任务失败。
-- Markdown 由 `market_brief_writer.py` 根据真实数据生成，包含摘要、市场概览、宽基指数、市场宽度、行业板块、热点、资金流向、风险提示、明日关注和数据来源，并明确“不构成投资建议”。
-
-原因：
-
-- 在保留 external runner 协议的前提下，先接入第一版真实 A 股基础行情数据，验证 source snapshot 和 Markdown artifact 能承载真实数据。
-- AkShare 接口可能受网络、版本和数据源变化影响，因此数据层采用模块级 try/except 和 warning 机制，而不是让单个接口失败拖垮整个任务。
-- 当前阶段先做行情基础数据，不引入新闻爬虫、AI 成稿、邮件、Notion 或定时任务，避免在数据质量尚未稳定时扩大系统复杂度。
-
-影响：
-
-- 无需执行 SQL；生产环境仍只要求已执行到 `0015_market_brief_generation_jobs.sql`。
-- 不改网站 API、预览、下载或后台页面，继续复用 claim/result/fail。
-- Python runner 不需要 Supabase key，只通过 `WORKSTATION_BASE_URL` 和 `MARKET_BRIEF_RUNNER_SECRET` 调网站私有 API；不读取 Documents、Storage、cookie、浏览器会话或 signed URL。
-- 本阶段不做 AI 自动成稿、DeepSeek/OpenAI 调用、新闻爬虫、邮件发送、Notion 同步、GitHub Actions、n8n、后端 PDF、复杂图表、股票推荐、个股买卖建议或投资建议。
+- 普通后台页面继续使用 Supabase Auth、`public.is_admin()` 和 RLS，不得泄露 API key、Supabase key、Auth UUID、Documents、Storage 路径、signed URL、Access Requests 或 Access Grants。
+- 本阶段不做真实行情接口、新闻爬虫、AI 自动生成、GitHub Actions、n8n、定时任务、邮件发送、Notion 同步、股票推荐或投资建议。
 - 不修改 Resume、Career Center、JD Review、投递看板、AI Provider、简历 Word 导出、Calendar、Documents、Viewer、restricted、Profile、Projects、Publications、Knowledge、Skills、Access Requests 或 Access Grants 的核心流程。
 
 ## 2026-06-10 - Add Historical Market Brief Generation And Multi Source Fallback
@@ -1087,22 +1029,19 @@
 - `/dashboard/market-briefs` 保留“获取今日市场动态”，并新增“生成指定日期市场简报”表单；两者共用生成 action，创建 job 前会校验管理员权限、日期格式、未来日期和 A 股交易日。
 - 新增 `src/data/a-share-trading-days.json` 与 `src/lib/a-share-trading-calendar.ts`，第一版用本地 2025/2026 A 股交易日白名单校验周末、法定节假日和休市日；交易日历未覆盖年份时返回明确错误，不创建 job。
 - `request_payload` 写入 `brief_date`、`market`、`triggered_by=dashboard`、`generator_mode` 和 `is_historical`；任务列表和详情页展示“历史补生成”标记。
-- Python runner 默认 `MARKET_BRIEF_DATA_MODE=multi`，先尝试轻量 HTTP 指数源，再尝试 AkShare，最后生成 partial / fallback 待复核简报；`source_snapshot.meta.source_status` 记录各数据源成功、失败或跳过。
-- Python runner 始终使用 claim API 返回的 `job.brief_date`，并写入 `source_snapshot.meta.is_historical`；历史日期会跳过只支持最新快照的数据源，不用今日数据冒充历史数据。
 - `data_quality` 规则调整为：`real` 需要至少两个核心模块且指数不少于 5 个，`partial` 需要至少一个核心模块或指数不少于 3 个，`fallback` 表示没有核心模块可用；partial / fallback 都写入 `generation_status=needs_review`。
 
 原因：
 
 - 市场简报不能在周末、节假日或未来日期创建无效任务，也不能把实时快照误标为历史行情。
-- AkShare / 东方财富接口存在网络和上游稳定性问题，runner 应尽量完成一份可复核 artifact，而不是让任务长期停留在 running 或 failed。
-- 本地交易日 JSON 让后台能先有强校验边界，后续可用 AkShare、交易所日历或维护脚本刷新。
+- 旧本地行情源存在网络和上游稳定性问题，系统应尽量完成一份可复核 artifact，而不是让任务长期停留在 running 或 failed。
+- 本地交易日 JSON 让后台能先有强校验边界，后续可用交易所日历或维护脚本刷新。
 
 影响：
 
 - 不新增 SQL 或 migration；生产环境不需要执行数据库变更。
-- 不改变 claim/result/fail API 协议，只增强 request payload、source snapshot 和 runner 数据模式。
 - 市场简报仍为后台私密数据，不进入公开页面、viewer、restricted 或 sitemap。
-- 不读取 Documents、Storage、cookie、signed URL、Access Requests、Access Grants；不保存外部 API key，不打印 runner secret 或 Supabase key。
+- 不读取 Documents、Storage、cookie、signed URL、Access Requests、Access Grants；不保存外部 API key，不打印 secret 或 Supabase key。
 - 本阶段不做 AI、新闻爬虫、邮件发送、Notion 同步、GitHub Actions、n8n、定时任务、公开市场简报页、股票推荐或投资建议。
 
 ## 2026-06-11 - Switch Market Briefs To AI First Generation
@@ -1112,17 +1051,16 @@
 决策：
 
 - Phase 2M-A 不新增 migration，继续复用 `market_briefs` 和 `market_brief_generation_jobs`。
-- `MARKET_BRIEF_GENERATOR` 扩展为 `mock | external | ai`，未配置时默认 `ai`；`mock` 仅用于本地占位测试，`external` 保留历史 runner 协议。
-- Market Brief 主生成链路从 AkShare / 东方财富抓取切换为服务端 AI-first：点击“获取今日市场动态”或“生成指定日期市场简报”后，仍先创建 generation job，再调用 OpenAI-compatible AI Provider 生成固定模板 Markdown、structured JSON、`source_snapshot` 和 charts。
+- `MARKET_BRIEF_GENERATOR` 支持 `mock | ai`，未配置时默认 `ai`；`mock` 仅用于本地占位测试。
+- Market Brief 主生成链路从本地行情抓取切换为服务端 AI-first：点击“获取今日市场动态”或“生成指定日期市场简报”后，仍先创建 generation job，再调用 OpenAI-compatible AI Provider 生成固定模板 Markdown、structured JSON、`source_snapshot` 和 charts。
 - 继续复用 `src/lib/ai-provider.ts`，支持 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL`，并兼容 `OPENAI_API_KEY` / `OPENAI_MODEL`；AI key 只在服务端读取，不进入客户端、HTML、日志或文档。
 - 新增 `src/lib/market-brief-ai-prompt.ts` 固定中文金融研究员风格 prompt，要求 JSON 输出、不做投资建议、不推荐个股、不能编造精确涨跌幅、无法确认的数据写 null 或需人工复核。
 - AI 输出默认 `generation_status=needs_review`；只有模型明确给出 `ai_verified` 且来源说明足够时才允许标记 `generated`。
 - 图表数据保存在 `source_snapshot.charts`，预览页新增图表区域；bar / pie / line 第一版不新增前端依赖，空数据展示“暂无可靠数据，需人工复核”。
-- Python AkShare / multi-source runner 标记为 deprecated，仅保留为历史诊断和 fallback 实验，不再作为推荐主流程。
 
 原因：
 
-- AkShare / 东方财富网页接口不稳定且覆盖不完整，继续维护多源抓取的性价比低。
+- 免费网页行情接口不稳定且覆盖不完整，继续维护多源抓取的性价比低。
 - 市场简报更需要稳定生成、固定结构、来源边界和人工复核，而不是在不稳定免费接口上追求伪完整数据。
 - 使用 AI structured output 可以在不新增表结构的情况下同时保存正文、图表配置、数据可信度和来源说明。
 
@@ -1140,25 +1078,45 @@
 决策：
 
 - Phase 2M-B 不新增 migration，不删除 `market_briefs` 或 `market_brief_generation_jobs`，继续复用现有任务表、状态流转、取消 / 重排能力、今日生成和历史交易日生成。
-- 后台 `/dashboard/market-briefs`、任务列表和任务详情的主文案全面收口为 AI-first Market Brief Generator，不再把旧 external 任务领取、回写接口或 Python 数据源脚本展示为推荐主流程。
+- 后台 `/dashboard/market-briefs`、任务列表和任务详情的主文案全面收口为 AI-first Market Brief Generator，不再把旧外部任务领取、回写接口或 Python 数据源脚本展示为推荐主流程。
 - 新建 AI 生成任务的 `request_payload` 写入 `generator_mode=ai` 和 `generator_name=ai-market-brief-generator`，方便后续区分 AI 任务与历史兼容任务。
-- `MARKET_BRIEF_GENERATOR` 未配置时继续默认 `ai`；如果生产环境仍配置为 `external`，后台显示旧模式提示并建议改为 `MARKET_BRIEF_GENERATOR=ai`。
-- `scripts/market-brief-runner/` 和 `scripts/market-brief-runner/python/` 只保留为 deprecated 历史诊断和兼容资料，不再作为市场简报推荐生成路线。
-- README、current-status、roadmap、decisions 和 Python runner README 更新为 AI-first 口径；旧 external / runner / 数据源抓取相关说明只保留在明确 deprecated 的历史上下文中。
+- `MARKET_BRIEF_GENERATOR` 未配置时继续默认 `ai`。
+- README、current-status、roadmap 和 decisions 更新为 AI-first 口径；旧外部 runner / 数据源抓取相关说明只保留在明确历史上下文中。
 
 原因：
 
 - Phase 2M-A 已确认市场简报主路线转向服务端 AI 生成，继续在后台和主文档中展示旧 runner / 数据抓取路线会造成配置和验收混乱。
 - 旧数据源路线依赖不稳定外部接口，且已经不再符合当前“固定模板、AI 生成、人工复核”的产品方向。
-- 仍保留历史任务表和兼容接口，可以避免破坏已存在任务记录、排查资料和旧 PR 证据。
+- 仍保留历史任务表和旧任务只读识别，可以避免破坏已存在任务记录、排查资料和旧 PR 证据。
 
 影响：
 
 - 不新增 SQL 或 migration；生产环境不需要执行数据库变更。
-- 不删除 claim/result/fail 兼容 API 或 runner 脚本，但它们不再出现在后台主操作说明中。
 - 不改变 AI 生成、Markdown 预览、图表预览、下载、交易日校验、任务取消 / 重排和历史补生成能力。
-- 不读取 Documents、Storage、cookie、signed URL、Access Requests、Access Grants；不保存外部 API key，不打印 AI key、runner secret 或 Supabase key。
+- 不读取 Documents、Storage、cookie、signed URL、Access Requests、Access Grants；不保存外部 API key，不打印 AI key、secret 或 Supabase key。
 - 不修改 Resume、Career、Calendar、Documents、Profile、Storage、RLS 或旧 migrations。
+
+## 2026-06-11 - Remove Legacy Market Brief Runner Paths
+
+类型：decision
+
+决策：
+
+- Phase 2N-0 删除旧 external / Python / AkShare runner 可执行路径，包括 `scripts/market-brief-runner/`、旧领取 / 失败回写 API 和旧 `skill-result` 成功回写 API。
+- `MARKET_BRIEF_GENERATOR` 仅保留 `ai` 与 `mock` 行为；未配置时继续默认 `ai`。
+- 保留 `market_briefs`、`market_brief_generation_jobs`、历史 migrations、AI-first generation、web search grounding、生成进度页、timeout / stale / failed / needs_review fallback、preview 和 download。
+- 不新增素材包表、不新增 cron、不新增外部依赖、不修改 RLS 或 Storage policy。
+
+原因：
+
+- Market Brief 后续方向改为“每日市场研究素材包 -> AI 固定模板简报 -> 人工编辑确认”，旧 runner 领取 / 回写路径会干扰新任务状态和故障排查。
+- 旧 Python 数据源实验依赖不稳定上游，已不适合作为当前或未来主线。
+
+影响：
+
+- README、current-status、roadmap 和 setup 文档不再指导用户运行旧 runner 或配置旧 runner secret。
+- 历史 job 的 `runner_name` / `request_payload.generator_mode` 仍可在后台以旧外部生成器形式只读展示。
+- 后续 Phase 2N-A 如需素材包，应新增独立 schema 和 workflow，不复用旧 runner 回写路径。
 
 ## 2026-06-11 - Add Web Grounding To AI Market Brief Generation
 
@@ -1184,7 +1142,7 @@
 
 - 生产环境除 AI Provider 外，还需要配置 `MARKET_BRIEF_SEARCH_PROVIDER` 和 `MARKET_BRIEF_SEARCH_API_KEY` 才能生成 grounded 市场简报。
 - 不保存搜索 API key、请求头、cookie 或敏感信息；页面只展示来源标题、URL、发布方、摘要和 source id。
-- 不接 AkShare、东方财富、Tushare，不恢复 Python runner 主流程，不做股票推荐或投资建议。
+- 不接本地行情抓取接口，不恢复 Python runner 主流程，不做股票推荐或投资建议。
 - 不修改 Resume、Career、Calendar、Documents、Profile、Storage、RLS 或旧 migrations。
 
 ## 2026-06-11 - Add AI Market Brief Generation Progress UX
@@ -1208,7 +1166,7 @@
 
 - 生成 API 和状态 API 均要求管理员登录，不返回 AI key、搜索 key、Supabase key、Auth UUID、request header 或 service role 信息。
 - `failed` / `cancelled` 任务不会继续轮询；`succeeded` 任务展示预览跳转。
-- 本阶段不改变 `market_briefs` 或 `market_brief_generation_jobs` 表结构，不改 RLS，不恢复 external / Python runner 主流程。
+- 本阶段不改变 `market_briefs` 或 `market_brief_generation_jobs` 表结构，不改 RLS，不恢复旧外部 / Python runner 主流程。
 - 不影响 Resume、Career、Calendar、Documents、Profile 或公开页面。
 
 ## 2026-06-11 - Prevent AI Market Brief Generation From Stalling

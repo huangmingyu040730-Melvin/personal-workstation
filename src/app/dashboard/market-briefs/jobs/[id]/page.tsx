@@ -66,7 +66,7 @@ export default async function MarketBriefJobDetailPage({
         {notice === "cancelled" ? <NoticeBanner message="任务已取消。" /> : null}
         {notice === "requeued" ? <NoticeBanner message="任务已重置为排队中，可再次由 AI 生成器处理。" /> : null}
         {isHistoricalJob(job) ? <NoticeBanner message="该任务为历史日期补生成，部分热点、新闻、资金流数据可能无法完整回溯。" /> : null}
-        {isLegacyExternalJob(job) ? <NoticeBanner message="该记录来自历史 external runner 兼容模式。当前推荐使用 AI-first 生成。" /> : null}
+        {isLegacyExternalJob(job) ? <NoticeBanner message="该记录来自旧外部生成兼容模式，当前仅作为历史任务展示。" /> : null}
 
         <MarketBriefJobProgressPanel
           jobId={job.id}
@@ -186,7 +186,7 @@ function getGeneratorDisplayName(job: { runner_name: string; request_payload: Re
   }
 
   if (isLegacyExternalJob(job)) {
-    return "历史任务：旧 external runner";
+    return "历史任务：旧外部生成器";
   }
 
   if (job.runner_name === "manual-skill-mock") {

@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Phase 2L-B 新增 Market Brief artifact / Markdown 主内容、站内预览和多格式下载。Phase 2L-D-A 新增 Market Brief generation jobs / 生成任务记录。Phase 2M-A / 2M-B 后市场简报主路线为 AI-first 生成，旧 external runner 路线仅保留为 deprecated 历史兼容。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2L-A 新增 Market Briefs 市场简报后台手工 CRUD。Phase 2L-B 新增 Market Brief artifact / Markdown 主内容、站内预览和多格式下载。Phase 2L-D-A 新增 Market Brief generation jobs / 生成任务记录。Phase 2M 后市场简报主路线为 AI-first 生成。Phase 2N-0 已移除旧外部 / Python runner API 与脚本，后续方向是每日市场研究素材包。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -37,7 +37,7 @@ AI_BASE_URL=https://api.deepseek.com
 AI_MODEL=deepseek-v4-flash
 ```
 
-`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`。AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 配置，并继续兼容旧 `OPENAI_API_KEY` / `OPENAI_MODEL`。Phase 2M-C 起，AI 生成前会先调用 `MARKET_BRIEF_SEARCH_PROVIDER` 检索公开来源；未配置 `MARKET_BRIEF_SEARCH_API_KEY` 时，生成任务会 failed 并提示配置搜索服务。旧 `MARKET_BRIEF_GENERATOR=external`、`MARKET_BRIEF_RUNNER_SECRET` 和 external runner / Python 数据源 runner 仅保留为 deprecated 历史兼容路径，不再作为推荐市场简报生成方式；普通后台页面继续使用登录管理员身份和 RLS。
+`MARKET_BRIEF_GENERATOR` 未配置时默认 `ai`，也可在本地设置为 `mock` 做占位测试。AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` 配置，并继续兼容旧 `OPENAI_API_KEY` / `OPENAI_MODEL`。Phase 2M-C 起，AI 生成前会先调用 `MARKET_BRIEF_SEARCH_PROVIDER` 检索公开来源；未配置 `MARKET_BRIEF_SEARCH_API_KEY` 时，生成任务会 failed 并提示配置搜索服务。Phase 2N-0 后不再配置旧外部 runner secret 或本地 runner 数据模式；普通后台页面继续使用登录管理员身份和 RLS。
 
 ## Auth 设置
 
@@ -61,7 +61,7 @@ AI_MODEL=deepseek-v4-flash
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。Phase 2L-A 合并后还需要执行 `0013_market_briefs.sql`。Phase 2L-B 合并后还需要执行 `0014_market_brief_artifacts.sql`。Phase 2L-D-A 合并后还需要执行 `0015_market_brief_generation_jobs.sql`。Market Brief external runner hotfix 合并后还需要执行 `0016_market_brief_runner_service_role_grants.sql`。已执行过的 migration 不应修改或重跑。执行 0016 后，后续数据库变更应新增 `0017_*`，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。Phase 2L-A 合并后还需要执行 `0013_market_briefs.sql`。Phase 2L-B 合并后还需要执行 `0014_market_brief_artifacts.sql`。Phase 2L-D-A 合并后还需要执行 `0015_market_brief_generation_jobs.sql`。`0016_market_brief_runner_service_role_grants.sql` 是历史 runner 权限迁移文件，Phase 2N-0 不新增 migration，也不修改或重跑旧 migration。后续数据库变更应新增 `0017_*`，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -397,7 +397,7 @@ Phase 2L-B 权限边界：
 - PDF 只通过浏览器打印 / 另存为 PDF，不提供后端 PDF 服务。
 - 当前仍不自动抓取行情、不调用 AI、不发送邮件、不同步 Notion、不做股票推荐或投资建议。
 
-Phase 2L-D-A 在 Phase 2L-B/C 基础上新增 Market Brief generation jobs / Skill Runner 任务记录。合并对应代码后，新建环境或生产环境需要继续运行：
+Phase 2L-D-A 在 Phase 2L-B/C 基础上新增 Market Brief generation jobs 任务记录。合并对应代码后，新建环境或生产环境需要继续运行：
 
 ```text
 supabase/migrations/0015_market_brief_generation_jobs.sql
@@ -411,41 +411,32 @@ supabase/migrations/0015_market_brief_generation_jobs.sql
 - 启用 RLS，并允许 `public.is_admin()` 或记录 owner 管理。
 - 不向 `anon` 授予权限，只给 `authenticated` 授予表级 `select, insert, update, delete`，最终行级权限仍由 RLS 管理。
 
-Phase 2L-D-A 权限边界：
+Phase 2L-D-A / Phase 2N-0 后权限边界：
 
 - `/dashboard/market-briefs/jobs` 和任务详情页仅限管理员后台访问，不进入公开页面、sitemap、viewer 或 restricted 内容页。
-- `/api/market-briefs/skill-result` 必须携带 `x-market-brief-runner-secret`，并要求服务端设置 `MARKET_BRIEF_RUNNER_SECRET`；未配置时返回 503，secret 错误时拒绝。
-- 普通后台按钮仍通过管理员登录身份和 RLS 创建任务；外部 runner 回调因无用户会话，仅在服务端使用必要写入凭据，不暴露到客户端。
+- 普通后台按钮通过管理员登录身份和 RLS 创建任务。
+- AI 生成只通过 `/api/market-briefs/jobs/[id]/generate-ai` 和 `/api/market-briefs/jobs/[id]/status` 处理。
+- 旧外部领取、失败回写和成功回写 API 已在 Phase 2N-0 移除，不再配置或运行本地 runner。
 - 不读取 Documents、Storage、signed URL、Access Requests、Access Grants、viewer/restricted 数据，不提交 API key、Supabase key、Auth UUID 或 `.env.local`。
-- 当前仍不自动抓取行情、不调用 AI、不发送邮件、不同步 Notion、不做股票推荐或投资建议。
+- 当前仍不自动抓取行情、不发送邮件、不同步 Notion、不做股票推荐或投资建议。
 
-Phase 2L-D-B 新增 external runner 模式，不新增 migration，继续依赖 `0015_market_brief_generation_jobs.sql`。核心流程：
+Phase 2N-0 说明：
 
-1. `MARKET_BRIEF_GENERATOR=external` 时，管理员点击“获取今日市场动态”只创建 queued job 并跳转任务详情。
-2. 外部 runner 调用 `POST /api/market-briefs/skill-jobs/claim`，用 `x-market-brief-runner-secret` 领取最早 queued job，并将状态改为 running。
-3. 成功时外部 runner 调用 `POST /api/market-briefs/skill-result` 回写 Markdown、source snapshot、标签和数据来源。
-4. 失败时外部 runner 调用 `POST /api/market-briefs/skill-jobs/fail`，写入失败原因并标记 failed。
+- 旧外部 runner 和 Python runner 的脚本、API route 与文档操作步骤已移除。
+- `market_briefs`、`market_brief_generation_jobs` 和历史 migration 保留不变。
+- 下一阶段 Phase 2N-A 将新增“每日市场研究素材包 -> AI 简报 -> 人工编辑确认”架构。
 
-Phase 2L-D-B 权限边界：
-
-- claim / fail / result API 都要求 `MARKET_BRIEF_RUNNER_SECRET`；未配置 secret 返回 503，wrong secret 返回 401。
-- 外部 runner 脚本只需要 `WORKSTATION_BASE_URL` 和 `MARKET_BRIEF_RUNNER_SECRET`，不需要 Supabase key。
-- `SUPABASE_SERVICE_ROLE_KEY` 只用于网站服务端 API route，不暴露给外部 runner、客户端、日志或仓库。
-- 任务领取和回写不提供 GET 公共读取，不进入 sitemap，不创建 public URL，不读取 Documents 或 Storage，不调用 AI。
-
-Market Brief external runner 权限 hotfix 新增：
+历史 runner 权限 hotfix 曾新增：
 
 ```text
 supabase/migrations/0016_market_brief_runner_service_role_grants.sql
 ```
 
-`0016` 会：
+`0016` 是已保留的历史迁移文件：
 
-- 给 `service_role` 授予 `public.market_brief_generation_jobs` 的 `select, insert, update, delete`，用于 claim / fail / result API 查询和更新任务。
-- 给 `service_role` 授予 `public.market_briefs` 的 `select, insert, update, delete`，用于 result API 创建或更新简报。
+- Phase 2N-0 不修改该迁移，也不新增迁移。
+- 当前主链路不再依赖旧 runner service role 回写 API。
 - 不给 `anon` 增加权限，不公开市场简报，不修改 RLS、表结构、Storage 或 Documents。
-
-如果 external runner diagnose 返回 `permission denied for table market_brief_generation_jobs` 且 code 为 `42501`，需要在生产 Supabase 执行 `0016` 后重新测试。
 
 ## 创建管理员
 
@@ -537,7 +528,7 @@ Phase 2C 使用：
 - Resume JD 分析历史依赖 0012 migration；未执行 0012 时，AI JD 分析仍可生成当前页建议，但无法保存为历史记录或投递状态。
 - Market Briefs 依赖 0013 migration；未执行 0013 时，`/dashboard/market-briefs` 无法完成真实读写，Dashboard 最近市场简报会降级为空。
 - Market Brief artifacts 依赖 0014 migration；未执行 0014 时，市场简报 Markdown 主内容、生成状态、预览和下载会因为缺少列而无法稳定读取。
-- Market Brief generation jobs 依赖 0015 migration；未执行 0015 时，“获取今日市场动态”无法创建生成任务，`/dashboard/market-briefs/jobs` 和 runner 回写接口无法完成真实读写。
+- Market Brief generation jobs 依赖 0015 migration；未执行 0015 时，“获取今日市场动态”无法创建生成任务，`/dashboard/market-briefs/jobs`、AI 生成进度和任务状态无法完成真实读写。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。

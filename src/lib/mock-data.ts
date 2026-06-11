@@ -147,13 +147,13 @@ export const publications: Publication[] = [
 
 export const knowledgeNotes: KnowledgeNote[] = [
   {
-    id: "akshare-api",
-    title: "AkShare 常用接口整理",
+    id: "market-data-api",
+    title: "行情数据接口整理",
     category: "数据工具",
     excerpt: "整理行情、指数、基金与宏观数据接口，记录字段含义和常见异常。",
     updatedAt: "2 天前",
     visibility: "private",
-    tags: ["AkShare", "数据接口", "Python"]
+    tags: ["行情数据", "数据接口", "Python"]
   },
   {
     id: "factor-investing",
@@ -246,7 +246,7 @@ export const documents: DocumentItem[] = [
 
 export const activityFeed = [
   "更新中国私募基金全指指增产品比较研究进度至 72%",
-  "新增 AkShare 常用接口整理笔记",
+  "新增行情数据接口整理笔记",
   "每日 A 股市场收评生成器完成 GitHub Actions 草案",
   "归档行业轮动策略回测分析报告"
 ];

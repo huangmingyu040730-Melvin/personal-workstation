@@ -244,7 +244,7 @@ function getGeneratorDisplayName(job: MarketBriefGenerationJobRecord) {
   }
 
   if (job.request_payload.generator_mode === "external" || job.runner_name.includes("external")) {
-    return "历史任务：旧 external runner";
+    return "历史任务：旧外部生成器";
   }
 
   if (job.runner_name === "manual-skill-mock") {
