@@ -1,4 +1,4 @@
-import type { DocumentRecord, DocumentRelatedType, DocumentWithRelation } from "@/lib/content-types";
+import type { DocumentCollectionRecord, DocumentCollectionWithRelation, DocumentRecord, DocumentRelatedType, DocumentWithRelation } from "@/lib/content-types";
 import { documents as mockDocuments } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,6 +11,10 @@ function mockDocumentFallback(): DocumentWithRelation[] {
     storage_path: `mock/${document.id}`,
     file_size: document.size.includes("MB") ? 2_400_000 : 128_000,
     mime_type: "application/pdf",
+    collection_id: null,
+    original_name: document.name,
+    relative_path: null,
+    folder_path: null,
     related_type: null,
     related_id: null,
     visibility: "private",
@@ -21,67 +25,96 @@ function mockDocumentFallback(): DocumentWithRelation[] {
   }));
 }
 
-async function resolveDocumentRelations(documents: DocumentRecord[]): Promise<DocumentWithRelation[]> {
+type RelatedRecord = {
+  related_type: DocumentRelatedType | null;
+  related_id: string | null;
+};
+
+async function getRelatedResolver(records: RelatedRecord[]) {
   const supabase = await createClient();
 
-  if (!supabase || documents.length === 0) {
-    return documents.map((document) => ({ ...document, related: null }));
+  if (!supabase || records.length === 0) {
+    return () => null;
   }
 
-  const idsByType = documents.reduce<Record<DocumentRelatedType, string[]>>((acc, document) => {
-    if (document.related_type && document.related_id) {
-      acc[document.related_type].push(document.related_id);
+  const idsByType = records.reduce<Record<DocumentRelatedType, string[]>>((acc, record) => {
+    if (record.related_type && record.related_id) {
+      acc[record.related_type].push(record.related_id);
     }
     return acc;
-  }, { publication: [], project: [], skill: [] });
+  }, { publication: [], project: [], knowledge: [], skill: [] });
 
-  const [publicationsResult, projectsResult, skillsResult] = await Promise.all([
+  const [publicationsResult, projectsResult, knowledgeResult, skillsResult] = await Promise.all([
     idsByType.publication.length > 0
       ? supabase.from("publications").select("id,title").in("id", Array.from(new Set(idsByType.publication)))
       : Promise.resolve({ data: [], error: null }),
     idsByType.project.length > 0
       ? supabase.from("projects").select("id,title").in("id", Array.from(new Set(idsByType.project)))
       : Promise.resolve({ data: [], error: null }),
+    idsByType.knowledge.length > 0
+      ? supabase.from("knowledge_notes").select("id,title").in("id", Array.from(new Set(idsByType.knowledge)))
+      : Promise.resolve({ data: [], error: null }),
     idsByType.skill.length > 0
       ? supabase.from("skills").select("id,name").in("id", Array.from(new Set(idsByType.skill)))
       : Promise.resolve({ data: [], error: null })
   ]);
 
-  if (publicationsResult.error || projectsResult.error || skillsResult.error) {
+  if (publicationsResult.error || projectsResult.error || knowledgeResult.error || skillsResult.error) {
     console.error("resolveDocumentRelations failed", {
       publications: publicationsResult.error?.message,
       projects: projectsResult.error?.message,
+      knowledge: knowledgeResult.error?.message,
       skills: skillsResult.error?.message
     });
   }
 
   const publicationMap = new Map((publicationsResult.data ?? []).map((item) => [item.id, { title: item.title, href: `/dashboard/publications/${item.id}` }]));
   const projectMap = new Map((projectsResult.data ?? []).map((item) => [item.id, { title: item.title, href: `/dashboard/projects/${item.id}` }]));
+  const knowledgeMap = new Map((knowledgeResult.data ?? []).map((item) => [item.id, { title: item.title, href: `/dashboard/knowledge/${item.id}` }]));
   const skillMap = new Map((skillsResult.data ?? []).map((item) => [item.id, { title: item.name, href: `/dashboard/skills/${item.id}` }]));
 
-  return documents.map((document) => {
-    if (!document.related_type || !document.related_id) {
-      return { ...document, related: null };
+  return (record: RelatedRecord) => {
+    if (!record.related_type || !record.related_id) {
+      return null;
     }
 
-    const related =
-      document.related_type === "publication"
-        ? publicationMap.get(document.related_id)
-        : document.related_type === "project"
-          ? projectMap.get(document.related_id)
-          : skillMap.get(document.related_id);
+    const related = record.related_type === "publication"
+      ? publicationMap.get(record.related_id)
+      : record.related_type === "project"
+        ? projectMap.get(record.related_id)
+        : record.related_type === "knowledge"
+          ? knowledgeMap.get(record.related_id)
+          : skillMap.get(record.related_id);
 
+    return related
+      ? {
+          type: record.related_type,
+          title: related.title,
+          href: related.href
+        }
+      : null;
+  };
+}
+
+type DocumentRow = DocumentRecord & {
+  document_collections?: Pick<DocumentCollectionRecord, "id" | "title" | "collection_type" | "root_folder_name" | "file_count" | "total_size"> | null;
+};
+
+async function resolveDocumentRelations(documents: DocumentRow[]): Promise<DocumentWithRelation[]> {
+  const resolveRelated = await getRelatedResolver(documents);
+
+  return documents.map((document) => {
     return {
       ...document,
-      related: related
-        ? {
-            type: document.related_type,
-            title: related.title,
-            href: related.href
-          }
-        : null
+      related: resolveRelated(document),
+      collection: document.document_collections ?? null
     };
   });
+}
+
+async function resolveCollectionRelations(collections: DocumentCollectionRecord[]): Promise<DocumentCollectionWithRelation[]> {
+  const resolveRelated = await getRelatedResolver(collections);
+  return collections.map((collection) => ({ ...collection, related: resolveRelated(collection) }));
 }
 
 export async function getDocuments(filters?: { category?: string; relatedType?: string }) {
@@ -91,7 +124,10 @@ export async function getDocuments(filters?: { category?: string; relatedType?: 
     return mockDocumentFallback();
   }
 
-  let query = supabase.from("documents").select("*").order("updated_at", { ascending: false });
+  let query = supabase
+    .from("documents")
+    .select("*, document_collections(id,title,collection_type,root_folder_name,file_count,total_size)")
+    .order("updated_at", { ascending: false });
 
   if (filters?.category && filters.category !== "all") {
     query = query.eq("category", filters.category);
@@ -108,7 +144,7 @@ export async function getDocuments(filters?: { category?: string; relatedType?: 
     return [];
   }
 
-  return resolveDocumentRelations((data ?? []) as DocumentRecord[]);
+  return resolveDocumentRelations((data ?? []) as DocumentRow[]);
 }
 
 export async function countDocuments() {
@@ -137,7 +173,11 @@ export async function getDocumentById(id: string) {
     return mockDocumentFallback().find((document) => document.id === id) ?? null;
   }
 
-  const { data, error } = await supabase.from("documents").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("documents")
+    .select("*, document_collections(id,title,collection_type,root_folder_name,file_count,total_size)")
+    .eq("id", id)
+    .maybeSingle();
 
   if (error) {
     console.error("getDocumentById failed", { code: error.code, message: error.message });
@@ -148,7 +188,7 @@ export async function getDocumentById(id: string) {
     return null;
   }
 
-  const [document] = await resolveDocumentRelations([data as DocumentRecord]);
+  const [document] = await resolveDocumentRelations([data as DocumentRow]);
   return document ?? null;
 }
 
@@ -161,7 +201,7 @@ export async function getDocumentsByRelated(relatedType: DocumentRelatedType, re
 
   const { data, error } = await supabase
     .from("documents")
-    .select("*")
+    .select("*, document_collections(id,title,collection_type,root_folder_name,file_count,total_size)")
     .eq("related_type", relatedType)
     .eq("related_id", relatedId)
     .order("updated_at", { ascending: false });
@@ -171,5 +211,53 @@ export async function getDocumentsByRelated(relatedType: DocumentRelatedType, re
     return [];
   }
 
-  return resolveDocumentRelations((data ?? []) as DocumentRecord[]);
+  return resolveDocumentRelations((data ?? []) as DocumentRow[]);
+}
+
+export async function getDocumentCollectionById(id: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("document_collections")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getDocumentCollectionById failed", { code: error.code, message: error.message });
+    return null;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const [collection] = await resolveCollectionRelations([data as DocumentCollectionRecord]);
+  return collection ?? null;
+}
+
+export async function getDocumentsByCollectionId(collectionId: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("documents")
+    .select("*, document_collections(id,title,collection_type,root_folder_name,file_count,total_size)")
+    .eq("collection_id", collectionId)
+    .order("relative_path", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("getDocumentsByCollectionId failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  return resolveDocumentRelations((data ?? []) as DocumentRow[]);
 }

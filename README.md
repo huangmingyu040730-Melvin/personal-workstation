@@ -109,7 +109,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。新建环境仍需按顺序执行 0001 至 0017。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。新建环境仍需按顺序执行 0001 至 0018。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -137,6 +137,8 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/knowledge` 知识库管理
 - `/dashboard/skills` Skill 库管理
 - `/dashboard/documents` 文件中心管理
+- `/dashboard/documents/upload` 单文件、多文件与文件夹上传
+- `/dashboard/documents/collections/[id]` 文档包详情
 - `/dashboard/access-requests` 访问申请管理
 - `/dashboard/access-grants` 访问授权管理
 - `/dashboard/profile` 个人信息管理
@@ -169,6 +171,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 下一阶段优先级：
 
 - Phase 2O 以后主线：研究资产沉淀、公开展示质量、文件 / 知识管理和求职闭环维护。
+- Phase 2P-A 起 Documents 升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。
@@ -185,7 +188,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制；restricted 内容通过 `content_access_grants` 与登录用户邮箱匹配控制；后台写入、更新、删除权限通过 `public.is_admin()` 控制。
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
-- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；生产环境已执行 0003 migration 并通过真实上传、下载、关联、删除保护和清理验收。
+- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。附件仍默认私密，不公开下载。
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
@@ -222,14 +225,15 @@ Viewer magic link 登录仍不稳定。Phase 2E-B 已实现 restricted 授权基
 - `knowledge_notes`：笔记标题、slug、分类、正文、精选标记与关联项目。
 - `skills`：Skill 名称、slug、说明、输入输出描述、使用指南、Skill.md 内容、仓库链接、版本、状态与精选标记。
 - `calendar_events`：日程时间、类型、地点、可见性与项目 / 成果 / 知识 / Skill 关联。
-- `documents`：文件存储路径、分类、关联实体类型与关联 ID。
+- `document_collections`：一次上传批次、文件夹或文档包，记录关联对象、根文件夹、文件数量和总大小。
+- `documents`：文件存储路径、分类、关联实体类型与关联 ID；Phase 2P-A 起可关联 `document_collections`，保存原始文件名、relative_path 与 folder_path。
 - `activity_logs` 与 `skill_versions`：后续审计与 Skill 版本记录基础。
 - `access_requests`：Phase 2E-A 访问申请记录，包括申请人姓名、邮箱、机构、申请内容、理由、处理状态与管理员备注。
 - `content_access_grants`：Phase 2E-B 受限内容授权记录，包括被授权邮箱、内容类型、内容 ID、状态、有效期与管理员备注。
 - `resume_items`：Phase 2K-A 履历素材库记录，包括素材类型、标题、机构、角色、时间、bullet、skills、tags、关联对象、排序、可见性与精选标记。
 - `resume_versions` 与 `resume_version_items`：Phase 2K-B 简历版本与素材组合关系，记录版本标题、目标岗位、语言、模板、启用状态、已选素材、区块、排序和展示开关；Phase 2K-C 通过 0011 补充顶部个人字段开关、区块顺序、模板选项和逐条素材可见字段控制。
 - `resume_jd_reviews`：Phase 2K-H JD 分析历史与投递记录，保存关联简历版本、JD 原文、AI 结构化建议、关键词缺口、风险、下一步行动、公司/岗位和投递状态；Phase 2K-I 投递看板继续复用该表和 `application_status`，不新增表结构。
-公开可读表 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 不保存管理员 Auth UUID。私密后台表 `calendar_events`、`documents`、`activity_logs` 可保留 `owner_id` 或 `actor_id` 用于后续审计。
+公开可读表 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 不保存管理员 Auth UUID。私密后台表 `calendar_events`、`documents`、`document_collections`、`activity_logs` 可保留 `owner_id` 或 `actor_id` 用于后续审计。
 
 ## 存储与文件安全
 
@@ -245,6 +249,8 @@ Phase 2C 使用 Supabase Storage bucket：
 - 管理员通过 `public.is_admin()` 和 Storage policy 操作文件。
 - 上传采用两阶段流程：Server Actions 只验证管理员、校验 metadata、生成安全路径并最终写入数据库；文件二进制由浏览器直接上传到 Supabase Storage，不经过 Vercel Function。
 - 下载使用 60 秒短时 signed URL，不保存到数据库，也不在公开页面输出。
-- 文件上传限制为 20 MB，并同时校验扩展名与 MIME type。
-- 即使文件关联到 public Publication，附件本轮仍保持私密，仅管理员可下载。
-- 即使用户被授权查看 restricted Publication，关联 Documents 仍保持私密，本阶段不生成外部 signed URL，也不开放附件下载。
+- 单文件上传限制为 50 MB；批量 / 文件夹上传单次最多 100 个文件、总量 200 MB，并同时校验扩展名与 MIME type。
+- 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。
+- 不支持 exe、dmg、app、msi、bat、cmd；上传的代码和 Skill 包只作为私密文件存储，不执行、不解析、不安装。
+- 即使文件关联到 public Project、Publication、Knowledge 或 Skill，附件仍保持私密，仅管理员可下载。
+- 即使用户被授权查看 restricted 内容，关联 Documents 仍保持私密，本阶段不生成外部 signed URL，也不开放附件下载。

@@ -21,7 +21,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
       <PageHeader
         eyebrow="Documents"
         title="文件中心"
-        description="从 Supabase 读取真实私密文件记录，上传、下载与删除均受管理员权限和 Storage policy 保护。"
+        description="统一管理私密文件、文档包和研究附件，上传、下载与删除均受管理员权限和 Storage policy 保护。"
         action={
           <Link href="/dashboard/documents/upload" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
             <Upload size={18} />
@@ -47,24 +47,37 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         <AdminEmptyState title="还没有文件记录" description="上传第一个文件后，文件中心会显示真实 Storage 元数据。" action={<Link href="/dashboard/documents/upload" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">上传文件</Link>} />
       ) : (
         <Card className="overflow-x-auto p-0">
-          <div className="min-w-[860px]">
-            <div className="grid grid-cols-[1.25fr_0.5fr_0.45fr_0.65fr_0.6fr_0.4fr_0.45fr] gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-500">
+          <div className="min-w-[1040px]">
+            <div className="grid grid-cols-[1.3fr_0.5fr_0.45fr_0.75fr_0.75fr_0.6fr_0.4fr_0.45fr] gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-500">
               <span>文件名</span>
               <span>分类</span>
               <span>大小</span>
+              <span>文档包</span>
               <span>关联对象</span>
               <span>上传时间</span>
               <span>权限</span>
               <span>操作</span>
             </div>
             {documents.map((document) => (
-              <div key={document.id} className="grid grid-cols-[1.25fr_0.5fr_0.45fr_0.65fr_0.6fr_0.4fr_0.45fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50/60 last:border-0">
+              <div key={document.id} className="grid grid-cols-[1.3fr_0.5fr_0.45fr_0.75fr_0.75fr_0.6fr_0.4fr_0.45fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50/60 last:border-0">
                 <Link href={`/dashboard/documents/${document.id}`} className="flex min-w-0 gap-2 font-medium text-slate-900 hover:text-blue-700">
                   <FileText className="mt-0.5 shrink-0 text-blue-700" size={16} />
-                  <span className="truncate">{document.name}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate">{document.name}</span>
+                    {document.relative_path ? <span className="mt-0.5 block truncate text-xs font-normal text-slate-400">{document.relative_path}</span> : null}
+                  </span>
                 </Link>
                 <span className="text-slate-600">{getDocumentCategoryLabel(document.category)}</span>
                 <span className="text-slate-500">{formatFileSize(document.file_size)}</span>
+                <span className="truncate text-slate-500">
+                  {document.collection ? (
+                    <Link href={`/dashboard/documents/collections/${document.collection.id}`} className="text-blue-700 hover:text-blue-900">
+                      {document.collection.title}
+                    </Link>
+                  ) : (
+                    "未加入文档包"
+                  )}
+                </span>
                 <span className="truncate text-slate-500">{document.related?.title ?? getDocumentRelatedTypeLabel(document.related_type)}</span>
                 <span className="text-slate-500">{formatDateTime(document.created_at)}</span>
                 <VisibilityBadge visibility={document.visibility} />
