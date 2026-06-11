@@ -104,7 +104,10 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
     throw new Error("AI 未返回市场简报内容。");
   }
 
-  const parsed = parseAiJson(content);
+  const parsed = parseAiJson(content, {
+    market: input.market,
+    briefDate: input.briefDate
+  });
   await input.onProgress?.("charting", "正在生成图表数据...");
   const normalized = normalizeAiMarketBriefOutput(parsed, {
     market: input.market,
@@ -127,31 +130,119 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
   };
 }
 
-function parseAiJson(content: string) {
+function parseAiJson(content: string, fallback: { market: string; briefDate: string }) {
   const normalized = stripMarkdownCodeFence(content);
-  try {
-    return JSON.parse(normalized) as Record<string, unknown>;
-  } catch {
-    const firstBrace = normalized.indexOf("{");
-    const lastBrace = normalized.lastIndexOf("}");
+  const firstBrace = normalized.indexOf("{");
+  const lastBrace = normalized.lastIndexOf("}");
+  const jsonCandidate = firstBrace >= 0 && lastBrace > firstBrace ? normalized.slice(firstBrace, lastBrace + 1) : null;
+  const candidates = [
+    normalized,
+    jsonCandidate,
+    jsonCandidate ? repairCommonJsonIssues(jsonCandidate) : null
+  ].filter((value): value is string => Boolean(value));
 
-    if (firstBrace < 0 || lastBrace <= firstBrace) {
-      throw new Error("AI 返回格式无法解析，请重新生成。");
-    }
-
-    const jsonCandidate = normalized.slice(firstBrace, lastBrace + 1);
+  for (const candidate of candidates) {
     try {
-      return JSON.parse(jsonCandidate) as Record<string, unknown>;
+      return JSON.parse(candidate) as Record<string, unknown>;
     } catch {
-      throw new Error("AI 返回格式无法解析，请重新生成。");
+      // Try the next safer candidate before falling back to a review draft.
     }
   }
+
+  console.warn("marketBrief.aiGeneration.invalidJsonFallback", {
+    content_length: content.length,
+    has_json_braces: Boolean(jsonCandidate)
+  });
+  return buildFallbackAiOutputFromInvalidJson(normalized, fallback);
 }
 
 function stripMarkdownCodeFence(content: string) {
   const trimmed = content.trim();
   const fenced = trimmed.match(/^```(?:json|JSON)?\s*([\s\S]*?)\s*```$/);
   return fenced ? fenced[1].trim() : trimmed;
+}
+
+function repairCommonJsonIssues(content: string) {
+  return content
+    .replace(/,\s*([}\]])/g, "$1")
+    .replace(/[\u0000-\u001F]+/g, (match) => match.includes("\n") || match.includes("\r") || match.includes("\t") ? match : "");
+}
+
+function buildFallbackAiOutputFromInvalidJson(content: string, fallback: { market: string; briefDate: string }): Record<string, unknown> {
+  const title = extractLooseStringField(content, "title") || `${fallback.market}市场收评简报｜${fallback.briefDate}`;
+  const summary = extractLooseStringField(content, "summary") || "AI 已返回内容，但格式不是合法 JSON，系统已保存为待复核草稿。";
+  const markdownContent = extractLooseStringField(content, "markdown_content");
+
+  return {
+    title,
+    summary,
+    markdown_content: markdownContent,
+    generation_status: "needs_review",
+    data_quality: "ai_grounded_partial",
+    charts: [],
+    source_snapshot: {
+      meta: {
+        warnings: ["AI returned non-strict JSON; saved fallback markdown draft."],
+        source_notes: ["AI 返回内容格式不是合法 JSON，系统已尽量保存正文草稿，请人工复核。"]
+      },
+      extracted_facts: {},
+      charts: []
+    },
+    tags: [fallback.market, "市场收评", "AI生成", "格式待复核"],
+    data_sources: ["AI", "Web Search"]
+  };
+}
+
+function extractLooseStringField(content: string, fieldName: string) {
+  const fieldIndex = findLooseFieldIndex(content, fieldName);
+  if (fieldIndex < 0) return null;
+
+  const colonIndex = content.indexOf(":", fieldIndex);
+  if (colonIndex < 0) return null;
+
+  const afterColon = content.slice(colonIndex + 1);
+  const nextFieldIndex = findNextLooseFieldIndex(afterColon);
+  const rawValue = (nextFieldIndex >= 0 ? afterColon.slice(0, nextFieldIndex) : afterColon)
+    .replace(/,\s*$/g, "")
+    .trim();
+  const trimmed = stripMatchingQuotes(rawValue);
+  const unescaped = trimmed
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\n")
+    .replace(/\\"/g, "\"")
+    .replace(/\\\\/g, "\\")
+    .trim();
+
+  return unescaped.length > 0 ? unescaped : null;
+}
+
+function findLooseFieldIndex(content: string, fieldName: string) {
+  const quoted = content.indexOf(`"${fieldName}"`);
+  if (quoted >= 0) return quoted;
+  const singleQuoted = content.indexOf(`'${fieldName}'`);
+  if (singleQuoted >= 0) return singleQuoted;
+  return content.indexOf(fieldName);
+}
+
+function findNextLooseFieldIndex(content: string) {
+  const fieldNames = ["summary", "markdown_content", "generation_status", "data_quality", "charts", "source_snapshot", "tags", "data_sources"];
+  const indexes = fieldNames
+    .flatMap((fieldName) => [content.indexOf(`"${fieldName}"`), content.indexOf(`'${fieldName}'`), content.indexOf(`\n${fieldName}`)])
+    .filter((index) => index > 0);
+
+  return indexes.length > 0 ? Math.min(...indexes) : -1;
+}
+
+function stripMatchingQuotes(value: string) {
+  const trimmed = value.trim();
+  const first = trimmed[0];
+  const last = trimmed[trimmed.length - 1];
+
+  if ((first === "\"" && last === "\"") || (first === "'" && last === "'") || (first === "`" && last === "`")) {
+    return trimmed.slice(1, -1);
+  }
+
+  return trimmed;
 }
 
 function normalizeAiMarketBriefOutput(
@@ -166,8 +257,8 @@ function normalizeAiMarketBriefOutput(
   const charts = normalizeCharts(value.charts, sourceIds);
   const sourceSnapshotInput = asRecord(value.source_snapshot);
   const sourceSnapshotMeta = asRecord(sourceSnapshotInput.meta);
-  const sourceNotes = normalizeTextArray(sourceSnapshotMeta.source_notes, context.grounding.sourceNotes);
-  const warnings = normalizeTextArray(sourceSnapshotMeta.warnings, context.grounding.warnings);
+  const sourceNotes = mergeTextArrays(context.grounding.sourceNotes, normalizeTextArray(sourceSnapshotMeta.source_notes, []));
+  const warnings = mergeTextArrays(context.grounding.warnings, normalizeTextArray(sourceSnapshotMeta.warnings, []));
   const extractedFacts = normalizeExtractedFacts(sourceSnapshotInput);
   const markdownContent = ensureAiMarkdown({
     markdown: asText(value.markdown_content),
@@ -383,6 +474,10 @@ function normalizeTextArray(value: unknown, fallback: string[]) {
     .map((item) => typeof item === "string" ? item.trim() : "")
     .filter(Boolean);
   return Array.from(new Set(values));
+}
+
+function mergeTextArrays(primary: string[], secondary: string[]) {
+  return Array.from(new Set([...primary, ...secondary].map((item) => item.trim()).filter(Boolean)));
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

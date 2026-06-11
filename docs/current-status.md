@@ -255,7 +255,7 @@ Phase 2K-A 当前新增 `resume_items` 数据模型和后台 `/dashboard/resume`
 
 Phase 2M-D 后，市场简报 AI 生成改为更明确的进度页体验：今日或历史生成先创建 queued job 并进入 `/dashboard/market-briefs/jobs/[id]`，客户端启动 AI 生成、轮询状态 API，展示 queued / validating / preparing / searching / analyzing / writing / charting / saving / succeeded / failed / cancelled 等阶段。生成成功后自动跳转预览页；失败、取消和重新排队继续复用现有任务状态流转。
 
-Hotfix 修复生产环境中 Tavily / DeepSeek 已扣费但任务卡在 writing / 70% 的问题：`generate-ai` API 默认给 AI-first 生成 105 秒主动超时窗口，并支持 `MARKET_BRIEF_AI_TIMEOUT_MS` 调整；超时或异常会安全标记 failed。status API 对 running 且超过 5 分钟未更新的任务返回 stale 提示，前端停止自动重复生成并提示管理员重置为排队后重试；同时限制搜索 query、source 数量、snippet 长度、AI 输出 token 和 prompt 示例体积，并增强 AI JSON code fence 解析。
+Hotfix 修复生产环境中 Tavily / DeepSeek 已扣费但任务卡在 writing / 70% 的问题：`generate-ai` API 默认给 AI-first 生成 105 秒主动超时窗口，并支持 `MARKET_BRIEF_AI_TIMEOUT_MS` 调整；超时或异常会安全标记 failed。status API 对 running 且超过 5 分钟未更新的任务返回 stale 提示，前端停止自动重复生成并提示管理员重置为排队后重试；同时限制搜索 query、source 数量、snippet 长度、AI 输出 token 和 prompt 示例体积，并增强 AI JSON code fence / loose JSON 解析。若 AI 返回内容仍不是合法 JSON，系统会尽量提取 title / summary / markdown_content，保存为 `needs_review` 待复核草稿，而不是整单 failed。
 
 ### Phase 2L - 自动化与市场简报
 
