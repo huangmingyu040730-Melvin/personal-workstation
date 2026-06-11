@@ -2,10 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Eye, ShieldCheck, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
+import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { Badge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
-import { ResumeJdReviewForm } from "@/components/forms/resume-jd-review-form";
+import { ResumeJdReviewWorkspace } from "@/components/forms/resume-jd-review-workspace";
 import { PageHeader } from "@/components/page-header";
 import { getAiProviderPublicInfo } from "@/lib/ai-provider";
 import { getProfileFallback, getPublicProfile } from "@/lib/queries/profile";
@@ -61,26 +61,13 @@ export default async function ResumeVersionJdReviewPage({ params }: { params: Pr
           AI 输入只包含当前简历版本中已选择展示的素材、目标岗位设置和你粘贴的 JD；不会发送 Documents、Storage 路径、signed URL、Access Requests、Access Grants、管理员邮箱、Auth UUID 或任何密钥。
         </AdminSecurityNote>
 
-        <AdminFormSurface
-          sidebar={
-            <>
-              <AdminFormHelpCard
-                title="使用边界"
-                description="这是投递前的辅助检查，不是自动改写系统。"
-                items={[
-                  "AI 只生成建议，不会自动写回 Resume Items。",
-                  "不要粘贴包含客户隐私、内部文件或未公开敏感信息的 JD 附件内容。",
-                  "建议人工复核所有 bullet，尤其是数字、范围和成果表达。",
-                  "如果缺少事实或数据，AI 应提示补充，而不是替你编造。"
-                ]}
-              />
-              <AdminFormHelpCard
-                title="配置提示"
-                tone="slate"
-                description={`生产环境需要在 Vercel 中配置 AI_API_KEY，或继续使用 OPENAI_API_KEY。当前 AI Provider：${aiProvider.providerLabel}；当前模型：${aiProvider.model}。未配置 API Key 时页面仍可打开，但不能提交分析。`}
-              />
-            </>
-          }
+        <ResumeJdReviewWorkspace
+          versionId={version.id}
+          targetRole={version.target_role}
+          targetKeywords={targetKeywords}
+          visibleItemCount={visibleItemCount}
+          aiProviderLabel={aiProvider.providerLabel}
+          aiModel={aiProvider.model}
         >
           <div className="grid gap-5 xl:grid-cols-[0.42fr_0.58fr]">
             <Card>
@@ -134,9 +121,7 @@ export default async function ResumeVersionJdReviewPage({ params }: { params: Pr
               )}
             </Card>
           </div>
-
-          <ResumeJdReviewForm versionId={version.id} targetRole={version.target_role} targetKeywords={targetKeywords} visibleItemCount={visibleItemCount} />
-        </AdminFormSurface>
+        </ResumeJdReviewWorkspace>
       </AdminPageSurface>
     </AppShell>
   );
