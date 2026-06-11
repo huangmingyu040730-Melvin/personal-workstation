@@ -15,24 +15,6 @@ export type CreateMarketBriefJobInput = {
   requestPayload?: Record<string, unknown>;
 };
 
-export type SkillResultPayload = {
-  job_id: string;
-  brief_date?: string;
-  market?: string;
-  title: string;
-  summary?: string | null;
-  markdown_content: string;
-  source_snapshot?: Record<string, unknown>;
-  tags?: string[];
-  data_sources?: string[];
-  generation_status?: GeneratedMarketBrief["generationStatus"];
-};
-
-export type ClaimMarketBriefJobInput = {
-  market?: string;
-  runnerName?: string;
-};
-
 export type MarketBriefGenerationProgressHandler = (stage: MarketBriefJobProgressStage, message?: string) => Promise<void> | void;
 
 export async function findExistingMarketBrief(
@@ -105,57 +87,6 @@ export async function createQueuedMarketBriefGenerationJob(supabase: RunnerSupab
   return data as MarketBriefGenerationJobRecord;
 }
 
-export async function claimQueuedMarketBriefGenerationJob(supabase: RunnerSupabaseClient, input: ClaimMarketBriefJobInput = {}) {
-  let query = supabase
-    .from("market_brief_generation_jobs")
-    .select("*")
-    .eq("status", "queued")
-    .order("created_at", { ascending: true })
-    .limit(1);
-
-  if (input.market) {
-    query = query.eq("market", input.market);
-  }
-
-  const { data: queuedJob, error: queuedError } = await query.maybeSingle();
-
-  if (queuedError) {
-    logMarketBriefRunnerSupabaseError("marketBrief.claimQueuedJob.queuedQueryFailed", queuedError, {
-      market: input.market ?? null
-    });
-    throw new Error(`读取待领取任务失败：${queuedError.message || "Supabase queued query failed."}`);
-  }
-
-  if (!queuedJob) {
-    return null;
-  }
-
-  const startedAt = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("market_brief_generation_jobs")
-    .update({
-      status: "running",
-      runner_name: input.runnerName ?? queuedJob.runner_name,
-      started_at: startedAt,
-      error_message: null
-    })
-    .eq("id", queuedJob.id)
-    .eq("status", "queued")
-    .select("*")
-    .maybeSingle();
-
-  if (error) {
-    logMarketBriefRunnerSupabaseError("marketBrief.claimQueuedJob.updateFailed", error, {
-      market: queuedJob.market,
-      runner_name: input.runnerName ?? queuedJob.runner_name,
-      previous_status: "queued"
-    });
-    throw new Error(`领取市场简报生成任务失败：${error.message || "Supabase claim update failed."}`);
-  }
-
-  return data as MarketBriefGenerationJobRecord | null;
-}
-
 export async function runMockMarketBriefGenerationJob(
   supabase: RunnerSupabaseClient,
   job: MarketBriefGenerationJobRecord,
@@ -210,79 +141,6 @@ export async function runMockMarketBriefGenerationJob(
     return { job: data as MarketBriefGenerationJobRecord, brief };
   } catch (error) {
     await updateProgress("failed", "AI 生成失败");
-    await markMarketBriefGenerationJobFailed(supabase, runningJob.id, getSafeRunnerErrorMessage(error));
-    throw error;
-  }
-}
-
-export async function applySkillResultToMarketBriefJob(supabase: RunnerSupabaseClient, payload: SkillResultPayload) {
-  const { data: job, error: jobError } = await supabase
-    .from("market_brief_generation_jobs")
-    .select("*")
-    .eq("id", payload.job_id)
-    .maybeSingle();
-
-  if (jobError) {
-    throw new Error("读取生成任务失败。");
-  }
-
-  if (!job) {
-    throw new Error("生成任务不存在。");
-  }
-
-  const runningJob = await updateMarketBriefGenerationJobStatus(supabase, job.id, "running", {
-    started_at: job.started_at ?? new Date().toISOString(),
-    error_message: null
-  });
-
-  try {
-    const briefDate = payload.brief_date ?? runningJob.brief_date;
-    const market = payload.market ?? runningJob.market;
-    const sourceSnapshot = normalizeSkillSourceSnapshot(payload.source_snapshot, {
-      market,
-      briefDate,
-      runnerName: runningJob.runner_name
-    });
-    const generated: GeneratedMarketBrief = {
-      title: payload.title,
-      summary: payload.summary ?? "",
-      markdownContent: payload.markdown_content,
-      sourceSnapshot,
-      tags: normalizeTextArray(payload.tags, ["市场简报", market, "待复核"]),
-      dataSources: normalizeTextArray(payload.data_sources, ["Skill Runner"]),
-      generatorName: runningJob.runner_name,
-      generationStatus: payload.generation_status
-    };
-    const brief = await createOrUpdateMarketBriefFromGenerated(supabase, { ...runningJob, brief_date: briefDate, market }, generated);
-    const completedAt = new Date().toISOString();
-
-    const { data: completedJob, error: completeError } = await supabase
-      .from("market_brief_generation_jobs")
-      .update({
-        status: "succeeded",
-        source_snapshot: sourceSnapshot,
-        result_payload: {
-          title: generated.title,
-          summary: generated.summary,
-          markdown_content: generated.markdownContent,
-          tags: generated.tags,
-          data_sources: generated.dataSources,
-          generation_status: generated.generationStatus ?? "generated"
-        },
-        market_brief_id: brief.id,
-        completed_at: completedAt,
-        error_message: null
-      })
-      .eq("id", runningJob.id)
-      .select("*")
-      .single();
-
-    if (completeError) {
-      throw new Error("保存生成任务结果失败。");
-    }
-
-    return { job: completedJob as MarketBriefGenerationJobRecord, brief };
-  } catch (error) {
     await markMarketBriefGenerationJobFailed(supabase, runningJob.id, getSafeRunnerErrorMessage(error));
     throw error;
   }
@@ -348,28 +206,6 @@ export function getTodayDateInShanghai() {
 
 export function normalizeBriefDate(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
-}
-
-function normalizeSkillSourceSnapshot(
-  value: Record<string, unknown> | undefined,
-  { market, briefDate, runnerName }: { market: string; briefDate: string; runnerName: string }
-) {
-  return {
-    meta: {
-      market,
-      brief_date: briefDate,
-      runner_name: runnerName,
-      generated_at: new Date().toISOString()
-    },
-    indices: [],
-    styles: [],
-    sectors: [],
-    hot_topics: [],
-    capital_flows: [],
-    policy_news: [],
-    risk_signals: [],
-    ...(value ?? {})
-  };
 }
 
 async function createOrUpdateMarketBriefFromGenerated(
@@ -464,13 +300,6 @@ async function mergeJobPayloadWithProgress(
   return mergeProgressIntoPayload(payload, createMarketBriefJobProgress(stage, message));
 }
 
-function normalizeTextArray(value: string[] | undefined, fallback: string[]) {
-  const values = (value && value.length > 0 ? value : fallback)
-    .map((item) => item.trim())
-    .filter(Boolean);
-  return Array.from(new Set(values));
-}
-
 function getSafeRunnerErrorMessage(error: unknown) {
   if (error instanceof Error && error.message.trim()) {
     return error.message.slice(0, 500);
@@ -481,23 +310,4 @@ function getSafeRunnerErrorMessage(error: unknown) {
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function logMarketBriefRunnerSupabaseError(
-  event: string,
-  error: {
-    message?: string;
-    code?: string;
-    details?: string;
-    hint?: string;
-  },
-  context: Record<string, string | null | undefined> = {}
-) {
-  console.error(event, {
-    ...context,
-    message: error.message,
-    code: error.code,
-    details: error.details,
-    hint: error.hint
-  });
 }

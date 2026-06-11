@@ -1,4 +1,0 @@
-akshare
-pandas
-requests
-python-dotenv

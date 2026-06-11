@@ -180,16 +180,16 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 - Phase 2L-A：Market Briefs / 市场简报后台管理，新增 `market_briefs` 表和 `/dashboard/market-briefs` 手工 CRUD，支持日期、市场、状态、标签、数据来源、摘要和模块化正文，并在 Dashboard 展示最近 3 条。
 - Phase 2L-B：Market Brief artifact / 文件化与站内预览，新增 Markdown 主内容、生成状态和 artifact 元数据字段，支持 `/dashboard/market-briefs/[id]/preview`、Markdown / HTML / JSON / Word 即时下载和浏览器打印 / 保存 PDF。
 - Phase 2L-C：新增“获取今日市场动态”按钮，当前使用 `manual-skill-mock` 生成器创建今日 A 股 Markdown 草稿并保存到 `market_briefs`；若今日同市场简报已存在则跳转已有预览页，不重复创建。
-- Phase 2L-D-A：新增 `market_brief_generation_jobs`、`/dashboard/market-briefs/jobs` 和私有结果回写接口，把“获取今日市场动态”改成先创建任务、记录 request/source/result payload，再同步运行 mock 生成器并写入简报。
-- Phase 2L-D-B：新增 `MARKET_BRIEF_GENERATOR=external`、任务领取 / 失败回写私有 API 和 `scripts/market-brief-runner/` 外部兼容脚本骨架；该路线后续仅保留为 deprecated 历史兼容。
-- Phase 2L-D-C：新增 Python 数据源实验，第一版接入宽基指数、市场宽度、行业板块和热点方向，生成稳定 `source_snapshot` 与 Markdown；该路线后续仅保留为 deprecated 历史诊断。
+- Phase 2L-D-A：新增 `market_brief_generation_jobs`、`/dashboard/market-briefs/jobs` 和任务状态记录，把“获取今日市场动态”改成先创建任务、记录 request/source/result payload，再同步运行 mock 生成器并写入简报。
+- Phase 2L-D-B / D-C：曾新增旧外部 runner 兼容与 Python 数据源实验；Phase 2N-0 后可执行路径已移除。
 - Phase 2L-D-D：真实行情源不可用时生成 fallback / partial 待复核简报，不让任务因旧数据源不稳定而长期卡住。
 - Phase 2L-D-E：新增多数据源模式、轻量 HTTP 指数源和指定日期历史补生成；今日与历史生成都先校验 A 股交易日，周末、节假日、未来日期不创建 job。
 - Phase 2M-A：切换为 AI-first Market Brief Generator，后台按钮直接创建 generation job 并由服务端 AI 生成固定模板 Markdown、structured JSON、source snapshot 和预览图表；旧 Python 数据源 runner 标记为 deprecated。
-- Phase 2M-B：清理旧数据源 / runner 路线，后台主流程、任务页面和推荐文档全面收口为 AI-first；旧 external 兼容接口和 runner 目录只作为 deprecated 历史诊断资料保留。
+- Phase 2M-B：清理旧数据源 / runner 路线，后台主流程、任务页面和推荐文档全面收口为 AI-first。
 - Phase 2M-C：新增 Market Brief AI Web Search Grounding，生成前按日期和市场检索公开来源，AI 只能基于 sources 生成 Markdown、structured JSON 和 charts；preview 展示来源列表，图表数据项必须带 `source_ids`。
 - Phase 2M-D：新增 Market Brief AI 生成进度体验，生成按钮创建 queued job 后进入任务详情页，客户端启动 AI 生成、轮询任务状态、展示阶段进度动画，并在 succeeded 后自动跳转预览页；hotfix 增加默认 105 秒主动超时、5 分钟 stale running 检测、failed 落库保护、JSON / loose JSON 解析增强、格式异常 fallback 草稿、输出 token 限制和 prompt/source 限制，避免卡在 writing / 70% 或因格式问题整单失败。
-- 后续：每日 A 股市场收评自动生成。
+- Phase 2N-0：移除旧外部 / Python runner API 与脚本目录，不新增素材包、不新增 cron、不改 AI 生成主链路。
+- 后续 Phase 2N-A：每日市场研究素材包，先沉淀公开市场资料，再由 AI 基于素材包生成固定模板简报，最后人工编辑确认。
 - 后续：扩展更可靠的可验证来源引用、授权数据供应商和来源质量评分。
 - 后续：扩展稳定交易日历刷新、来源审计和人工复核工作流。
 - 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。

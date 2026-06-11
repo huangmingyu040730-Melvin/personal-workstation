@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getNearestPreviousAShareTradingDay, validateAShareTradingDay } from "@/lib/a-share-trading-calendar";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
-import { aiMarketBriefRunnerName, externalMarketBriefRunnerName, getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
+import { aiMarketBriefRunnerName, getMarketBriefGeneratorMode } from "@/lib/market-brief-generator";
 import {
   createQueuedMarketBriefGenerationJob,
   findActiveMarketBriefGenerationJob,
@@ -211,7 +211,7 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
   }
 
   if (activeJob?.id) {
-    const autoGenerate = generatorMode !== "external" && activeJob.status === "queued" ? "&auto_generate=1" : "";
+    const autoGenerate = activeJob.status === "queued" ? "&auto_generate=1" : "";
     redirect(`/dashboard/market-briefs/jobs/${activeJob.id}?notice=active${autoGenerate}`);
   }
 
@@ -222,36 +222,16 @@ async function generateMarketBriefAction(formData: FormData, options: { mode: "t
       ownerId: actorId,
       briefDate,
       market,
-      runnerName: generatorMode === "external" ? externalMarketBriefRunnerName : generatorMode === "ai" ? aiMarketBriefRunnerName : undefined,
+      runnerName: generatorMode === "ai" ? aiMarketBriefRunnerName : undefined,
       requestPayload: {
         triggered_by: "dashboard",
         generator_mode: generatorMode,
-        generator_name: generatorMode === "ai" ? aiMarketBriefRunnerName : generatorMode === "external" ? externalMarketBriefRunnerName : "manual-skill-mock",
+        generator_name: generatorMode === "ai" ? aiMarketBriefRunnerName : "manual-skill-mock",
         is_historical: isHistorical
       }
     });
   } catch (createError) {
     redirect(`/dashboard/market-briefs?error=${encodeFormError(getActionErrorMessage(createError, "创建生成任务失败。"))}`);
-  }
-
-  if (generatorMode === "external") {
-    await writeActivityLog({
-      action: "market_brief_generation_job.create",
-      entityType: "market_brief_generation_job",
-      entityId: job.id,
-      metadata: {
-        brief_date: job.brief_date,
-        market: job.market,
-        status: job.status,
-        runner_name: job.runner_name,
-        generator_mode: generatorMode,
-        is_historical: isHistorical
-      }
-    });
-
-    revalidateMarketBriefPaths();
-    revalidateMarketBriefJobPaths(job.id);
-    redirect(`/dashboard/market-briefs/jobs/${job.id}?notice=queued`);
   }
 
   await writeActivityLog({

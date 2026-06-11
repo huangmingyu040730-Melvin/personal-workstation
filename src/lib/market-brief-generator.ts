@@ -26,13 +26,12 @@ export type GeneratedMarketBrief = {
 };
 
 export const defaultMarketBriefRunnerName = "manual-skill-mock";
-export const externalMarketBriefRunnerName = "external-skill-runner";
 export const aiMarketBriefRunnerName = "ai-market-brief-generator";
-export type MarketBriefGeneratorMode = "mock" | "external" | "ai";
+export type MarketBriefGeneratorMode = "mock" | "ai";
 
 export function getMarketBriefGeneratorMode(): MarketBriefGeneratorMode {
   const value = process.env.MARKET_BRIEF_GENERATOR?.trim().toLowerCase();
-  if (value === "mock" || value === "external" || value === "ai") {
+  if (value === "mock" || value === "ai") {
     return value;
   }
   return "ai";
@@ -45,7 +44,7 @@ export async function generateMarketBriefDraft(input: MarketBriefGenerationInput
     return generateAiMarketBrief(input);
   }
 
-  if (generator === "mock" || generator === "external") {
+  if (generator === "mock") {
     return generateMockMarketBrief(input);
   }
 
