@@ -189,11 +189,12 @@ Phase 2K-A 只建立数据模型与后台素材 CRUD，不做 PDF 导出、Word 
 - Phase 2M-C：新增 Market Brief AI Web Search Grounding，生成前按日期和市场检索公开来源，AI 只能基于 sources 生成 Markdown、structured JSON 和 charts；preview 展示来源列表，图表数据项必须带 `source_ids`。
 - Phase 2M-D：新增 Market Brief AI 生成进度体验，生成按钮创建 queued job 后进入任务详情页，客户端启动 AI 生成、轮询任务状态、展示阶段进度动画，并在 succeeded 后自动跳转预览页；hotfix 增加默认 105 秒主动超时、5 分钟 stale running 检测、failed 落库保护、JSON / loose JSON 解析增强、格式异常 fallback 草稿、输出 token 限制和 prompt/source 限制，避免卡在 writing / 70% 或因格式问题整单失败。
 - Phase 2N-0：移除旧外部 / Python runner API 与脚本目录，不新增素材包、不新增 cron、不改 AI 生成主链路。
-- 后续 Phase 2N-A：每日市场研究素材包，先沉淀公开市场资料，再由 AI 基于素材包生成固定模板简报，最后人工编辑确认。
+- Phase 2N-A：新增每日市场研究素材包基础层，包括 `market_brief_material_packages`、手动采集 API、素材包列表和详情页；当前只沉淀公开市场资料，不改 AI 生成主链路，不新增 cron。
+- 后续 Phase 2N-B：让 AI 固定模板简报基于已复核或可用的素材包生成，并保留人工编辑确认。
 - 后续：扩展更可靠的可验证来源引用、授权数据供应商和来源质量评分。
 - 后续：扩展稳定交易日历刷新、来源审计和人工复核工作流。
 - 后续：AI 自动生成、邮件发送、网站 / Knowledge / Publications 归档、Notion 同步和定时任务。
-- 当前 2M-C 不做行情接口抓取、新闻爬虫、邮件、Notion、公开市场简报页、股票推荐或投资建议；AI 和搜索 key 只在服务端读取，输出默认 `needs_review`。
+- 当前 2N-A 不做行情接口抓取、新闻爬虫、邮件、Notion、公开市场简报页、股票推荐、投资建议或自动发布；AI 和搜索 key 只在服务端读取，素材包与生成输出默认需要后台人工复核。
 
 ### Phase 2L - Notion / Google Calendar / AI 辅助研究
 
