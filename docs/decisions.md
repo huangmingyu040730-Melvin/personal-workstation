@@ -1145,6 +1145,35 @@
 - 不修改 `market_briefs`、`market_brief_generation_jobs`、Storage policy、旧 migrations、Resume、Career、Calendar、Documents、Profile 或公开页面。
 - 当前不做行情接口抓取、新闻爬虫、邮件发送、Notion 同步、定时任务、股票推荐、投资建议或自动发布。
 
+## 2026-06-11 - Generate Market Briefs From Material Packages
+
+类型：decision
+
+决策：
+
+- Phase 2N-B 不新增 migration，继续复用 `market_brief_material_packages` 和 `market_brief_generation_jobs.request_payload`。
+- 点击“基于素材包生成今日简报”或“基于素材包生成指定日期简报”时，后台先按 owner/date/market 查找 `ready`、`partial` 或 `reviewed` 素材包；找不到时不创建 generation job，并提示先采集素材包。
+- 如果表单或旧 job request payload 带有 `material_package_id`，生成前优先按该 id 查询，并校验 owner、date、market 和 status；否则按 owner/date/market 查找最新可用素材包。
+- 新建 job 的 `request_payload` 写入 `grounding_mode=material_package`、`material_package_id`、`material_package_status` 和 `material_package_sources_count`。
+- `POST /api/market-briefs/jobs/[id]/generate-ai` 在调用 AI 前强制 resolve 可用素材包；找不到时将任务标记为 failed，progress 写入 failed/100%，错误文案为“未找到可用市场素材包，请先采集素材包后重新排队。”。
+- AI generator 默认只接受调用方传入的素材包 grounding context，不再默认调用 `searchMarketBriefSources`；搜索只发生在素材包采集阶段。
+- 生成结果的 `source_snapshot.meta` 写入 `grounding_mode=material_package`、`material_package_id`、`material_package_status` 和 `material_package_collected_at`；`sources` 来自素材包 sources，`extracted_facts` 优先来自素材包。
+- `partial` 素材包允许生成，但输出保持 `needs_review` / `ai_grounded_partial` 语义，并在 warnings/source notes 中标记需要人工复核。
+
+原因：
+
+- Market Brief 主路径需要从“生成时实时搜索”切换为“先沉淀素材包，再基于素材包生成”，以便来源、warnings、复核状态和失败状态可审计。
+- 默认实时 Tavily 搜索会让生成结果依赖当次网络状态和搜索配置，也会让无素材包的日期继续消耗 AI/搜索调用。
+- 生成前强制素材包存在，可以让缺失资料的失败尽早发生，并引导管理员先完成采集。
+
+影响：
+
+- 生产环境需要先执行 Phase 2N-A 的 `0017_market_brief_material_packages.sql`，但本阶段不新增数据库迁移。
+- 生成阶段没有可用素材包时，不调用 Tavily / Serper / custom search，也不调用 DeepSeek 或 OpenAI-compatible Provider。
+- Job 列表和详情页会展示 grounding mode 与素材包链接；旧 job 没有 material package id 时继续兼容展示。
+- 不恢复 external / Python / AkShare runner，不新增 cron，不新增外部依赖，不修改 Storage/RLS/历史 migration。
+- 不影响 Resume、Career、Calendar、Documents、Profile 或公开页面；不做股票推荐、投资建议、邮件、Notion 同步或自动发布。
+
 ## 2026-06-11 - Add Web Grounding To AI Market Brief Generation
 
 类型：decision

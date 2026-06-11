@@ -85,6 +85,7 @@ export default async function MarketBriefJobsPage({ searchParams }: { searchPara
                     <th className="px-3 py-3 font-semibold">市场</th>
                     <th className="px-3 py-3 font-semibold">状态</th>
                     <th className="px-3 py-3 font-semibold">生成器</th>
+                    <th className="px-3 py-3 font-semibold">来源模式</th>
                     <th className="px-3 py-3 font-semibold">生成简报</th>
                     <th className="px-3 py-3 font-semibold">错误</th>
                     <th className="px-3 py-3 font-semibold">运行时间</th>
@@ -146,6 +147,9 @@ function MarketBriefJobRow({ job }: { job: MarketBriefGenerationJobRecord }) {
         </div>
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-slate-500">{getGeneratorDisplayName(job)}</td>
+      <td className="whitespace-nowrap px-3 py-4">
+        <GroundingModeCell job={job} />
+      </td>
       <td className="px-3 py-4">
         {job.market_briefs ? (
           <Link href={`/dashboard/market-briefs/${job.market_briefs.id}/preview`} className="inline-flex items-center gap-1.5 text-blue-700 hover:text-blue-800">
@@ -173,6 +177,30 @@ function MarketBriefJobRow({ job }: { job: MarketBriefGenerationJobRecord }) {
       </td>
     </tr>
   );
+}
+
+function GroundingModeCell({ job }: { job: MarketBriefGenerationJobRecord }) {
+  const groundingMode = getPayloadText(job.request_payload.grounding_mode);
+  const materialPackageId = getPayloadText(job.request_payload.material_package_id);
+
+  if (groundingMode === "material_package") {
+    return (
+      <div className="space-y-2">
+        <Badge className="bg-blue-50 text-blue-700 ring-blue-100">素材包</Badge>
+        {materialPackageId ? (
+          <Link href={`/dashboard/market-briefs/materials/${materialPackageId}`} className="block text-xs font-semibold text-blue-700 hover:text-blue-800">
+            查看素材包
+          </Link>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (groundingMode === "live_fallback" || groundingMode === "live_search") {
+    return <Badge className="bg-amber-50 text-amber-700 ring-amber-100">历史实时检索</Badge>;
+  }
+
+  return <span className="text-xs text-slate-400">旧任务</span>;
 }
 
 function MarketBriefJobQuickActions({ job }: { job: MarketBriefGenerationJobRecord }) {
@@ -252,4 +280,8 @@ function getGeneratorDisplayName(job: MarketBriefGenerationJobRecord) {
   }
 
   return "历史任务：旧生成器";
+}
+
+function getPayloadText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }

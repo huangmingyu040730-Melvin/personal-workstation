@@ -35,6 +35,8 @@ export default async function MarketBriefJobDetailPage({
   const autoGenerate = getSearchValue(query.auto_generate) === "1";
   const progress = getMarketBriefJobProgressFromPayload(job.request_payload, getFallbackProgressStage(job.status));
   const previewUrl = job.market_brief_id ? `/dashboard/market-briefs/${job.market_brief_id}/preview` : null;
+  const materialPackageId = getPayloadText(job.request_payload.material_package_id);
+  const groundingMode = getPayloadText(job.request_payload.grounding_mode);
 
   return (
     <AppShell>
@@ -96,6 +98,7 @@ export default async function MarketBriefJobDetailPage({
               <div className="mb-4 flex flex-wrap gap-2">
                 <Badge className={getMarketBriefJobStatusTone(job.status)}>{getMarketBriefJobStatusLabel(job.status)}</Badge>
                 <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{job.market}</Badge>
+                {groundingMode === "material_package" ? <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-100">素材包生成</Badge> : null}
                 {isHistoricalJob(job) ? (
                   <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-100">历史补生成</Badge>
                 ) : (
@@ -108,11 +111,23 @@ export default async function MarketBriefJobDetailPage({
                 <InfoRow label="市场" value={job.market} />
                 <InfoRow label="状态" value={getMarketBriefJobStatusLabel(job.status)} />
                 <InfoRow label="生成器" value={getGeneratorDisplayName(job)} />
+                <InfoRow label="来源模式" value={getGroundingModeLabel(groundingMode)} />
                 <InfoRow label="创建时间" value={formatDateTime(job.created_at)} />
                 <InfoRow label="开始时间" value={job.started_at ? formatDateTime(job.started_at) : "未开始"} />
                 <InfoRow label="完成时间" value={job.completed_at ? formatDateTime(job.completed_at) : "未完成"} />
                 <InfoRow label="更新时间" value={formatDateTime(job.updated_at)} />
               </dl>
+            </Card>
+
+            <Card>
+              <CardHeader title="素材包" />
+              {materialPackageId ? (
+                <Link href={`/dashboard/market-briefs/materials/${materialPackageId}`} className="block rounded-2xl border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-blue-700 hover:border-blue-200 hover:bg-blue-100">
+                  查看素材包：{materialPackageId}
+                </Link>
+              ) : (
+                <p className="text-sm leading-6 text-slate-500">该任务没有记录素材包 ID，可能是历史任务。</p>
+              )}
             </Card>
 
             <Card>
@@ -194,6 +209,17 @@ function getGeneratorDisplayName(job: { runner_name: string; request_payload: Re
   }
 
   return "历史任务：旧生成器";
+}
+
+function getGroundingModeLabel(value: string | null) {
+  if (value === "material_package") return "已保存素材包";
+  if (value === "live_fallback") return "历史实时检索 fallback";
+  if (value === "live_search") return "历史实时检索";
+  return "旧任务 / 未记录";
+}
+
+function getPayloadText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function getSearchValue(value: string | string[] | undefined) {

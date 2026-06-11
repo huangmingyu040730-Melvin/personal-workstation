@@ -1,5 +1,6 @@
 import type { MarketBriefSearchSource } from "@/lib/market-brief-search";
 import { searchMarketBriefSources } from "@/lib/market-brief-search";
+import type { MarketBriefMaterialPackageStatus } from "@/lib/content-types";
 
 const MAX_GROUNDING_PROMPT_LENGTH = 7600;
 
@@ -7,6 +8,7 @@ export type MarketBriefGroundingContext = {
   market: string;
   briefDate: string;
   isHistorical: boolean;
+  groundingMode: "material_package" | "live_search" | "live_fallback";
   searchProvider: string;
   searchProviderLabel: string;
   groundingEnabled: boolean;
@@ -14,6 +16,10 @@ export type MarketBriefGroundingContext = {
   sources: MarketBriefSearchSource[];
   warnings: string[];
   sourceNotes: string[];
+  extractedFacts?: Record<string, unknown>;
+  materialPackageId?: string | null;
+  materialPackageStatus?: MarketBriefMaterialPackageStatus | null;
+  materialPackageCollectedAt?: string | null;
 };
 
 export async function buildMarketBriefGroundingContext(input: { market: string; briefDate: string; isHistorical: boolean }): Promise<MarketBriefGroundingContext> {
@@ -32,6 +38,7 @@ export async function buildMarketBriefGroundingContext(input: { market: string; 
     market: input.market,
     briefDate: input.briefDate,
     isHistorical: input.isHistorical,
+    groundingMode: "live_search",
     searchProvider: searchResult.provider,
     searchProviderLabel: searchResult.providerLabel,
     groundingEnabled: true,
@@ -48,27 +55,36 @@ export function buildGroundingSourceSnapshotBase(input: MarketBriefGroundingCont
       market: input.market,
       brief_date: input.briefDate,
       generator: "ai",
+      grounding_mode: input.groundingMode,
       grounding_enabled: input.groundingEnabled,
       search_provider: input.searchProvider,
+      search_provider_label: input.searchProviderLabel,
       model: input.model,
       data_quality: input.dataQuality,
       generation_status: input.generationStatus,
       is_historical: input.isHistorical,
       warnings: input.warnings,
       source_notes: input.sourceNotes,
-      queries: input.queries
+      queries: input.queries,
+      material_package_id: input.materialPackageId ?? null,
+      material_package_status: input.materialPackageStatus ?? null,
+      material_package_collected_at: input.materialPackageCollectedAt ?? null
     },
     sources: input.sources,
-    extracted_facts: {
-      indices: [],
-      market_breadth: {},
-      sectors: [],
-      hot_topics: [],
-      capital_flows: [],
-      policy_news: [],
-      risk_signals: []
-    },
+    extracted_facts: input.extractedFacts ?? createEmptyGroundingFacts(),
     charts: []
+  };
+}
+
+function createEmptyGroundingFacts() {
+  return {
+    indices: [],
+    market_breadth: {},
+    sectors: [],
+    hot_topics: [],
+    capital_flows: [],
+    policy_news: [],
+    risk_signals: []
   };
 }
 

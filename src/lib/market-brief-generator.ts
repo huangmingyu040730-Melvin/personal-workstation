@@ -1,16 +1,18 @@
 import OpenAI from "openai";
 import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import type { MarketBriefGroundingContext } from "@/lib/market-brief-grounding";
-import { buildGroundingSourceSnapshotBase, buildMarketBriefGroundingContext } from "@/lib/market-brief-grounding";
+import { buildGroundingSourceSnapshotBase } from "@/lib/market-brief-grounding";
 import { buildMarketBriefAiPrompt } from "@/lib/market-brief-ai-prompt";
 import type { MarketBriefJobProgressStage } from "@/lib/market-brief-job-progress";
 import type { MarketBriefSearchSource } from "@/lib/market-brief-search";
+import { getMarketBriefMaterialPackageDataQuality } from "@/lib/market-brief-material-packages";
 
 export type MarketBriefGenerationInput = {
   market: string;
   briefDate: string;
   runnerName?: string;
   isHistorical?: boolean;
+  grounding?: MarketBriefGroundingContext;
   onProgress?: (stage: MarketBriefJobProgressStage, message?: string) => Promise<void> | void;
 };
 
@@ -52,13 +54,13 @@ export async function generateMarketBriefDraft(input: MarketBriefGenerationInput
 }
 
 async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise<GeneratedMarketBrief> {
-  await input.onProgress?.("searching", "正在检索公开市场信息...");
-  const grounding = await buildMarketBriefGroundingContext({
-    market: input.market,
-    briefDate: input.briefDate,
-    isHistorical: Boolean(input.isHistorical)
-  });
-  await input.onProgress?.("analyzing", "正在整理市场信息与来源...");
+  const grounding = input.grounding;
+
+  if (!grounding) {
+    throw new Error("未找到可用市场素材包，请先采集素材包后重新排队。");
+  }
+
+  await input.onProgress?.("analyzing", "正在整理已保存素材包与来源...");
   const aiConfig = getAiProviderConfig();
   const providerLabel = getAiProviderDisplayName(aiConfig.provider);
 
@@ -80,6 +82,8 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
   });
   console.info("marketBrief.aiGeneration.promptReady", {
     provider: providerLabel,
+    grounding_mode: grounding.groundingMode,
+    material_package_id: grounding.materialPackageId ?? null,
     source_count: grounding.sources.length,
     prompt_length_estimate: prompt.length
   });
@@ -188,7 +192,7 @@ function buildFallbackAiOutputFromInvalidJson(content: string, fallback: { marke
       charts: []
     },
     tags: [fallback.market, "市场收评", "AI生成", "格式待复核"],
-    data_sources: ["AI", "Web Search"]
+    data_sources: ["AI"]
   };
 }
 
@@ -249,8 +253,8 @@ function normalizeAiMarketBriefOutput(
   context: { market: string; briefDate: string; isHistorical: boolean; model: string; providerLabel: string; grounding: MarketBriefGroundingContext }
 ) {
   const title = asText(value.title) || `${context.market}市场收评简报｜${context.briefDate}`;
-  const dataQuality = normalizeAiDataQuality(asText(value.data_quality));
-  const generationStatus = normalizeGenerationStatus(asText(value.generation_status));
+  const dataQuality = normalizeAiDataQualityForGrounding(context.grounding, asText(value.data_quality));
+  const generationStatus = normalizeGenerationStatusForGrounding(context.grounding, asText(value.generation_status));
   const summary = asText(value.summary) || "AI 已生成市场简报草稿，需人工复核关键数据与来源。";
   const sourceIds = new Set(context.grounding.sources.map((source) => source.id));
   const charts = normalizeCharts(value.charts, sourceIds);
@@ -258,7 +262,7 @@ function normalizeAiMarketBriefOutput(
   const sourceSnapshotMeta = asRecord(sourceSnapshotInput.meta);
   const sourceNotes = mergeTextArrays(context.grounding.sourceNotes, normalizeTextArray(sourceSnapshotMeta.source_notes, []));
   const warnings = mergeTextArrays(context.grounding.warnings, normalizeTextArray(sourceSnapshotMeta.warnings, []));
-  const extractedFacts = normalizeExtractedFacts(sourceSnapshotInput);
+  const extractedFacts = normalizeExtractedFactsForGrounding(context.grounding, sourceSnapshotInput);
   const markdownContent = ensureAiMarkdown({
     markdown: asText(value.markdown_content),
     title,
@@ -266,6 +270,7 @@ function normalizeAiMarketBriefOutput(
     generationStatus,
     dataQuality,
     isHistorical: context.isHistorical,
+    groundingMode: context.grounding.groundingMode,
     sourceNotes,
     sources: context.grounding.sources
   });
@@ -280,6 +285,7 @@ function normalizeAiMarketBriefOutput(
     meta: {
       ...sourceSnapshotBase.meta,
       provider: context.providerLabel,
+      grounding_mode: context.grounding.groundingMode,
       warnings,
       source_notes: sourceNotes
     },
@@ -296,8 +302,8 @@ function normalizeAiMarketBriefOutput(
     data_quality: dataQuality,
     charts,
     source_snapshot: sourceSnapshot,
-    tags: normalizeTextArray(value.tags, [context.market, "市场收评", "AI生成", "来源检索", "待复核"]),
-    data_sources: normalizeTextArray(value.data_sources, ["AI", context.grounding.searchProviderLabel, "Web Search"])
+    tags: normalizeTextArray(value.tags, [context.market, "市场收评", "AI生成", "素材包生成", "待复核"]),
+    data_sources: normalizeDataSourcesForGrounding(context.grounding, value.data_sources)
   };
 }
 
@@ -308,6 +314,7 @@ function ensureAiMarkdown(input: {
   generationStatus: string;
   dataQuality: string;
   isHistorical: boolean;
+  groundingMode: MarketBriefGroundingContext["groundingMode"];
   sourceNotes: string[];
   sources: MarketBriefSearchSource[];
 }) {
@@ -320,7 +327,7 @@ function ensureAiMarkdown(input: {
     const withHistoricalNotice = input.isHistorical && !base.includes("历史日期补生成版本")
       ? base.replace("\n## 一、市场概览", `${historicalNotice}\n\n## 一、市场概览`)
       : base;
-    return `${withHistoricalNotice}\n`;
+    return `${ensureMaterialPackageMarkdownNote(withHistoricalNotice, input.groundingMode)}\n`;
   }
 
   const lines = [
@@ -375,6 +382,7 @@ function ensureAiMarkdown(input: {
     "",
     "## 九、数据与来源说明",
     "",
+    input.groundingMode === "material_package" ? "- 本简报基于已保存的市场素材包生成，不在生成时实时搜索。" : "",
     ...input.sourceNotes.map((note) => `- ${note}`),
     ...input.sources.map((source) => `- [${source.id}] ${source.title} - ${source.publisher || "未知来源"} - ${source.url}`),
     "",
@@ -398,8 +406,24 @@ function normalizeAiDataQuality(value: string | null) {
   return "ai_unverified";
 }
 
+function normalizeAiDataQualityForGrounding(grounding: MarketBriefGroundingContext, value: string | null) {
+  if (grounding.groundingMode === "material_package" && grounding.materialPackageStatus) {
+    return getMarketBriefMaterialPackageDataQuality(grounding.materialPackageStatus);
+  }
+
+  return normalizeAiDataQuality(value);
+}
+
 function normalizeGenerationStatus(value: string | null): NonNullable<GeneratedMarketBrief["generationStatus"]> {
   return value === "generated" ? "generated" : "needs_review";
+}
+
+function normalizeGenerationStatusForGrounding(grounding: MarketBriefGroundingContext, value: string | null): NonNullable<GeneratedMarketBrief["generationStatus"]> {
+  if (grounding.groundingMode === "material_package") {
+    return "needs_review";
+  }
+
+  return normalizeGenerationStatus(value);
 }
 
 function normalizeCharts(value: unknown, validSourceIds: Set<string>) {
@@ -465,6 +489,56 @@ function normalizeExtractedFacts(sourceSnapshotInput: Record<string, unknown>) {
     policy_news: Array.isArray(extractedFacts.policy_news) ? extractedFacts.policy_news : Array.isArray(sourceSnapshotInput.policy_news) ? sourceSnapshotInput.policy_news : [],
     risk_signals: Array.isArray(extractedFacts.risk_signals) ? extractedFacts.risk_signals : Array.isArray(sourceSnapshotInput.risk_signals) ? sourceSnapshotInput.risk_signals : []
   };
+}
+
+function normalizeExtractedFactsForGrounding(grounding: MarketBriefGroundingContext, sourceSnapshotInput: Record<string, unknown>) {
+  const groundingFacts = asRecord(grounding.extractedFacts);
+  if (Object.keys(groundingFacts).length > 0) {
+    return {
+      indices: Array.isArray(groundingFacts.indices) ? groundingFacts.indices : [],
+      market_breadth: asRecord(groundingFacts.market_breadth),
+      sectors: Array.isArray(groundingFacts.sectors) ? groundingFacts.sectors : [],
+      hot_topics: Array.isArray(groundingFacts.hot_topics) ? groundingFacts.hot_topics : [],
+      capital_flows: Array.isArray(groundingFacts.capital_flows) ? groundingFacts.capital_flows : [],
+      policy_news: Array.isArray(groundingFacts.policy_news) ? groundingFacts.policy_news : [],
+      risk_signals: Array.isArray(groundingFacts.risk_signals) ? groundingFacts.risk_signals : []
+    };
+  }
+
+  return normalizeExtractedFacts(sourceSnapshotInput);
+}
+
+function getDefaultDataSources(grounding: MarketBriefGroundingContext) {
+  if (grounding.groundingMode === "material_package") {
+    return ["AI", "已保存市场素材包", grounding.searchProviderLabel];
+  }
+
+  return ["AI", grounding.searchProviderLabel];
+}
+
+function normalizeDataSourcesForGrounding(grounding: MarketBriefGroundingContext, value: unknown) {
+  const defaults = getDefaultDataSources(grounding);
+  const values = normalizeTextArray(value, []);
+  const normalized = grounding.groundingMode === "material_package"
+    ? values.map((item) => item === "Web Search" || item === "网络搜索" ? "已保存市场素材包" : item)
+    : values;
+
+  return Array.from(new Set([...normalized, ...defaults].map((item) => item.trim()).filter(Boolean)));
+}
+
+function ensureMaterialPackageMarkdownNote(markdown: string, groundingMode: MarketBriefGroundingContext["groundingMode"]) {
+  if (groundingMode !== "material_package" || markdown.includes("已保存的市场素材包")) {
+    return markdown;
+  }
+
+  if (markdown.includes("\n## 十、AI 复核状态")) {
+    return markdown.replace(
+      "\n## 十、AI 复核状态",
+      "\n- 本简报基于已保存的市场素材包生成，不在生成时实时搜索。\n\n## 十、AI 复核状态"
+    );
+  }
+
+  return `${markdown.trim()}\n\n## 数据与来源说明\n\n- 本简报基于已保存的市场素材包生成，不在生成时实时搜索。`;
 }
 
 function normalizeTextArray(value: unknown, fallback: string[]) {

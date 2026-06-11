@@ -122,7 +122,13 @@ export function buildMarketBriefAiPrompt(input: {
     `市场：${input.market}`,
     `日期：${input.briefDate}`,
     `AI Provider：${input.providerLabel}`,
-    `搜索 Provider：${input.grounding.searchProviderLabel}`,
+    `来源模式：${input.grounding.groundingMode}`,
+    `素材来源 Provider：${input.grounding.searchProviderLabel}`,
+    input.grounding.groundingMode === "material_package"
+      ? "本次生成只能基于已保存的市场素材包，不得假设生成阶段进行了实时搜索。"
+      : "本次生成使用临时来源上下文，需在 source_snapshot.meta 中标明来源模式。",
+    input.grounding.materialPackageId ? `素材包 ID：${input.grounding.materialPackageId}` : "",
+    input.grounding.materialPackageStatus ? `素材包状态：${input.grounding.materialPackageStatus}` : "",
     historicalInstruction,
     "",
     "Grounding sources：",
@@ -131,6 +137,9 @@ export function buildMarketBriefAiPrompt(input: {
     "",
     serializeGroundingSourcesForPrompt(input.grounding.sources),
     "",
+    "素材包 warnings / source_notes / extracted_facts：",
+    serializeGroundingPackageContextForPrompt(input.grounding),
+    "",
     "重要约束：",
     "1. 中文输出，金融研究员风格，克制、可复核。",
     "2. 不做投资建议，不推荐个股，不输出买入 / 卖出建议。",
@@ -138,7 +147,7 @@ export function buildMarketBriefAiPrompt(input: {
     "4. 如果无法从 sources 可靠确认某个精确数字，写 null、未能从本次检索来源中可靠确认或需人工复核。",
     "5. 不得编造指数涨跌幅、成交额、行业排名、资金流、涨跌家数等精确数据。",
     "6. charts 的每一条 data 都必须包含 source_ids，例如 [\"S1\"]；没有 source_ids 的图表数据无效。",
-    "7. Markdown 的“数据与来源说明”必须列出 [S1]、[S2] 这类来源编号、标题、发布方和 URL。",
+    "7. Markdown 的“数据与来源说明”必须列出 [S1]、[S2] 这类来源编号、标题、发布方和 URL；如果来源模式是 material_package，必须写明：本简报基于已保存的市场素材包生成，不在生成时实时搜索。",
     "8. data_quality 只能是 ai_grounded、ai_grounded_partial 或 ai_unverified。生成状态默认 needs_review。",
     "9. source_snapshot.sources 必须原样保留下方 sources；source_snapshot.extracted_facts 用结构化字段摘录已确认事实。",
     "10. 为保证生成稳定，markdown_content 控制在 900-1400 个中文字符；每个章节只写关键结论，不要展开长篇解释。",
@@ -191,8 +200,12 @@ export function buildMarketBriefAiPrompt(input: {
             market: input.market,
             brief_date: input.briefDate,
             generator: "ai",
+            grounding_mode: input.grounding.groundingMode,
             grounding_enabled: true,
             search_provider: input.grounding.searchProvider,
+            material_package_id: input.grounding.materialPackageId ?? null,
+            material_package_status: input.grounding.materialPackageStatus ?? null,
+            material_package_collected_at: input.grounding.materialPackageCollectedAt ?? null,
             model: "model-name",
             data_quality: "ai_unverified",
             is_historical: input.isHistorical,
@@ -218,4 +231,22 @@ export function buildMarketBriefAiPrompt(input: {
       2
     )
   ].join("\n");
+}
+
+function serializeGroundingPackageContextForPrompt(grounding: MarketBriefGroundingContext) {
+  const payload = {
+    grounding_mode: grounding.groundingMode,
+    material_package_id: grounding.materialPackageId ?? null,
+    material_package_status: grounding.materialPackageStatus ?? null,
+    material_package_collected_at: grounding.materialPackageCollectedAt ?? null,
+    warnings: grounding.warnings,
+    source_notes: grounding.sourceNotes,
+    extracted_facts: grounding.extractedFacts ?? {}
+  };
+  const serialized = JSON.stringify(payload, null, 2);
+  const maxLength = 3600;
+
+  return serialized.length > maxLength
+    ? `${serialized.slice(0, maxLength).trim()}\n[Material package context truncated to fit prompt budget.]`
+    : serialized;
 }
