@@ -1,8 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
-import { analyzeResumeJdAction } from "@/actions/resume-jd-review";
-import { createResumeJdReviewAction } from "@/actions/resume-jd-reviews";
+import Link from "next/link";
 import { Badge } from "@/components/badge";
 import { Field, Select, Textarea, TextInput } from "@/components/forms/form-fields";
 import { SubmitButton } from "@/components/forms/submit-button";
@@ -10,29 +8,69 @@ import { resumeJdDirectionOptions, type ResumeJdReviewResult, type ResumeJdRevie
 import { resumeJdReviewStatusOptions } from "@/lib/resume-jd-review-options";
 
 export function ResumeJdReviewForm({
+  action,
   versionId,
+  state,
   targetRole,
   targetKeywords,
   visibleItemCount
 }: {
+  action: (formData: FormData) => void;
   versionId: string;
+  state: ResumeJdReviewState;
   targetRole?: string | null;
   targetKeywords: string[];
   visibleItemCount: number;
 }) {
-  const [state, action] = useActionState<ResumeJdReviewState, FormData>(analyzeResumeJdAction.bind(null, versionId), { status: "idle" });
+  const defaultDirection = "investment_research";
+  const defaultDirectionLabel = resumeJdDirectionOptions.find((option) => option.value === defaultDirection)?.label ?? "";
 
   return (
     <div className="space-y-5">
       <form action={action} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
         <div className="mb-5">
-          <h2 className="text-base font-semibold text-slate-950">粘贴目标岗位 JD</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500">AI 只会基于当前简历版本和你粘贴的 JD 生成建议，不会自动修改简历数据。</p>
+          <h2 className="text-base font-semibold text-slate-950">投递信息与目标岗位 JD</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-500">分析完成后会自动保存为 JD 分析记录，可在求职中心继续维护投递状态。AI 不会自动修改简历数据。</p>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[0.36fr_0.64fr]">
-          <Field label="岗位方向" hint="用于调整分析侧重点，不会写入数据库。">
-            <Select name="direction" defaultValue="investment_research">
+        <input type="hidden" name="resume_version_id" value={versionId} />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="公司 / 机构" hint="可留空，后续在记录详情中补充。">
+            <TextInput name="company_name" placeholder="例如 某券商研究所 / 某资产管理公司" />
+          </Field>
+          <Field label="岗位名称">
+            <TextInput name="job_title" placeholder="例如 量化研究实习" defaultValue={targetRole ?? ""} />
+          </Field>
+          <Field label="岗位方向">
+            <TextInput name="job_direction" placeholder="例如 投研 / 量化研究 / AI 数据分析" defaultValue={defaultDirectionLabel} />
+          </Field>
+          <Field label="城市 / 地点">
+            <TextInput name="job_location" placeholder="例如 上海 / 北京 / 远程" />
+          </Field>
+          <Field label="投递渠道">
+            <TextInput name="application_channel" placeholder="例如 官网 / 内推 / Boss / 邮件" />
+          </Field>
+          <Field label="状态">
+            <Select name="application_status" defaultValue="reviewed">
+              {resumeJdReviewStatusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+
+        <div className="mt-4">
+          <Field label="备注" hint="可记录投递计划、需要补充的数据或人工复核结论。">
+            <Textarea name="notes" rows={4} placeholder="例如：需要补充 Python 回测项目的量化成果，再考虑投递。" />
+          </Field>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[0.36fr_0.64fr]">
+          <Field label="AI 分析方向" hint="用于调整本次分析侧重点，不等同于投递记录里的岗位方向。">
+            <Select name="direction" defaultValue={defaultDirection}>
               {resumeJdDirectionOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -55,31 +93,22 @@ export function ResumeJdReviewForm({
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <SubmitButton pendingLabel="分析中...">开始 AI JD 分析</SubmitButton>
-          <p className="text-xs leading-5 text-slate-500">分析结果仅在当前页面展示。请人工复核后再复制到简历素材中。</p>
+          <SubmitButton pendingLabel="分析并保存中...">开始 AI JD 分析并保存记录</SubmitButton>
+          <p className="text-xs leading-5 text-slate-500">分析完成后会自动保存，不需要再手动保存；请人工复核后再复制到简历素材中。</p>
         </div>
       </form>
 
       {state.status === "error" ? <div className="rounded-3xl border border-rose-200 bg-rose-50 p-5 text-sm font-medium text-rose-700">{state.message}</div> : null}
-      {state.status === "success" ? <ResumeJdReviewResultView state={state} versionId={versionId} targetRole={targetRole} targetKeywords={targetKeywords} /> : null}
+      {state.status === "success" ? <ResumeJdReviewResultView state={state} /> : null}
     </div>
   );
 }
 
-function ResumeJdReviewResultView({
-  state,
-  versionId,
-  targetRole,
-  targetKeywords
-}: {
-  state: ResumeJdReviewState;
-  versionId: string;
-  targetRole?: string | null;
-  targetKeywords: string[];
-}) {
+export function ResumeJdReviewResultView({ state }: { state: ResumeJdReviewState }) {
   if (state.rawText) {
     return (
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+      <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+        <SavedReviewNotice state={state} rawText />
         <h2 className="text-base font-semibold text-slate-950">AI 分析结果</h2>
         {state.message ? <p className="mt-1 text-sm leading-6 text-slate-500">{state.message}</p> : null}
         <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-slate-950 p-4 text-sm leading-6 text-white">{state.rawText}</pre>
@@ -95,6 +124,7 @@ function ResumeJdReviewResultView({
   return (
     <div className="space-y-5">
       <section className="rounded-3xl border border-blue-100 bg-blue-50/40 p-5 shadow-soft">
+        <SavedReviewNotice state={state} />
         <div className="mb-5">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">AI JD Review</p>
           <h2 className="mt-2 text-xl font-semibold text-slate-950">分析结果</h2>
@@ -115,85 +145,30 @@ function ResumeJdReviewResultView({
           <ListBlock title="下一步行动" values={result.nextActions} emptyText="暂无下一步建议。" />
         </div>
       </section>
-
-      <SaveJdReviewForm versionId={versionId} targetRole={targetRole} targetKeywords={targetKeywords} state={state} result={result} />
     </div>
   );
 }
 
-function SaveJdReviewForm({
-  versionId,
-  targetRole,
-  targetKeywords,
-  state,
-  result
-}: {
-  versionId: string;
-  targetRole?: string | null;
-  targetKeywords: string[];
-  state: ResumeJdReviewState;
-  result: ResumeJdReviewResult;
-}) {
-  const directionLabel = resumeJdDirectionOptions.find((option) => option.value === state.direction)?.label ?? targetRole ?? "";
-  const jdText = state.jdText ?? "";
-
+function SavedReviewNotice({ state, rawText = false }: { state: ResumeJdReviewState; rawText?: boolean }) {
   return (
-    <form action={createResumeJdReviewAction} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
-      <input type="hidden" name="resume_version_id" value={versionId} />
-      <input type="hidden" name="match_summary" value={result.matchSummary} />
-      <input type="hidden" name="model_name" value={state.modelName ?? ""} />
-      <textarea className="hidden" name="jd_text" readOnly value={jdText} />
-      <textarea className="hidden" name="target_keywords_json" readOnly value={JSON.stringify(targetKeywords)} />
-      <textarea className="hidden" name="ai_result_json" readOnly value={JSON.stringify(result)} />
-      <textarea className="hidden" name="matched_keywords_json" readOnly value={JSON.stringify(result.matchedKeywords)} />
-      <textarea className="hidden" name="missing_keywords_json" readOnly value={JSON.stringify(result.missingKeywords)} />
-      <textarea className="hidden" name="risks_json" readOnly value={JSON.stringify(result.risks)} />
-      <textarea className="hidden" name="next_actions_json" readOnly value={JSON.stringify(result.nextActions)} />
-
-      <div className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Save Review</p>
-        <h2 className="mt-2 text-lg font-semibold text-slate-950">保存为 JD 分析记录</h2>
-        <p className="mt-1 text-sm leading-6 text-slate-500">保存后可在 JD 分析记录中跟踪公司、岗位、投递状态和后续行动；不会自动修改简历素材。</p>
+    <div className="mb-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+      <div>
+        <p className="text-sm font-semibold text-emerald-950">已自动保存为 JD 分析记录</p>
+        <p className="mt-1 text-sm leading-6 text-emerald-800">
+          {rawText ? "AI 返回了非结构化文本，记录已保存为需人工复核状态。" : "分析结果、JD 原文和投递信息已保存，可在求职中心继续维护投递状态。"}
+        </p>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="公司 / 机构" hint="可留空，后续在记录详情中补充。">
-          <TextInput name="company_name" placeholder="例如 某券商研究所 / 某资产管理公司" />
-        </Field>
-        <Field label="岗位名称">
-          <TextInput name="job_title" placeholder="例如 量化研究实习" defaultValue={targetRole ?? ""} />
-        </Field>
-        <Field label="岗位方向">
-          <TextInput name="job_direction" placeholder="例如 投研 / 量化研究 / AI 数据分析" defaultValue={directionLabel} />
-        </Field>
-        <Field label="城市 / 地点">
-          <TextInput name="job_location" placeholder="例如 上海 / 北京 / 远程" />
-        </Field>
-        <Field label="投递渠道">
-          <TextInput name="application_channel" placeholder="例如 官网 / 内推 / Boss / 邮件" />
-        </Field>
-        <Field label="状态">
-          <Select name="application_status" defaultValue="reviewed">
-            {resumeJdReviewStatusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
-        </Field>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {state.savedReviewUrl ? (
+          <Link href={state.savedReviewUrl} className="rounded-2xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+            查看已保存记录
+          </Link>
+        ) : null}
+        <Link href="/dashboard/resume/applications" className="rounded-2xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:border-emerald-300">
+          查看投递看板
+        </Link>
       </div>
-
-      <div className="mt-4">
-        <Field label="备注" hint="可记录投递计划、需要补充的数据或人工复核结论。">
-          <Textarea name="notes" rows={4} placeholder="例如：需要补充 Python 回测项目的量化成果，再考虑投递。" />
-        </Field>
-      </div>
-
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <SubmitButton pendingLabel="保存中...">保存分析记录</SubmitButton>
-        <p className="text-xs leading-5 text-slate-500">保存的是本次 JD、AI 建议和投递状态，不会写回简历正文。</p>
-      </div>
-    </form>
+    </div>
   );
 }
 

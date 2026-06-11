@@ -30,6 +30,9 @@ export type ResumeJdReviewState = {
   jdText?: string;
   direction?: ResumeJdDirection;
   modelName?: string;
+  savedReviewId?: string;
+  savedReviewUrl?: string;
+  savedAt?: string;
 };
 
 export const resumeJdDirectionOptions: Array<{ value: ResumeJdDirection; label: string; description: string }> = [
