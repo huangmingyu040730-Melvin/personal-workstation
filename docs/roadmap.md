@@ -114,6 +114,21 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - Skill 包仍只作为私密文件存储，不执行、不解析、不安装。
 - 不修改 Resume / Career 逻辑。
 
+### Phase 2P-C - Create And Upload Flows
+
+已完成代码实现。Project、Publication、Knowledge 和 Skill 新建表单增加“保存并上传文件 / 文件夹或文档包”操作：Server Action 先创建内容记录，创建成功后跳转到统一 `/dashboard/documents/upload`，并通过 query params 预填 `related_type`、`related_id`、`mode`、`category` 和 `collection_type`。
+
+边界：
+
+- 不做 pending upload 或临时文件 staging。
+- 不在 create action 中接收 File 或文件二进制。
+- 不让文件经过 Vercel Function。
+- 不重复实现 Documents 上传逻辑。
+- 不新增 migration，不改 Storage policy。
+- 不公开附件或 signed URL。
+- Skill 包仍只作为私密文件存储，不执行、不解析、不安装。
+- 不修改 Resume / Career 逻辑。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -176,6 +191,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - Documents 继续保持私密，不开放公开下载或 viewer signed URL。
 - Documents 作为统一附件底座承载 Project、Publication、Knowledge 和 Skill 的私密附件，避免每个模块重复实现文件系统。
 - 内容详情页只嵌入后台私密附件视图，公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件下载入口。
+- 新建内容时的“保存并上传附件”仅在创建成功后跳转统一上传页，不创建临时上传记录或 staging 文件。
 - Access Requests / Access Grants 继续作为 restricted 访问基础。
 - Viewer magic link 和 restricted 访问可以另开 bugfix，但不得扩大 Documents 权限。
 
