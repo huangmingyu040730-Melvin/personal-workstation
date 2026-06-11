@@ -2,9 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { MarketBriefMaterialPackageRecord, MarketBriefMaterialPackageStatus } from "@/lib/content-types";
 import type { MarketBriefGroundingContext } from "@/lib/market-brief-grounding";
 import {
+  collectOfficialExchangeSummaries,
+  type OfficialExchangeCollectionResult
+} from "@/lib/market-brief-official-exchange-collectors";
+import {
   buildMarketBriefSearchQueries,
   getMarketBriefSearchConfig,
-  MarketBriefSearchNotConfiguredError,
   searchMarketBriefSources,
   type MarketBriefSearchSource
 } from "@/lib/market-brief-search";
@@ -24,7 +27,6 @@ export type MarketBriefMaterialPackageCollectionResult = {
   warnings: string[];
 };
 
-const MIN_READY_SOURCE_COUNT = 3;
 export const usableMarketBriefMaterialPackageStatuses: MarketBriefMaterialPackageStatus[] = ["ready", "partial", "reviewed"];
 export const missingMarketBriefMaterialPackageMessage = "未找到可用市场素材包，请先采集素材包后再生成简报。";
 export const missingMarketBriefMaterialPackageForJobMessage = "未找到可用市场素材包，请先采集素材包后重新排队。";
@@ -42,39 +44,49 @@ export async function createOrUpdateMarketBriefMaterialPackage(
     isHistorical
   });
 
+  const officialCollection = await collectOfficialExchangeSummaries(input.packageDate);
+  const searchResult = await collectSupplementalSearchSources({
+    market,
+    packageDate: input.packageDate,
+    isHistorical,
+    fallbackQueries: queries,
+    fallbackProvider: searchConfig.provider,
+    fallbackProviderLabel: searchConfig.providerLabel
+  });
+  const sources = [...officialCollection.sources, ...searchResult.sources];
+  const warnings = buildMaterialPackageWarnings(officialCollection, searchResult.warnings);
+  const status = getMaterialPackageStatus(officialCollection);
+  const errorMessage = status === "failed" ? "未取得可用官方交易所 summary，supplemental search 不能单独支撑市场素材包。" : null;
+  const sourceNotes = buildSourceNotes({
+    officialCollection,
+    searchProviderLabel: searchResult.providerLabel,
+    searchSources: searchResult.sources,
+    status
+  });
+  const packageProvider = buildMaterialPackageProvider(searchResult);
+
   try {
-    const searchResult = await searchMarketBriefSources({
-      market,
-      briefDate: input.packageDate,
-      isHistorical
-    });
-    const allQueriesFailed = searchResult.sources.length === 0 && searchResult.warnings.length >= searchResult.queries.length;
-    const baseWarnings = [...searchResult.warnings];
-    const status = getMaterialPackageStatus(searchResult.sources, allQueriesFailed);
-    const warnings = status === "partial" && searchResult.sources.length === 0
-      ? [...baseWarnings, "本次未检索到足够可复核来源，素材包已保存为 partial。"]
-      : baseWarnings;
-    const errorMessage = status === "failed" ? "市场素材包搜索全部失败，请检查搜索服务或稍后重试。" : null;
-    const sourceNotes = buildSourceNotes(searchResult.providerLabel, searchResult.sources, status);
     const packageRecord = await upsertMaterialPackage(supabase, {
       ownerId: input.ownerId,
       packageDate: input.packageDate,
       market,
       status,
-      provider: searchResult.provider,
-      providerLabel: searchResult.providerLabel,
+      provider: packageProvider.provider,
+      providerLabel: packageProvider.providerLabel,
       queries: searchResult.queries,
-      sources: searchResult.sources,
+      sources,
+      exchangeSummary: officialCollection.exchangeSummary,
+      officialCollectorResults: officialCollection.results,
       warnings,
       sourceNotes,
-      qualityScore: calculateQualityScore(searchResult.sources.length, warnings.length, status),
+      qualityScore: calculateQualityScore(sources.length, warnings.length, status, officialCollection.results.filter((result) => result.status === "ok").length),
       errorMessage,
       isHistorical
     });
 
     return {
       package: packageRecord,
-      sourcesCount: searchResult.sources.length,
+      sourcesCount: sources.length,
       warnings
     };
   } catch (error) {
@@ -93,6 +105,8 @@ export async function createOrUpdateMarketBriefMaterialPackage(
       providerLabel: searchConfig.providerLabel,
       queries,
       sources: [],
+      exchangeSummary: {},
+      officialCollectorResults: [],
       warnings,
       sourceNotes,
       qualityScore: 0,
@@ -240,6 +254,8 @@ type UpsertMaterialPackageInput = {
   providerLabel: string | null;
   queries: string[];
   sources: MarketBriefSearchSource[];
+  exchangeSummary: Record<string, unknown>;
+  officialCollectorResults: OfficialExchangeCollectionResult["results"];
   warnings: string[];
   sourceNotes: string[];
   qualityScore: number;
@@ -249,7 +265,7 @@ type UpsertMaterialPackageInput = {
 
 async function upsertMaterialPackage(supabase: MaterialPackageSupabaseClient, input: UpsertMaterialPackageInput) {
   const collectedAt = new Date().toISOString();
-  const extractedFacts = createEmptyExtractedFacts();
+  const extractedFacts = createEmptyExtractedFacts(input.exchangeSummary);
   const sourceSnapshot = buildMaterialPackageSourceSnapshot({
     ...input,
     collectedAt,
@@ -287,35 +303,117 @@ async function upsertMaterialPackage(supabase: MaterialPackageSupabaseClient, in
   return data as MarketBriefMaterialPackageRecord;
 }
 
-function getMaterialPackageStatus(sources: MarketBriefSearchSource[], allQueriesFailed: boolean): MarketBriefMaterialPackageStatus {
-  if (allQueriesFailed) return "failed";
-  if (sources.length >= MIN_READY_SOURCE_COUNT) return "ready";
+type SupplementalSearchCollectionResult = {
+  provider: string;
+  providerLabel: string;
+  queries: string[];
+  warnings: string[];
+  sources: MarketBriefSearchSource[];
+};
+
+function buildMaterialPackageProvider(searchResult: SupplementalSearchCollectionResult) {
+  if (searchResult.sources.length === 0) {
+    return {
+      provider: "official_exchange",
+      providerLabel: "Official Exchange Summary"
+    };
+  }
+
+  return {
+    provider: `official_exchange+${searchResult.provider}`,
+    providerLabel: `Official Exchange Summary + ${searchResult.providerLabel} supplemental search`
+  };
+}
+
+async function collectSupplementalSearchSources(input: {
+  market: string;
+  packageDate: string;
+  isHistorical: boolean;
+  fallbackQueries: string[];
+  fallbackProvider: string;
+  fallbackProviderLabel: string;
+}): Promise<SupplementalSearchCollectionResult> {
+  try {
+    return await searchMarketBriefSources({
+      market: input.market,
+      briefDate: input.packageDate,
+      isHistorical: input.isHistorical
+    });
+  } catch (error) {
+    return {
+      provider: input.fallbackProvider,
+      providerLabel: input.fallbackProviderLabel,
+      queries: input.fallbackQueries,
+      warnings: [`Supplemental search 未取得可用来源：${getSafeMaterialPackageErrorMessage(error)}`],
+      sources: []
+    };
+  }
+}
+
+function buildMaterialPackageWarnings(officialCollection: OfficialExchangeCollectionResult, searchWarnings: string[]) {
+  const usableOfficialResults = getUsableOfficialResults(officialCollection);
+  const officialAvailabilityWarnings = usableOfficialResults.length === 0
+    ? ["未取得可用官方交易所 summary；supplemental search sources are supplemental only，不能单独支撑可生成的 A 股素材包。"]
+    : ["Supplemental search sources are supplemental only，不作为行情事实来源。"];
+
+  return Array.from(new Set([...officialCollection.warnings, ...searchWarnings, ...officialAvailabilityWarnings].map((warning) => warning.trim()).filter(Boolean)));
+}
+
+function getMaterialPackageStatus(officialCollection: OfficialExchangeCollectionResult): MarketBriefMaterialPackageStatus {
+  const usableOfficialResults = getUsableOfficialResults(officialCollection);
+
+  if (usableOfficialResults.length === 0) return "failed";
+
+  // Phase 2N-C1 only validates exchange summary fields. Breadth, sectors and flows are still missing,
+  // so a newly collected package should stay partial until a human review or a later collector fills gaps.
   return "partial";
 }
 
-function buildSourceNotes(providerLabel: string, sources: MarketBriefSearchSource[], status: MarketBriefMaterialPackageStatus) {
-  if (status === "failed") {
-    return [`已调用 ${providerLabel}，但本次搜索全部失败。`];
+function getUsableOfficialResults(officialCollection: OfficialExchangeCollectionResult) {
+  return officialCollection.results.filter((result) => result.status === "ok" || result.status === "partial");
+}
+
+function buildSourceNotes(input: {
+  officialCollection: OfficialExchangeCollectionResult;
+  searchProviderLabel: string;
+  searchSources: MarketBriefSearchSource[];
+  status: MarketBriefMaterialPackageStatus;
+}) {
+  const officialNotes = input.officialCollection.sourceNotes;
+
+  if (input.status === "failed") {
+    const supplementalNote = input.searchSources.length > 0
+      ? `${input.searchProviderLabel} supplemental search 返回了 ${input.searchSources.length} 条来源，这些来源已保存用于诊断，但 search sources are supplemental only，不能单独支撑市场素材包生成。`
+      : `已调用 ${input.searchProviderLabel} supplemental search，但本次没有可用搜索来源；即使存在搜索来源，也不能在缺少官方交易所 summary 时支撑生成。`;
+
+    return [
+      ...officialNotes,
+      "未取得可用官方交易所 summary，因此该素材包不可用于生成。",
+      supplementalNote
+    ];
   }
 
-  if (sources.length === 0) {
+  if (input.searchSources.length === 0) {
     return [
-      `已调用 ${providerLabel}，但本次未检索到可用于复核的公开来源。`,
+      ...officialNotes,
+      `已调用 ${input.searchProviderLabel} supplemental search，但本次未检索到可用于复核的新闻 / 热点来源。`,
       "后续 AI 简报生成不得基于空素材包编造行情数据。"
     ];
   }
 
   return [
-    `本素材包基于 ${providerLabel} 检索到的 ${sources.length} 条公开来源。`,
+    ...officialNotes,
+    `本素材包另含 ${input.searchProviderLabel} supplemental search 检索到的 ${input.searchSources.length} 条新闻 / 热点来源。`,
     "后续 AI 简报生成应优先引用素材包来源编号，缺失数据需要保留人工复核标记。"
   ];
 }
 
-function calculateQualityScore(sourcesCount: number, warningsCount: number, status: MarketBriefMaterialPackageStatus) {
+function calculateQualityScore(sourcesCount: number, warningsCount: number, status: MarketBriefMaterialPackageStatus, officialOkCount: number) {
   if (status === "failed") return 0;
   const sourceScore = Math.min(sourcesCount / 8, 1);
+  const officialScore = Math.min(officialOkCount / 2, 1) * 0.35;
   const warningPenalty = Math.min(warningsCount * 0.08, 0.4);
-  return Number(Math.max(0.1, sourceScore - warningPenalty).toFixed(2));
+  return Number(Math.max(0.1, Math.min(0.85, sourceScore + officialScore - warningPenalty)).toFixed(2));
 }
 
 function buildMaterialPackageSourceSnapshot(input: UpsertMaterialPackageInput & { collectedAt: string; extractedFacts: Record<string, unknown> }) {
@@ -333,16 +431,24 @@ function buildMaterialPackageSourceSnapshot(input: UpsertMaterialPackageInput & 
       sources_count: input.sources.length,
       quality_score: input.qualityScore,
       collected_at: input.collectedAt,
-      material_package_version: "2N-A"
+      material_package_version: "2N-C1",
+      official_exchange_collectors: input.officialCollectorResults.map((result) => ({
+        id: result.id,
+        upstream: result.upstream,
+        status: result.status,
+        latency_ms: result.latency_ms,
+        source_id: result.source.id
+      }))
     },
     sources: input.sources,
     extracted_facts: input.extractedFacts
   };
 }
 
-function createEmptyExtractedFacts() {
+function createEmptyExtractedFacts(exchangeSummary: Record<string, unknown> = {}) {
   return {
     indices: [],
+    exchange_summary: exchangeSummary,
     market_breadth: {},
     sectors: [],
     hot_topics: [],
@@ -353,10 +459,6 @@ function createEmptyExtractedFacts() {
 }
 
 function getSafeMaterialPackageErrorMessage(error: unknown) {
-  if (error instanceof MarketBriefSearchNotConfiguredError) {
-    return error.message;
-  }
-
   if (error instanceof Error && error.message.trim()) {
     return error.message.slice(0, 500);
   }

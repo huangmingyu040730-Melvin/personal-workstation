@@ -218,6 +218,7 @@ export type MarketBriefMaterialPackageSource = {
   snippet: string;
   query: string;
   relevance: "high" | "medium" | "low";
+  source_type?: "official_exchange_summary" | "supplemental_search" | string;
 };
 
 export type MarketBriefMaterialPackageRecord = {
