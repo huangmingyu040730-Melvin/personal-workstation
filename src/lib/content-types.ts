@@ -13,6 +13,7 @@ export type CalendarEventType = "general" | "meeting" | "research" | "deadline" 
 export type MarketBriefStatus = "draft" | "reviewed" | "published" | "archived";
 export type MarketBriefGenerationStatus = "manual" | "draft" | "generated" | "failed" | "needs_review" | "archived";
 export type MarketBriefJobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
+export type MarketBriefMaterialPackageStatus = "collecting" | "ready" | "partial" | "failed" | "reviewed" | "archived";
 export type ResumeItemType = "basic" | "education" | "experience" | "project" | "research" | "skill" | "certification" | "award" | "language" | "other";
 export type ResumeVersionLanguage = "zh" | "en";
 export type ResumeTemplateKey = "classic" | "compact" | "research";
@@ -206,6 +207,39 @@ export type MarketBriefGenerationJobRecord = {
   created_at: string;
   updated_at: string;
   market_briefs?: Pick<MarketBriefRecord, "id" | "title" | "brief_date" | "market"> | null;
+};
+
+export type MarketBriefMaterialPackageSource = {
+  id: string;
+  title: string;
+  url: string;
+  publisher: string | null;
+  published_at: string | null;
+  snippet: string;
+  query: string;
+  relevance: "high" | "medium" | "low";
+};
+
+export type MarketBriefMaterialPackageRecord = {
+  id: string;
+  owner_id: string;
+  package_date: string;
+  market: string;
+  status: MarketBriefMaterialPackageStatus;
+  provider: string | null;
+  provider_label: string | null;
+  queries: string[];
+  sources: MarketBriefMaterialPackageSource[];
+  source_snapshot: Record<string, unknown>;
+  extracted_facts: Record<string, unknown>;
+  warnings: string[];
+  source_notes: string[];
+  quality_score: number | null;
+  error_message: string | null;
+  collected_at: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ResumeItemRecord = {

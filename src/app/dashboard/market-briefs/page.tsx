@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Download, Eye, FileText, ListChecks, Plus, Sparkles } from "lucide-react";
+import { BarChart3, Database, Download, Eye, FileText, ListChecks, Plus, Sparkles } from "lucide-react";
 import { generateMarketBriefForDateAction, generateTodayMarketBriefAction } from "@/actions/market-briefs";
 import { AppShell } from "@/components/app-shell";
 import { AdminContentCard, AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/admin-ui";
@@ -60,6 +60,10 @@ export default async function MarketBriefsPage({ searchParams }: { searchParams:
               <Link href="/dashboard/market-briefs/jobs" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">
                 <ListChecks size={16} />
                 生成任务
+              </Link>
+              <Link href="/dashboard/market-briefs/materials" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">
+                <Database size={16} />
+                市场素材包
               </Link>
             </div>
           }

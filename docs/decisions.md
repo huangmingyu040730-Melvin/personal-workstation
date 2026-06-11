@@ -1116,7 +1116,34 @@
 
 - README、current-status、roadmap 和 setup 文档不再指导用户运行旧 runner 或配置旧 runner secret。
 - 历史 job 的 `runner_name` / `request_payload.generator_mode` 仍可在后台以旧外部生成器形式只读展示。
-- 后续 Phase 2N-A 如需素材包，应新增独立 schema 和 workflow，不复用旧 runner 回写路径。
+- Phase 2N-A 素材包应使用独立 schema 和 workflow，不复用旧 runner 回写路径。
+
+## 2026-06-11 - Add Market Brief Material Packages
+
+类型：decision
+
+决策：
+
+- Phase 2N-A 新增 `supabase/migrations/0017_market_brief_material_packages.sql`，创建后台私密 `market_brief_material_packages` 表，用于按 owner、日期和市场沉淀每日公开市场素材包。
+- `0016_market_brief_runner_service_role_grants.sql` 是保留的历史 runner 权限 hotfix；本阶段不修改历史 migration，也不复用 `0016` 编号。
+- 新表保存 package date、market、status、provider、queries、sources、source snapshot、extracted facts、warnings、source notes、quality score、error message、collected/reviewed timestamps，并通过 `(owner_id, package_date, market)` 保证同一用户同日同市场幂等更新。
+- 新增 `createOrUpdateMarketBriefMaterialPackage()`，复用既有 Market Brief search query 与 source normalization 逻辑；搜索成功但来源不足时保存 `partial`，搜索未配置或全部失败时保存 `failed` 和安全错误信息。
+- 新增管理员 API `POST /api/market-briefs/material-packages/collect`、素材包列表 `/dashboard/market-briefs/materials` 和详情页 `/dashboard/market-briefs/materials/[id]`。
+- 当前 AI generation job、`generate-ai` route、status route、progress UI、preview/download/edit 仍按原路径运行；Phase 2N-A 不让 AI 生成读取素材包，不新增 cron，不新增外部依赖。
+
+原因：
+
+- Market Brief 后续方向是“每日市场研究素材包 -> AI 固定模板简报 -> 人工编辑确认”，需要先把公开来源采集结果沉淀为可复核对象，而不是继续让每次生成直接临时检索。
+- 独立素材包表可以把来源质量、warnings、失败状态和人工复核状态从 generation job 中拆出来，为 Phase 2N-B 的 AI 基于素材包生成打基础。
+- 延后 AI 链路切换和 cron，可以把 schema / RLS / 后台可视化先验收干净，降低对现有简报生成路径的回归风险。
+
+影响：
+
+- 生产环境合并后需要按顺序执行 `0017_market_brief_material_packages.sql`。
+- 新表启用 RLS；管理员或记录 owner 可管理，`anon` 无权限，`authenticated` 只有表级权限且仍受 RLS 限制。
+- 素材包采集只读取服务端 `MARKET_BRIEF_SEARCH_PROVIDER` / `MARKET_BRIEF_SEARCH_API_KEY` 配置，不保存 API key、请求头、cookie、Supabase key、Auth UUID、signed URL 或 service role key。
+- 不修改 `market_briefs`、`market_brief_generation_jobs`、Storage policy、旧 migrations、Resume、Career、Calendar、Documents、Profile 或公开页面。
+- 当前不做行情接口抓取、新闻爬虫、邮件发送、Notion 同步、定时任务、股票推荐、投资建议或自动发布。
 
 ## 2026-06-11 - Add Web Grounding To AI Market Brief Generation
 
