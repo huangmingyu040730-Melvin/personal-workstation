@@ -65,14 +65,14 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
   const providerLabel = getAiProviderDisplayName(aiConfig.provider);
 
   if (!aiConfig.isConfigured || !aiConfig.apiKey) {
-    throw new Error("AI 市场简报尚未配置。请在服务端环境变量中设置 AI_API_KEY，或继续使用 OPENAI_API_KEY。");
+    throw new Error("AI 辅助简报草稿生成尚未配置。请在服务端环境变量中设置 AI_API_KEY，或继续使用 OPENAI_API_KEY。");
   }
 
   const client = new OpenAI({
     apiKey: aiConfig.apiKey,
     baseURL: aiConfig.baseURL
   });
-  await input.onProgress?.("writing", "正在生成市场简报正文...");
+  await input.onProgress?.("writing", "正在生成简报草稿正文...");
   const prompt = buildMarketBriefAiPrompt({
     market: input.market,
     briefDate: input.briefDate,
@@ -111,7 +111,7 @@ async function generateAiMarketBrief(input: MarketBriefGenerationInput): Promise
     market: input.market,
     briefDate: input.briefDate
   });
-  await input.onProgress?.("charting", "正在生成图表数据...");
+  await input.onProgress?.("charting", "正在整理图表草稿数据...");
   const normalized = normalizeAiMarketBriefOutput(parsed, {
     market: input.market,
     briefDate: input.briefDate,

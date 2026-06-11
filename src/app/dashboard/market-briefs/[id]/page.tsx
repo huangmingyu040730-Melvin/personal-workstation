@@ -177,7 +177,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function getGeneratorDisplayName(job: { runner_name: string; request_payload: Record<string, unknown> }) {
   if (job.request_payload.generator_mode === "ai" || job.runner_name === "ai-market-brief-generator") {
-    return "AI 市场简报生成器";
+    return "AI 辅助简报草稿生成器";
   }
 
   if (job.request_payload.generator_mode === "external" || job.runner_name.includes("external")) {
