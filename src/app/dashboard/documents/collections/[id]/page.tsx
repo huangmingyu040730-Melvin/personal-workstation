@@ -1,17 +1,22 @@
 import Link from "next/link";
 import { Download, FileText, Upload } from "lucide-react";
 import { notFound } from "next/navigation";
-import { deleteDocumentCollectionAction } from "@/actions/documents";
+import { deleteDocumentCollectionAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
 import { AdminDangerZone, AdminEmptyState, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { DocumentCollectionForm } from "@/components/forms/document-collection-form";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { getDocumentCategoryLabel, getDocumentCollectionTypeLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
 import { formatDateTime, formatFileSize } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { getDocumentCollectionById, getDocumentsByCollectionId } from "@/lib/queries/documents";
+import { getKnowledgeNoteOptions } from "@/lib/queries/knowledge";
+import { getPublicationOptions } from "@/lib/queries/publications";
+import { getProjectOptions } from "@/lib/queries/projects";
+import { getSkillOptions } from "@/lib/queries/skills";
 
 export default async function DocumentCollectionDetailPage({
   params,
@@ -21,9 +26,13 @@ export default async function DocumentCollectionDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const [collection, documents] = await Promise.all([
+  const [collection, documents, projects, publications, knowledgeNotes, skills] = await Promise.all([
     getDocumentCollectionById(id),
-    getDocumentsByCollectionId(id)
+    getDocumentsByCollectionId(id),
+    getProjectOptions(),
+    getPublicationOptions(),
+    getKnowledgeNoteOptions(),
+    getSkillOptions()
   ]);
 
   if (!collection) {
@@ -32,7 +41,12 @@ export default async function DocumentCollectionDetailPage({
 
   const error = getFormError(query);
   const notice = query.notice === "collection_deleted";
+  const updatedNotice = query.notice === "collection_updated";
   const deleteAction = deleteDocumentCollectionAction.bind(null, collection.id);
+  const updateAction = updateDocumentCollectionMetadataAction.bind(null, collection.id);
+  const hasRelationMismatch = documents.some((document) => (
+    document.related_type !== collection.related_type || document.related_id !== collection.related_id
+  ));
 
   return (
     <AppShell>
@@ -54,7 +68,17 @@ export default async function DocumentCollectionDetailPage({
             空文档包已删除。
           </div>
         ) : null}
+        {updatedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            文档包信息已更新。包内文件的关联对象没有被批量修改。
+          </div>
+        ) : null}
         <AdminSecurityNote>文档包只是私密附件管理层。即使关联公开 Project、Publication、Knowledge 或 Skill，也不会在公开页面展示附件下载入口。</AdminSecurityNote>
+        {hasRelationMismatch ? (
+          <div className="rounded-3xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+            文档包关联对象与部分文件关联对象可能不同；文件级关联请在文件详情页单独调整。
+          </div>
+        ) : null}
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
           <Card className="min-w-0 overflow-hidden p-0">
@@ -132,6 +156,12 @@ export default async function DocumentCollectionDetailPage({
                 <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">{collection.description}</p>
               </Card>
             ) : null}
+
+            <DocumentCollectionForm
+              action={updateAction}
+              collection={collection}
+              relatedOptions={{ projects, publications, knowledgeNotes, skills }}
+            />
 
             {documents.length === 0 ? (
               <AdminDangerZone description="删除空文档包只会清理文档包记录，不删除任何文件或 Storage 对象。">

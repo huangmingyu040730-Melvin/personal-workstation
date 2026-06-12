@@ -30,6 +30,7 @@
 - Resume Word `.docx` 即时导出
 - Resume Preview 与 Word 导出共用 20260523 风格模板
 - Supabase Storage 私密文件上传与下载
+- Documents 文件 metadata、文档包 metadata、关联对象和列表筛选维护能力
 
 ## 本地启动
 
@@ -174,6 +175,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2P-A 起 Documents 升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
 - Phase 2P-B 起 Project、Publication、Knowledge、Skill 后台详情页内嵌关联文件 / 文档包区域，并继续复用统一 Documents 上传页。
 - Phase 2P-C 起新建 Project、Publication、Knowledge、Skill 时可选择“保存并上传附件”，创建成功后跳转到统一 Documents 上传页并预选当前对象。
+- Phase 2P-D 起 Documents 从上传底座进一步扩展为可维护的私密附件管理系统，支持编辑文件 / 文档包 metadata、调整关联对象和按文档包状态筛选。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。
@@ -190,7 +192,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制；restricted 内容通过 `content_access_grants` 与登录用户邮箱匹配控制；后台写入、更新、删除权限通过 `public.is_admin()` 控制。
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
-- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。Phase 2P-B 将关联文件区域嵌入 Project、Publication、Knowledge 和 Skill 后台详情页，上传入口仍统一跳转到 `/dashboard/documents/upload` 并通过 query params 预填关联对象、分类、上传模式和文档包类型。Phase 2P-C 在四类内容新建表单加入 create-and-upload flow：先保存内容对象，再跳转统一上传页；不做 pending upload、临时文件 staging 或 create action 文件处理。附件仍默认私密，不公开下载。
+- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。Phase 2P-B 将关联文件区域嵌入 Project、Publication、Knowledge 和 Skill 后台详情页，上传入口仍统一跳转到 `/dashboard/documents/upload` 并通过 query params 预填关联对象、分类、上传模式和文档包类型。Phase 2P-C 在四类内容新建表单加入 create-and-upload flow：先保存内容对象，再跳转统一上传页；不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 支持管理员编辑文件显示名、分类、关联对象，编辑文档包名称、描述、类型、关联对象，并在 Documents 列表按 category、related_type、collection 状态筛选。附件仍默认私密，不公开下载，修改 metadata 不会移动或重命名 Storage object。
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
@@ -250,6 +252,7 @@ Phase 2C 使用 Supabase Storage bucket：
 - 普通非管理员登录用户不能读取或修改文件。
 - 管理员通过 `public.is_admin()` 和 Storage policy 操作文件。
 - 上传采用两阶段流程：Server Actions 只验证管理员、校验 metadata、生成安全路径并最终写入数据库；文件二进制由浏览器直接上传到 Supabase Storage，不经过 Vercel Function。
+- 文件和文档包 metadata 可在后台修正，但 `storage_bucket`、`storage_path`、文件大小、MIME type、原始路径和文档包统计字段不通过编辑表单修改。
 - 下载使用 60 秒短时 signed URL，不保存到数据库，也不在公开页面输出。
 - 单文件上传限制为 50 MB；批量 / 文件夹上传单次最多 100 个文件、总量 200 MB，并同时校验扩展名与 MIME type。
 - 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。

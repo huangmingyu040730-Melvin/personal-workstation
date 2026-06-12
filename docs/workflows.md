@@ -233,3 +233,72 @@ npm run build
 - 确认没有新增 migration。
 - 确认没有修改业务代码。
 - 确认没有提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL、Storage 内部路径或 `service_role`。
+
+## Memory Engineering Update
+
+日期：2026-06-12
+
+类型：workflow
+
+用途：
+
+- 当用户要求“更新记忆”“长期记忆”“沉淀记忆”或“memory engineering”时，按标准 SOP 更新项目记忆层。
+
+步骤：
+
+1. 先读取项目根目录 `AGENTS.md`。
+2. 读取 `docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`。
+3. 如涉及阶段状态、路线或已知问题，继续读取 `docs/current-status.md`、`docs/roadmap.md`、`docs/known-issues.md` 和 `docs/supabase-setup.md`。
+4. 按 SOP 将信息分类为 preference、fact、decision、workflow、failure / blocker、evidence。
+5. 把稳定协作规则和安全边界写入 `AGENTS.md`。
+6. 把当前状态、重要上下文、已知问题、迁移状态、下一步和 stale / superseded notes 写入 `docs/memory.md`。
+7. 把关键产品、权限、数据模型或流程取舍写入 `docs/decisions.md`，不要为一次普通文档同步制造无意义决策。
+8. 把可重复操作步骤写入 `docs/workflows.md`。
+9. 对被新阶段替代的旧记录标记 stale / superseded，不要静默删除会影响后续判断的历史。
+
+验证要求：
+
+- 不保存密码、API key、token、管理员邮箱、Auth UUID、signed URL、Storage 内部路径或私人通信原文。
+- 明确区分已验证事实、当前已知问题和未稳定能力。
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+
+## Unified Private Attachment Workflow
+
+日期：2026-06-12
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow 和 metadata 管理。
+
+步骤：
+
+1. Documents 查询逻辑继续集中在 `src/lib/queries/documents.ts`。
+2. Documents 校验逻辑继续集中在 `src/lib/validations/document.ts`。
+3. Documents 写入、prepare、finalize、删除和 collection 维护继续集中在 `src/actions/documents.ts`。
+4. 文件类型、大小、文件名清理、Storage path 和 signed URL 配置继续集中在 `src/lib/storage/documents.ts`。
+5. 上传继续使用两阶段流程：Server Action 准备 metadata 和安全 Storage path，浏览器用管理员 Supabase Auth 会话直接上传到 private bucket，Server Action finalize 写入 `documents` 记录。
+6. 多文件 / 文件夹上传通过 `document_collections` 表记录批次、文件夹、附件包或 Skill 包，并通过 `documents.collection_id` 关联具体文件。
+7. `original_name`、`relative_path` 和 `folder_path` 可保存中文或原始路径信息用于后台展示。
+8. `storage_path` 必须使用 ASCII-safe object key；最终 Storage 文件名使用 `documentId + extension`，中文文件名和中文目录不得直接进入 object key。
+9. Project / Publication / Knowledge / Skill 后台详情页只嵌入关联文件和文档包区域，不重复实现上传系统。
+10. 新建 Project / Publication / Knowledge / Skill 时，“保存并上传文件 / 文件夹或文档包”必须先创建内容记录，成功后跳转 `/dashboard/documents/upload` 并用 query params 预填 `related_type`、`related_id`、`mode`、`category` 和 `collection_type`。
+11. query params 只用于预填；服务端必须继续通过 `ensureRelatedRecordExists` 或同等逻辑验证关联对象存在且管理员可读。
+12. Publication 删除前同时检查关联 `documents` 和 `document_collections`，存在附件或文档包时阻止删除。
+13. Skill 包、代码文件和压缩包只作为私密文件存储，不执行、不解析、不安装。
+14. 文件详情页只允许编辑显示名称、分类和关联对象，不允许编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id。
+15. 文档包详情页只允许编辑名称、描述、类型和关联对象，不允许手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。
+16. 修改文档包关联对象时，不自动批量修改包内文件的 `related_type` / `related_id`；如不一致，提示管理员去文件详情页单独调整。
+17. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 确认公开 Projects、Publications、Knowledge、Skills 页面不展示附件、Storage 路径、signed URL 或下载入口。
+- 确认未配置或未执行 `0018_document_collections_and_folder_uploads.sql` 的环境会清晰失败或降级，不假装上传成功。
+- 真实上传验收需要用户本人登录管理员账号，并确认目标 Supabase 环境已执行 0003 和 0018。
+- metadata 编辑验收不需要新增 migration；确认 0018 已执行即可。
+- 不新增公开下载、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行能力。

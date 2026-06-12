@@ -117,7 +117,7 @@ async function resolveCollectionRelations(collections: DocumentCollectionRecord[
   return collections.map((collection) => ({ ...collection, related: resolveRelated(collection) }));
 }
 
-export async function getDocuments(filters?: { category?: string; relatedType?: string }) {
+export async function getDocuments(filters?: { category?: string; relatedType?: string; relatedId?: string; collection?: string }) {
   const supabase = await createClient();
 
   if (!supabase) {
@@ -134,7 +134,23 @@ export async function getDocuments(filters?: { category?: string; relatedType?: 
   }
 
   if (filters?.relatedType && filters.relatedType !== "all") {
-    query = query.eq("related_type", filters.relatedType);
+    if (filters.relatedType === "unlinked") {
+      query = query.is("related_type", null);
+    } else {
+      query = query.eq("related_type", filters.relatedType);
+
+      if (filters.relatedId) {
+        query = query.eq("related_id", filters.relatedId);
+      }
+    }
+  }
+
+  if (filters?.collection === "with_collection") {
+    query = query.not("collection_id", "is", null);
+  }
+
+  if (filters?.collection === "without_collection") {
+    query = query.is("collection_id", null);
   }
 
   const { data, error } = await query;

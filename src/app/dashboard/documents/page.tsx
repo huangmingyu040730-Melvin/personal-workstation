@@ -14,9 +14,11 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const params = await searchParams;
   const category = params.category ?? "all";
   const relatedType = params.related_type ?? "all";
+  const relatedId = params.related_id;
+  const collection = params.collection ?? "all";
   const error = getFormError(params);
   const notice = params.notice === "collection_deleted";
-  const documents = await getDocuments({ category, relatedType });
+  const documents = await getDocuments({ category, relatedType, relatedId, collection });
 
   return (
     <AppShell>
@@ -48,9 +50,23 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         <select name="related_type" defaultValue={relatedType} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
           <option value="all">全部关联</option>
           {documentRelatedTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          <option value="unlinked">未关联文件</option>
+        </select>
+        <select name="collection" defaultValue={collection} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+          <option value="all">全部文档包状态</option>
+          <option value="with_collection">已加入文档包</option>
+          <option value="without_collection">未加入文档包</option>
         </select>
         <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
+        {relatedId && relatedType !== "all" && relatedType !== "unlinked" ? (
+          <Link href={`/dashboard/documents?category=${category}&related_type=${relatedType}&collection=${collection}`} className="inline-flex h-10 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-700">
+            清除具体对象
+          </Link>
+        ) : null}
       </form>
+      {relatedId && relatedType !== "all" && relatedType !== "unlinked" ? (
+        <p className="mt-3 text-sm text-slate-500">当前结果已按具体关联对象筛选；更改上方筛选会清除这个对象级约束。</p>
+      ) : null}
       </AdminSection>
       {documents.length === 0 ? (
         <AdminEmptyState title="还没有文件记录" description="上传第一个文件后，文件中心会显示真实 Storage 元数据。" action={<Link href="/dashboard/documents/upload" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">上传文件</Link>} />

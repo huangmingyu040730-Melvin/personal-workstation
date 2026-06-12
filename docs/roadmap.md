@@ -129,6 +129,25 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - Skill 包仍只作为私密文件存储，不执行、不解析、不安装。
 - 不修改 Resume / Career 逻辑。
 
+### Phase 2P-D - Document And Collection Management Polish
+
+已完成代码实现。Documents 从上传底座进一步扩展为可维护的私密附件管理系统：
+
+- 文件详情页支持编辑显示名称、分类和关联对象。
+- 文档包详情页支持编辑名称、描述、类型和关联对象。
+- 文档包级关联与文件级关联允许不一致；修改文档包关联对象不会自动批量同步包内文件。
+- Documents 列表支持按 category、related_type、collection 状态筛选，并支持查看未关联文件。
+- 内容详情页关联文件面板展示文档包数量和文件数量，并尽量带上具体 related_id 跳转文件中心。
+
+边界：
+
+- 不新增 migration，继续依赖既有 `0018_document_collections_and_folder_uploads.sql`。
+- 不修改 Storage policy。
+- 不移动、不重命名 Storage object，不修改 `storage_path`。
+- 不公开附件、signed URL 或 Storage 路径。
+- 不做批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不修改 Resume / Career 逻辑，不恢复 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -189,7 +208,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - public 页面只展示明确设为 `public` 的内容。
 - Documents 继续保持私密，不开放公开下载或 viewer signed URL。
-- Documents 作为统一附件底座承载 Project、Publication、Knowledge 和 Skill 的私密附件，避免每个模块重复实现文件系统。
+- Documents 作为可维护的统一私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的私密附件，避免每个模块重复实现文件系统。
 - 内容详情页只嵌入后台私密附件视图，公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件下载入口。
 - 新建内容时的“保存并上传附件”仅在创建成功后跳转统一上传页，不创建临时上传记录或 staging 文件。
 - Access Requests / Access Grants 继续作为 restricted 访问基础。

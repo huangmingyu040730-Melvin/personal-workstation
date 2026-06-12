@@ -1,12 +1,19 @@
 # Project Memory
 
-日期：2026-06-09
+日期：2026-06-12
 
 ## Current State
 
 项目定位：
 
 > 黄铭语的公开研究工作站与私密数字资产后台。
+
+当前主线已经从功能扩张收口到稳定维护：
+
+- 研究资产沉淀：Projects、Publications、Knowledge、Skills。
+- 公开展示：公开首页、About、公开列表与详情页、SEO、sitemap、robots。
+- 文件 / 知识管理：Documents 作为统一私密附件底座，服务 Project / Publication / Knowledge / Skill。
+- 求职闭环维护：Career Center、Resume、AI JD 分析历史、投递看板。
 
 已完成阶段：
 
@@ -16,29 +23,32 @@
 - Phase 2C：Publications / Documents / private Storage。
 - Phase 2D：公开研究工作站、公开内容路由、公开内容填充。
 - Phase 2E-A：访问申请表单与后台审批。
-- Phase 2E-B：restricted 授权基础能力已实现，但 viewer magic link 登录仍存在已知问题。
+- Phase 2E-B：restricted 授权基础能力已实现，但 viewer magic link 登录仍未稳定。
 - Phase 2F：SEO 基础、sitemap、robots、metadata。
-- Phase 2G-A：公共页 UI 优化。
-- Phase 2G-B：管理后台 UI 优化。
-- Phase 2J-A：Profile 真实编辑。
-- Phase 2J-B / 2J-C：Calendar CRUD 与月视图。
-- Phase 2K-A：Resume 履历素材库基础数据模型与后台管理入口。
-- Phase 2K-B：Resume 简历版本组合与后台预览。
-- Phase 2K-C：Resume 分区式素材管理、A4 中文模板化预览与浏览器打印 PDF。
+- Phase 2G-A / 2G-B：公开站点与管理后台 UI 优化。
+- Phase 2J-A / 2J-B / 2J-C：Profile 真实编辑、Calendar CRUD 与月视图。
+- Phase 2K-A 至 2K-J：Resume 素材库、版本组合、模板预览、质量检查、AI JD 建议、Word 导出、JD 分析历史、投递看板与 Career Center。
+- Phase 2N-Z：Market Brief / 市场简报从产品入口和代码主路径移除。
+- Phase 2O-A：工作台稳定维护路线确立。
+- Phase 2P-A：Documents 文档包、多文件 / 文件夹上传与 50 MB Storage 上限。
+- Phase 2P-B：Project / Publication / Knowledge / Skill 后台详情页嵌入私密附件区域。
+- Phase 2P-C：四类内容新建表单支持“保存并上传附件”，创建成功后跳转统一 Documents 上传页。
+- Phase 2P-D：Documents 文件 metadata、文档包 metadata、关联对象与列表筛选维护能力。
 
 当前网站包括：
 
 - 面向外部访客的公开研究工作站。
 - 管理员本人使用的私密后台。
-- 私密文件中心。
+- 私密文件中心与文档包。
 - 访问申请与审批。
 - restricted 内容授权基础。
-- Resume 履历素材库。
-- Resume 简历版本管理。
+- Resume / Career 求职闭环。
 
 详细当前状态见 `docs/current-status.md`。
 
 ## Important Context
+
+事实：
 
 - 网站默认语言为中文。
 - 技术栈：Next.js App Router、TypeScript、Tailwind CSS、Lucide React、Supabase Auth / Database / RLS / Storage。
@@ -53,23 +63,56 @@
 - `robots.txt` 和 `sitemap.xml` 不是安全边界；真正安全边界依赖 Supabase Auth、RLS、Storage policy 和后台路由保护。
 - 不提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL、Storage 内部路径或 `service_role`。
 
+权限边界：
+
+| 区域 | 谁可访问 |
+| --- | --- |
+| public 内容 | 所有人 |
+| unlisted 内容 | 不出现在公开列表，当前能力保持保守 |
+| restricted 内容 | 管理员可见，viewer 授权基础已实现但登录链路待修 |
+| private 内容 | 仅管理员 |
+| dashboard | 仅管理员 |
+| documents | 仅管理员 |
+| signed URL | 仅管理员流程生成 |
+| access requests 提交 | 访客可提交 |
+| access requests 管理 | 仅管理员 |
+| access grants 管理 | 仅管理员 |
+
+Documents / Storage：
+
+- Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座。
+- 上传继续采用两阶段浏览器直传 Supabase Storage；文件二进制不经过 Vercel Function。
+- `document_collections` 表示一次上传批次、文件夹、附件包或 Skill 包。
+- `documents.collection_id`、`original_name`、`relative_path`、`folder_path` 保存多文件 / 文件夹上传 metadata。
+- `documents.storage_path` 必须使用 ASCII-safe object key；中文文件名和文件夹名只用于后台展示字段。
+- 文件 metadata 可编辑字段为显示名称、分类和关联对象；不可编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id。
+- 文档包 metadata 可编辑字段为名称、描述、类型和关联对象；不可手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。
+- 文件级关联和文档包级关联允许不一致；修改文档包关联对象不自动批量同步包内文件。
+- 单文件上限为 50 MB；批量 / 文件夹上传单次最多 100 个文件、总量 200 MB。
+- 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。
+- 不支持 exe、dmg、app、msi、bat、cmd。
+- 上传的代码、Skill 包和压缩包只作为私密文件存储，不执行、不解析、不安装。
+
 ## Recent Decisions
 
 - 公开研究工作站与私密后台已经分离：公开只读路由为 `/projects`、`/publications`、`/skills`、`/knowledge`；后台管理路由为 `/dashboard/...`。
 - 文件附件默认比正文更严格。即使内容 public，关联 Documents 仍保持 private。
-- Publication 有关联附件时禁止直接删除，要求先处理附件。
+- Publication 有关联 `documents` 或 `document_collections` 时禁止直接删除，要求先处理附件。
 - Documents 上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。
-- Phase 2E-B 的 restricted 基础代码保留，但 Viewer 登录问题冻结，后续单独 Hotfix。
+- Phase 2E-B 的 restricted 基础代码保留，但 Viewer 登录问题仍未稳定，后续单独做 Phase 2I / hotfix。
 - Phase 2F / 2G 只优化公开站点运营体验、SEO 和 UI，不扩展权限系统。
-- Phase 2K-A 采用统一 `resume_items` 表 + `item_type` 区分素材类型，不为教育、经历、证书等一开始拆多张表。
-- Phase 2K-B 采用 `resume_versions` + `resume_version_items` 保存版本和素材选择关系，不在本阶段生成 PDF / Word，也不创建公开简历页面。
-- Phase 2K-C 在统一表结构上增加 JSON 字段承载简历模板细节：`resume_items.details` 保存教育、实习、个人信息、技能等结构化字段，`resume_versions.profile_fields` 控制顶部个人字段，`resume_version_items.visible_fields` 控制单条素材进入预览的字段。
+- Resume 模块采用统一素材库、版本组合、浏览器预览 / 打印、Word 即时导出、AI JD 建议和 JD 分析历史；AI 输出只作为建议，不自动写回素材或版本。
+- Career Center 已进入稳定维护状态；后续只做 bugfix、文案修正和 broken link 修复，不主动扩展面试记录、提醒、邮件、Notion 同步或自动投递。
+- Market Brief / 市场简报已因数据可靠性不足弃用并从产品入口和代码主路径移除；历史迁移 0013-0017 暂作 unused legacy data，不在当前路线继续维护。
+- Phase 2P-A / 2P-B / 2P-C 将 Documents 扩展为统一私密附件底座，并把附件查看、预填上传、新建后上传串到 Project / Publication / Knowledge / Skill 后台流程中。
+- Phase 2P-D 将 Documents 进一步打磨为可维护的私密附件管理系统；metadata 修正不移动、不重命名 Storage object，不新增 migration。
+- 后续数据库变更必须新增 `0019_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
 
 ### Viewer magic link 登录问题
 
-状态：冻结继续排查。
+状态：未稳定；后续单独做 Phase 2I / hotfix，当前不视为已验收能力。
 
 现象：
 
@@ -85,22 +128,19 @@
 - 不影响访问申请提交与审批。
 - 不影响公开站点 SEO 和 UI。
 
-详见 `docs/known-issues.md`。
+边界：
 
-## Permission Boundary
+- Phase 2I 只能修复 viewer login、viewer callback、viewer session 与 restricted 只读访问闭环。
+- 不得扩大 restricted grants、RLS、Supabase Auth 或 Storage 权限边界。
+- Documents、signed URL 和 Storage 路径仍不得对 Viewer 或公开访客开放。
 
-| 区域 | 谁可访问 |
-| --- | --- |
-| public 内容 | 所有人 |
-| unlisted 内容 | 不出现在公开列表，当前能力保持保守 |
-| restricted 内容 | 管理员可见，viewer 授权基础已实现但登录链路待修 |
-| private 内容 | 仅管理员 |
-| dashboard | 仅管理员 |
-| documents | 仅管理员 |
-| signed URL | 仅管理员流程生成 |
-| access requests 提交 | 访客可提交 |
-| access requests 管理 | 仅管理员 |
-| access grants 管理 | 仅管理员 |
+### Resume 预览 bullet-like 文本拆行遗留问题
+
+状态：冻结，后续如继续处理应单独开 hotfix。
+
+影响：
+
+- 不影响 Resume 素材库、版本组合、质量检查、AI JD 分析、JD 历史、投递看板或 Word 导出主流程。
 
 ## Migration State
 
@@ -115,36 +155,60 @@
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后需执行：
+后续功能对应迁移：
 
-- `0009_resume_items.sql`
-
-Phase 2K-B 合并后需执行：
-
-- `0010_resume_versions.sql`
-
-Phase 2K-C 本轮 PR 合并后需执行：
-
-- `0011_resume_template_fields.sql`
+- Phase 2K-A：`0009_resume_items.sql`
+- Phase 2K-B：`0010_resume_versions.sql`
+- Phase 2K-C：`0011_resume_template_fields.sql`
+- Phase 2K-H：`0012_resume_jd_reviews.sql`
+- Phase 2N 旧 Market Brief 遗留迁移：`0013_market_briefs.sql` 至 `0017_market_brief_material_packages.sql`
+- Phase 2P-A：`0018_document_collections_and_folder_uploads.sql`
 
 规则：
 
 - 已执行 migration 不应修改或重跑。
-- 执行 0011 后，后续数据库变更应新增 `0012_*`。
+- 0013 至 0017 是 Market Brief unused legacy data 对应迁移；当前产品代码不再依赖这些旧表，本轮不 drop。
+- 执行 0018 后，后续数据库变更应新增 `0019_*` 或更高编号。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
+
+## Workflows
+
+重复流程：
+
+- 本地开发：`npm run dev`。
+- 每轮代码修改后验证：`npm run lint`、`npm run build`。
+- Supabase 数据库变更：新增 migration，不修改已执行旧 migration。
+- Documents 上传：prepare metadata -> 浏览器直传 private `workspace-files` -> finalize 写库 -> 必要时清理失败对象。
+- 新建内容并上传附件：先创建 Project / Publication / Knowledge / Skill，成功后跳转 `/dashboard/documents/upload` 并通过 query params 预填关联对象、上传模式、分类和文档包类型。
+- Documents metadata 维护：文件详情页修正显示名、分类、关联对象；文档包详情页修正名称、描述、类型、关联对象；列表页用 category、related_type、collection 筛选整理。
+- 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
+
+详细流程见 `docs/workflows.md`。
 
 ## Next Steps
 
 建议顺序：
 
-1. Phase 2I：Viewer 登录与 restricted 访问专项修复。
-2. Phase 2K-C：A4 中文模板化预览与浏览器打印 PDF。
-3. Phase 2K-D：AI JD 优化与更复杂模板。
-4. Phase 2K-E：自动化与 AI 辅助研究。
-5. Phase 2L：Notion / Google Calendar 集成。
+1. Phase 2P 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域和 create-and-upload flow。
+2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
+3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
+4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
+
+暂不主动推进：
+
+- Market Brief / 市场简报恢复。
+- 新的求职自动化。
+- 公开附件下载。
+- viewer 附件授权下载。
+- OCR、文件内容索引、AI 文件总结。
+- Google Calendar、提醒系统、Notion 同步。
 
 ## Stale Or Superseded Notes
 
-- “页面数据仍保持 mock data 预览”已过时。Projects、Knowledge、Skills、Publications、Documents、Access Requests、Access Grants、Profile 与 Calendar 已使用真实 Supabase 数据或真实表结构；公开 `/calendar` 仍保留占位展示，真实管理入口为 `/dashboard/calendar`。
+- “页面数据仍保持 mock data 预览”已过时。Projects、Knowledge、Skills、Publications、Documents、Access Requests、Access Grants、Profile、Calendar、Resume 与 Career 已使用真实 Supabase 数据或真实表结构；公开 `/calendar` 仍保留占位展示，真实管理入口为 `/dashboard/calendar`。
 - “restricted 属于后续规划，尚未进入 schema / RLS / UI”已过时。restricted 基础代码和 migration 已完成，但 viewer 登录链路仍待修。
 - “后台页面仍位于公开候选路径”已过时。主要后台管理页面已迁移到 `/dashboard/...`。
+- “Phase 2K-D 才做 AI JD 优化”已过时。Resume 已完成规则化质量检查、AI JD 建议、JD 分析历史、投递看板和 Career Center；后续默认稳定维护。
+- “Market Brief 是可继续扩展模块”已废弃。Market Brief 已在 Phase 2N-Z 移除产品入口和代码主路径，后续不维护相关 runner、素材包、探针或环境变量。
+- “Documents 只服务 Publication 附件”已过时。Documents 已升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
+- “后续数据库变更应新增 `0018_*`”已过时。`0018_document_collections_and_folder_uploads.sql` 已存在，后续应使用 `0019_*` 或更高编号。
