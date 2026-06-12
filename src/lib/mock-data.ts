@@ -11,6 +11,7 @@ import {
   KeyRound,
   Library,
   Settings,
+  Search,
   UserRound,
   WandSparkles
 } from "lucide-react";
@@ -34,7 +35,8 @@ export const sidebarGroups = [
   {
     label: "总览",
     items: [
-      { label: "工作台", href: "/dashboard", icon: Home }
+      { label: "工作台", href: "/dashboard", icon: Home },
+      { label: "全局搜索", href: "/dashboard/search", icon: Search }
     ]
   },
   {
