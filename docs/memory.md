@@ -40,6 +40,7 @@
 - Phase 2P-E-2：Documents 列表和文档包详情页支持批量删除文件；文档包详情页支持删除整个文档包及包内文件。
 - Phase 2P-E-3：Documents 列表和文档包详情页支持选中文件 zip 临时下载；文档包详情页和内容详情页文档包卡片支持下载整个文档包 zip。
 - Phase 2P-F-1：后台新增 `/dashboard/search` 全局搜索入口，用于按数据库 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包。
+- Phase 2P-F-2：后台全局搜索支持类型筛选、每类数量统计、选中类型空状态、结果卡片类型 badge 和标题 / 描述关键词高亮。
 
 当前网站包括：
 
@@ -103,7 +104,7 @@ Documents / Storage：
 - Documents 删除流程采用先 Storage object、后数据库记录的保守顺序；当前不新增数据库事务或 RPC。
 - zip 下载按请求临时生成，不保存到 Storage；仅管理员后台可用，不公开 signed URL、Storage 路径或持久 zip 链接。
 - zip 下载限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限或任一 Storage object 下载失败时不部分打包。
-- 后台全局搜索 `/dashboard/search` 只查数据库 metadata；不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要或向量搜索，不读取 Storage object，不生成 signed URL，不输出 Storage path。
+- 后台全局搜索 `/dashboard/search` 只查数据库 metadata；支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选、每类数量统计和标题 / 描述关键词高亮；不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要或向量搜索，不读取 Storage object，不生成 signed URL，不输出 Storage path。
 - 单文件上限为 50 MB；批量 / 文件夹上传单次最多 100 个文件、总量 200 MB。
 - 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。
 - 不支持 exe、dmg、app、msi、bat、cmd。
@@ -125,6 +126,7 @@ Documents / Storage：
 - Phase 2P-E-2 删除能力继续保持 Documents 私密边界：Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 - Phase 2P-E-3 zip 下载继续保持 Documents 私密边界：zip 不保存到 Storage，Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 - Phase 2P-F-1 全局搜索采用 metadata-first 决策：只在管理员后台搜索数据库字段，不新增 migration、索引、RPC、外部搜索服务、向量库或文件内容解析。
+- Phase 2P-F-2 搜索体验增强继续采用 metadata-only 决策：类型筛选只是结果过滤，关键词高亮只在展示层完成，不保存索引，不新增外部搜索、OCR、AI 摘要或向量搜索。
 - 后续数据库变更必须新增 `0019_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -199,7 +201,7 @@ Documents / Storage：
 - Supabase 数据库变更：新增 migration，不修改已执行旧 migration。
 - Documents 上传：prepare metadata -> 浏览器直传 private `workspace-files` -> finalize 写库 -> 必要时清理失败对象。
 - 新建内容并上传附件：先创建 Project / Publication / Knowledge / Skill，成功后跳转 `/dashboard/documents/upload` 并通过 query params 预填关联对象、上传模式、分类和文档包类型。
-- Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类、关联对象；文档包详情页修正文档包名称、描述、类型、关联对象；列表页用 category、related_type、collection 筛选整理；Documents 列表或文档包详情页批量移动多个文件关联对象、批量解除关联、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件分组理解附件关系；文档包详情页整体迁移 / 同步关联工具用于同步调整整个资料包和包内全部文件；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时使用 `/dashboard/search` 按 metadata 搜索。
+- Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类、关联对象；文档包详情页修正文档包名称、描述、类型、关联对象；列表页用 category、related_type、collection 筛选整理；Documents 列表或文档包详情页批量移动多个文件关联对象、批量解除关联、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件分组理解附件关系；文档包详情页整体迁移 / 同步关联工具用于同步调整整个资料包和包内全部文件；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
 - 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
 
 详细流程见 `docs/workflows.md`。
@@ -208,7 +210,7 @@ Documents / Storage：
 
 建议顺序：
 
-1. Phase 2P 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载和 `/dashboard/search` metadata 搜索。
+1. Phase 2P 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载和 `/dashboard/search` metadata 搜索、type 筛选与关键词高亮。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { Badge } from "@/components/badge";
+import { HighlightedText } from "@/components/search/highlighted-text";
 import type { WorkspaceSearchItem } from "@/lib/queries/search";
 import { formatRelative } from "@/lib/format";
 
-export function SearchResultCard({ item }: { item: WorkspaceSearchItem }) {
+export function SearchResultCard({ item, query }: { item: WorkspaceSearchItem; query: string }) {
   return (
     <Link
       href={item.href}
@@ -11,16 +13,23 @@ export function SearchResultCard({ item }: { item: WorkspaceSearchItem }) {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="line-clamp-2 text-base font-semibold text-slate-950 group-hover:text-blue-800">{item.title}</h3>
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{item.description}</p>
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{item.typeLabel}</Badge>
+          </div>
+          <h3 className="line-clamp-2 text-base font-semibold text-slate-950 group-hover:text-blue-800">
+            <HighlightedText text={item.title} query={query} />
+          </h3>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+            <HighlightedText text={item.description} query={query} />
+          </p>
         </div>
         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition group-hover:border-blue-200 group-hover:text-blue-700">
           <ArrowUpRight size={16} />
         </span>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        {item.metadata.map((value) => (
-          <span key={value} className="max-w-full truncate rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+        {item.metadata.map((value, index) => (
+          <span key={`${value}-${index}`} className="max-w-full truncate rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
             {value}
           </span>
         ))}

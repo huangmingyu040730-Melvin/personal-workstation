@@ -6,15 +6,47 @@ import {
   getDocumentRelatedTypeLabel,
   getPublicationTypeLabel
 } from "@/lib/content-options";
+import { formatFileSize } from "@/lib/format";
 import type { Visibility } from "@/lib/types";
 
 export const WORKSPACE_SEARCH_MIN_QUERY_LENGTH = 2;
 const WORKSPACE_SEARCH_LIMIT = 8;
 
 export type WorkspaceSearchGroupKey = "projects" | "publications" | "knowledge" | "skills" | "documents" | "collections";
+export type WorkspaceSearchType = "all" | WorkspaceSearchGroupKey;
+
+const workspaceSearchTypeValues: WorkspaceSearchType[] = [
+  "all",
+  "projects",
+  "publications",
+  "knowledge",
+  "skills",
+  "documents",
+  "collections"
+];
+
+export const WORKSPACE_SEARCH_GROUP_LABELS: Record<WorkspaceSearchGroupKey, string> = {
+  projects: "Projects",
+  publications: "Publications",
+  knowledge: "Knowledge",
+  skills: "Skills",
+  documents: "Documents",
+  collections: "文档包"
+};
+
+const WORKSPACE_SEARCH_RESULT_TYPE_LABELS: Record<WorkspaceSearchGroupKey, string> = {
+  projects: "Project",
+  publications: "Publication",
+  knowledge: "Knowledge",
+  skills: "Skill",
+  documents: "Document",
+  collections: "Collection"
+};
 
 export type WorkspaceSearchItem = {
   id: string;
+  type: WorkspaceSearchGroupKey;
+  typeLabel: string;
   title: string;
   description: string | null;
   href: string;
@@ -102,6 +134,13 @@ type CollectionSearchRow = {
 
 export function normalizeWorkspaceSearchQuery(value: string | null | undefined) {
   return (value ?? "").trim().replace(/\s+/g, " ").slice(0, 100);
+}
+
+export function normalizeWorkspaceSearchType(value: string | string[] | null | undefined): WorkspaceSearchType {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const type = (rawValue ?? "all").trim().toLowerCase();
+
+  return workspaceSearchTypeValues.includes(type as WorkspaceSearchType) ? (type as WorkspaceSearchType) : "all";
 }
 
 export async function searchWorkspace(rawQuery: string): Promise<WorkspaceSearchResults> {
@@ -243,6 +282,8 @@ async function searchProjects(supabase: SupabaseClient, query: string): Promise<
     (tagResult.data ?? []) as ProjectSearchRow[]
   ]).map((project) => ({
     id: project.id,
+    type: "projects",
+    typeLabel: WORKSPACE_SEARCH_RESULT_TYPE_LABELS.projects,
     title: project.title,
     description: summarize([project.summary, project.background, project.research_question, project.methodology], "尚未填写摘要。"),
     href: `/dashboard/projects/${project.id}`,
@@ -280,6 +321,8 @@ async function searchPublications(supabase: SupabaseClient, query: string): Prom
     (tagResult.data ?? []) as PublicationSearchRow[]
   ]).map((publication) => ({
     id: publication.id,
+    type: "publications",
+    typeLabel: WORKSPACE_SEARCH_RESULT_TYPE_LABELS.publications,
     title: publication.title,
     description: summarize([publication.summary, publication.abstract], "尚未填写成果摘要。"),
     href: `/dashboard/publications/${publication.id}`,
@@ -322,6 +365,8 @@ async function searchKnowledge(supabase: SupabaseClient, query: string): Promise
     (tagResult.data ?? []) as KnowledgeSearchRow[]
   ]).map((note) => ({
     id: note.id,
+    type: "knowledge",
+    typeLabel: WORKSPACE_SEARCH_RESULT_TYPE_LABELS.knowledge,
     title: note.title,
     description: summarize([note.excerpt, note.content], "尚未填写知识摘要。"),
     href: `/dashboard/knowledge/${note.id}`,
@@ -359,6 +404,8 @@ async function searchSkills(supabase: SupabaseClient, query: string): Promise<Wo
     (platformResult.data ?? []) as SkillSearchRow[]
   ]).map((skill) => ({
     id: skill.id,
+    type: "skills",
+    typeLabel: WORKSPACE_SEARCH_RESULT_TYPE_LABELS.skills,
     title: skill.name,
     description: summarize([skill.description, skill.content], "尚未填写 Skill 说明。"),
     href: `/dashboard/skills/${skill.id}`,
@@ -390,14 +437,22 @@ async function searchDocuments(supabase: SupabaseClient, query: string): Promise
 
     return {
       id: document.id,
+      type: "documents",
+      typeLabel: WORKSPACE_SEARCH_RESULT_TYPE_LABELS.documents,
       title: document.name,
-      description: summarize([document.original_name, document.relative_path, document.folder_path], "文件 metadata 待补充。"),
+      description: summarize([
+        document.original_name ? `原始文件名：${document.original_name}` : null,
+        document.relative_path ? `相对路径：${document.relative_path}` : null,
+        document.folder_path ? `文件夹：${document.folder_path}` : null
+      ], "文件 metadata 待补充。"),
       href: `/dashboard/documents/${document.id}`,
       metadata: compactMetadata([
         getDocumentCategoryLabel(document.category),
         getDocumentRelatedTypeLabel(document.related_type),
-        collectionTitle ? `文档包：${collectionTitle}` : null,
-        document.relative_path ? `相对路径：${document.relative_path}` : null
+        document.original_name ? `原始文件名：${document.original_name}` : null,
+        document.relative_path ? `相对路径：${document.relative_path}` : null,
+        document.folder_path ? `文件夹：${document.folder_path}` : null,
+        collectionTitle ? `文档包：${collectionTitle}` : null
       ]),
       updatedAt: document.updated_at
     };
@@ -418,14 +473,17 @@ async function searchCollections(supabase: SupabaseClient, query: string): Promi
 
   return ((data ?? []) as CollectionSearchRow[]).map((collection) => ({
     id: collection.id,
+    type: "collections",
+    typeLabel: WORKSPACE_SEARCH_RESULT_TYPE_LABELS.collections,
     title: collection.title,
     description: summarize([collection.description, collection.root_folder_name], "文档包 metadata 待补充。"),
     href: `/dashboard/documents/collections/${collection.id}`,
     metadata: compactMetadata([
       getDocumentCollectionTypeLabel(collection.collection_type),
+      `${collection.file_count} 个文件`,
+      `总大小：${formatFileSize(collection.total_size)}`,
       getDocumentRelatedTypeLabel(collection.related_type),
-      collection.root_folder_name ? `根文件夹：${collection.root_folder_name}` : null,
-      `${collection.file_count} 个文件`
+      collection.root_folder_name ? `根文件夹：${collection.root_folder_name}` : null
     ]),
     updatedAt: collection.updated_at
   }));

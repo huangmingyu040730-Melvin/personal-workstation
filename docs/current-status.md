@@ -55,7 +55,7 @@
 - Documents 批量移动文件关联对象与批量解除关联能力。
 - Documents 批量删除文件与删除整个文档包及文件能力。
 - Documents 多文件与文档包 zip 临时下载能力。
-- 后台全局搜索 `/dashboard/search`，按研究资产 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包。
+- 后台全局搜索 `/dashboard/search`，按研究资产 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包，并支持类型筛选、统计和关键词高亮。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
 - 文档包整体迁移 / 同步关联工具。
 - Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
@@ -88,6 +88,9 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 后台新增 `/dashboard/search` 全局搜索入口。
 - 搜索范围包括 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections。
 - 搜索只查数据库 metadata，每类最多返回 8 条结果，不做分页。
+- 搜索支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选。
+- 类型筛选 chips 显示全部和每类命中数量；选中某类但无结果时保留切换入口并显示“当前类型没有匹配结果”。
+- 结果标题和描述用安全 React 文本切片做关键词高亮，不保存索引，不使用 HTML 注入。
 - q trim 后少于 2 个字符时不执行查询并提示“请输入至少 2 个字符。”
 - Documents 搜索只查文件名、原始文件名、relative_path、folder_path、category 和 related_type 等 metadata。
 - 搜索不读取 Supabase Storage 文件内容，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要或向量搜索，不生成 signed URL，不输出 Storage path。
@@ -219,7 +222,7 @@ Phase 2P-A 新增 Documents 文档包与文件夹上传能力后需要继续执�
 
 `0018` 创建 `document_collections`，为 `documents` 增加 `collection_id`、`original_name`、`relative_path`、`folder_path`，扩展 `workspace-files` bucket 的文件大小上限与 MIME 白名单。该 migration 不公开附件、不修改历史 migration、不放宽 Storage/RLS。
 
-Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 不新增 migration。文件与文档包 metadata 编辑、批量移动关联对象、批量解除关联、内容详情页分组展示、文档包整体迁移 / 同步关联、批量删除文件、删除整个文档包及文件、zip 临时下载和后台 metadata 搜索均复用既有字段，不修改 Storage policy。
+Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 不新增 migration。文件与文档包 metadata 编辑、批量移动关联对象、批量解除关联、内容详情页分组展示、文档包整体迁移 / 同步关联、批量删除文件、删除整个文档包及文件、zip 临时下载、后台 metadata 搜索和搜索体验增强均复用既有字段，不修改 Storage policy。
 
 规则：
 
@@ -245,7 +248,7 @@ Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有
 
 - 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系。
 - 公开展示：保持公开首页、About、Projects、Publications、Knowledge 和 Skills 的只读展示稳定。
-- 文件 / 知识管理：Documents 作为可维护的统一私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；Knowledge Base 继续维护内容本身，不开放公开附件下载。需要调整单个文件时使用文件详情页，需要调整多个文件时使用 Documents 批量移动，需要调整整个资料包关联时使用文档包整体迁移 / 同步关联工具，需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search` 搜索 metadata。
+- 文件 / 知识管理：Documents 作为可维护的统一私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；Knowledge Base 继续维护内容本身，不开放公开附件下载。需要调整单个文件时使用文件详情页，需要调整多个文件时使用 Documents 批量移动，需要调整整个资料包关联时使用文档包整体迁移 / 同步关联工具，需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 受限访问：Viewer magic link 和 restricted 访问可作为独立 bugfix 专项处理，但不得开放 Documents 或 signed URL。
 
