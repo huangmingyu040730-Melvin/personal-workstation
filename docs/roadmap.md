@@ -189,9 +189,31 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 `document_collections.related_type / related_id`、`documents.related_type / related_id` 或 `documents.collection_id`。
 - 不公开附件、signed URL 或 Storage 路径。
 
+### Phase 2P-E-1-C - Collection Relation Sync Tool
+
+已完成代码实现。文档包详情页新增“同步文档包与包内文件关联”工具，用于整体迁移一个资料包或一起解除关联：
+
+- 当前关联对象在操作区内明确展示。
+- 管理员可选择目标 Publication、Project、Knowledge 或 Skill。
+- 整体迁移会同时更新 `document_collections.related_type / related_id` 和该文档包下全部 `documents.related_type / related_id`。
+- 整体解除关联会把文档包和包内全部文件的 `related_type / related_id` 一起置空。
+- 空文档包允许执行整体迁移或整体解除关联，此时只修改文档包自身关联。
+- 操作完成写入 Activity Log，并记录 `collection_id`、服务端计算的 `document_count`、旧关联和新关联摘要。
+- 页面提示该操作不移动、不重命名、不删除 Storage object，也不修改文件 `collection_id`。
+
+边界：
+
+- 不新增 migration，继续依赖既有 `0018_document_collections_and_folder_uploads.sql`。
+- 不修改 RLS、Storage policy、bucket 或 `storage_path`。
+- 不移动、不重命名、不删除 Supabase Storage object。
+- 不修改 `documents.collection_id`。
+- 不删除 `documents` 或 `document_collections` 记录。
+- 不做批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不公开附件、signed URL 或 Storage 路径。
+- 不修改 Resume / Career 逻辑，不恢复 Market Brief。
+
 后续可单独推进：
 
-- Phase 2P-E-1-C：文档包整体迁移 / 同步关联工具。
 - Phase 2P-E-2：批量删除文件 / 删除整个文档包及文件。
 - Phase 2P-E-3：批量下载 zip。
 

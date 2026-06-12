@@ -1180,3 +1180,33 @@
 - RelatedDocumentsPanel 不生成 signed URL，不展示 Storage path；下载仍走既有后台下载入口。
 - 文档包整体迁移 / 同步关联工具可作为 Phase 2P-E-1-C 单独推进。
 - 批量删除和批量 zip 下载继续后延。
+
+## 2026-06-12 - Add Explicit Collection Relation Sync Tool
+
+类型：decision
+
+决策：
+
+- 文件级关联和文档包级关联继续允许不一致。
+- 当管理员需要整体迁移一个资料包时，应使用文档包整体迁移 / 同步关联工具，而不是分别修改文档包和包内文件。
+- 该工具在文档包详情页提供整体迁移和整体解除关联两个操作。
+- 整体迁移会同步更新 `document_collections.related_type / related_id` 和该文档包下全部 `documents.related_type / related_id`。
+- 整体解除关联会把文档包和包内全部文件的 `related_type / related_id` 一起置空。
+- 包内文件列表必须由 Server Action 按 `collection_id` 查询获得，不从前端接收文件 ID 或文件数量。
+- 目标关联对象必须在服务端校验存在。
+- 该工具只修改 metadata，不移动、不重命名、不删除 Storage object，也不修改文件 `collection_id`。
+
+原因：
+
+- 2P-D 和 2P-E-1 保留了文档包级关联与文件级关联的独立性，这对精细整理研究资料是合理的。
+- 但当用户想把一个资料包整体迁移到新的 Project、Publication、Knowledge 或 Skill 时，分两步操作容易让文档包和包内文件停留在不同对象上。
+- 显式同步工具可以保持数据模型灵活性，同时给“整体迁移资料包”提供清晰入口。
+
+影响：
+
+- 本阶段不新增 migration，继续依赖 `0018_document_collections_and_folder_uploads.sql` 已提供的字段。
+- 不修改 RLS、Storage policy、bucket、`storage_path`、文件大小、MIME type、原始文件名、relative_path 或 folder_path。
+- 操作完成写入 `activity_logs`，只记录 collection id、服务端计算的文件数量、旧关联和新关联摘要；不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
+- 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径或 signed URL。
+- 单个文件调整继续使用文件详情页；多个文件调整继续使用 Documents 批量移动；整个资料包调整使用文档包整体迁移 / 同步关联工具。
+- 批量删除和批量 zip 下载继续后延。
