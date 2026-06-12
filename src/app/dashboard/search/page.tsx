@@ -4,7 +4,7 @@ import { AdminEmptyState, AdminPageSurface, AdminSection, AdminSecurityNote } fr
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { WorkspaceSearchResults } from "@/components/search/workspace-search-results";
-import { normalizeWorkspaceSearchQuery, searchWorkspace, WORKSPACE_SEARCH_MIN_QUERY_LENGTH } from "@/lib/queries/search";
+import { normalizeWorkspaceSearchQuery, normalizeWorkspaceSearchType, searchWorkspace, WORKSPACE_SEARCH_MIN_QUERY_LENGTH } from "@/lib/queries/search";
 
 function getSingleSearchParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -13,6 +13,7 @@ function getSingleSearchParam(value: string | string[] | undefined) {
 export default async function DashboardSearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const query = normalizeWorkspaceSearchQuery(getSingleSearchParam(params.q));
+  const selectedType = normalizeWorkspaceSearchType(params.type);
   const hasQuery = query.length > 0;
   const shouldSearch = query.length >= WORKSPACE_SEARCH_MIN_QUERY_LENGTH;
   const results = shouldSearch ? await searchWorkspace(query) : null;
@@ -28,6 +29,7 @@ export default async function DashboardSearchPage({ searchParams }: { searchPara
 
         <AdminSection title="研究资产搜索" description="输入关键词后，将在后台研究资产中搜索标题、摘要、分类、文件名和文档包 metadata。">
           <form action="/dashboard/search" className="flex flex-col gap-3 lg:flex-row">
+            <input type="hidden" name="type" value={selectedType} />
             <label className="relative min-w-0 flex-1">
               <span className="sr-only">搜索关键词</span>
               <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -83,7 +85,7 @@ export default async function DashboardSearchPage({ searchParams }: { searchPara
           </div>
         ) : null}
 
-        {results ? <WorkspaceSearchResults results={results} /> : null}
+        {results ? <WorkspaceSearchResults results={results} selectedType={selectedType} /> : null}
       </AdminPageSurface>
     </AppShell>
   );

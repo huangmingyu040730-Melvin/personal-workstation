@@ -1301,3 +1301,32 @@
 - 不修改数据库模型、RLS、Storage policy、bucket 或 `storage_path`。
 - 不生成 signed URL，不输出 Storage path，不记录 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
 - Resume、Career、Calendar、Profile、Market Brief 和公开页面导航不受影响。
+
+## 2026-06-12 - Polish Search Experience Without Expanding Search Scope
+
+类型：decision
+
+决策：
+
+- Phase 2P-F-2 优化 `/dashboard/search` 后台全局搜索体验，但继续只基于数据库 metadata。
+- 搜索页支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选。
+- 类型筛选 chips 显示全部和每类命中数量；切换类型只过滤当前 metadata 搜索结果，不引入外部搜索服务。
+- 结果标题和描述支持关键词高亮；高亮只在 React 展示层用文本切片完成，不保存索引，不使用 HTML 注入。
+- 结果卡片显示类型 badge、metadata chips、更新时间和后台详情页入口。
+- Documents 结果可以展示文件分类、原始文件名、relative_path、folder_path 和文档包标题等 metadata，但不得展示 `storage_path`。
+- Document Collections 结果展示 collection type、file count、total size 和 related type 等 metadata。
+- 继续不做 OCR、AI 摘要、向量搜索、文件正文检索、PDF / Word / Excel / zip 解析。
+- 不新增 migration、数据库索引、RPC、外部搜索服务或向量库。
+
+原因：
+
+- 2P-F-1 已提供后台全局搜索入口，但管理员还需要按类型快速聚焦结果，并能看到关键词命中位置。
+- 当前阶段的目标是提升研究资产定位效率，而不是扩大搜索边界或引入文件内容处理复杂度。
+- 前端展示层高亮可以改善可读性，同时避免数据库索引、全文检索、AI 摘要或外部搜索服务带来的权限与维护风险。
+
+影响：
+
+- `/dashboard/search` 的 URL 状态新增 `type` 参数；顶部搜索入口继续提交到后台搜索页。
+- 结果组件负责渲染类型筛选、每类数量、选中类型空状态和关键词高亮。
+- 查询层继续只选择必要 metadata 字段，不读取 Storage object，不生成 signed URL，不输出 Storage path。
+- 公开页面、viewer 页面、sitemap、robots、Resume、Career、Calendar、Profile、Market Brief 和 Storage policy 不受影响。

@@ -279,6 +279,29 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不新增公开搜索页，不修改公开页面导航。
 - 不修改 Storage policy、RLS、Resume / Career 或 Market Brief。
 
+### Phase 2P-F-2 - Workspace Search Filters And Result Polish
+
+已完成代码实现。后台全局搜索继续保持 metadata-only 边界，并优化结果体验：
+
+- `/dashboard/search` 支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选。
+- 类型筛选 chips 显示全部和每类命中数量。
+- 切换类型时保留当前 `q`，选中类型无结果时显示“当前类型没有匹配结果”。
+- 结果卡片显示类型 badge、metadata chips、更新时间和进入详情页箭头。
+- 结果标题与描述使用安全 React 文本切片做关键词高亮。
+- Documents 结果更明确展示文件分类、原始文件名、相对路径、文件夹和文档包 metadata。
+- Document Collections 结果展示 collection type、file count、total size 和 related type。
+
+边界：
+
+- 不新增 migration、索引、RPC、外部搜索服务或向量库。
+- 类型筛选只过滤已查询的数据库 metadata 搜索结果，不扩大搜索范围。
+- 关键词高亮只发生在前端展示层，不保存索引。
+- 不读取文件正文，不解析 PDF / Word / Excel / zip。
+- 不做 OCR、AI 文件摘要或向量搜索。
+- 不读取 Storage object，不生成 signed URL，不展示 Storage path。
+- 不新增公开搜索页，不修改公开页面导航。
+- 不修改 Storage policy、RLS、Resume / Career 或 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。

@@ -9,6 +9,7 @@ export function Topbar() {
     <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/85 px-4 py-4 backdrop-blur-xl lg:ml-[17rem] lg:px-8 xl:px-10 2xl:px-12">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <form action="/dashboard/search" className="relative flex w-full max-w-2xl gap-2">
+          <input type="hidden" name="type" value="all" />
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             name="q"
