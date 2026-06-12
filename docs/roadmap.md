@@ -232,12 +232,32 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 Storage policy、bucket 或 `storage_path` 生成规则。
 - 不移动、不重命名 Storage object。
 - 不公开附件、signed URL 或 Storage 路径。
-- 不做批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不做 OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
-后续可单独推进：
+### Phase 2P-E-3 - Document Zip Downloads
 
-- Phase 2P-E-3：批量下载 zip。
+已完成代码实现。Documents 后台新增按请求临时生成的 zip 下载能力：
+
+- Documents 列表支持勾选多个文件后下载 zip。
+- 文档包详情页支持勾选包内部分文件后下载 zip。
+- 文档包详情页支持下载整个文档包 zip。
+- Project / Publication / Knowledge / Skill 后台详情页的文档包卡片支持下载 zip。
+- zip 内部文件名优先使用 `relative_path`、`original_name`、`name`，并清理 Zip Slip 风险。
+- zip 文件按请求临时生成，不保存到 Supabase Storage。
+- 下载写入 Activity Log，只记录 document ids、document_count、collection id 和 total_size。
+
+边界：
+
+- 不新增 migration，继续依赖既有 `0018_document_collections_and_folder_uploads.sql`。
+- 不新增 RPC、后台任务、队列、cron 或持久化 zip 文件。
+- 不修改数据库模型、RLS、Storage policy、bucket 或 `storage_path`。
+- 不移动、不重命名、不删除 Supabase Storage object。
+- zip 下载仅限管理员后台，不新增公开附件入口，不暴露 Storage 路径或 signed URL。
+- 当前限制：最多 50 个文件，总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查。
+- 任一 Storage object 下载失败或超过限制时不部分打包。
+- 不做 OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
 ### Phase 2D - Public Research Workstation
 
