@@ -17,6 +17,7 @@ import {
   WORKSPACE_FILES_BUCKET
 } from "@/lib/storage/documents";
 import {
+  documentBulkRelationSchema,
   documentCollectionEditableMetadataSchema,
   documentCollectionMetadataSchema,
   documentEditableMetadataSchema,
@@ -104,6 +105,72 @@ function relatedValuesFromForm(formData: FormData) {
     related_type: relatedType,
     related_id: idParts.join(":") || null
   };
+}
+
+function getDocumentIdsFromForm(formData: FormData) {
+  return Array.from(new Set(
+    formData
+      .getAll("document_ids")
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim())
+      .filter(Boolean)
+  ));
+}
+
+function getSafeDashboardReturnTo(value: string | null | undefined) {
+  if (!value) {
+    return "/dashboard/documents";
+  }
+
+  try {
+    const url = new URL(value, "https://local.invalid");
+    const isSameOrigin = url.origin === "https://local.invalid";
+    const isDashboardPath = url.pathname === "/dashboard" || url.pathname.startsWith("/dashboard/");
+
+    if (!isSameOrigin || !isDashboardPath) {
+      return "/dashboard/documents";
+    }
+
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return "/dashboard/documents";
+  }
+}
+
+function getReturnPathWithMessage(returnTo: string, params: Record<string, string>) {
+  const url = new URL(returnTo, "https://local.invalid");
+  url.searchParams.delete("error");
+  url.searchParams.delete("notice");
+  url.searchParams.delete("count");
+
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value);
+  }
+
+  return `${url.pathname}${url.search}`;
+}
+
+function getDashboardPathname(value: string) {
+  return new URL(value, "https://local.invalid").pathname;
+}
+
+function uniqueRelationKeys(records: Array<{ related_type: string | null; related_id: string | null }>) {
+  return Array.from(new Set(
+    records
+      .filter((record) => record.related_type && record.related_id)
+      .map((record) => `${record.related_type}:${record.related_id}`)
+  ))
+    .map((key) => {
+      const [relatedType, ...idParts] = key.split(":");
+      return {
+        relatedType: relatedType as DocumentRelatedType,
+        relatedId: idParts.join(":")
+      };
+    });
+}
+
+function uniqueNullableValues(values: Array<string | null>) {
+  return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
 }
 
 async function ensureRelatedRecordExists(
@@ -756,6 +823,108 @@ export async function updateDocumentCollectionMetadataAction(id: string, formDat
   });
 
   redirect(`${detailPath}?notice=collection_updated`);
+}
+
+export async function bulkUpdateDocumentRelationsAction(formData: FormData) {
+  const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to"));
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(error ?? "当前账号没有管理员权限。") }));
+  }
+
+  const relatedValues = relatedValuesFromForm(formData);
+  const bulkAction = getString(formData, "bulk_action");
+  const documentIds = getDocumentIdsFromForm(formData);
+  const parsed = documentBulkRelationSchema.safeParse({
+    bulk_action: bulkAction,
+    document_ids: documentIds,
+    related_type: bulkAction === "unlink" ? null : relatedValues.related_type,
+    related_id: bulkAction === "unlink" ? null : relatedValues.related_id,
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(parsed.error.issues[0]?.message ?? "请检查批量操作信息。")
+    }));
+  }
+
+  const nextRelatedType = parsed.data.bulk_action === "unlink"
+    ? null
+    : parsed.data.related_type as DocumentRelatedType | null;
+  const nextRelatedId = parsed.data.bulk_action === "unlink" ? null : parsed.data.related_id;
+  const relatedExists = await ensureRelatedRecordExists(supabase, nextRelatedType, nextRelatedId);
+
+  if (!relatedExists) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError("目标关联对象不存在，请重新选择。") }));
+  }
+
+  const { data: existingDocuments, error: fetchError } = await supabase
+    .from("documents")
+    .select("id,collection_id,related_type,related_id")
+    .in("id", parsed.data.document_ids);
+
+  if (fetchError) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(fetchError.message || "读取文件记录失败。")
+    }));
+  }
+
+  if (!existingDocuments || existingDocuments.length !== parsed.data.document_ids.length) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError("部分文件不存在或没有权限访问。") }));
+  }
+
+  const { error: updateError } = await supabase
+    .from("documents")
+    .update({
+      related_type: nextRelatedType,
+      related_id: nextRelatedId
+    })
+    .in("id", parsed.data.document_ids);
+
+  if (updateError) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(updateError.message || "批量更新文件关联失败。") }));
+  }
+
+  const action = parsed.data.bulk_action === "unlink" ? "document.bulk_unlink" : "document.bulk_update_relations";
+  await writeActivityLog({
+    action,
+    entityType: "document",
+    entityId: parsed.data.document_ids[0],
+    metadata: {
+      document_ids: parsed.data.document_ids,
+      document_count: parsed.data.document_ids.length,
+      new_related_type: nextRelatedType,
+      new_related_id: nextRelatedId
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/documents");
+  revalidatePath(getDashboardPathname(returnTo));
+
+  for (const collectionId of uniqueNullableValues(existingDocuments.map((document) => document.collection_id))) {
+    revalidatePath(`/dashboard/documents/collections/${collectionId}`);
+  }
+
+  for (const relation of uniqueRelationKeys(existingDocuments)) {
+    revalidateDocumentPaths({
+      relatedType: relation.relatedType,
+      relatedId: relation.relatedId
+    });
+  }
+
+  revalidateDocumentPaths({
+    relatedType: nextRelatedType,
+    relatedId: nextRelatedId
+  });
+
+  const notice = parsed.data.bulk_action === "unlink" ? "bulk_unlinked" : "bulk_relations_updated";
+  redirect(getReturnPathWithMessage(returnTo, {
+    notice,
+    count: `${parsed.data.document_ids.length}`
+  }));
 }
 
 export async function deleteDocumentCollectionAction(id: string) {

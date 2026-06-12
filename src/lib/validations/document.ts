@@ -105,3 +105,39 @@ export const documentCollectionEditableMetadataSchema = z.object({
     });
   }
 });
+
+export const documentBulkRelationSchema = z.object({
+  bulk_action: z.enum(["move", "unlink"], { message: "请选择有效的批量操作" }),
+  document_ids: z.array(z.string().uuid("文件选择无效")).min(1, "请至少选择一个文件。"),
+  related_type: z.preprocess((value) => (value === "" ? null : value), z.enum(relatedTypeValues).nullable()).optional().transform((value) => value ?? null),
+  related_id: optionalText(),
+  return_to: optionalText()
+}).superRefine((value, ctx) => {
+  if (value.bulk_action !== "move") {
+    return;
+  }
+
+  if (value.related_id && !value.related_type) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "选择关联对象时需要同时选择关联类型",
+      path: ["related_type"]
+    });
+  }
+
+  if (value.related_type && !value.related_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "选择关联类型后需要选择关联对象",
+      path: ["related_id"]
+    });
+  }
+
+  if (!value.related_type && !value.related_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "批量移动前请选择目标关联对象。",
+      path: ["related_type"]
+    });
+  }
+});

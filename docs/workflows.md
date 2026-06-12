@@ -271,7 +271,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow 和 metadata 管理。
+- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理和批量关联整理。
 
 步骤：
 
@@ -291,7 +291,12 @@ npm run build
 14. 文件详情页只允许编辑显示名称、分类和关联对象，不允许编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id。
 15. 文档包详情页只允许编辑名称、描述、类型和关联对象，不允许手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。
 16. 修改文档包关联对象时，不自动批量修改包内文件的 `related_type` / `related_id`；如不一致，提示管理员去文件详情页单独调整。
-17. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
+17. Documents 列表和文档包详情页允许勾选多个文件后批量移动关联对象或批量解除关联。
+18. 批量移动只更新 `documents.related_type` 与 `documents.related_id`，目标关联对象必须在 Server Action 中重新校验存在。
+19. 批量解除关联只把 `documents.related_type` 与 `documents.related_id` 置空；不修改 `collection_id`。
+20. 文档包详情页的批量操作只修改包内文件 metadata，不修改文档包自身关联对象。
+21. 批量操作的 `return_to` 必须限制为站内 `/dashboard` 路径，避免 open redirect。
+22. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
 
 验证要求：
 
@@ -301,4 +306,5 @@ npm run build
 - 确认未配置或未执行 `0018_document_collections_and_folder_uploads.sql` 的环境会清晰失败或降级，不假装上传成功。
 - 真实上传验收需要用户本人登录管理员账号，并确认目标 Supabase 环境已执行 0003 和 0018。
 - metadata 编辑验收不需要新增 migration；确认 0018 已执行即可。
+- 批量移动和批量解除关联验收不需要新增 migration；确认 0018 已执行即可。
 - 不新增公开下载、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行能力。

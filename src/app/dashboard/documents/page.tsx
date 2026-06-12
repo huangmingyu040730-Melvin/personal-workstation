@@ -1,14 +1,17 @@
 import Link from "next/link";
-import { Download, FileText, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { AdminEmptyState, AdminPageSurface, AdminSection, AdminSecurityNote } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
-import { VisibilityBadge } from "@/components/badge";
 import { Card } from "@/components/card";
+import { DocumentBulkActionsForm } from "@/components/forms/document-bulk-actions-form";
 import { PageHeader } from "@/components/page-header";
-import { documentCategories, documentRelatedTypes, getDocumentCategoryLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
-import { formatDateTime, formatFileSize } from "@/lib/format";
+import { documentCategories, documentRelatedTypes } from "@/lib/content-options";
 import { getFormError } from "@/lib/forms";
 import { getDocuments } from "@/lib/queries/documents";
+import { getKnowledgeNoteOptions } from "@/lib/queries/knowledge";
+import { getPublicationOptions } from "@/lib/queries/publications";
+import { getProjectOptions } from "@/lib/queries/projects";
+import { getSkillOptions } from "@/lib/queries/skills";
 
 export default async function DocumentsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
@@ -17,8 +20,18 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const relatedId = params.related_id;
   const collection = params.collection ?? "all";
   const error = getFormError(params);
-  const notice = params.notice === "collection_deleted";
-  const documents = await getDocuments({ category, relatedType, relatedId, collection });
+  const collectionDeletedNotice = params.notice === "collection_deleted";
+  const bulkUpdatedNotice = params.notice === "bulk_relations_updated";
+  const bulkUnlinkedNotice = params.notice === "bulk_unlinked";
+  const bulkCount = Number(params.count ?? 0);
+  const [documents, projects, publications, knowledgeNotes, skills] = await Promise.all([
+    getDocuments({ category, relatedType, relatedId, collection }),
+    getProjectOptions(),
+    getPublicationOptions(),
+    getKnowledgeNoteOptions(),
+    getSkillOptions()
+  ]);
+  const returnTo = getDocumentsReturnTo({ category, relatedType, relatedId, collection });
 
   return (
     <AppShell>
@@ -35,9 +48,19 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         }
       />
       {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-      {notice ? (
+      {collectionDeletedNotice ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
           空文档包已删除。
+        </div>
+      ) : null}
+      {bulkUpdatedNotice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          已更新 {bulkCount || documents.length} 个文件的关联对象。
+        </div>
+      ) : null}
+      {bulkUnlinkedNotice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          已解除 {bulkCount || documents.length} 个文件的关联对象。Storage object 未移动、未删除。
         </div>
       ) : null}
       <AdminSecurityNote>文件中心只面向管理员后台。文件默认私密，公开页面不会展示下载入口、Storage 路径或 signed URL。</AdminSecurityNote>
@@ -72,50 +95,38 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         <AdminEmptyState title="还没有文件记录" description="上传第一个文件后，文件中心会显示真实 Storage 元数据。" action={<Link href="/dashboard/documents/upload" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">上传文件</Link>} />
       ) : (
         <Card className="overflow-x-auto p-0">
-          <div className="min-w-[1040px]">
-            <div className="grid grid-cols-[1.3fr_0.5fr_0.45fr_0.75fr_0.75fr_0.6fr_0.4fr_0.45fr] gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-500">
-              <span>文件名</span>
-              <span>分类</span>
-              <span>大小</span>
-              <span>文档包</span>
-              <span>关联对象</span>
-              <span>上传时间</span>
-              <span>权限</span>
-              <span>操作</span>
-            </div>
-            {documents.map((document) => (
-              <div key={document.id} className="grid grid-cols-[1.3fr_0.5fr_0.45fr_0.75fr_0.75fr_0.6fr_0.4fr_0.45fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50/60 last:border-0">
-                <Link href={`/dashboard/documents/${document.id}`} className="flex min-w-0 gap-2 font-medium text-slate-900 hover:text-blue-700">
-                  <FileText className="mt-0.5 shrink-0 text-blue-700" size={16} />
-                  <span className="min-w-0">
-                    <span className="block truncate">{document.name}</span>
-                    {document.relative_path ? <span className="mt-0.5 block truncate text-xs font-normal text-slate-400">{document.relative_path}</span> : null}
-                  </span>
-                </Link>
-                <span className="text-slate-600">{getDocumentCategoryLabel(document.category)}</span>
-                <span className="text-slate-500">{formatFileSize(document.file_size)}</span>
-                <span className="truncate text-slate-500">
-                  {document.collection ? (
-                    <Link href={`/dashboard/documents/collections/${document.collection.id}`} className="text-blue-700 hover:text-blue-900">
-                      {document.collection.title}
-                    </Link>
-                  ) : (
-                    "未加入文档包"
-                  )}
-                </span>
-                <span className="truncate text-slate-500">{document.related?.title ?? getDocumentRelatedTypeLabel(document.related_type)}</span>
-                <span className="text-slate-500">{formatDateTime(document.created_at)}</span>
-                <VisibilityBadge visibility={document.visibility} />
-                <Link href={`/dashboard/documents/${document.id}/download`} className="inline-flex items-center gap-1 font-medium text-blue-700">
-                  <Download size={14} />
-                  下载
-                </Link>
-              </div>
-            ))}
-          </div>
+          <DocumentBulkActionsForm
+            documents={documents}
+            relatedOptions={{ projects, publications, knowledgeNotes, skills }}
+            returnTo={returnTo}
+          />
         </Card>
       )}
       </AdminPageSurface>
     </AppShell>
   );
+}
+
+function getDocumentsReturnTo({
+  category,
+  relatedType,
+  relatedId,
+  collection
+}: {
+  category: string;
+  relatedType: string;
+  relatedId?: string;
+  collection: string;
+}) {
+  const params = new URLSearchParams();
+
+  params.set("category", category);
+  params.set("related_type", relatedType);
+  params.set("collection", collection);
+
+  if (relatedId && relatedType !== "all" && relatedType !== "unlinked") {
+    params.set("related_id", relatedId);
+  }
+
+  return `/dashboard/documents?${params.toString()}`;
 }

@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，但不新增数据库步骤。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联；两者都不新增数据库步骤。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -379,7 +379,7 @@ Document Collection 权限边界：
 - 本阶段不做批量 zip 下载、OCR、文件内容索引或 AI 总结。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
-Phase 2P-D 只使用 0001 和 0018 已存在的 `documents` / `document_collections` 字段增强后台管理能力，不新增 migration。文件 metadata 编辑只更新显示名称、分类和关联对象；文档包 metadata 编辑只更新名称、描述、类型和关联对象。编辑操作不会修改 `storage_path`，不会移动或重命名 Supabase Storage object，也不会修改 Storage policy。
+Phase 2P-D / 2P-E-1 只使用 0001 和 0018 已存在的 `documents` / `document_collections` 字段增强后台管理能力，不新增 migration。文件 metadata 编辑只更新显示名称、分类和关联对象；文档包 metadata 编辑只更新名称、描述、类型和关联对象；批量移动和批量解除关联只更新 `documents.related_type` / `documents.related_id`。这些操作不会修改 `storage_path`，不会移动、重命名或删除 Supabase Storage object，也不会修改 Storage policy。
 
 ## 创建管理员
 
@@ -472,7 +472,7 @@ Phase 2C 使用：
 - Resume Template 字段依赖 0011 migration；未执行 0011 时，简历素材详情字段、版本顶部个人字段开关、逐条素材可见字段控制和贴近 PDF 的打印预览会因为缺少列而无法稳定保存或读取。
 - Resume JD 分析历史依赖 0012 migration；未执行 0012 时，AI JD 分析仍可生成当前页建议，但无法保存为历史记录或投递状态。
 - Document collections 和文件夹上传 metadata 依赖 0018 migration；未执行 0018 时，多文件 / 文件夹上传、Knowledge 附件关联和 collection 详情页无法完成真实读写。
-- Document metadata 和 collection metadata 编辑不需要 0019 migration；只要求既有 `documents` 与 `document_collections` 字段可用。
+- Document metadata、collection metadata 编辑和批量关联整理不需要 0019 migration；只要求既有 `documents` 与 `document_collections` 字段可用。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。

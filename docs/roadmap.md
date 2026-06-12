@@ -148,6 +148,27 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不做批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
+### Phase 2P-E-1 - Bulk Document Relation Actions
+
+已完成代码实现。Documents 后台继续面向大量研究附件整理，新增批量选择和批量关联维护能力：
+
+- Documents 列表支持勾选多个文件。
+- 文档包详情页的包内文件列表支持勾选多个文件。
+- 批量操作区显示已选择文件数量，并支持批量移动到 Project / Publication / Knowledge / Skill。
+- 支持批量解除关联；解除后可通过 `related_type=unlinked` 筛选查看。
+- 批量操作保留 Documents 当前筛选 URL；文档包详情页操作后回到当前文档包。
+
+边界：
+
+- 只更新 `documents.related_type` 与 `documents.related_id`。
+- 不新增 migration，继续依赖既有 `0018_document_collections_and_folder_uploads.sql`。
+- 不修改 Storage policy。
+- 不移动、不重命名、不删除 Storage object，不修改 `storage_path`。
+- 不修改文件 `collection_id`，不修改文档包自身关联对象。
+- 不删除 `documents` 或 `document_collections` 记录。
+- 不做批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不修改 Resume / Career 逻辑，不恢复 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
