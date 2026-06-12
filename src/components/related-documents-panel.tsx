@@ -48,6 +48,15 @@ export function buildRelatedDocumentUploadHref({
   return `/dashboard/documents/upload?${params.toString()}`;
 }
 
+function buildRelatedDocumentsListHref(relatedType: DocumentRelatedType, relatedId: string) {
+  const params = new URLSearchParams({
+    related_type: relatedType,
+    related_id: relatedId
+  });
+
+  return `/dashboard/documents?${params.toString()}`;
+}
+
 export async function RelatedDocumentsPanel({
   relatedType,
   relatedId,
@@ -78,6 +87,7 @@ export async function RelatedDocumentsPanel({
     category: uploadBatchCategory,
     collectionType: uploadBatchCollectionType
   });
+  const documentsListHref = buildRelatedDocumentsListHref(relatedType, relatedId);
 
   return (
     <Card className="min-w-0 overflow-hidden">
@@ -94,14 +104,25 @@ export async function RelatedDocumentsPanel({
               <FolderArchive size={15} />
               {uploadBatchLabel}
             </Link>
-            <Link href={`/dashboard/documents?related_type=${relatedType}`} className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+            <Link href={documentsListHref} className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
               查看全部文件
             </Link>
           </div>
         }
       />
 
-      {securityNote ? <AdminSecurityNote>{securityNote}</AdminSecurityNote> : null}
+      <div className="grid gap-3 text-sm sm:grid-cols-2">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-slate-500">文档包数量</p>
+          <p className="mt-1 text-lg font-semibold text-slate-950">{collections.length}</p>
+        </div>
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-slate-500">文件数量</p>
+          <p className="mt-1 text-lg font-semibold text-slate-950">{documents.length}</p>
+        </div>
+      </div>
+
+      {securityNote ? <div className="mt-4"><AdminSecurityNote>{securityNote}</AdminSecurityNote></div> : null}
 
       {documents.length === 0 && collections.length === 0 ? (
         <div className="mt-4">

@@ -1065,3 +1065,58 @@
 - 只影响新上传文件的 Storage path 生成。
 - 不新增 migration，不修改 Storage policy，不改 Documents 数据模型。
 - 不影响 Project、Publication、Knowledge、Skill、Resume 或 Career 业务逻辑。
+
+## 2026-06-12 - Use Phase 2O / 2P Memory Files As Current Handoff Baseline
+
+类型：decision
+
+决策：
+
+- 项目记忆层以 Phase 2O-A 稳定维护路线和 Phase 2P-A / 2P-B / 2P-C Documents 私密附件底座作为当前交接基准。
+- `AGENTS.md` 记录稳定协作规则、安全边界和记忆更新规则。
+- `docs/memory.md` 记录当前项目状态、重要上下文、迁移状态、已知问题、下一步和 stale / superseded notes。
+- `docs/workflows.md` 记录可重复执行的 memory engineering 和统一私密附件工作流。
+- `docs/current-status.md`、`docs/known-issues.md`、`docs/roadmap.md` 和 `docs/supabase-setup.md` 应与上述基准保持一致。
+- `docs/memory.md` 不再以 2026-06-09 的 Phase 2K-C 状态作为当前状态。
+- 执行 0018 后，后续数据库变更应新增 `0019_*` 或更高编号。
+
+原因：
+
+- 项目已经完成 Market Brief 移除、工作台稳定路线收口和 Documents 统一附件底座扩展。
+- 旧记忆文件仍停留在 2026-06-09，会误导后续 Codex 把 Resume Phase 2K-C、Viewer 冻结状态或 0018 迁移编号当作最新边界。
+- 统一交接基准可以降低后续开发前重复确认项目状态的成本。
+
+影响：
+
+- 后续新对话接续项目时应先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，涉及阶段状态再读 `docs/current-status.md`、`docs/roadmap.md`、`docs/known-issues.md` 和 `docs/supabase-setup.md`。
+- 不修改业务代码、数据库 schema、RLS、Storage policy 或历史 migration。
+- 不恢复 Market Brief，不扩展 Career 自动化，不开放 Documents 或 signed URL。
+
+## 2026-06-12 - Keep Document Metadata Editable Without Moving Storage Objects
+
+类型：decision
+
+决策：
+
+- Phase 2P-D 允许管理员在后台编辑文件 metadata：显示名称、分类、关联对象。
+- Phase 2P-D 允许管理员在后台编辑文档包 metadata：名称、描述、类型、关联对象。
+- 文件级关联和文档包级关联允许不一致。
+- 修改文档包关联对象时，不自动批量同步包内 `documents.related_type` / `documents.related_id`。
+- 文件 metadata 编辑不允许修改 `storage_bucket`、`storage_path`、`file_size`、`mime_type`、`original_name`、`relative_path`、`folder_path` 或 `collection_id`。
+- 文档包 metadata 编辑不允许手动修改 `file_count`、`total_size`、`root_folder_name`、`owner_id`、`visibility`、`created_at` 或 `updated_at`。
+- Documents 列表支持按 category、related_type 和 collection 状态筛选，便于长期整理研究资产。
+
+原因：
+
+- Documents 已能上传文件和文档包，但长期维护时常需要修正显示名、分类或关联对象。
+- Storage object key 已经采用 ASCII-safe 路径，重命名对象会增加权限、清理和引用一致性风险。
+- 文档包表示上传批次或资料包，包级关联不应强制覆盖每个文件的精细关联。
+
+影响：
+
+- 本阶段不新增 migration，继续依赖 `0018_document_collections_and_folder_uploads.sql` 已提供的字段。
+- 不修改 Storage policy，不移动、不重命名 Storage object，不修改 `storage_path`。
+- 更新写入 `activity_logs`，只记录 metadata 摘要，不记录 signed URL、Storage 内部路径、API key、cookie 或 secret。
+- 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径或 signed URL。
+- 不做批量删除、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。

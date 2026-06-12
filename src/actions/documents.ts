@@ -16,7 +16,12 @@ import {
   validateDocumentFileDescriptor,
   WORKSPACE_FILES_BUCKET
 } from "@/lib/storage/documents";
-import { documentCollectionMetadataSchema, documentMetadataSchema } from "@/lib/validations/document";
+import {
+  documentCollectionEditableMetadataSchema,
+  documentCollectionMetadataSchema,
+  documentEditableMetadataSchema,
+  documentMetadataSchema
+} from "@/lib/validations/document";
 
 export type PreparedDocumentUpload = {
   documentId: string;
@@ -81,6 +86,24 @@ function documentMetadataFromForm(formData: FormData, fallbackName: string) {
     original_name: getOptionalString(formData, "original_name"),
     relative_path: getOptionalString(formData, "relative_path")
   });
+}
+
+function relatedValuesFromForm(formData: FormData) {
+  const relatedKey = getOptionalString(formData, "related_key");
+
+  if (!relatedKey) {
+    return {
+      related_type: getOptionalString(formData, "related_type"),
+      related_id: getOptionalString(formData, "related_id")
+    };
+  }
+
+  const [relatedType, ...idParts] = relatedKey.split(":");
+
+  return {
+    related_type: relatedType,
+    related_id: idParts.join(":") || null
+  };
 }
 
 async function ensureRelatedRecordExists(
@@ -565,6 +588,174 @@ export async function rollbackPreparedDocumentUploadAction(upload: PreparedDocum
   }
 
   return { ok: true };
+}
+
+export async function updateDocumentMetadataAction(id: string, formData: FormData) {
+  const { supabase, isAdmin, error } = await getAdminClient();
+  const detailPath = `/dashboard/documents/${id}`;
+
+  if (!supabase || !isAdmin) {
+    redirect(`${detailPath}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const relatedValues = relatedValuesFromForm(formData);
+  const metadata = documentEditableMetadataSchema.safeParse({
+    name: getString(formData, "name"),
+    category: getString(formData, "category"),
+    related_type: relatedValues.related_type,
+    related_id: relatedValues.related_id
+  });
+
+  if (!metadata.success) {
+    redirect(`${detailPath}?error=${encodeFormError(metadata.error.issues[0]?.message ?? "请检查文件信息。")}`);
+  }
+
+  const relatedType = metadata.data.related_type as DocumentRelatedType | null;
+  const relatedExists = await ensureRelatedRecordExists(supabase, relatedType, metadata.data.related_id);
+
+  if (!relatedExists) {
+    redirect(`${detailPath}?error=${encodeFormError("关联对象不存在，请重新选择。")}`);
+  }
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("documents")
+    .select("id,name,category,collection_id,related_type,related_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError || !existing) {
+    redirect(`${detailPath}?error=${encodeFormError(fetchError?.message || "文件记录不存在。")}`);
+  }
+
+  const { error: updateError } = await supabase
+    .from("documents")
+    .update({
+      name: metadata.data.name,
+      category: metadata.data.category,
+      related_type: relatedType,
+      related_id: metadata.data.related_id
+    })
+    .eq("id", id);
+
+  if (updateError) {
+    redirect(`${detailPath}?error=${encodeFormError(updateError.message || "更新文件信息失败。")}`);
+  }
+
+  const oldRelatedType = existing.related_type as DocumentRelatedType | null;
+  const oldRelatedId = existing.related_id;
+
+  await writeActivityLog({
+    action: "document.update_metadata",
+    entityType: "document",
+    entityId: id,
+    metadata: {
+      name: metadata.data.name,
+      category: metadata.data.category,
+      old_related_type: existing.related_type,
+      old_related_id: existing.related_id,
+      new_related_type: relatedType,
+      new_related_id: metadata.data.related_id
+    }
+  });
+
+  revalidateDocumentPaths({
+    documentId: id,
+    collectionId: existing.collection_id,
+    relatedType: oldRelatedType,
+    relatedId: oldRelatedId
+  });
+  revalidateDocumentPaths({
+    documentId: id,
+    collectionId: existing.collection_id,
+    relatedType,
+    relatedId: metadata.data.related_id
+  });
+
+  redirect(`${detailPath}?notice=metadata_updated`);
+}
+
+export async function updateDocumentCollectionMetadataAction(id: string, formData: FormData) {
+  const { supabase, isAdmin, error } = await getAdminClient();
+  const detailPath = `/dashboard/documents/collections/${id}`;
+
+  if (!supabase || !isAdmin) {
+    redirect(`${detailPath}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const relatedValues = relatedValuesFromForm(formData);
+  const metadata = documentCollectionEditableMetadataSchema.safeParse({
+    title: getString(formData, "title"),
+    description: getOptionalString(formData, "description"),
+    collection_type: getString(formData, "collection_type"),
+    related_type: relatedValues.related_type,
+    related_id: relatedValues.related_id
+  });
+
+  if (!metadata.success) {
+    redirect(`${detailPath}?error=${encodeFormError(metadata.error.issues[0]?.message ?? "请检查文档包信息。")}`);
+  }
+
+  const relatedType = metadata.data.related_type as DocumentRelatedType | null;
+  const relatedExists = await ensureRelatedRecordExists(supabase, relatedType, metadata.data.related_id);
+
+  if (!relatedExists) {
+    redirect(`${detailPath}?error=${encodeFormError("关联对象不存在，请重新选择。")}`);
+  }
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("document_collections")
+    .select("id,title,description,collection_type,related_type,related_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError || !existing) {
+    redirect(`${detailPath}?error=${encodeFormError(fetchError?.message || "文档包不存在。")}`);
+  }
+
+  const { error: updateError } = await supabase
+    .from("document_collections")
+    .update({
+      title: metadata.data.title,
+      description: metadata.data.description,
+      collection_type: metadata.data.collection_type,
+      related_type: relatedType,
+      related_id: metadata.data.related_id
+    })
+    .eq("id", id);
+
+  if (updateError) {
+    redirect(`${detailPath}?error=${encodeFormError(updateError.message || "更新文档包信息失败。")}`);
+  }
+
+  const oldRelatedType = existing.related_type as DocumentRelatedType | null;
+  const oldRelatedId = existing.related_id;
+
+  await writeActivityLog({
+    action: "document_collection.update_metadata",
+    entityType: "document_collection",
+    entityId: id,
+    metadata: {
+      title: metadata.data.title,
+      collection_type: metadata.data.collection_type,
+      old_related_type: existing.related_type,
+      old_related_id: existing.related_id,
+      new_related_type: relatedType,
+      new_related_id: metadata.data.related_id
+    }
+  });
+
+  revalidateDocumentPaths({
+    collectionId: id,
+    relatedType: oldRelatedType,
+    relatedId: oldRelatedId
+  });
+  revalidateDocumentPaths({
+    collectionId: id,
+    relatedType,
+    relatedId: metadata.data.related_id
+  });
+
+  redirect(`${detailPath}?notice=collection_updated`);
 }
 
 export async function deleteDocumentCollectionAction(id: string) {

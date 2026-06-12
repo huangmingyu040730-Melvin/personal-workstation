@@ -2,15 +2,15 @@
 
 ## Viewer magic link 登录问题
 
-状态：Phase 2I 修复中，待 Preview 与生产真实验收。
+状态：未稳定，后续单独做 Phase 2I / hotfix；当前不视为已验收能力。
 
 当前状态：
 
 - Phase 2E-B restricted 授权基础代码已实现。
 - 已实现 `restricted` visibility、`content_access_grants`、`has_content_access()`、后台 Access Grants、viewer login 和 viewer callback。
-- 已尝试 PR #19、PR #20 修复。
-- Phase 2I 当前聚焦 magic link 回调路径、session cookie 写入和 restricted 只读访问闭环。
-- 在 Phase 2I 合并并完成生产验收前，仍可能出现：
+- 已尝试 PR #19、PR #20 修复，但尚未形成稳定验收结论。
+- 后续 Phase 2I 应聚焦 magic link 回调路径、session cookie 写入和 restricted 只读访问闭环。
+- 在 Phase 2I 完成并通过 Preview / 生产真实验收前，仍可能出现：
   - 授权邮箱无法发送 magic link。
   - magic link 成功但 viewer session 未稳定建立。
   - 已授权用户仍无法查看 restricted 内容。
