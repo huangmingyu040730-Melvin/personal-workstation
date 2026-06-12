@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Download, FileText, MoveRight, Unlink } from "lucide-react";
+import { Download, FileText, MoveRight, Trash2, Unlink } from "lucide-react";
 import { useState } from "react";
-import { bulkUpdateDocumentRelationsAction } from "@/actions/documents";
+import { bulkDeleteDocumentsAction, bulkUpdateDocumentRelationsAction } from "@/actions/documents";
 import { VisibilityBadge } from "@/components/badge";
 import { getDocumentCategoryLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
 import type { DocumentWithRelation } from "@/lib/content-types";
@@ -27,6 +27,7 @@ export function DocumentBulkActionsForm({
 }: DocumentBulkActionsFormProps) {
   const allDocumentIds = documents.map((document) => document.id);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const selectedDocumentIds = Array.from(selectedIds);
   const selectedCount = selectedIds.size;
   const allSelected = allDocumentIds.length > 0 && selectedCount === allDocumentIds.length;
 
@@ -59,8 +60,7 @@ export function DocumentBulkActionsForm({
     : "grid-cols-[0.24fr_1.28fr_0.52fr_0.45fr_0.82fr_0.72fr_0.58fr_0.42fr]";
 
   return (
-    <form action={bulkUpdateDocumentRelationsAction}>
-      <input type="hidden" name="return_to" value={returnTo} />
+    <div>
       <div className="border-b border-slate-100 bg-slate-50 px-5 py-4">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
           <div className="space-y-2 text-sm leading-6 text-slate-600">
@@ -72,21 +72,57 @@ export function DocumentBulkActionsForm({
               私密附件仍不会在公开页面展示下载入口；Skill 包只作为文件存储，不执行、不解析、不安装。
             </p>
           </div>
-          <div className="space-y-3">
-            <DocumentRelatedSelect
-              options={relatedOptions}
-              hint="批量移动时选择目标对象；批量解除关联会忽略此选择。"
-            />
-            <div className="flex flex-wrap gap-2">
-              <SubmitButton name="bulk_action" value="move" pendingLabel="批量移动中..." className="gap-2 px-4 py-2.5">
-                <MoveRight size={16} />
-                批量移动到关联对象
+          <div className="space-y-4">
+            <form action={bulkUpdateDocumentRelationsAction} className="space-y-3">
+              <input type="hidden" name="return_to" value={returnTo} />
+              {selectedDocumentIds.map((documentId) => (
+                <input key={documentId} type="hidden" name="document_ids" value={documentId} />
+              ))}
+              <DocumentRelatedSelect
+                options={relatedOptions}
+                hint="批量移动时选择目标对象；批量解除关联会忽略此选择。"
+              />
+              <div className="flex flex-wrap gap-2">
+                <SubmitButton name="bulk_action" value="move" pendingLabel="批量移动中..." disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                  <MoveRight size={16} />
+                  批量移动到关联对象
+                </SubmitButton>
+                <SubmitButton name="bulk_action" value="unlink" pendingLabel="批量解除中..." variant="secondary" disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                  <Unlink size={16} />
+                  批量解除关联
+                </SubmitButton>
+              </div>
+            </form>
+
+            <form action={bulkDeleteDocumentsAction} className="rounded-2xl border border-rose-100 bg-white p-4">
+              <input type="hidden" name="return_to" value={returnTo} />
+              {selectedDocumentIds.map((documentId) => (
+                <input key={documentId} type="hidden" name="document_ids" value={documentId} />
+              ))}
+              <div className="space-y-2 text-xs leading-5 text-rose-700">
+                <p className="font-semibold text-rose-950">批量删除选中文件</p>
+                <p>将删除选中文件的数据库记录和 Supabase Storage object；不会自动删除文档包本身，文档包可能变为空。</p>
+                <p>此操作不可撤销。</p>
+              </div>
+              <label className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-700">
+                <input
+                  type="checkbox"
+                  name="delete_confirm"
+                  value="yes"
+                  className="mt-0.5 size-4 rounded border-slate-300 text-rose-600 focus:ring-rose-200"
+                />
+                <span>我确认删除选中的文件及其 Storage object</span>
+              </label>
+              <SubmitButton
+                variant="danger"
+                pendingLabel="批量删除中..."
+                disabled={selectedCount === 0}
+                className="mt-3 gap-2 px-4 py-2.5"
+              >
+                <Trash2 size={16} />
+                批量删除选中文件
               </SubmitButton>
-              <SubmitButton name="bulk_action" value="unlink" pendingLabel="批量解除中..." variant="secondary" className="gap-2 px-4 py-2.5">
-                <Unlink size={16} />
-                批量解除关联
-              </SubmitButton>
-            </div>
+            </form>
           </div>
         </div>
       </div>
@@ -117,8 +153,6 @@ export function DocumentBulkActionsForm({
             <label className="flex items-start justify-center pt-0.5">
               <input
                 type="checkbox"
-                name="document_ids"
-                value={document.id}
                 checked={selectedIds.has(document.id)}
                 onChange={() => toggleDocument(document.id)}
                 aria-label={`选择文件：${document.name}`}
@@ -159,6 +193,6 @@ export function DocumentBulkActionsForm({
           </div>
         ))}
       </div>
-    </form>
+    </div>
   );
 }

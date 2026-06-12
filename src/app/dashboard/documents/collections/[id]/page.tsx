@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Upload } from "lucide-react";
 import { notFound } from "next/navigation";
-import { deleteDocumentCollectionAction, syncDocumentCollectionRelationsAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
+import { deleteDocumentCollectionAction, deleteDocumentCollectionWithFilesAction, syncDocumentCollectionRelationsAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
 import { AdminDangerZone, AdminEmptyState, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DocumentBulkActionsForm } from "@/components/forms/document-bulk-actions-form";
+import { DocumentCollectionDeleteForm } from "@/components/forms/document-collection-delete-form";
 import { DocumentCollectionForm } from "@/components/forms/document-collection-form";
 import { DocumentCollectionSyncForm } from "@/components/forms/document-collection-sync-form";
 import { DeleteButton } from "@/components/forms/submit-button";
@@ -46,10 +47,12 @@ export default async function DocumentCollectionDetailPage({
   const updatedNotice = query.notice === "collection_updated";
   const bulkUpdatedNotice = query.notice === "bulk_relations_updated";
   const bulkUnlinkedNotice = query.notice === "bulk_unlinked";
+  const documentsDeletedNotice = query.notice === "documents_deleted";
   const collectionSyncedNotice = query.notice === "collection_relations_synced";
   const collectionUnlinkedNotice = query.notice === "collection_relations_unlinked";
   const bulkCount = Number(getSingleQueryValue(query.count) ?? 0);
   const deleteAction = deleteDocumentCollectionAction.bind(null, collection.id);
+  const deleteWithFilesAction = deleteDocumentCollectionWithFilesAction.bind(null, collection.id);
   const updateAction = updateDocumentCollectionMetadataAction.bind(null, collection.id);
   const syncAction = syncDocumentCollectionRelationsAction.bind(null, collection.id);
   const relatedOptions = { projects, publications, knowledgeNotes, skills };
@@ -91,6 +94,11 @@ export default async function DocumentCollectionDetailPage({
         {bulkUnlinkedNotice ? (
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
             已解除 {bulkCount || documents.length} 个文件的关联对象。Storage object 未移动、未删除，文档包归属没有改变。
+          </div>
+        ) : null}
+        {documentsDeletedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            已删除 {bulkCount} 个文件记录及对应 Storage object。文档包本身已保留，可能变为空包。
           </div>
         ) : null}
         {collectionSyncedNotice ? (
@@ -190,12 +198,7 @@ export default async function DocumentCollectionDetailPage({
                 </div>
               </AdminDangerZone>
             ) : (
-              <Card className="overflow-hidden border-amber-100 bg-amber-50">
-                <CardHeader title="文档包删除" />
-                <p className="text-sm leading-6 text-amber-800">
-                  当前文档包包含 {documents.length} 个文件。需要先删除文件后，才能删除文档包记录。
-                </p>
-              </Card>
+              <DocumentCollectionDeleteForm action={deleteWithFilesAction} documentCount={documents.length} />
             )}
           </aside>
         </div>

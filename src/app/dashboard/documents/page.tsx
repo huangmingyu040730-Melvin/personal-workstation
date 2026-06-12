@@ -21,6 +21,8 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const collection = params.collection ?? "all";
   const error = getFormError(params);
   const collectionDeletedNotice = params.notice === "collection_deleted";
+  const collectionDeletedWithFilesNotice = params.notice === "collection_deleted_with_files";
+  const documentsDeletedNotice = params.notice === "documents_deleted";
   const bulkUpdatedNotice = params.notice === "bulk_relations_updated";
   const bulkUnlinkedNotice = params.notice === "bulk_unlinked";
   const bulkCount = Number(params.count ?? 0);
@@ -51,6 +53,16 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
       {collectionDeletedNotice ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
           空文档包已删除。
+        </div>
+      ) : null}
+      {collectionDeletedWithFilesNotice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          文档包及 {bulkCount} 个文件已删除，相关 Storage object 已清理。
+        </div>
+      ) : null}
+      {documentsDeletedNotice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          已删除 {bulkCount || documents.length} 个文件记录及对应 Storage object。文档包本身不会自动删除。
         </div>
       ) : null}
       {bulkUpdatedNotice ? (

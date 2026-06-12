@@ -1211,3 +1211,34 @@
 - 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径或 signed URL。
 - 单个文件调整继续使用文件详情页；多个文件调整继续使用 Documents 批量移动；整个资料包调整使用文档包整体迁移 / 同步关联工具。
 - 批量删除和批量 zip 下载继续后延。
+
+## 2026-06-12 - Add Confirmed Document Deletion Without Database Transaction
+
+类型：decision
+
+决策：
+
+- Phase 2P-E-2 允许管理员在 Documents 列表和文档包详情页批量删除选中文件。
+- 批量删除文件会删除所选 `documents` 记录和对应 Supabase Storage object。
+- 批量删除文件不会自动删除空文档包，空文档包可继续作为诊断记录或由管理员单独删除。
+- 文档包详情页新增“删除整个文档包及文件”危险操作，确认文本必须为 `DELETE` 或 `删除`。
+- 删除整个文档包及文件会删除包内文件记录、对应 Storage object 和 `document_collections` 记录。
+- 删除流程继续通过 Server Action 分步更新 Supabase 数据；本 PR 不新增数据库事务、RPC、migration、RLS 或 Storage policy。
+- 删除顺序采用“先 Storage object、后数据库记录”，以降低数据库记录先消失但私密文件对象残留的风险。
+- 如果 Storage 删除失败，不删除数据库记录；如果 Storage 成功但数据库删除失败，向管理员显示安全错误并要求人工复核。
+- Activity Log 只记录 document ids、document_count、collection ids 和关联摘要；不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
+
+原因：
+
+- 2P-E-1 系列已经具备批量整理附件 metadata 的能力，管理员还需要受确认保护的资产清理入口。
+- Documents 与 Storage 是两个系统，现阶段没有引入跨系统事务；先删 Storage 再删数据库记录是当前风险更低的保守顺序。
+- 批量删除文件和删除整个文档包是破坏性操作，需要显式确认，避免误删研究资料。
+
+影响：
+
+- 本阶段不新增 migration，继续依赖 `0018_document_collections_and_folder_uploads.sql` 已提供的字段。
+- 不修改 RLS、Storage policy、bucket、`storage_path` 生成规则、文件大小、MIME type、原始文件名、relative_path 或 folder_path。
+- 批量删除文件会重新计算受影响文档包的 `file_count` 和 `total_size`。
+- 删除整个文档包不会删除或修改关联的 Project、Publication、Knowledge 或 Skill 对象。
+- 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径或 signed URL。
+- 批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行继续后延。
