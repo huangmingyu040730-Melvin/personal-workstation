@@ -1194,6 +1194,7 @@
 - 整体解除关联会把文档包和包内全部文件的 `related_type / related_id` 一起置空。
 - 包内文件列表必须由 Server Action 按 `collection_id` 查询获得，不从前端接收文件 ID 或文件数量。
 - 目标关联对象必须在服务端校验存在。
+- 当前同步工具仍通过 Server Action 分步更新 Supabase 数据；本 PR 不新增数据库事务或 RPC。更新顺序采用“先包内文件、后文档包自身”，以降低失败时文档包先移动但文件未同步的风险。
 - 该工具只修改 metadata，不移动、不重命名、不删除 Storage object，也不修改文件 `collection_id`。
 
 原因：

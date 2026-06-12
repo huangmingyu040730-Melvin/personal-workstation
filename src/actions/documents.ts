@@ -879,18 +879,27 @@ export async function syncDocumentCollectionRelationsAction(id: string, formData
   const oldRelatedType = collection.related_type as DocumentRelatedType | null;
   const oldRelatedId = collection.related_id;
   const oldDocumentRelations = uniqueRelationKeys(documentsInCollection);
+  const documentRollbackGroups = documentsInCollection.reduce<Array<{
+    documentIds: string[];
+    relatedType: DocumentRelatedType | null;
+    relatedId: string | null;
+  }>>((groups, document) => {
+    const relatedType = document.related_type as DocumentRelatedType | null;
+    const relatedId = document.related_id;
+    const existingGroup = groups.find((group) => group.relatedType === relatedType && group.relatedId === relatedId);
 
-  const { error: collectionUpdateError } = await supabase
-    .from("document_collections")
-    .update({
-      related_type: nextRelatedType,
-      related_id: nextRelatedId
-    })
-    .eq("id", id);
+    if (existingGroup) {
+      existingGroup.documentIds.push(document.id);
+    } else {
+      groups.push({
+        documentIds: [document.id],
+        relatedType,
+        relatedId
+      });
+    }
 
-  if (collectionUpdateError) {
-    redirect(`${detailPath}?error=${encodeFormError(collectionUpdateError.message || "更新文档包关联失败。")}`);
-  }
+    return groups;
+  }, []);
 
   const { error: documentsUpdateError } = await supabase
     .from("documents")
@@ -901,23 +910,55 @@ export async function syncDocumentCollectionRelationsAction(id: string, formData
     .eq("collection_id", id);
 
   if (documentsUpdateError) {
-    const { error: rollbackError } = await supabase
-      .from("document_collections")
-      .update({
-        related_type: oldRelatedType,
-        related_id: oldRelatedId
-      })
-      .eq("id", id);
+    console.error("syncDocumentCollectionRelationsAction documents update failed", {
+      collectionId: id,
+      code: documentsUpdateError.code,
+      message: documentsUpdateError.message
+    });
+    redirect(`${detailPath}?error=${encodeFormError(documentsUpdateError.message || "同步包内文件关联失败，文档包关联未修改。")}`);
+  }
 
-    if (rollbackError) {
-      console.error("syncDocumentCollectionRelationsAction rollback failed", {
-        collectionId: id,
-        code: rollbackError.code,
-        message: rollbackError.message
-      });
+  const { error: collectionUpdateError } = await supabase
+    .from("document_collections")
+    .update({
+      related_type: nextRelatedType,
+      related_id: nextRelatedId
+    })
+    .eq("id", id);
+
+  if (collectionUpdateError) {
+    console.error("syncDocumentCollectionRelationsAction collection update failed", {
+      collectionId: id,
+      code: collectionUpdateError.code,
+      message: collectionUpdateError.message
+    });
+
+    let rollbackFailed = false;
+
+    for (const group of documentRollbackGroups) {
+      const { error: rollbackError } = await supabase
+        .from("documents")
+        .update({
+          related_type: group.relatedType,
+          related_id: group.relatedId
+        })
+        .in("id", group.documentIds);
+
+      if (rollbackError) {
+        rollbackFailed = true;
+        console.error("syncDocumentCollectionRelationsAction documents rollback failed", {
+          collectionId: id,
+          code: rollbackError.code,
+          message: rollbackError.message
+        });
+      }
     }
 
-    redirect(`${detailPath}?error=${encodeFormError(documentsUpdateError.message || "同步包内文件关联失败，已尝试恢复文档包关联。")}`);
+    if (rollbackFailed) {
+      redirect(`${detailPath}?error=${encodeFormError("文档包关联更新失败，且包内文件回滚未完全成功，请检查文档包内文件关联后重试。")}`);
+    }
+
+    redirect(`${detailPath}?error=${encodeFormError(collectionUpdateError.message || "文档包关联更新失败，包内文件已尝试恢复原关联。")}`);
   }
 
   const isUnlink = parsed.data.collection_sync_action === "unlink";
