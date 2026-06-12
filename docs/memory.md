@@ -35,6 +35,7 @@
 - Phase 2P-C：四类内容新建表单支持“保存并上传附件”，创建成功后跳转统一 Documents 上传页。
 - Phase 2P-D：Documents 文件 metadata、文档包 metadata、关联对象与列表筛选维护能力。
 - Phase 2P-E-1：Documents 列表和文档包详情页支持批量移动文件关联对象与批量解除关联。
+- Phase 2P-E-1-B：内容详情页 RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组，避免当前对象文档包内文件重复展示。
 
 当前网站包括：
 
@@ -90,6 +91,7 @@ Documents / Storage：
 - 文档包 metadata 可编辑字段为名称、描述、类型和关联对象；不可手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。
 - 文件级关联和文档包级关联允许不一致；修改文档包关联对象不自动批量同步包内文件。
 - 批量移动关联对象和批量解除关联只更新 `documents.related_type` / `documents.related_id`；不修改 Storage object、`storage_path`、`collection_id` 或文档包自身关联对象。
+- RelatedDocumentsPanel 中，当前对象文档包内文件由文档包卡片代表；文件级关联指向当前对象但仍属于其他文档包的文件展示为跨文档包文件并提示。
 - 单文件上限为 50 MB；批量 / 文件夹上传单次最多 100 个文件、总量 200 MB。
 - 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。
 - 不支持 exe、dmg、app、msi、bat、cmd。
@@ -107,7 +109,7 @@ Documents / Storage：
 - Career Center 已进入稳定维护状态；后续只做 bugfix、文案修正和 broken link 修复，不主动扩展面试记录、提醒、邮件、Notion 同步或自动投递。
 - Market Brief / 市场简报已因数据可靠性不足弃用并从产品入口和代码主路径移除；历史迁移 0013-0017 暂作 unused legacy data，不在当前路线继续维护。
 - Phase 2P-A / 2P-B / 2P-C 将 Documents 扩展为统一私密附件底座，并把附件查看、预填上传、新建后上传串到 Project / Publication / Knowledge / Skill 后台流程中。
-- Phase 2P-D / 2P-E-1 将 Documents 进一步打磨为可维护的私密附件管理系统；metadata 修正和批量关联整理不移动、不重命名、不删除 Storage object，不新增 migration。
+- Phase 2P-D / 2P-E-1 / 2P-E-1-B 将 Documents 进一步打磨为可维护的私密附件管理系统；metadata 修正、批量关联整理和详情页分组展示不移动、不重命名、不删除 Storage object，不新增 migration。
 - 后续数据库变更必须新增 `0019_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -182,7 +184,7 @@ Documents / Storage：
 - Supabase 数据库变更：新增 migration，不修改已执行旧 migration。
 - Documents 上传：prepare metadata -> 浏览器直传 private `workspace-files` -> finalize 写库 -> 必要时清理失败对象。
 - 新建内容并上传附件：先创建 Project / Publication / Knowledge / Skill，成功后跳转 `/dashboard/documents/upload` 并通过 query params 预填关联对象、上传模式、分类和文档包类型。
-- Documents metadata 维护：文件详情页修正显示名、分类、关联对象；文档包详情页修正名称、描述、类型、关联对象；列表页用 category、related_type、collection 筛选整理；Documents 列表或文档包详情页批量移动文件关联对象或批量解除关联。
+- Documents metadata 维护：文件详情页修正显示名、分类、关联对象；文档包详情页修正名称、描述、类型、关联对象；列表页用 category、related_type、collection 筛选整理；Documents 列表或文档包详情页批量移动文件关联对象或批量解除关联；内容详情页用文档包、独立文件、跨文档包文件分组理解附件关系。
 - 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
 
 详细流程见 `docs/workflows.md`。
@@ -191,7 +193,7 @@ Documents / Storage：
 
 建议顺序：
 
-1. Phase 2P 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow 和批量关联整理。
+1. Phase 2P 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理和 RelatedDocumentsPanel 分组展示。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
@@ -203,6 +205,7 @@ Documents / Storage：
 - 公开附件下载。
 - viewer 附件授权下载。
 - OCR、文件内容索引、AI 文件总结。
+- 文档包整体迁移 / 同步关联工具；该能力可作为 Phase 2P-E-1-C 单独实现。
 - Google Calendar、提醒系统、Notion 同步。
 
 ## Stale Or Superseded Notes

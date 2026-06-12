@@ -1149,3 +1149,34 @@
 - `return_to` 只允许站内 `/dashboard` 路径，避免 open redirect。
 - 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径或 signed URL。
 - 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。
+
+## 2026-06-12 - Group Related Documents By Package Context
+
+类型：decision
+
+决策：
+
+- 文件级关联和文档包级关联继续允许不一致。
+- RelatedDocumentsPanel 继续展示当前对象关联的文档包。
+- RelatedDocumentsPanel 不再把当前对象文档包内文件作为独立文件重复展示。
+- `documents.collection_id is null` 且文件级关联指向当前对象的文件展示为独立文件。
+- 文件级关联指向当前对象、但仍属于其他文档包的文件展示为跨文档包文件。
+- 跨文档包文件需要单独提示，说明这些文件仍属于其他文档包。
+- 自动同步文档包和包内文件关联留到后续阶段，不在 Phase 2P-E-1-B 中实现。
+
+原因：
+
+- 2P-E-1 后，文件可以被批量移动到新的关联对象，而文档包自身关联可以保持原状。
+- 这种状态是合法的，但在内容详情页同时显示文档包和包内文件会造成“重复附件”的错觉。
+- 通过分组展示可以保留灵活 metadata 模型，同时让管理员理解文件级关联和包级关联的差异。
+
+影响：
+
+- 本阶段只修改后台展示逻辑，不新增 migration，不修改数据模型。
+- 不修改 `documents.related_type` / `documents.related_id`。
+- 不修改 `document_collections.related_type` / `document_collections.related_id`。
+- 不修改 `documents.collection_id`。
+- 不修改 Storage policy、bucket、`storage_path`，不移动、不重命名、不删除 Storage object。
+- RelatedDocumentsPanel 不生成 signed URL，不展示 Storage path；下载仍走既有后台下载入口。
+- 文档包整体迁移 / 同步关联工具可作为 Phase 2P-E-1-C 单独推进。
+- 批量删除和批量 zip 下载继续后延。

@@ -53,6 +53,7 @@
 - Documents 文档包、多文件 / 文件夹上传与统一私密附件底座。
 - Documents 文件 metadata、文档包 metadata、关联对象与列表筛选维护能力。
 - Documents 批量移动文件关联对象与批量解除关联能力。
+- RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
 - Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
 - Access Requests 访问申请管理。
 - Access Grants 授权管理基础。
@@ -95,6 +96,8 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - Documents 列表支持按 category、related_type 和 collection 状态筛选；`related_type=unlinked` 可查看未关联文件。
 - Documents 列表支持批量选择文件、批量移动关联对象和批量解除关联，并尽量保留当前筛选 URL。
 - 文档包详情页支持批量修改包内文件关联对象或批量解除包内文件关联，不修改文档包自身关联或文件 `collection_id`。
+- Project / Publication / Knowledge / Skill 后台详情页的 RelatedDocumentsPanel 将附件分为文档包、独立文件和跨文档包文件；当前对象文档包内文件不再在独立文件区域重复展示。
+- 跨文档包文件表示文件级关联指向当前对象，但文件仍属于其他文档包；页面只提示该状态，不自动同步或修复关联。
 - 文档包关联对象修改不会自动批量修改包内文件的关联对象；不一致时页面提示管理员在文件详情页单独调整。
 - `document_collections` 文档包记录上传批次、文件夹、附件包或 Skill 包。
 - `documents.relative_path` / `documents.folder_path` 保存文件夹上传的相对路径信息。
@@ -105,7 +108,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 公开页面不展示 signed URL。
 - 公开页面不展示 Storage 路径。
 
-文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging、create action 文件处理或新的上传系统；Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力。不新增 migration，不改 Storage policy，不移动、重命名或删除 Storage object。
+文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging、create action 文件处理或新的上传系统；Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示。不新增 migration，不改 Storage policy，不移动、重命名或删除 Storage object。
 
 ### Access Requests
 
@@ -222,6 +225,7 @@ Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有
 - 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系。
 - 公开展示：保持公开首页、About、Projects、Publications、Knowledge 和 Skills 的只读展示稳定。
 - 文件 / 知识管理：Documents 作为可维护的统一私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；Knowledge Base 继续维护内容本身，不开放公开附件下载。
+- 后续可单独做文档包整体迁移 / 同步关联工具，用于一起迁移 `document_collections.related_type / related_id` 和包内文件关联；当前阶段只做展示澄清。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 受限访问：Viewer magic link 和 restricted 访问可作为独立 bugfix 专项处理，但不得开放 Documents 或 signed URL。
 

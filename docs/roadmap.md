@@ -169,6 +169,32 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不做批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
+### Phase 2P-E-1-B - Clarify Related Document Grouping
+
+已完成代码实现。Project、Publication、Knowledge 和 Skill 后台详情页中的关联附件区域进一步澄清文档包与文件的关系：
+
+- 统计仍显示当前对象关联的文档包数量和文件数量。
+- 文档包区域展示 `document_collections.related_type / related_id` 指向当前对象的文档包。
+- 独立文件区域只展示 `documents.collection_id is null` 且文件级关联指向当前对象的文件。
+- 当前对象文档包内文件由文档包卡片代表，不在独立文件区域重复展示。
+- 跨文档包文件单独分组展示：文件级关联指向当前对象，但文件仍属于其他文档包。
+- 跨文档包文件区域提示管理员该状态合法但需要显式整理。
+
+边界：
+
+- 不新增 migration，不新增字段。
+- 不修改 RLS、Storage policy、bucket 或 `storage_path`。
+- 不移动、不重命名、不删除 Storage object。
+- 不自动同步文档包和包内文件关联。
+- 不修改 `document_collections.related_type / related_id`、`documents.related_type / related_id` 或 `documents.collection_id`。
+- 不公开附件、signed URL 或 Storage 路径。
+
+后续可单独推进：
+
+- Phase 2P-E-1-C：文档包整体迁移 / 同步关联工具。
+- Phase 2P-E-2：批量删除文件 / 删除整个文档包及文件。
+- Phase 2P-E-3：批量下载 zip。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
