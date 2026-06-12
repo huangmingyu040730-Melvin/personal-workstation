@@ -150,15 +150,16 @@ export async function RelatedDocumentsPanel({
               <h3 className="text-sm font-semibold text-slate-900">文档包</h3>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 {collections.map((collection) => (
-                  <Link
+                  <div
                     key={collection.id}
-                    href={`/dashboard/documents/collections/${collection.id}`}
-                    className="block min-w-0 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-blue-50/60"
+                    className="min-w-0 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-blue-50/60"
                   >
                     <div className="flex min-w-0 items-start gap-3">
                       <FolderArchive className="mt-0.5 shrink-0 text-blue-700" size={18} />
                       <div className="min-w-0">
-                        <p className="break-words font-semibold text-slate-950">{collection.title}</p>
+                        <Link href={`/dashboard/documents/collections/${collection.id}`} className="break-words font-semibold text-slate-950 hover:text-blue-700">
+                          {collection.title}
+                        </Link>
                         <p className="mt-1 text-xs leading-5 text-slate-500">
                           {getDocumentCollectionTypeLabel(collection.collection_type)} · {collection.file_count} 个文件 · {formatFileSize(collection.total_size)}
                         </p>
@@ -168,9 +169,20 @@ export async function RelatedDocumentsPanel({
                           </span>
                         ) : null}
                         <p className="mt-1 truncate text-xs text-slate-400">{collection.root_folder_name ?? "未记录根文件夹"} · {formatDateTime(collection.updated_at)}</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Link href={`/dashboard/documents/collections/${collection.id}`} className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:text-blue-700">
+                            查看文档包
+                          </Link>
+                          <form method="post" action={`/dashboard/documents/collections/${collection.id}/download-zip`}>
+                            <button type="submit" className="inline-flex items-center gap-1 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+                              <Download size={14} />
+                              下载 zip
+                            </button>
+                          </form>
+                        </div>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
               {packagedDocumentsInCurrentCollections.length > 0 ? (

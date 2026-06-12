@@ -1242,3 +1242,34 @@
 - 删除整个文档包不会删除或修改关联的 Project、Publication、Knowledge 或 Skill 对象。
 - 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径或 signed URL。
 - 批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行继续后延。
+
+## 2026-06-12 - Generate Document Zip Downloads On Request Only
+
+类型：decision
+
+决策：
+
+- Phase 2P-E-3 允许管理员在 Documents 列表和文档包详情页勾选多个文件后下载 zip。
+- 文档包详情页允许下载整个文档包 zip。
+- Project / Publication / Knowledge / Skill 后台详情页的文档包卡片允许下载该文档包 zip。
+- zip 由 Route Handler 按请求临时生成，不保存到 Supabase Storage，不创建持久化 zip 记录。
+- zip 下载只对管理员后台开放；Route Handler 必须重新校验管理员身份，不能只依赖 `/dashboard` 路径保护。
+- zip 内部文件名优先使用 `relative_path`、`original_name`、`name`，允许中文文件名，但必须清理 `..`、开头 `/`、控制字符和 Windows 不兼容字符。
+- 为控制 serverless 内存与执行时间风险，单次 zip 限制为最多 50 个文件、总原始大小 100 MB。
+- 如果超过限制、文件不存在、文档包为空或任一 Storage object 下载失败，整个 zip 下载失败，不部分打包。
+- Activity Log 只记录 document ids、document_count、collection id 和 total_size；不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
+
+原因：
+
+- Documents 已具备整理、迁移和删除能力，但管理员仍需要临时下载多个私密附件做本地备份或交付。
+- zip 下载属于临时导出，不应变成新的 Storage 资产或公开分享机制。
+- 文件数量和总大小限制可以降低 Vercel / Node serverless 内存与超时风险。
+
+影响：
+
+- 新增 `jszip` 作为直接依赖，用于在 Route Handler 中生成临时 zip。
+- 本阶段不新增 migration，继续依赖 `0018_document_collections_and_folder_uploads.sql` 已提供的字段。
+- 不修改数据库模型、RLS、Storage policy、bucket、`storage_path` 生成规则、文件大小、MIME type、原始文件名、relative_path 或 folder_path。
+- 不移动、不重命名、不删除 Supabase Storage object。
+- 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径、signed URL 或 zip 下载入口。
+- OCR、文件内容索引、AI 文件总结、Skill 包解析或执行继续后延。

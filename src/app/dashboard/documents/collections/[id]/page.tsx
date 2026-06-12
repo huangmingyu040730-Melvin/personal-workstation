@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Upload } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import { notFound } from "next/navigation";
 import { deleteDocumentCollectionAction, deleteDocumentCollectionWithFilesAction, syncDocumentCollectionRelationsAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
 import { AdminDangerZone, AdminEmptyState, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
@@ -10,7 +10,7 @@ import { DocumentBulkActionsForm } from "@/components/forms/document-bulk-action
 import { DocumentCollectionDeleteForm } from "@/components/forms/document-collection-delete-form";
 import { DocumentCollectionForm } from "@/components/forms/document-collection-form";
 import { DocumentCollectionSyncForm } from "@/components/forms/document-collection-sync-form";
-import { DeleteButton } from "@/components/forms/submit-button";
+import { DeleteButton, SubmitButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { getDocumentCollectionTypeLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
 import { formatDateTime, formatFileSize } from "@/lib/format";
@@ -152,6 +152,22 @@ export default async function DocumentCollectionDetailPage({
                   <dd className="min-w-0 text-right"><VisibilityBadge visibility={collection.visibility} /></dd>
                 </div>
               </dl>
+            </Card>
+
+            <Card className="overflow-hidden border-blue-100 bg-blue-50/50">
+              <CardHeader
+                title="Zip 下载"
+                description="临时打包文档包内文件，不保存到 Storage，也不修改任何 metadata。"
+              />
+              <div className="space-y-3 text-sm leading-6 text-blue-800">
+                <p>当前限制：最多 50 个文件，总大小 100 MB。超限时请拆分下载。</p>
+                <form method="post" action={`/dashboard/documents/collections/${collection.id}/download-zip`}>
+                  <SubmitButton variant="secondary" pendingLabel="zip 生成中..." className="gap-2 px-4 py-2.5">
+                    <Download size={16} />
+                    下载整个文档包 zip
+                  </SubmitButton>
+                </form>
+              </div>
             </Card>
 
             <Card className="overflow-hidden">

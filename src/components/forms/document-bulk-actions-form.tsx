@@ -94,6 +94,27 @@ export function DocumentBulkActionsForm({
               </div>
             </form>
 
+            <form method="post" action="/dashboard/documents/download-zip" className="rounded-2xl border border-blue-100 bg-white p-4">
+              <input type="hidden" name="return_to" value={returnTo} />
+              {selectedDocumentIds.map((documentId) => (
+                <input key={documentId} type="hidden" name="document_ids" value={documentId} />
+              ))}
+              <div className="space-y-2 text-xs leading-5 text-blue-700">
+                <p className="font-semibold text-slate-950">下载选中文件 zip</p>
+                <p>会临时打包选中文件，不会删除、移动或修改文件，也不会公开附件。</p>
+                <p>当前限制：最多 50 个文件，总大小 100 MB。</p>
+              </div>
+              <SubmitButton
+                variant="secondary"
+                pendingLabel="zip 生成中..."
+                disabled={selectedCount === 0}
+                className="mt-3 gap-2 px-4 py-2.5"
+              >
+                <Download size={16} />
+                下载选中文件 zip
+              </SubmitButton>
+            </form>
+
             <form action={bulkDeleteDocumentsAction} className="rounded-2xl border border-rose-100 bg-white p-4">
               <input type="hidden" name="return_to" value={returnTo} />
               {selectedDocumentIds.map((documentId) => (

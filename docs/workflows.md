@@ -311,6 +311,12 @@ npm run build
 34. 删除整个文档包及文件先删除包内文件的 Storage object 和 `documents` 记录，再删除 `document_collections` 记录。
 35. 当前删除流程不新增数据库事务或 RPC；如果 Storage 成功但数据库删除失败，显示中文安全错误并在日志中记录 id、code/message 供人工复核。
 36. 删除相关 Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
+37. 需要下载多个附件时，在 Documents 列表或文档包详情页勾选文件后使用“下载选中文件 zip”。
+38. 需要下载整个资料包时，在文档包详情页或内容详情页文档包卡片使用“下载 zip”。
+39. zip 下载由 Route Handler 重新校验管理员身份并重新查询文件记录，不信任前端传入的文件名、Storage 路径、大小或数量。
+40. zip 按请求临时生成，不保存到 Storage，不创建持久化 zip 记录。
+41. zip 下载限制为最多 50 个文件、总原始大小 100 MB；超限时拆分下载。
+42. zip 下载失败时不部分打包，不输出 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 
 验证要求：
 
@@ -324,4 +330,5 @@ npm run build
 - RelatedDocumentsPanel 分组展示验收不需要新增 migration；确认当前查询返回文档包和文件记录即可。
 - 文档包整体迁移 / 同步关联验收不需要新增 migration；确认 0018 已执行，并验证文档包和包内文件的关联对象一起更新或一起置空。
 - 批量删除文件和删除整个文档包及文件验收不需要新增 migration；确认 0018 已执行，并验证 Storage object 与数据库记录按确认操作清理。
-- 不新增公开下载、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行能力。
+- zip 下载验收不需要新增 migration；确认 0018 已执行，并验证选中文件 zip、文档包 zip、超限拒绝和空文档包错误。
+- 不新增公开下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行能力。
