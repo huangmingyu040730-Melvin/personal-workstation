@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Download, FileText, FolderArchive, Upload } from "lucide-react";
 import { AdminEmptyState, AdminSecurityNote } from "@/components/admin-ui";
 import { Card, CardHeader } from "@/components/card";
-import type { DocumentCategory, DocumentCollectionType, DocumentRelatedType } from "@/lib/content-types";
+import type { DocumentCategory, DocumentCollectionType, DocumentCollectionWithRelation, DocumentRelatedType, DocumentWithRelation } from "@/lib/content-types";
 import { getDocumentCategoryLabel, getDocumentCollectionTypeLabel } from "@/lib/content-options";
 import { formatDateTime, formatFileSize } from "@/lib/format";
 import { getDocumentCollectionsByRelated, getDocumentsByRelated } from "@/lib/queries/documents";
@@ -57,6 +57,16 @@ function buildRelatedDocumentsListHref(relatedType: DocumentRelatedType, related
   return `/dashboard/documents?${params.toString()}`;
 }
 
+function groupRelatedDocuments(documents: DocumentWithRelation[], collections: DocumentCollectionWithRelation[]) {
+  const collectionIds = new Set(collections.map((collection) => collection.id));
+
+  return {
+    standaloneDocuments: documents.filter((document) => !document.collection_id),
+    crossCollectionDocuments: documents.filter((document) => document.collection_id && !collectionIds.has(document.collection_id)),
+    packagedDocumentsInCurrentCollections: documents.filter((document) => document.collection_id && collectionIds.has(document.collection_id))
+  };
+}
+
 export async function RelatedDocumentsPanel({
   relatedType,
   relatedId,
@@ -88,6 +98,11 @@ export async function RelatedDocumentsPanel({
     collectionType: uploadBatchCollectionType
   });
   const documentsListHref = buildRelatedDocumentsListHref(relatedType, relatedId);
+  const {
+    standaloneDocuments,
+    crossCollectionDocuments,
+    packagedDocumentsInCurrentCollections
+  } = groupRelatedDocuments(documents, collections);
 
   return (
     <Card className="min-w-0 overflow-hidden">
@@ -158,37 +173,34 @@ export async function RelatedDocumentsPanel({
                   </Link>
                 ))}
               </div>
+              {packagedDocumentsInCurrentCollections.length > 0 ? (
+                <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
+                  文档包内文件已归入对应文档包，不在独立文件中重复展示。
+                </p>
+              ) : null}
             </section>
           ) : null}
 
-          {documents.length > 0 ? (
+          {standaloneDocuments.length > 0 ? (
             <section>
-              <h3 className="text-sm font-semibold text-slate-900">文件</h3>
+              <h3 className="text-sm font-semibold text-slate-900">独立文件</h3>
               <div className="mt-3 space-y-3">
-                {documents.map((document) => (
-                  <div key={document.id} className="flex min-w-0 flex-col gap-3 rounded-2xl bg-slate-50 p-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex min-w-0 gap-3">
-                      <FileText className="mt-1 shrink-0 text-blue-700" size={18} />
-                      <div className="min-w-0">
-                        <Link href={`/dashboard/documents/${document.id}`} className="break-words font-medium text-slate-900 hover:text-blue-700">
-                          {document.name}
-                        </Link>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                          {getDocumentCategoryLabel(document.category)} · {formatFileSize(document.file_size)} · {formatDateTime(document.created_at)}
-                        </p>
-                        {document.relative_path ? <p className="mt-1 break-all text-xs text-slate-400">{document.relative_path}</p> : null}
-                        {document.collection ? (
-                          <Link href={`/dashboard/documents/collections/${document.collection.id}`} className="mt-1 inline-flex max-w-full text-xs font-medium text-blue-700 hover:text-blue-900">
-                            <span className="truncate">文档包：{document.collection.title}</span>
-                          </Link>
-                        ) : null}
-                      </div>
-                    </div>
-                    <Link href={`/dashboard/documents/${document.id}/download`} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:text-blue-700">
-                      <Download size={16} />
-                      下载
-                    </Link>
-                  </div>
+                {standaloneDocuments.map((document) => (
+                  <RelatedDocumentRow key={document.id} document={document} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {crossCollectionDocuments.length > 0 ? (
+            <section>
+              <h3 className="text-sm font-semibold text-slate-900">跨文档包文件</h3>
+              <p className="mt-2 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+                这些文件的文件级关联指向当前对象，但它们仍属于其他文档包。如需整体迁移，请进入文档包详情页调整文档包关联，或在后续阶段使用文档包整体迁移功能。
+              </p>
+              <div className="mt-3 space-y-3">
+                {crossCollectionDocuments.map((document) => (
+                  <RelatedDocumentRow key={document.id} document={document} showCollection />
                 ))}
               </div>
             </section>
@@ -196,5 +208,36 @@ export async function RelatedDocumentsPanel({
         </div>
       )}
     </Card>
+  );
+}
+
+function RelatedDocumentRow({ document, showCollection = false }: { document: DocumentWithRelation; showCollection?: boolean }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-3 rounded-2xl bg-slate-50 p-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 gap-3">
+        <FileText className="mt-1 shrink-0 text-blue-700" size={18} />
+        <div className="min-w-0">
+          <Link href={`/dashboard/documents/${document.id}`} className="break-words font-medium text-slate-900 hover:text-blue-700">
+            {document.name}
+          </Link>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {getDocumentCategoryLabel(document.category)} · {formatFileSize(document.file_size)} · {formatDateTime(document.created_at)}
+          </p>
+          {document.relative_path ? <p className="mt-1 break-all text-xs text-slate-400">{document.relative_path}</p> : null}
+          {showCollection && document.collection ? (
+            <Link href={`/dashboard/documents/collections/${document.collection.id}`} className="mt-1 inline-flex max-w-full text-xs font-medium text-blue-700 hover:text-blue-900">
+              <span className="truncate">所属文档包：{document.collection.title}</span>
+            </Link>
+          ) : null}
+          {showCollection && document.collection_id && !document.collection ? (
+            <p className="mt-1 text-xs text-slate-400">所属文档包未能读取</p>
+          ) : null}
+        </div>
+      </div>
+      <Link href={`/dashboard/documents/${document.id}/download`} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:text-blue-700">
+        <Download size={16} />
+        下载
+      </Link>
+    </div>
   );
 }

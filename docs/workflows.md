@@ -271,7 +271,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理和批量关联整理。
+- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 / 2P-E-1-B 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理、批量关联整理和内容详情页分组展示。
 
 步骤：
 
@@ -296,7 +296,10 @@ npm run build
 19. 批量解除关联只把 `documents.related_type` 与 `documents.related_id` 置空；不修改 `collection_id`。
 20. 文档包详情页的批量操作只修改包内文件 metadata，不修改文档包自身关联对象。
 21. 批量操作的 `return_to` 必须限制为站内 `/dashboard` 路径，避免 open redirect。
-22. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
+22. RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件展示：当前对象文档包内文件由文档包卡片代表，不在独立文件中重复展示。
+23. 如果只是移动个别文件或一批文件，使用 2P-E-1 的批量文件关联能力。
+24. 如果要整体迁移一个资料包，当前需要分别调整文档包关联和包内文件关联；后续可做文档包整体迁移 / 同步关联工具。
+25. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
 
 验证要求：
 
@@ -307,4 +310,5 @@ npm run build
 - 真实上传验收需要用户本人登录管理员账号，并确认目标 Supabase 环境已执行 0003 和 0018。
 - metadata 编辑验收不需要新增 migration；确认 0018 已执行即可。
 - 批量移动和批量解除关联验收不需要新增 migration；确认 0018 已执行即可。
+- RelatedDocumentsPanel 分组展示验收不需要新增 migration；确认当前查询返回文档包和文件记录即可。
 - 不新增公开下载、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行能力。
