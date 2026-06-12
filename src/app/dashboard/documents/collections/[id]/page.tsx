@@ -1,15 +1,16 @@
 import Link from "next/link";
-import { Download, FileText, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { notFound } from "next/navigation";
 import { deleteDocumentCollectionAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
 import { AdminDangerZone, AdminEmptyState, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { DocumentBulkActionsForm } from "@/components/forms/document-bulk-actions-form";
 import { DocumentCollectionForm } from "@/components/forms/document-collection-form";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
-import { getDocumentCategoryLabel, getDocumentCollectionTypeLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
+import { getDocumentCollectionTypeLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
 import { formatDateTime, formatFileSize } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { getDocumentCollectionById, getDocumentsByCollectionId } from "@/lib/queries/documents";
@@ -42,8 +43,13 @@ export default async function DocumentCollectionDetailPage({
   const error = getFormError(query);
   const notice = query.notice === "collection_deleted";
   const updatedNotice = query.notice === "collection_updated";
+  const bulkUpdatedNotice = query.notice === "bulk_relations_updated";
+  const bulkUnlinkedNotice = query.notice === "bulk_unlinked";
+  const bulkCount = Number(getSingleQueryValue(query.count) ?? 0);
   const deleteAction = deleteDocumentCollectionAction.bind(null, collection.id);
   const updateAction = updateDocumentCollectionMetadataAction.bind(null, collection.id);
+  const relatedOptions = { projects, publications, knowledgeNotes, skills };
+  const collectionReturnTo = `/dashboard/documents/collections/${collection.id}`;
   const hasRelationMismatch = documents.some((document) => (
     document.related_type !== collection.related_type || document.related_id !== collection.related_id
   ));
@@ -73,6 +79,16 @@ export default async function DocumentCollectionDetailPage({
             文档包信息已更新。包内文件的关联对象没有被批量修改。
           </div>
         ) : null}
+        {bulkUpdatedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            已更新 {bulkCount || documents.length} 个文件的关联对象。文档包自身关联对象没有改变。
+          </div>
+        ) : null}
+        {bulkUnlinkedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            已解除 {bulkCount || documents.length} 个文件的关联对象。Storage object 未移动、未删除，文档包归属没有改变。
+          </div>
+        ) : null}
         <AdminSecurityNote>文档包只是私密附件管理层。即使关联公开 Project、Publication、Knowledge 或 Skill，也不会在公开页面展示附件下载入口。</AdminSecurityNote>
         {hasRelationMismatch ? (
           <div className="rounded-3xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
@@ -90,34 +106,12 @@ export default async function DocumentCollectionDetailPage({
                 <AdminEmptyState title="文档包里还没有文件" description="如果批量上传全部失败，文档包会保留为诊断记录；可以重新上传文件。" />
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <div className="min-w-[920px]">
-                  <div className="grid grid-cols-[1.35fr_0.6fr_0.45fr_0.95fr_0.55fr_0.45fr] gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-500">
-                    <span>文件</span>
-                    <span>分类</span>
-                    <span>大小</span>
-                    <span>相对路径</span>
-                    <span>上传时间</span>
-                    <span>操作</span>
-                  </div>
-                  {documents.map((document) => (
-                    <div key={document.id} className="grid grid-cols-[1.35fr_0.6fr_0.45fr_0.95fr_0.55fr_0.45fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50/60 last:border-0">
-                      <Link href={`/dashboard/documents/${document.id}`} className="flex min-w-0 gap-2 font-medium text-slate-900 hover:text-blue-700">
-                        <FileText className="mt-0.5 shrink-0 text-blue-700" size={16} />
-                        <span className="truncate">{document.name}</span>
-                      </Link>
-                      <span className="text-slate-600">{getDocumentCategoryLabel(document.category)}</span>
-                      <span className="text-slate-500">{formatFileSize(document.file_size)}</span>
-                      <span className="truncate text-slate-500">{document.relative_path ?? document.original_name ?? document.name}</span>
-                      <span className="text-slate-500">{formatDateTime(document.created_at)}</span>
-                      <Link href={`/dashboard/documents/${document.id}/download`} className="inline-flex items-center gap-1 font-medium text-blue-700">
-                        <Download size={14} />
-                        下载
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <DocumentBulkActionsForm
+                documents={documents}
+                relatedOptions={relatedOptions}
+                returnTo={collectionReturnTo}
+                mode="collection"
+              />
             )}
           </Card>
 
@@ -160,7 +154,7 @@ export default async function DocumentCollectionDetailPage({
             <DocumentCollectionForm
               action={updateAction}
               collection={collection}
-              relatedOptions={{ projects, publications, knowledgeNotes, skills }}
+              relatedOptions={relatedOptions}
             />
 
             {documents.length === 0 ? (
@@ -187,6 +181,10 @@ export default async function DocumentCollectionDetailPage({
       </AdminPageSurface>
     </AppShell>
   );
+}
+
+function getSingleQueryValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {

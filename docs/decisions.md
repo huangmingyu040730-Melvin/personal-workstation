@@ -1120,3 +1120,32 @@
 - 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径或 signed URL。
 - 不做批量删除、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
 - 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。
+
+## 2026-06-12 - Keep Bulk Document Relation Actions Metadata Only
+
+类型：decision
+
+决策：
+
+- Phase 2P-E-1 允许管理员在 Documents 列表和文档包详情页批量选择文件。
+- 批量移动关联对象只更新 `documents.related_type` 和 `documents.related_id`。
+- 批量解除关联将 `documents.related_type` 与 `documents.related_id` 置空。
+- 文档包详情页批量修改包内文件关联对象时，不修改文档包自身 `related_type` / `related_id`。
+- 批量操作不修改文件 `collection_id`，不把文件移出或移入文档包。
+- 批量删除、批量 zip 下载、OCR、文件内容索引和 AI 文件总结继续后延。
+
+原因：
+
+- 2P-D 已能维护单个文件和文档包 metadata，但大量文件整理时逐个进入详情页效率较低。
+- 批量关联整理属于 metadata 维护，不需要移动 Storage object，也不需要新增数据库字段。
+- 文档包代表上传批次或资料包，包级关联和文件级关联继续保持可独立维护。
+
+影响：
+
+- 本阶段不新增 migration，继续依赖 `0018_document_collections_and_folder_uploads.sql` 已提供的字段。
+- 不修改 Storage policy，不移动、不重命名、不删除 Storage object，不修改 `storage_path`。
+- 不删除 `documents` 或 `document_collections` 记录。
+- 更新写入 `activity_logs`，记录文件 ID 列表、文件数量和新关联对象摘要；不记录 signed URL、Storage 内部路径、API key、cookie 或 secret。
+- `return_to` 只允许站内 `/dashboard` 路径，避免 open redirect。
+- 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径或 signed URL。
+- 不修改 Resume / Career 业务逻辑，不恢复 Market Brief。

@@ -52,6 +52,7 @@
 - Documents 文件中心。
 - Documents 文档包、多文件 / 文件夹上传与统一私密附件底座。
 - Documents 文件 metadata、文档包 metadata、关联对象与列表筛选维护能力。
+- Documents 批量移动文件关联对象与批量解除关联能力。
 - Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
 - Access Requests 访问申请管理。
 - Access Grants 授权管理基础。
@@ -92,6 +93,8 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 文件详情页支持编辑文件显示名称、分类和关联对象。
 - 文档包详情页支持编辑文档包名称、描述、类型和关联对象。
 - Documents 列表支持按 category、related_type 和 collection 状态筛选；`related_type=unlinked` 可查看未关联文件。
+- Documents 列表支持批量选择文件、批量移动关联对象和批量解除关联，并尽量保留当前筛选 URL。
+- 文档包详情页支持批量修改包内文件关联对象或批量解除包内文件关联，不修改文档包自身关联或文件 `collection_id`。
 - 文档包关联对象修改不会自动批量修改包内文件的关联对象；不一致时页面提示管理员在文件详情页单独调整。
 - `document_collections` 文档包记录上传批次、文件夹、附件包或 Skill 包。
 - `documents.relative_path` / `documents.folder_path` 保存文件夹上传的相对路径信息。
@@ -102,7 +105,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 公开页面不展示 signed URL。
 - 公开页面不展示 Storage 路径。
 
-文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging、create action 文件处理或新的上传系统；Phase 2P-D 只增强后台 metadata 管理与筛选，不新增 migration，不改 Storage policy，不移动或重命名 Storage object。
+文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging、create action 文件处理或新的上传系统；Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力。不新增 migration，不改 Storage policy，不移动、重命名或删除 Storage object。
 
 ### Access Requests
 
@@ -192,7 +195,7 @@ Phase 2P-A 新增 Documents 文档包与文件夹上传能力后需要继续执�
 
 `0018` 创建 `document_collections`，为 `documents` 增加 `collection_id`、`original_name`、`relative_path`、`folder_path`，扩展 `workspace-files` bucket 的文件大小上限与 MIME 白名单。该 migration 不公开附件、不修改历史 migration、不放宽 Storage/RLS。
 
-Phase 2P-D 不新增 migration。文件与文档包 metadata 编辑复用既有 `documents` 和 `document_collections` 字段，不修改 Storage object 或 Storage policy。
+Phase 2P-D / 2P-E-1 不新增 migration。文件与文档包 metadata 编辑、批量移动关联对象和批量解除关联复用既有 `documents` 和 `document_collections` 字段，不修改 Storage object 或 Storage policy。
 
 规则：
 
