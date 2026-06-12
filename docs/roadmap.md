@@ -212,9 +212,31 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不公开附件、signed URL 或 Storage 路径。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
+### Phase 2P-E-2 - Bulk Document Deletion
+
+已完成代码实现。Documents 后台新增受确认保护的删除能力，用于清理不再需要的私密附件：
+
+- Documents 列表支持勾选多个文件后批量删除。
+- 文档包详情页支持勾选包内多个文件后批量删除。
+- 批量删除会删除所选 `documents` 记录和对应 Supabase Storage object。
+- 批量删除文件不会自动删除空文档包；文档包可能保留为 0 文件记录。
+- 文档包详情页危险区支持输入 `DELETE` 或 `删除` 后删除整个文档包及包内全部文件。
+- 删除整个文档包及文件会删除包内文件记录、Storage object 和 `document_collections` 记录。
+- 删除完成写入 Activity Log，只记录文件 ID、数量、collection id 和关联摘要。
+
+边界：
+
+- 不新增 migration，继续依赖既有 `0018_document_collections_and_folder_uploads.sql`。
+- 不新增 RPC 或数据库事务；删除流程由 Server Action 分步执行。
+- 删除顺序采用先 Supabase Storage object、后数据库记录，以避免数据库记录先消失但文件对象仍残留。
+- 不修改 Storage policy、bucket 或 `storage_path` 生成规则。
+- 不移动、不重命名 Storage object。
+- 不公开附件、signed URL 或 Storage 路径。
+- 不做批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
+- 不修改 Resume / Career 逻辑，不恢复 Market Brief。
+
 后续可单独推进：
 
-- Phase 2P-E-2：批量删除文件 / 删除整个文档包及文件。
 - Phase 2P-E-3：批量下载 zip。
 
 ### Phase 2D - Public Research Workstation

@@ -8,23 +8,26 @@ export function SubmitButton({
   pendingLabel = "保存中...",
   variant = "primary",
   className,
+  disabled,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   children?: React.ReactNode;
   pendingLabel?: string;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "danger";
 }) {
   const { pending } = useFormStatus();
   const variantClass =
     variant === "primary"
       ? "bg-navy-900 text-white shadow-sm hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-md"
-      : "border border-blue-200 bg-blue-50 text-blue-700 hover:-translate-y-0.5 hover:bg-blue-100";
+      : variant === "danger"
+        ? "border border-rose-200 bg-rose-50 text-rose-700 hover:-translate-y-0.5 hover:bg-rose-100"
+        : "border border-blue-200 bg-blue-50 text-blue-700 hover:-translate-y-0.5 hover:bg-blue-100";
 
   return (
     <button
       type="submit"
       {...props}
-      disabled={pending}
+      disabled={pending || disabled}
       className={cn(
         "inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
         variantClass,

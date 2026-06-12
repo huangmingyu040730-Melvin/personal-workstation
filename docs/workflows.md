@@ -271,7 +271,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理、批量关联整理、内容详情页分组展示和文档包整体迁移 / 同步关联工具。
+- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理、批量关联整理、内容详情页分组展示、文档包整体迁移 / 同步关联工具和受确认保护的删除能力。
 
 步骤：
 
@@ -303,6 +303,14 @@ npm run build
 26. 文档包整体迁移 / 同步关联必须由 Server Action 按 `collection_id` 查询包内文件，不接收前端传入的文件 ID 或文件数量。
 27. 文档包整体解除关联会把文档包和包内全部文件的 `related_type` / `related_id` 置空，但不修改 `collection_id`。
 28. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
+29. 批量删除文件必须在 Server Action 中重新读取所选文件记录；读取失败或选择为空时不得执行删除。
+30. 批量删除文件必须要求确认 checkbox，缺失时返回“请先确认删除操作。”。
+31. 批量删除文件先删除 Supabase Storage object，再删除 `documents` 记录；Storage 删除失败时不删除数据库记录。
+32. 批量删除文件成功后重新计算受影响文档包的 `file_count` 与 `total_size`，但不自动删除空文档包。
+33. 删除整个文档包及文件必须要求确认文本 `DELETE` 或 `删除`；确认失败时不得执行删除。
+34. 删除整个文档包及文件先删除包内文件的 Storage object 和 `documents` 记录，再删除 `document_collections` 记录。
+35. 当前删除流程不新增数据库事务或 RPC；如果 Storage 成功但数据库删除失败，显示中文安全错误并在日志中记录 id、code/message 供人工复核。
+36. 删除相关 Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 
 验证要求：
 
@@ -315,4 +323,5 @@ npm run build
 - 批量移动和批量解除关联验收不需要新增 migration；确认 0018 已执行即可。
 - RelatedDocumentsPanel 分组展示验收不需要新增 migration；确认当前查询返回文档包和文件记录即可。
 - 文档包整体迁移 / 同步关联验收不需要新增 migration；确认 0018 已执行，并验证文档包和包内文件的关联对象一起更新或一起置空。
+- 批量删除文件和删除整个文档包及文件验收不需要新增 migration；确认 0018 已执行，并验证 Storage object 与数据库记录按确认操作清理。
 - 不新增公开下载、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行能力。

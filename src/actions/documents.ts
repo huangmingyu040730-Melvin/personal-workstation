@@ -17,7 +17,9 @@ import {
   WORKSPACE_FILES_BUCKET
 } from "@/lib/storage/documents";
 import {
+  documentBulkDeleteSchema,
   documentBulkRelationSchema,
+  documentCollectionDeleteWithFilesSchema,
   documentCollectionEditableMetadataSchema,
   documentCollectionRelationSyncSchema,
   documentCollectionMetadataSchema,
@@ -67,6 +69,18 @@ export type FinalizeDocumentUploadResult =
 export type RollbackDocumentUploadResult =
   | { ok: true }
   | { ok: false; message: string };
+
+type AdminSupabaseClient = NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>;
+
+type DocumentDeletionRecord = {
+  id: string;
+  name: string | null;
+  storage_bucket: string;
+  storage_path: string;
+  collection_id: string | null;
+  related_type: string | null;
+  related_id: string | null;
+};
 
 function documentResultError(message: string): { ok: false; message: string } {
   return { ok: false, message };
@@ -174,8 +188,82 @@ function uniqueNullableValues(values: Array<string | null>) {
   return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
 }
 
+function getRelatedSummaries(records: Array<{ related_type: string | null; related_id: string | null }>) {
+  return uniqueRelationKeys(records).map((relation) => ({
+    related_type: relation.relatedType,
+    related_id: relation.relatedId
+  }));
+}
+
+async function deleteDocumentRecordsFromStorageAndDatabase(
+  supabase: AdminSupabaseClient,
+  documents: DocumentDeletionRecord[]
+) {
+  if (documents.length === 0) {
+    return { ok: true as const };
+  }
+
+  const documentIds = documents.map((document) => document.id);
+  const collectionIds = uniqueNullableValues(documents.map((document) => document.collection_id));
+  const invalidStorageRecord = documents.find((document) => (
+    document.storage_bucket !== WORKSPACE_FILES_BUCKET || !document.storage_path
+  ));
+
+  if (invalidStorageRecord) {
+    console.error("document bulk delete blocked by invalid storage bucket", {
+      documentId: invalidStorageRecord.id,
+      collectionId: invalidStorageRecord.collection_id
+    });
+    return {
+      ok: false as const,
+      message: "文件存储位置无效，未执行删除。"
+    };
+  }
+
+  const { error: storageError } = await supabase
+    .storage
+    .from(WORKSPACE_FILES_BUCKET)
+    .remove(documents.map((document) => document.storage_path));
+
+  if (storageError) {
+    console.error("document bulk delete storage remove failed", {
+      documentIds,
+      collectionIds,
+      message: storageError.message
+    });
+    return {
+      ok: false as const,
+      message: "删除文件对象失败，未删除数据库记录，请稍后重试。"
+    };
+  }
+
+  const { error: deleteError } = await supabase
+    .from("documents")
+    .delete()
+    .in("id", documentIds);
+
+  if (deleteError) {
+    console.error("document bulk delete database delete failed after storage remove", {
+      documentIds,
+      collectionIds,
+      code: deleteError.code,
+      message: deleteError.message
+    });
+    return {
+      ok: false as const,
+      message: "文件对象已删除，但数据库记录删除失败，请人工复核文件记录。"
+    };
+  }
+
+  for (const collectionId of collectionIds) {
+    await refreshDocumentCollectionStats(supabase, collectionId);
+  }
+
+  return { ok: true as const };
+}
+
 async function ensureRelatedRecordExists(
-  supabase: NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>,
+  supabase: AdminSupabaseClient,
   relatedType: DocumentRelatedType | null,
   relatedId: string | null
 ) {
@@ -201,7 +289,7 @@ async function ensureRelatedRecordExists(
 }
 
 async function getDocumentCollectionForUpload(
-  supabase: NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>,
+  supabase: AdminSupabaseClient,
   collectionId: string | null
 ) {
   if (!collectionId) {
@@ -222,7 +310,7 @@ async function getDocumentCollectionForUpload(
 }
 
 async function refreshDocumentCollectionStats(
-  supabase: NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>,
+  supabase: AdminSupabaseClient,
   collectionId: string | null
 ) {
   if (!collectionId) {
@@ -313,7 +401,7 @@ function getRelatedDetailHref(relatedType: DocumentRelatedType | null, relatedId
 }
 
 async function storageObjectExists(
-  supabase: NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>,
+  supabase: AdminSupabaseClient,
   storagePath: string
 ) {
   const pathParts = storagePath.split("/");
@@ -1103,6 +1191,87 @@ export async function bulkUpdateDocumentRelationsAction(formData: FormData) {
   }));
 }
 
+export async function bulkDeleteDocumentsAction(formData: FormData) {
+  const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to"));
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(error ?? "当前账号没有管理员权限。") }));
+  }
+
+  const parsed = documentBulkDeleteSchema.safeParse({
+    document_ids: getDocumentIdsFromForm(formData),
+    delete_confirm: getOptionalString(formData, "delete_confirm"),
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(parsed.error.issues[0]?.message ?? "请检查批量删除信息。")
+    }));
+  }
+
+  const { data: documents, error: fetchError } = await supabase
+    .from("documents")
+    .select("id,name,storage_bucket,storage_path,collection_id,related_type,related_id")
+    .in("id", parsed.data.document_ids);
+
+  if (fetchError) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(fetchError.message || "读取文件记录失败。")
+    }));
+  }
+
+  if (!documents || documents.length !== parsed.data.document_ids.length) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError("部分文件不存在或没有权限访问。") }));
+  }
+
+  const documentsToDelete = documents as DocumentDeletionRecord[];
+  const collectionIds = uniqueNullableValues(documentsToDelete.map((document) => document.collection_id));
+  const relatedSummaries = getRelatedSummaries(documentsToDelete);
+  const deleteResult = await deleteDocumentRecordsFromStorageAndDatabase(supabase, documentsToDelete);
+
+  if (!deleteResult.ok) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(deleteResult.message) }));
+  }
+
+  await writeActivityLog({
+    action: "document.bulk_delete",
+    entityType: "document",
+    entityId: parsed.data.document_ids[0],
+    metadata: {
+      document_ids: parsed.data.document_ids,
+      document_count: parsed.data.document_ids.length,
+      collection_ids: collectionIds,
+      related_summaries: relatedSummaries
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/documents");
+  revalidatePath(getDashboardPathname(returnTo));
+
+  for (const documentId of parsed.data.document_ids) {
+    revalidatePath(`/dashboard/documents/${documentId}`);
+  }
+
+  for (const collectionId of collectionIds) {
+    revalidatePath(`/dashboard/documents/collections/${collectionId}`);
+  }
+
+  for (const relation of uniqueRelationKeys(documentsToDelete)) {
+    revalidateDocumentPaths({
+      relatedType: relation.relatedType,
+      relatedId: relation.relatedId
+    });
+  }
+
+  redirect(getReturnPathWithMessage(returnTo, {
+    notice: "documents_deleted",
+    count: `${parsed.data.document_ids.length}`
+  }));
+}
+
 export async function deleteDocumentCollectionAction(id: string) {
   const { supabase, isAdmin, error } = await getAdminClient();
   const collectionPath = `/dashboard/documents/collections/${id}`;
@@ -1174,6 +1343,102 @@ export async function deleteDocumentCollectionAction(id: string) {
   redirect("/dashboard/documents?notice=collection_deleted");
 }
 
+export async function deleteDocumentCollectionWithFilesAction(id: string, formData: FormData) {
+  const { supabase, isAdmin, error } = await getAdminClient();
+  const collectionPath = `/dashboard/documents/collections/${id}`;
+
+  if (!supabase || !isAdmin) {
+    redirect(`${collectionPath}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const parsed = documentCollectionDeleteWithFilesSchema.safeParse({
+    confirmation_text: getString(formData, "confirmation_text")
+  });
+
+  if (!parsed.success) {
+    redirect(`${collectionPath}?error=${encodeFormError(parsed.error.issues[0]?.message ?? "请检查删除确认文本。")}`);
+  }
+
+  const { data: collection, error: fetchError } = await supabase
+    .from("document_collections")
+    .select("id,title,collection_type,related_type,related_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    redirect(`${collectionPath}?error=${encodeFormError(fetchError.message || "读取文档包失败。")}`);
+  }
+
+  if (!collection) {
+    redirect(`/dashboard/documents?error=${encodeFormError("文档包不存在或已经被删除。")}`);
+  }
+
+  const { data: documents, error: documentsError } = await supabase
+    .from("documents")
+    .select("id,name,storage_bucket,storage_path,collection_id,related_type,related_id")
+    .eq("collection_id", id);
+
+  if (documentsError) {
+    redirect(`${collectionPath}?error=${encodeFormError(documentsError.message || "读取文档包内文件失败。")}`);
+  }
+
+  const documentsToDelete = (documents ?? []) as DocumentDeletionRecord[];
+  const oldDocumentRelations = uniqueRelationKeys(documentsToDelete);
+  const deleteResult = await deleteDocumentRecordsFromStorageAndDatabase(supabase, documentsToDelete);
+
+  if (!deleteResult.ok) {
+    redirect(`${collectionPath}?error=${encodeFormError(deleteResult.message)}`);
+  }
+
+  const { error: deleteCollectionError } = await supabase
+    .from("document_collections")
+    .delete()
+    .eq("id", id);
+
+  if (deleteCollectionError) {
+    console.error("document collection delete failed after deleting files", {
+      collectionId: id,
+      code: deleteCollectionError.code,
+      message: deleteCollectionError.message
+    });
+    redirect(`${collectionPath}?error=${encodeFormError("文件已删除，但文档包记录删除失败，请人工复核文档包。")}`);
+  }
+
+  const relatedType = collection.related_type as DocumentRelatedType | null;
+  const relatedId = collection.related_id;
+
+  await writeActivityLog({
+    action: "document_collection.delete_with_files",
+    entityType: "document_collection",
+    entityId: id,
+    metadata: {
+      collection_id: id,
+      document_count: documentsToDelete.length,
+      related_type: collection.related_type,
+      related_id: collection.related_id
+    }
+  });
+
+  revalidateDocumentPaths({
+    collectionId: id,
+    relatedType,
+    relatedId
+  });
+
+  for (const document of documentsToDelete) {
+    revalidatePath(`/dashboard/documents/${document.id}`);
+  }
+
+  for (const relation of oldDocumentRelations) {
+    revalidateDocumentPaths({
+      relatedType: relation.relatedType,
+      relatedId: relation.relatedId
+    });
+  }
+
+  redirect(`/dashboard/documents?notice=collection_deleted_with_files&count=${documentsToDelete.length}`);
+}
+
 export async function deleteDocumentAction(id: string) {
   const { supabase, isAdmin, error } = await getAdminClient();
 
@@ -1183,7 +1448,7 @@ export async function deleteDocumentAction(id: string) {
 
   const { data: document, error: fetchError } = await supabase
     .from("documents")
-    .select("id,name,category,storage_bucket,storage_path,file_size,mime_type,collection_id,original_name,relative_path,folder_path,related_type,related_id,visibility,owner_id,created_at")
+    .select("id,name,storage_bucket,storage_path,collection_id,related_type,related_id")
     .eq("id", id)
     .maybeSingle();
 
@@ -1191,37 +1456,11 @@ export async function deleteDocumentAction(id: string) {
     redirect(`/dashboard/documents/${id}?error=${encodeFormError(fetchError?.message || "文件记录不存在。")}`);
   }
 
-  const { error: deleteRecordError } = await supabase.from("documents").delete().eq("id", id);
+  const documentToDelete = document as DocumentDeletionRecord;
+  const deleteResult = await deleteDocumentRecordsFromStorageAndDatabase(supabase, [documentToDelete]);
 
-  if (deleteRecordError) {
-    redirect(`/dashboard/documents/${id}?error=${encodeFormError(deleteRecordError.message || "删除文件记录失败，尚未删除 Storage 对象。")}`);
-  }
-
-  const { error: storageError } = await supabase.storage.from(document.storage_bucket).remove([document.storage_path]);
-
-  if (storageError) {
-    console.error("document storage delete after record delete failed", { message: storageError.message });
-    await supabase
-      .from("documents")
-      .insert({
-        id: document.id,
-        name: document.name,
-        category: document.category,
-        storage_bucket: document.storage_bucket,
-        storage_path: document.storage_path,
-        file_size: document.file_size,
-        mime_type: document.mime_type,
-        collection_id: document.collection_id,
-        original_name: document.original_name,
-        relative_path: document.relative_path,
-        folder_path: document.folder_path,
-        related_type: document.related_type,
-        related_id: document.related_id,
-        visibility: document.visibility,
-        owner_id: document.owner_id,
-        created_at: document.created_at
-      });
-    redirect(`/dashboard/documents/${id}?error=${encodeFormError("删除文件对象失败，已尝试恢复文件记录，请稍后重试。")}`);
+  if (!deleteResult.ok) {
+    redirect(`/dashboard/documents/${id}?error=${encodeFormError(deleteResult.message)}`);
   }
 
   await writeActivityLog({
@@ -1236,12 +1475,11 @@ export async function deleteDocumentAction(id: string) {
     }
   });
 
-  await refreshDocumentCollectionStats(supabase, document.collection_id);
   revalidateDocumentPaths({
     documentId: id,
-    collectionId: document.collection_id,
-    relatedType: document.related_type as DocumentRelatedType | null,
-    relatedId: document.related_id
+    collectionId: documentToDelete.collection_id,
+    relatedType: documentToDelete.related_type as DocumentRelatedType | null,
+    relatedId: documentToDelete.related_id
   });
-  redirect("/dashboard/documents");
+  redirect("/dashboard/documents?notice=documents_deleted&count=1");
 }

@@ -142,6 +142,20 @@ export const documentBulkRelationSchema = z.object({
   }
 });
 
+export const documentBulkDeleteSchema = z.object({
+  document_ids: z.array(z.string().uuid("文件选择无效")).min(1, "请至少选择一个文件。"),
+  delete_confirm: optionalText(),
+  return_to: optionalText()
+}).superRefine((value, ctx) => {
+  if (value.delete_confirm !== "yes") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "请先确认删除操作。",
+      path: ["delete_confirm"]
+    });
+  }
+});
+
 export const documentCollectionRelationSyncSchema = z.object({
   collection_sync_action: z.enum(["sync", "unlink"], { message: "请选择有效的文档包操作" }),
   related_type: z.preprocess((value) => (value === "" ? null : value), z.enum(relatedTypeValues).nullable()).optional().transform((value) => value ?? null),
@@ -172,6 +186,18 @@ export const documentCollectionRelationSyncSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: "整体迁移前请选择目标关联对象。",
       path: ["related_type"]
+    });
+  }
+});
+
+export const documentCollectionDeleteWithFilesSchema = z.object({
+  confirmation_text: z.string().trim()
+}).superRefine((value, ctx) => {
+  if (value.confirmation_text !== "DELETE" && value.confirmation_text !== "删除") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "确认文本不匹配，未执行删除。",
+      path: ["confirmation_text"]
     });
   }
 });
