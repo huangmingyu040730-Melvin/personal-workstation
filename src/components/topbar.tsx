@@ -8,13 +8,17 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/85 px-4 py-4 backdrop-blur-xl lg:ml-[17rem] lg:px-8 xl:px-10 2xl:px-12">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="relative w-full max-w-2xl">
+        <form action="/dashboard/search" className="relative flex w-full max-w-2xl gap-2">
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
+            name="q"
             className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-            placeholder="搜索项目、笔记、成果或 Skill...（UI 占位）"
+            placeholder="搜索项目、知识笔记、成果、Skill、文件名或文档包…"
           />
-        </div>
+          <button className="hidden h-11 shrink-0 rounded-2xl bg-navy-900 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 sm:inline-flex sm:items-center">
+            搜索
+          </button>
+        </form>
         <div className="flex items-center justify-end gap-2">
           <Link href="/dashboard/projects/new" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 hover:shadow-sm" aria-label="新建项目">
             <Plus size={18} />

@@ -259,6 +259,26 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不做 OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
+### Phase 2P-F-1 - Workspace Search
+
+已完成代码实现。后台新增统一研究资产搜索入口：
+
+- 新增 `/dashboard/search` 管理员后台页面。
+- Sidebar 和 Topbar 搜索框进入 `/dashboard/search?q=...`。
+- 搜索范围包括 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections。
+- 搜索只查数据库 metadata，每类最多返回 8 条结果，不做分页。
+- q trim 后少于 2 个字符时不执行查询。
+- 搜索结果按类型分组，并跳转到对应后台详情页。
+
+边界：
+
+- 不新增 migration、索引、RPC、外部搜索服务或向量库。
+- 不读取文件正文，不解析 PDF / Word / Excel / zip。
+- 不做 OCR、AI 文件摘要或向量搜索。
+- 不读取 Storage object，不生成 signed URL，不展示 Storage path。
+- 不新增公开搜索页，不修改公开页面导航。
+- 不修改 Storage policy、RLS、Resume / Career 或 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -292,7 +312,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 目标：
 
 - 保持 Dashboard、Sidebar、公开页和后台主路径稳定。
-- 继续突出 Projects、Knowledge、Skills、Publications、Documents、Calendar 和 Career。
+- 继续突出 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar 和 Career。
 - 确认 Market Brief 不再出现在产品入口、API 主路径或推荐环境变量中。
 - 将求职中心标记为稳定维护状态。
 

@@ -1273,3 +1273,31 @@
 - 不移动、不重命名、不删除 Supabase Storage object。
 - 公开页面、viewer 页面、sitemap 和 robots 仍不展示附件下载入口、Storage 路径、signed URL 或 zip 下载入口。
 - OCR、文件内容索引、AI 文件总结、Skill 包解析或执行继续后延。
+
+## 2026-06-12 - Add Admin Metadata Search Before Content Search
+
+类型：decision
+
+决策：
+
+- Phase 2P-F-1 新增 `/dashboard/search` 作为管理员后台全局搜索入口。
+- 当前搜索只查数据库 metadata，范围包括 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections。
+- 每类最多返回 8 条结果，不做分页；q trim 后少于 2 个字符时不执行查询。
+- 搜索结果按类型分组，并只跳转后台详情页。
+- Documents 搜索只查 `name`、`original_name`、`relative_path`、`folder_path`、`category`、`related_type` 等 metadata。
+- 当前不解析文件正文，不读取 Supabase Storage object，不解析 PDF / Word / Excel / zip，不做 OCR，不做 AI 摘要，不做向量搜索。
+- 当前不新增 migration、数据库索引、RPC、外部搜索服务或向量库。
+- 搜索只在管理员后台开放，不新增公开搜索页，不在公开页面展示 Documents 或附件下载入口。
+
+原因：
+
+- Documents 全生命周期能力完成后，后台研究资产分散在多个模块中，管理员需要跨 Projects、Publications、Knowledge、Skills、Documents 和文档包快速定位资产。
+- 先做 metadata 搜索可以利用现有字段与 RLS 权限边界，避免过早引入文件解析、全文索引、向量库或外部搜索服务。
+
+影响：
+
+- 新增 `src/lib/queries/search.ts`，搜索逻辑集中在查询层并继续由后台管理员保护。
+- 新增 `/dashboard/search` 页面和后台导航入口。
+- 不修改数据库模型、RLS、Storage policy、bucket 或 `storage_path`。
+- 不生成 signed URL，不输出 Storage path，不记录 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+- Resume、Career、Calendar、Profile、Market Brief 和公开页面导航不受影响。
