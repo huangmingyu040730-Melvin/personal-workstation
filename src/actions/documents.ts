@@ -19,6 +19,7 @@ import {
 import {
   documentBulkRelationSchema,
   documentCollectionEditableMetadataSchema,
+  documentCollectionRelationSyncSchema,
   documentCollectionMetadataSchema,
   documentEditableMetadataSchema,
   documentMetadataSchema
@@ -823,6 +824,181 @@ export async function updateDocumentCollectionMetadataAction(id: string, formDat
   });
 
   redirect(`${detailPath}?notice=collection_updated`);
+}
+
+export async function syncDocumentCollectionRelationsAction(id: string, formData: FormData) {
+  const { supabase, isAdmin, error } = await getAdminClient();
+  const detailPath = `/dashboard/documents/collections/${id}`;
+
+  if (!supabase || !isAdmin) {
+    redirect(`${detailPath}?error=${encodeFormError(error ?? "当前账号没有管理员权限。")}`);
+  }
+
+  const relatedValues = relatedValuesFromForm(formData);
+  const syncAction = getString(formData, "collection_sync_action");
+  const parsed = documentCollectionRelationSyncSchema.safeParse({
+    collection_sync_action: syncAction,
+    related_type: syncAction === "unlink" ? null : relatedValues.related_type,
+    related_id: syncAction === "unlink" ? null : relatedValues.related_id
+  });
+
+  if (!parsed.success) {
+    redirect(`${detailPath}?error=${encodeFormError(parsed.error.issues[0]?.message ?? "请检查文档包同步信息。")}`);
+  }
+
+  const nextRelatedType = parsed.data.collection_sync_action === "unlink"
+    ? null
+    : parsed.data.related_type as DocumentRelatedType | null;
+  const nextRelatedId = parsed.data.collection_sync_action === "unlink" ? null : parsed.data.related_id;
+  const relatedExists = await ensureRelatedRecordExists(supabase, nextRelatedType, nextRelatedId);
+
+  if (!relatedExists) {
+    redirect(`${detailPath}?error=${encodeFormError("目标关联对象不存在，请重新选择。")}`);
+  }
+
+  const { data: collection, error: fetchError } = await supabase
+    .from("document_collections")
+    .select("id,title,collection_type,related_type,related_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError || !collection) {
+    redirect(`${detailPath}?error=${encodeFormError(fetchError?.message || "文档包不存在或无权限访问。")}`);
+  }
+
+  const { data: documents, error: documentsError } = await supabase
+    .from("documents")
+    .select("id,collection_id,related_type,related_id")
+    .eq("collection_id", id);
+
+  if (documentsError) {
+    redirect(`${detailPath}?error=${encodeFormError(documentsError.message || "读取文档包内文件失败。")}`);
+  }
+
+  const documentsInCollection = documents ?? [];
+  const oldRelatedType = collection.related_type as DocumentRelatedType | null;
+  const oldRelatedId = collection.related_id;
+  const oldDocumentRelations = uniqueRelationKeys(documentsInCollection);
+  const documentRollbackGroups = documentsInCollection.reduce<Array<{
+    documentIds: string[];
+    relatedType: DocumentRelatedType | null;
+    relatedId: string | null;
+  }>>((groups, document) => {
+    const relatedType = document.related_type as DocumentRelatedType | null;
+    const relatedId = document.related_id;
+    const existingGroup = groups.find((group) => group.relatedType === relatedType && group.relatedId === relatedId);
+
+    if (existingGroup) {
+      existingGroup.documentIds.push(document.id);
+    } else {
+      groups.push({
+        documentIds: [document.id],
+        relatedType,
+        relatedId
+      });
+    }
+
+    return groups;
+  }, []);
+
+  const { error: documentsUpdateError } = await supabase
+    .from("documents")
+    .update({
+      related_type: nextRelatedType,
+      related_id: nextRelatedId
+    })
+    .eq("collection_id", id);
+
+  if (documentsUpdateError) {
+    console.error("syncDocumentCollectionRelationsAction documents update failed", {
+      collectionId: id,
+      code: documentsUpdateError.code,
+      message: documentsUpdateError.message
+    });
+    redirect(`${detailPath}?error=${encodeFormError(documentsUpdateError.message || "同步包内文件关联失败，文档包关联未修改。")}`);
+  }
+
+  const { error: collectionUpdateError } = await supabase
+    .from("document_collections")
+    .update({
+      related_type: nextRelatedType,
+      related_id: nextRelatedId
+    })
+    .eq("id", id);
+
+  if (collectionUpdateError) {
+    console.error("syncDocumentCollectionRelationsAction collection update failed", {
+      collectionId: id,
+      code: collectionUpdateError.code,
+      message: collectionUpdateError.message
+    });
+
+    let rollbackFailed = false;
+
+    for (const group of documentRollbackGroups) {
+      const { error: rollbackError } = await supabase
+        .from("documents")
+        .update({
+          related_type: group.relatedType,
+          related_id: group.relatedId
+        })
+        .in("id", group.documentIds);
+
+      if (rollbackError) {
+        rollbackFailed = true;
+        console.error("syncDocumentCollectionRelationsAction documents rollback failed", {
+          collectionId: id,
+          code: rollbackError.code,
+          message: rollbackError.message
+        });
+      }
+    }
+
+    if (rollbackFailed) {
+      redirect(`${detailPath}?error=${encodeFormError("文档包关联更新失败，且包内文件回滚未完全成功，请检查文档包内文件关联后重试。")}`);
+    }
+
+    redirect(`${detailPath}?error=${encodeFormError(collectionUpdateError.message || "文档包关联更新失败，包内文件已尝试恢复原关联。")}`);
+  }
+
+  const isUnlink = parsed.data.collection_sync_action === "unlink";
+
+  await writeActivityLog({
+    action: isUnlink ? "document_collection.bulk_unlink" : "document_collection.sync_relations",
+    entityType: "document_collection",
+    entityId: id,
+    metadata: {
+      collection_id: id,
+      document_count: documentsInCollection.length,
+      old_related_type: collection.related_type,
+      old_related_id: collection.related_id,
+      ...(isUnlink ? {} : {
+        new_related_type: nextRelatedType,
+        new_related_id: nextRelatedId
+      })
+    }
+  });
+
+  revalidateDocumentPaths({
+    collectionId: id,
+    relatedType: oldRelatedType,
+    relatedId: oldRelatedId
+  });
+  revalidateDocumentPaths({
+    collectionId: id,
+    relatedType: nextRelatedType,
+    relatedId: nextRelatedId
+  });
+
+  for (const relation of oldDocumentRelations) {
+    revalidateDocumentPaths({
+      relatedType: relation.relatedType,
+      relatedId: relation.relatedId
+    });
+  }
+
+  const notice = isUnlink ? "collection_relations_unlinked" : "collection_relations_synced";
+  redirect(`${detailPath}?notice=${notice}&count=${documentsInCollection.length}`);
 }
 
 export async function bulkUpdateDocumentRelationsAction(formData: FormData) {

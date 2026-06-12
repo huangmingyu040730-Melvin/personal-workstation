@@ -271,7 +271,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 / 2P-E-1-B 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理、批量关联整理和内容详情页分组展示。
+- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理、批量关联整理、内容详情页分组展示和文档包整体迁移 / 同步关联工具。
 
 步骤：
 
@@ -290,16 +290,19 @@ npm run build
 13. Skill 包、代码文件和压缩包只作为私密文件存储，不执行、不解析、不安装。
 14. 文件详情页只允许编辑显示名称、分类和关联对象，不允许编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id。
 15. 文档包详情页只允许编辑名称、描述、类型和关联对象，不允许手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。
-16. 修改文档包关联对象时，不自动批量修改包内文件的 `related_type` / `related_id`；如不一致，提示管理员去文件详情页单独调整。
+16. 普通“编辑文档包信息”只修改文档包 metadata，不自动批量修改包内文件的 `related_type` / `related_id`。
 17. Documents 列表和文档包详情页允许勾选多个文件后批量移动关联对象或批量解除关联。
 18. 批量移动只更新 `documents.related_type` 与 `documents.related_id`，目标关联对象必须在 Server Action 中重新校验存在。
 19. 批量解除关联只把 `documents.related_type` 与 `documents.related_id` 置空；不修改 `collection_id`。
 20. 文档包详情页的批量操作只修改包内文件 metadata，不修改文档包自身关联对象。
 21. 批量操作的 `return_to` 必须限制为站内 `/dashboard` 路径，避免 open redirect。
 22. RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件展示：当前对象文档包内文件由文档包卡片代表，不在独立文件中重复展示。
-23. 如果只是移动个别文件或一批文件，使用 2P-E-1 的批量文件关联能力。
-24. 如果要整体迁移一个资料包，当前需要分别调整文档包关联和包内文件关联；后续可做文档包整体迁移 / 同步关联工具。
-25. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
+23. 单个文件调整：使用文件详情页，只修改该文件 metadata。
+24. 多个文件调整：使用 Documents 列表或文档包详情页的批量移动 / 批量解除关联，只修改所选文件 metadata。
+25. 整个资料包调整：使用文档包详情页的整体迁移 / 同步关联工具，同步修改文档包和包内全部文件的 `related_type` / `related_id`。
+26. 文档包整体迁移 / 同步关联必须由 Server Action 按 `collection_id` 查询包内文件，不接收前端传入的文件 ID 或文件数量。
+27. 文档包整体解除关联会把文档包和包内全部文件的 `related_type` / `related_id` 置空，但不修改 `collection_id`。
+28. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
 
 验证要求：
 
@@ -311,4 +314,5 @@ npm run build
 - metadata 编辑验收不需要新增 migration；确认 0018 已执行即可。
 - 批量移动和批量解除关联验收不需要新增 migration；确认 0018 已执行即可。
 - RelatedDocumentsPanel 分组展示验收不需要新增 migration；确认当前查询返回文档包和文件记录即可。
+- 文档包整体迁移 / 同步关联验收不需要新增 migration；确认 0018 已执行，并验证文档包和包内文件的关联对象一起更新或一起置空。
 - 不新增公开下载、批量 zip 下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行能力。

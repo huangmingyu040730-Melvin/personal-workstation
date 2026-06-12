@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Upload } from "lucide-react";
 import { notFound } from "next/navigation";
-import { deleteDocumentCollectionAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
+import { deleteDocumentCollectionAction, syncDocumentCollectionRelationsAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
 import { AdminDangerZone, AdminEmptyState, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DocumentBulkActionsForm } from "@/components/forms/document-bulk-actions-form";
 import { DocumentCollectionForm } from "@/components/forms/document-collection-form";
+import { DocumentCollectionSyncForm } from "@/components/forms/document-collection-sync-form";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { getDocumentCollectionTypeLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
@@ -45,9 +46,12 @@ export default async function DocumentCollectionDetailPage({
   const updatedNotice = query.notice === "collection_updated";
   const bulkUpdatedNotice = query.notice === "bulk_relations_updated";
   const bulkUnlinkedNotice = query.notice === "bulk_unlinked";
+  const collectionSyncedNotice = query.notice === "collection_relations_synced";
+  const collectionUnlinkedNotice = query.notice === "collection_relations_unlinked";
   const bulkCount = Number(getSingleQueryValue(query.count) ?? 0);
   const deleteAction = deleteDocumentCollectionAction.bind(null, collection.id);
   const updateAction = updateDocumentCollectionMetadataAction.bind(null, collection.id);
+  const syncAction = syncDocumentCollectionRelationsAction.bind(null, collection.id);
   const relatedOptions = { projects, publications, knowledgeNotes, skills };
   const collectionReturnTo = `/dashboard/documents/collections/${collection.id}`;
   const hasRelationMismatch = documents.some((document) => (
@@ -89,10 +93,20 @@ export default async function DocumentCollectionDetailPage({
             已解除 {bulkCount || documents.length} 个文件的关联对象。Storage object 未移动、未删除，文档包归属没有改变。
           </div>
         ) : null}
+        {collectionSyncedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            已将文档包及 {bulkCount || documents.length} 个文件整体迁移到目标对象。
+          </div>
+        ) : null}
+        {collectionUnlinkedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            已解除文档包及 {bulkCount || documents.length} 个文件的关联。Storage object 未移动、未删除。
+          </div>
+        ) : null}
         <AdminSecurityNote>文档包只是私密附件管理层。即使关联公开 Project、Publication、Knowledge 或 Skill，也不会在公开页面展示附件下载入口。</AdminSecurityNote>
         {hasRelationMismatch ? (
           <div className="rounded-3xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-            文档包关联对象与部分文件关联对象可能不同；文件级关联请在文件详情页单独调整。
+            文档包关联对象与部分文件关联对象可能不同；如需整体迁移资料包，请使用“同步文档包与包内文件关联”。
           </div>
         ) : null}
 
@@ -154,6 +168,13 @@ export default async function DocumentCollectionDetailPage({
             <DocumentCollectionForm
               action={updateAction}
               collection={collection}
+              relatedOptions={relatedOptions}
+            />
+
+            <DocumentCollectionSyncForm
+              action={syncAction}
+              collection={collection}
+              documentCount={documents.length}
               relatedOptions={relatedOptions}
             />
 

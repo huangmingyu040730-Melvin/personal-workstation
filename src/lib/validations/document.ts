@@ -141,3 +141,37 @@ export const documentBulkRelationSchema = z.object({
     });
   }
 });
+
+export const documentCollectionRelationSyncSchema = z.object({
+  collection_sync_action: z.enum(["sync", "unlink"], { message: "请选择有效的文档包操作" }),
+  related_type: z.preprocess((value) => (value === "" ? null : value), z.enum(relatedTypeValues).nullable()).optional().transform((value) => value ?? null),
+  related_id: optionalText()
+}).superRefine((value, ctx) => {
+  if (value.collection_sync_action !== "sync") {
+    return;
+  }
+
+  if (value.related_id && !value.related_type) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "选择关联对象时需要同时选择关联类型",
+      path: ["related_type"]
+    });
+  }
+
+  if (value.related_type && !value.related_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "选择关联类型后需要选择关联对象",
+      path: ["related_id"]
+    });
+  }
+
+  if (!value.related_type && !value.related_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "整体迁移前请选择目标关联对象。",
+      path: ["related_type"]
+    });
+  }
+});
