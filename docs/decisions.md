@@ -1255,7 +1255,7 @@
 - zip 由 Route Handler 按请求临时生成，不保存到 Supabase Storage，不创建持久化 zip 记录。
 - zip 下载只对管理员后台开放；Route Handler 必须重新校验管理员身份，不能只依赖 `/dashboard` 路径保护。
 - zip 内部文件名优先使用 `relative_path`、`original_name`、`name`，允许中文文件名，但必须清理 `..`、开头 `/`、控制字符和 Windows 不兼容字符。
-- 为控制 serverless 内存与执行时间风险，单次 zip 限制为最多 50 个文件、总原始大小 100 MB。
+- 为控制 serverless 内存与执行时间风险，单次 zip 限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查。
 - 如果超过限制、文件不存在、文档包为空或任一 Storage object 下载失败，整个 zip 下载失败，不部分打包。
 - Activity Log 只记录 document ids、document_count、collection id 和 total_size；不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 

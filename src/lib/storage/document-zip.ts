@@ -96,7 +96,7 @@ export async function buildDocumentZipArchive(
     }
 
     const arrayBuffer = await data.arrayBuffer();
-    totalSize += document.file_size ?? arrayBuffer.byteLength;
+    totalSize += arrayBuffer.byteLength;
 
     if (totalSize > MAX_ZIP_TOTAL_BYTES) {
       return { ok: false, status: 400, message: DOCUMENT_ZIP_LIMIT_MESSAGE };

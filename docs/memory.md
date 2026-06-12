@@ -101,7 +101,7 @@ Documents / Storage：
 - 删除整个文档包及文件会删除包内文件记录、对应 Storage object 和 `document_collections` 记录；确认文本必须为 `DELETE` 或 `删除`。
 - Documents 删除流程采用先 Storage object、后数据库记录的保守顺序；当前不新增数据库事务或 RPC。
 - zip 下载按请求临时生成，不保存到 Storage；仅管理员后台可用，不公开 signed URL、Storage 路径或持久 zip 链接。
-- zip 下载限制为最多 50 个文件、总原始大小 100 MB；超限或任一 Storage object 下载失败时不部分打包。
+- zip 下载限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限或任一 Storage object 下载失败时不部分打包。
 - 单文件上限为 50 MB；批量 / 文件夹上传单次最多 100 个文件、总量 200 MB。
 - 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。
 - 不支持 exe、dmg、app、msi、bat、cmd。

@@ -254,7 +254,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改数据库模型、RLS、Storage policy、bucket 或 `storage_path`。
 - 不移动、不重命名、不删除 Supabase Storage object。
 - zip 下载仅限管理员后台，不新增公开附件入口，不暴露 Storage 路径或 signed URL。
-- 当前限制：最多 50 个文件，总原始大小 100 MB。
+- 当前限制：最多 50 个文件，总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查。
 - 任一 Storage object 下载失败或超过限制时不部分打包。
 - 不做 OCR、文件内容索引、AI 文件总结、Skill 包解析或执行。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。

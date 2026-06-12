@@ -315,7 +315,7 @@ npm run build
 38. 需要下载整个资料包时，在文档包详情页或内容详情页文档包卡片使用“下载 zip”。
 39. zip 下载由 Route Handler 重新校验管理员身份并重新查询文件记录，不信任前端传入的文件名、Storage 路径、大小或数量。
 40. zip 按请求临时生成，不保存到 Storage，不创建持久化 zip 记录。
-41. zip 下载限制为最多 50 个文件、总原始大小 100 MB；超限时拆分下载。
+41. zip 下载限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限时拆分下载，系统不生成部分 zip。
 42. zip 下载失败时不部分打包，不输出 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 
 验证要求：

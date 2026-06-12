@@ -266,7 +266,7 @@ Phase 2C 使用 Supabase Storage bucket：
 - 批量删除文件和删除整个文档包及文件采用保守顺序：先删除 private Storage object，再删除 `documents` / `document_collections` 记录；该流程不新增数据库事务或 RPC，失败时显示中文安全错误并要求人工复核。
 - 下载使用 60 秒短时 signed URL，不保存到数据库，也不在公开页面输出。
 - zip 下载通过 `jszip` 在请求时临时生成，不保存到 Storage；仅管理员后台可用，不公开 signed URL、Storage 路径或 zip 持久链接。
-- zip 下载当前限制为最多 50 个文件、总原始大小 100 MB；超限或任一 Storage object 读取失败时不部分打包。
+- zip 下载当前限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限或任一 Storage object 读取失败时不部分打包。
 - 单文件上传限制为 50 MB；批量 / 文件夹上传单次最多 100 个文件、总量 200 MB，并同时校验扩展名与 MIME type。
 - 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。
 - 不支持 exe、dmg、app、msi、bat、cmd；上传的代码和 Skill 包只作为私密文件存储，不执行、不解析、不安装。

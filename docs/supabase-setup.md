@@ -440,7 +440,7 @@ Phase 2C 使用：
 - 附件即使关联到 public Project、Publication、Knowledge 或 Skill，本轮仍保持私密。
 - 删除文件、批量删除文件和删除整个文档包及文件时先删除 Storage 对象，再删除 `documents` / `document_collections` 记录；失败时向管理员显示中文安全提示。
 - 当前删除流程不新增数据库事务或 RPC；如果 Storage 成功但数据库删除失败，需要人工复核数据库记录和 Storage 状态。
-- zip 下载最多 50 个文件、总原始大小 100 MB；超限或任一 Storage object 下载失败时不部分打包。
+- zip 下载最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限或任一 Storage object 下载失败时不部分打包。
 - zip 下载不保存 signed URL、Storage 路径或持久 zip 文件。
 
 ## Phase 2B / 2C 真实 CRUD
