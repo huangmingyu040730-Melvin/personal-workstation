@@ -56,7 +56,7 @@
 - Documents 批量删除文件与删除整个文档包及文件能力。
 - Documents 多文件与文档包 zip 临时下载能力。
 - 后台全局搜索 `/dashboard/search`，按研究资产 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包，并支持类型筛选、统计和关键词高亮。
-- 研究资产显式关联关系 `research_asset_links`，用于在 Project / Knowledge / Skill / Publication 之间维护管理员手动确认的关系和 backlinks，并支持关系编辑、筛选统计和目标资产本地筛选。
+- 研究资产显式关联关系 `research_asset_links`，用于在 Project / Knowledge / Skill / Publication 之间维护管理员手动确认的关系和 backlinks，并支持关系编辑、筛选统计、目标资产本地筛选和后台全局关系图谱。
 - Project 后台详情页研究中枢：集中展示项目概览、研究问题、背景、方法、里程碑、私密附件、相关知识笔记 / 学术成果和快捷操作。
 - Knowledge 后台详情页知识节点：集中展示知识摘要、正文、分类、标签、关联 Project、私密附件、同项目成果和搜索入口。
 - Skill 后台详情页能力包 / 工作流包：集中展示用途、平台、版本、状态、使用说明、私密资料、版本记录和相关资产搜索入口。
@@ -112,15 +112,18 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 新增关系表单支持按标题和 metadata 本地筛选目标资产；目标候选仍使用受限数量的数据库 metadata，不读取文件内容或 Storage。
 - 关系列表支持总数、outbound、inbound、当前筛选数量和关系类型数量统计，并支持按方向、对方资产类型和 relation_type 筛选。
 - 已有关系可编辑 relation_type 和 note；source / target 不允许编辑，如需更换目标资产需删除后重新创建。
+- 新增 `/dashboard/network` 只读研究资产网络视图，最多读取最近更新的 200 条显式关系，展示节点总数、关系总数、四类资产节点数量、relation_type 数量、节点分组和全局关系列表。
+- 关系图谱页支持按资产类型、relation_type 和节点标题 / metadata 关键词做前端本地筛选；点击节点、source 或 target 可回到对应后台详情页。
 - 现有 `knowledge_notes.project_id`、`publications.project_id` 关系继续保留，不迁移、不删除、不自动推断。
 
 边界：
 
 - 关系只在管理员后台使用，不新增公开关系展示。
 - Documents 不纳入 `research_asset_links`，继续使用 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
-- Phase 2Q-B-2 不新增 migration，不修改 `0019_research_asset_links.sql`，不新增 RPC，也不引入数据库事务。
+- Phase 2Q-B-2 / 2Q-B-3 不新增 migration，不修改 `0019_research_asset_links.sql`，不新增 RPC，也不引入数据库事务。
+- `/dashboard/network` 只读，不提供 create / edit / delete，不做批量关系管理。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
-- 不做 AI 自动关联、图谱可视化、拖拽连线或复杂权限继承。
+- 不做 AI 自动关联、复杂图谱库、拖拽连线、图谱编辑或复杂权限继承。
 - 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 逻辑、Resume / Career 或 Market Brief。
 
 ### Project Detail Research Hub
@@ -343,7 +346,7 @@ Phase 2Q-B-1 新增研究资产显式关系底座后需要继续执行：
 
 `0019` 创建 `research_asset_links`，只覆盖 Project / Knowledge / Skill / Publication 的管理员后台显式关系。该 migration 不纳入 Documents，不修改 Storage policy，不新增 RPC，不开放 public / viewer / restricted 读取。
 
-Phase 2Q-B-2 只优化显式关系管理体验，不新增 migration，不修改已执行的 `0019_research_asset_links.sql`。
+Phase 2Q-B-2 / 2Q-B-3 只优化显式关系管理体验和后台只读网络视图，不新增 migration，不修改已执行的 `0019_research_asset_links.sql`。
 
 规则：
 

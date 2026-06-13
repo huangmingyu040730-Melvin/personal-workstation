@@ -425,6 +425,28 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不做 AI 自动关联、关系图谱可视化、拖拽连线、批量导入、批量删除或复杂权限继承。
 - 不修改 Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
 
+### Phase 2Q-B-3 - Research Asset Network View MVP
+
+已完成代码实现。基于 2Q-B-1 / 2Q-B-2 的显式关系底座，新增管理员后台只读研究资产网络视图：
+
+- 新增 `/dashboard/network`，并在后台侧边栏显示“关系图谱”入口。
+- 最多读取最近更新的 200 条 `research_asset_links`，节点只来自这些关系的 source / target。
+- 页面展示节点总数、关系总数、Project / Knowledge / Skill / Publication 节点数量和 relation_type 数量。
+- 采用轻量分组列表图谱：按资产类型展示节点卡片、出度、入度和详情入口，不引入复杂图谱库。
+- 页面下方展示只读“全部关系列表”，source / target 均可跳转到对应后台详情页。
+- 支持按资产类型、relation_type 和节点标题 / metadata 关键词进行前端本地筛选。
+- 四类资产详情页的显式关联资产区域增加“查看关系图谱”入口。
+
+边界：
+
+- `/dashboard/network` 只读，不提供 create / edit / delete；关系维护仍在资产详情页完成。
+- 只展示 Project / Knowledge / Skill / Publication；Documents 仍不纳入图谱。
+- 不新增 schema，不修改 `0019_research_asset_links.sql`，不新增 migration、RPC 或数据库事务。
+- 不引入 d3、cytoscape、react-flow 等复杂图谱库，不做拖拽连线、图谱编辑或批量关系管理。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
+- 不做 AI 自动关联、公开展示、向量搜索、外部搜索服务或复杂权限继承。
+- 不修改 Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。

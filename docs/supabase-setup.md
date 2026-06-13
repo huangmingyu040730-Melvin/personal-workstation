@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包，Phase 2Q-A-4 增强 Publication 后台详情页成果中枢。Phase 2Q-B-1 新增 `research_asset_links` 显式关系表，用于 Project / Knowledge / Skill / Publication 的管理员后台关系与 backlinks。Phase 2Q-B-2 只优化显式关系管理体验，不新增 Supabase migration。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包，Phase 2Q-A-4 增强 Publication 后台详情页成果中枢。Phase 2Q-B-1 新增 `research_asset_links` 显式关系表，用于 Project / Knowledge / Skill / Publication 的管理员后台关系与 backlinks。Phase 2Q-B-2 只优化显式关系管理体验，不新增 Supabase migration。Phase 2Q-B-3 新增后台只读研究资产关系图谱 `/dashboard/network`，继续读取 0019 已有关系表和四类资产基础 metadata，不新增 Supabase migration。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -58,7 +58,7 @@ AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODE
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 均不新增 migration，继续依赖既有字段。Phase 2Q-B-1 新增 `0019_research_asset_links.sql`，只创建管理员后台显式资产关系表，不修改 Documents、Storage policy 或公开读取规则。Phase 2Q-B-2 不新增 migration，继续依赖已执行的 0019。执行 0019 后，后续数据库变更应新增 `0020_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 均不新增 migration，继续依赖既有字段。Phase 2Q-B-1 新增 `0019_research_asset_links.sql`，只创建管理员后台显式资产关系表，不修改 Documents、Storage policy 或公开读取规则。Phase 2Q-B-2 / 2Q-B-3 不新增 migration，继续依赖已执行的 0019。执行 0019 后，后续数据库变更应新增 `0020_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -382,7 +382,7 @@ Document Collection 权限边界：
 - 本阶段不做 OCR、文件内容索引或 AI 总结。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
-Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 / 2Q-B-2 只使用既有字段增强后台管理能力，不新增 migration。文件 metadata 编辑只更新显示名称、分类和关联对象；文档包 metadata 编辑只更新名称、描述、类型和关联对象；批量移动和批量解除关联只更新 `documents.related_type` / `documents.related_id`；RelatedDocumentsPanel 分组展示只改变后台展示；文档包整体迁移 / 同步关联只同步更新 `document_collections.related_type / related_id` 和包内全部 `documents.related_type / related_id`；批量删除文件会删除所选 `documents` 记录与对应 Storage object，删除整个文档包及文件会删除包内文件和 `document_collections` 记录；zip 下载按请求临时读取 Storage object 并生成响应；全局搜索只查询 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections metadata，类型筛选和关键词高亮只影响展示体验；Project 研究中枢只聚合现有 Project 字段、私密附件面板和相关资产 metadata；Knowledge 知识节点只聚合现有 Knowledge 字段、关联 Project、同项目 Publications、私密附件面板和搜索入口；Skill 能力包只聚合现有 Skill 字段、版本记录、私密附件面板和搜索入口；Publication 成果中枢只聚合现有 Publication 字段、关联 Project、同项目 Knowledge、私密附件面板和搜索入口；显式关系管理 polish 只更新 `research_asset_links.relation_type` 与 `note`，并在客户端筛选已查询关系和目标候选。这些操作不会修改 `storage_path` 生成规则，不会移动或重命名 Supabase Storage object，不会修改 Storage policy，也不会新增数据库事务或 RPC。
+Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 / 2Q-B-2 / 2Q-B-3 只使用既有字段增强后台管理能力，不新增 migration。文件 metadata 编辑只更新显示名称、分类和关联对象；文档包 metadata 编辑只更新名称、描述、类型和关联对象；批量移动和批量解除关联只更新 `documents.related_type` / `documents.related_id`；RelatedDocumentsPanel 分组展示只改变后台展示；文档包整体迁移 / 同步关联只同步更新 `document_collections.related_type / related_id` 和包内全部 `documents.related_type / related_id`；批量删除文件会删除所选 `documents` 记录与对应 Storage object，删除整个文档包及文件会删除包内文件和 `document_collections` 记录；zip 下载按请求临时读取 Storage object 并生成响应；全局搜索只查询 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections metadata，类型筛选和关键词高亮只影响展示体验；Project 研究中枢只聚合现有 Project 字段、私密附件面板和相关资产 metadata；Knowledge 知识节点只聚合现有 Knowledge 字段、关联 Project、同项目 Publications、私密附件面板和搜索入口；Skill 能力包只聚合现有 Skill 字段、版本记录、私密附件面板和搜索入口；Publication 成果中枢只聚合现有 Publication 字段、关联 Project、同项目 Knowledge、私密附件面板和搜索入口；显式关系管理 polish 只更新 `research_asset_links.relation_type` 与 `note`，并在客户端筛选已查询关系和目标候选；后台关系图谱只读取最近更新的 200 条 `research_asset_links` 和四类资产基础 metadata，筛选只发生在应用展示层。这些操作不会修改 `storage_path` 生成规则，不会移动或重命名 Supabase Storage object，不会修改 Storage policy，也不会新增数据库事务或 RPC。
 
 Phase 2Q-B-1 新增研究资产显式关系。合并对应代码后，新建环境或生产环境需要继续运行：
 
@@ -409,7 +409,8 @@ Research Asset Links 权限边界：
 - Documents 不纳入 `research_asset_links`；文件和文档包继续走 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
 - 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除。
 - Phase 2Q-B-2 不新增 migration；编辑关系只允许更新 `relation_type` 与 `note`，source / target 需要删除后重新创建。
-- 不新增 RPC，不引入数据库事务，不做 AI 自动关联、图谱可视化、拖拽连线或复杂权限继承。
+- Phase 2Q-B-3 不新增 migration；`/dashboard/network` 只读展示最近更新的 200 条关系、节点分组、统计、筛选和全局关系列表，不提供 create / edit / delete。
+- 不新增 RPC，不引入数据库事务，不做 AI 自动关联、复杂图谱库、拖拽连线或复杂权限继承。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 
 ## 创建管理员
@@ -508,7 +509,7 @@ Phase 2C 使用：
 - Document collections 和文件夹上传 metadata 依赖 0018 migration；未执行 0018 时，多文件 / 文件夹上传、Knowledge 附件关联和 collection 详情页无法完成真实读写。
 - Document metadata、collection metadata 编辑和批量关联整理不需要 0019 migration；只要求既有 `documents` 与 `document_collections` 字段可用。
 - `/dashboard/search` metadata 搜索、type 筛选和关键词高亮不需要 0019 migration；未执行 0018 时，文档包相关搜索结果会缺少真实 collection 数据。
-- 研究资产显式关系依赖 0019 migration；未执行 0019 时，四类后台详情页的显式关系读写会失败或显示空关系。
+- 研究资产显式关系依赖 0019 migration；未执行 0019 时，四类后台详情页的显式关系读写会失败或显示空关系，`/dashboard/network` 也无法展示真实关系网络。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。
@@ -529,6 +530,7 @@ npm run build
 - 查询不到 private 数据：确认当前登录用户是管理员，并确认 RLS migration 已执行。
 - 文件上传失败：确认生产 Supabase 已执行 `0003_publications_documents_storage.sql` 和 `0018_document_collections_and_folder_uploads.sql`，bucket 为 private，且当前用户在 `admin_users` 中。
 - 显式资产关系保存失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且 source / target 资产真实存在。
+- 关系图谱为空或读取失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且目标环境已有 Project / Knowledge / Skill / Publication 之间的显式关系记录。
 - 文件类型被拒绝：确认扩展名和 MIME type 都在白名单中，单文件不超过 50 MB，批次不超过 100 个文件 / 200 MB，且不是 exe、dmg、app、msi、bat 或 cmd。
 - Viewer 登录失败：已知问题，后续 Phase 2I 专项排查。先确认 0005、0006 已执行，Auth callback URL 已配置，再结合 Supabase Auth 日志与 Vercel Function 日志定位。
 - 本地构建没有 Supabase 环境变量：这是预期行为，未配置时会保留 mock preview。

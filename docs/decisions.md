@@ -1499,3 +1499,33 @@
 - CreateAssetLinkForm 增加目标资产本地筛选与筛选数量提示。
 - 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-13 - Add Read-Only Research Asset Network View
+
+类型：decision
+
+决策：
+
+- Phase 2Q-B-3 新增 `/dashboard/network`，作为管理员后台只读研究资产网络视图 MVP。
+- Network View 只展示 Project / Knowledge / Skill / Publication 四类资产，数据来自 `research_asset_links`。
+- 页面最多读取最近更新的 200 条显式关系，节点只来自这些关系的 source / target。
+- MVP 采用轻量分组列表图谱和全局关系列表，不引入 d3、cytoscape、react-flow 等复杂图谱库。
+- 页面提供资产类型、relation_type 和节点标题 / metadata 关键词的前端本地筛选。
+- Network View 只读，不提供 create / edit / delete；关系创建、编辑和删除仍在各资产详情页的 AssetLinksPanel 完成。
+- Documents 不纳入图谱；Documents 与文档包继续使用 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
+- 本阶段不新增 schema，不修改 `0019_research_asset_links.sql`，不新增 migration、RPC 或数据库事务。
+- 暂不做 AI 自动关联、图谱自动推理、公开展示、复杂权限继承、拖拽连线、图谱编辑、批量导入或批量删除。
+
+原因：
+
+- 2Q-B-1 / 2Q-B-2 已让单个资产详情页可以维护局部显式关系，但当关系变多时需要一个全局视角查看研究资产网络。
+- 列表式网络能先满足节点、出入度、关系方向和全局筛选需求，同时保持可维护性，避免过早引入复杂图谱交互和依赖。
+- 只读页面可以降低误操作风险；关系写入继续集中在资产详情页现有管理流程中。
+- 已执行的 0019 migration 应保持稳定，网络视图只读取既有关系和 metadata。
+
+影响：
+
+- 新增 `src/lib/queries/asset-network.ts`、`src/app/dashboard/network/page.tsx` 和轻量网络视图组件。
+- 后台侧边栏新增“关系图谱”入口，AssetLinksPanel 增加“查看关系图谱”快捷入口。
+- 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
