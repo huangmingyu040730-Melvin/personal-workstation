@@ -406,6 +406,25 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不做 AI 自动关联、关系图谱可视化、拖拽连线、公开展示或复杂权限继承。
 - 不修改 Resume / Career、viewer/restricted 或 Market Brief。
 
+### Phase 2Q-B-2 - Research Asset Links Management Polish
+
+已完成代码实现。基于 2Q-B-1 的 `research_asset_links` 底座，显式关联资产区域增强后台管理体验：
+
+- 新增关系表单支持本地筛选目标资产，按目标标题和 metadata 匹配，不做异步搜索或外部搜索。
+- 关系列表新增总数、outbound、inbound、当前筛选数量和 relation_type 数量统计。
+- 关系列表支持按方向、对方资产类型和 relation_type 筛选；筛选只在当前页面已查询结果中完成，不写入 URL。
+- 关系卡片展示对方资产类型、标题、中文关系标签、方向、关系句子、备注、更新时间、打开对方资产、编辑关系和删除关系。
+- 编辑关系只允许修改 `relation_type` 与 `note`；source / target 不允许修改，如需更换目标资产需要删除后重新创建。
+
+边界：
+
+- 本阶段只增强管理员后台管理体验，不新增公开页面展示。
+- 关系仍只覆盖 Project / Knowledge / Skill / Publication；Documents 仍不纳入 `research_asset_links`。
+- 不新增 migration，不修改 `0019_research_asset_links.sql`，不新增 RPC，不引入数据库事务。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
+- 不做 AI 自动关联、关系图谱可视化、拖拽连线、批量导入、批量删除或复杂权限继承。
+- 不修改 Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
