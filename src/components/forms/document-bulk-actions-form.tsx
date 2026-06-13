@@ -4,12 +4,13 @@ import Link from "next/link";
 import { Download, FileText, Link2, MoveRight, Trash2, Unlink } from "lucide-react";
 import { useState } from "react";
 import { addDocumentAssetLinksAction, bulkDeleteDocumentsAction, bulkRemoveDocumentAssetLinksAction, bulkUpdateDocumentRelationsAction } from "@/actions/documents";
-import { VisibilityBadge } from "@/components/badge";
 import { DocumentRelationChips } from "@/components/documents/document-relation-chips";
+import { DocumentVisibilityBadge } from "@/components/documents/document-visibility-badge";
 import { documentAssetRelationTypes, getDocumentCategoryLabel } from "@/lib/content-options";
 import type { DocumentWithRelation } from "@/lib/content-types";
 import { formatDateTime, formatFileSize } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DocumentAssetLinkPicker } from "./document-asset-link-picker";
 import { DocumentRelatedSelect, type DocumentRelatedOptions } from "./document-related-select";
 import { SubmitButton } from "./submit-button";
 
@@ -77,15 +78,13 @@ export function DocumentBulkActionsForm({
                 <Link2 size={15} />
                 添加关联
               </summary>
-              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,520px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,640px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
                 <form action={addDocumentAssetLinksAction} className="space-y-3">
                   <input type="hidden" name="return_to" value={returnTo} />
                   {hiddenSelectedInputs}
-                  <select name="asset_links" multiple disabled={selectedCount === 0} className="min-h-36 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
-                    <AssetOptions relatedOptions={relatedOptions} />
-                  </select>
+                  <DocumentAssetLinkPicker options={relatedOptions} disabled={selectedCount === 0} compact />
                   <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
-                    <select name="asset_relation_type" defaultValue="related" disabled={selectedCount === 0} className="h-10 rounded-2xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+                    <select aria-label="这批文件与所选资产的关系" name="asset_relation_type" defaultValue="related" disabled={selectedCount === 0} className="h-10 rounded-2xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
                       {documentAssetRelationTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
                     </select>
                     <input name="asset_note" placeholder="可选备注" disabled={selectedCount === 0} className="h-10 rounded-2xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100" />
@@ -239,7 +238,7 @@ export function DocumentBulkActionsForm({
             )}
             <DocumentRelationChips relations={document.relations} compact />
             <span className="text-slate-500">{formatDateTime(document.created_at)}</span>
-            {mode === "documents" ? <VisibilityBadge visibility={document.visibility} /> : null}
+            {mode === "documents" ? <DocumentVisibilityBadge visibility={document.visibility} /> : null}
             <Link href={`/dashboard/documents/${document.id}/download`} className="inline-flex items-center gap-1 font-medium text-blue-700">
               <Download size={14} />
               下载
@@ -248,32 +247,5 @@ export function DocumentBulkActionsForm({
         ))}
       </div>
     </div>
-  );
-}
-
-function AssetOptions({ relatedOptions }: { relatedOptions: DocumentRelatedOptions }) {
-  return (
-    <>
-      <optgroup label="学术成果">
-        {relatedOptions.publications.map((publication) => (
-          <option key={publication.id} value={`publication:${publication.id}`}>{publication.title}</option>
-        ))}
-      </optgroup>
-      <optgroup label="研究项目">
-        {relatedOptions.projects.map((project) => (
-          <option key={project.id} value={`project:${project.id}`}>{project.title}</option>
-        ))}
-      </optgroup>
-      <optgroup label="知识文章">
-        {relatedOptions.knowledgeNotes.map((note) => (
-          <option key={note.id} value={`knowledge:${note.id}`}>{note.title}</option>
-        ))}
-      </optgroup>
-      <optgroup label="Skill">
-        {relatedOptions.skills.map((skill) => (
-          <option key={skill.id} value={`skill:${skill.id}`}>{skill.title}</option>
-        ))}
-      </optgroup>
-    </>
   );
 }

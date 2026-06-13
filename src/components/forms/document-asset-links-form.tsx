@@ -1,5 +1,6 @@
-import { documentAssetRelationTypes, documentRelatedTypes } from "@/lib/content-options";
+import { documentAssetRelationTypes } from "@/lib/content-options";
 import type { DocumentRelatedOptions } from "./document-related-select";
+import { DocumentAssetLinkPicker } from "./document-asset-link-picker";
 import { Field, Select, Textarea } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
@@ -28,36 +29,11 @@ export function DocumentAssetLinksForm({
       {documentIds.map((documentId) => (
         <input key={documentId} type="hidden" name="document_ids" value={documentId} />
       ))}
-      <Field label="关联对象" hint="可多选；同一对象可用不同关系语义重复关联。">
-        <select
-          name="asset_links"
-          multiple
-          className="min-h-40 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-        >
-          <optgroup label={documentRelatedTypes.find((type) => type.value === "publication")?.label}>
-            {relatedOptions.publications.map((publication) => (
-              <option key={publication.id} value={`publication:${publication.id}`}>{publication.title}</option>
-            ))}
-          </optgroup>
-          <optgroup label={documentRelatedTypes.find((type) => type.value === "project")?.label}>
-            {relatedOptions.projects.map((project) => (
-              <option key={project.id} value={`project:${project.id}`}>{project.title}</option>
-            ))}
-          </optgroup>
-          <optgroup label={documentRelatedTypes.find((type) => type.value === "knowledge")?.label}>
-            {relatedOptions.knowledgeNotes.map((note) => (
-              <option key={note.id} value={`knowledge:${note.id}`}>{note.title}</option>
-            ))}
-          </optgroup>
-          <optgroup label={documentRelatedTypes.find((type) => type.value === "skill")?.label}>
-            {relatedOptions.skills.map((skill) => (
-              <option key={skill.id} value={`skill:${skill.id}`}>{skill.title}</option>
-            ))}
-          </optgroup>
-        </select>
+      <Field label="关联对象" hint="可多选；添加或移除关联不会移动、重命名或删除 Storage object。">
+        <DocumentAssetLinkPicker options={relatedOptions} compact />
       </Field>
       <div className="grid gap-3 md:grid-cols-2">
-        <Field label="关系语义">
+        <Field label="这批文件与所选资产的关系">
           <Select name="asset_relation_type" defaultValue="related">
             {documentAssetRelationTypes.map((type) => (
               <option key={type.value} value={type.value}>{type.label}</option>

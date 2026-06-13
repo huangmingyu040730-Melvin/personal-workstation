@@ -32,6 +32,8 @@
 - Supabase Storage 私密文件上传与下载
 - Documents 文件 metadata、文档包 metadata、多资产关联和列表筛选维护能力
 - Documents 批量添加 / 移除多资产关联，并保留 legacy primary relation 兼容能力
+- Documents 多关联选择器使用 checkbox / chips 分组选择，不再依赖原生多选框
+- Documents 文件中心权限列使用轻量私密状态标签
 - Documents 关联 chips 对同一资产下的 legacy `related` fallback 做展示降噪，已有具体关系时不重复显示“相关”
 - Documents 批量删除文件与删除整个文档包及文件
 - Documents 多文件与文档包 zip 临时下载
@@ -224,7 +226,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
 - 公开访问通过 `visibility = "public"` 控制；restricted 内容通过 `content_access_grants` 与登录用户邮箱匹配控制；后台写入、更新、删除权限通过 `public.is_admin()` 控制。
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
-- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。Phase 2P-B 将关联文件区域嵌入 Project、Publication、Knowledge 和 Skill 后台详情页，上传入口仍统一跳转到 `/dashboard/documents/upload` 并通过 query params 预填关联对象、分类、上传模式和文档包类型。Phase 2P-C 在四类内容新建表单加入 create-and-upload flow：先保存内容对象，再跳转统一上传页；不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 支持管理员编辑文件显示名、分类、关联对象，编辑文档包名称、描述、类型、关联对象，并在 Documents 列表按 category、related_type、collection 状态筛选。Phase 2P-E-1 支持在 Documents 列表和文档包详情页批量移动文件关联对象、批量解除文件关联；不修改文档包自身关联或文件 `collection_id`。Phase 2P-E-1-B 澄清内容详情页附件分组：当前对象文档包内文件由文档包卡片代表，不在独立文件中重复展示；文件级关联指向当前对象但仍属于其他文档包的文件进入“跨文档包文件”分组并提示。Phase 2P-E-1-C 在文档包详情页新增整体迁移 / 同步关联工具，可把文档包和包内全部文件一起关联到 Project、Publication、Knowledge 或 Skill，也可一起解除关联；该工具不修改 `collection_id`，不移动、不重命名、不删除 Storage object。Phase 2P-E-2 新增批量删除文件和删除整个文档包及文件，删除时先删除 Storage object，再删除数据库记录；批量删除文件不会自动删除空文档包。Phase 2P-E-3 新增按请求临时生成 zip 下载，支持选中文件 zip、文档包 zip 和内容详情页文档包卡片下载 zip；zip 不保存到 Storage。Phase 2P-G-1 新增 `document_asset_links` / `document_collection_asset_links`，文件与文档包可同时关联多个 Project / Knowledge / Skill / Publication；上传、筛选、搜索和 RelatedDocumentsPanel 优先读取专用 link tables，旧 `related_type / related_id` 只作为 legacy primary relation 与路径 fallback。同一资产如果已有 `deliverable` 等具体关系，UI 不重复显示该资产的 legacy `related` fallback。附件仍默认私密，不公开下载，修改 metadata 或关联不会移动或重命名 Storage object。
+- Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。Phase 2P-B 将关联文件区域嵌入 Project、Publication、Knowledge 和 Skill 后台详情页，上传入口仍统一跳转到 `/dashboard/documents/upload` 并通过 query params 预填关联对象、分类、上传模式和文档包类型。Phase 2P-C 在四类内容新建表单加入 create-and-upload flow：先保存内容对象，再跳转统一上传页；不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 支持管理员编辑文件显示名、分类、关联对象，编辑文档包名称、描述、类型、关联对象，并在 Documents 列表按 category、related_type、collection 状态筛选。Phase 2P-E-1 支持在 Documents 列表和文档包详情页批量移动文件关联对象、批量解除文件关联；不修改文档包自身关联或文件 `collection_id`。Phase 2P-E-1-B 澄清内容详情页附件分组：当前对象文档包内文件由文档包卡片代表，不在独立文件中重复展示；文件级关联指向当前对象但仍属于其他文档包的文件进入“跨文档包文件”分组并提示。Phase 2P-E-1-C 在文档包详情页新增整体迁移 / 同步关联工具，可把文档包和包内全部文件一起关联到 Project、Publication、Knowledge 或 Skill，也可一起解除关联；该工具不修改 `collection_id`，不移动、不重命名、不删除 Storage object。Phase 2P-E-2 新增批量删除文件和删除整个文档包及文件，删除时先删除 Storage object，再删除数据库记录；批量删除文件不会自动删除空文档包。Phase 2P-E-3 新增按请求临时生成 zip 下载，支持选中文件 zip、文档包 zip 和内容详情页文档包卡片下载 zip；zip 不保存到 Storage。Phase 2P-G-1 新增 `document_asset_links` / `document_collection_asset_links`，文件与文档包可同时关联多个 Project / Knowledge / Skill / Publication；上传、筛选、搜索和 RelatedDocumentsPanel 优先读取专用 link tables，旧 `related_type / related_id` 只作为 legacy primary relation 与路径 fallback。同一资产如果已有 `deliverable` 等具体关系，UI 不重复显示该资产的 legacy `related` fallback。PR #99 追加 polish 将上传、详情页和批量添加关联统一为 checkbox / chips 分组选择器，并把文件中心“私密”权限显示改为轻量状态标签。附件仍默认私密，不公开下载，修改 metadata 或关联不会移动或重命名 Storage object。
 - 后台全局搜索 `/dashboard/search` 只查询数据库 metadata，每类最多返回 8 条；支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选、每类数量统计和标题 / 描述关键词高亮；不读取文件正文，不解析 PDF / Office / zip，不做 OCR、AI 摘要或向量搜索，不生成 signed URL，不输出 Storage path。
 - Project / Knowledge / Skill / Publication 后台详情页已支持显式资产关系面板：管理员可在四类研究资产之间手动创建关系，查看 outbound 和 backlink，按方向 / 对方资产类型 / 关系类型筛选，编辑 relation_type 与 note，并删除关系；如需更换 source / target，需要删除后重新创建。全局关系可视化页面已移除，现有 `project_id` 关系继续保留，不迁移、不删除；搜索入口也继续作为辅助定位能力。
 - Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
@@ -288,7 +290,7 @@ Phase 2C 使用 Supabase Storage bucket：
 - 普通非管理员登录用户不能读取或修改文件。
 - 管理员通过 `public.is_admin()` 和 Storage policy 操作文件。
 - 上传采用两阶段流程：Server Actions 只验证管理员、校验 metadata、生成安全路径并最终写入数据库；文件二进制由浏览器直接上传到 Supabase Storage，不经过 Vercel Function。
-- 文件和文档包 metadata 可在后台修正；新增 / 移除多资产关联写入 `document_asset_links` 或 `document_collection_asset_links`，必要时只同步 legacy primary relation，不修改 `storage_bucket`、`storage_path`、文件大小、MIME type、原始路径、`collection_id` 或文档包统计字段。关联 chips 的 `related` 降噪只发生在展示查询层，不删除 legacy 字段或回填 rows。内容详情页只展示后台附件摘要和现有后台下载入口，不输出 Storage path 或 signed URL。
+- 文件和文档包 metadata 可在后台修正；新增 / 移除多资产关联写入 `document_asset_links` 或 `document_collection_asset_links`，必要时只同步 legacy primary relation，不修改 `storage_bucket`、`storage_path`、文件大小、MIME type、原始路径、`collection_id` 或文档包统计字段。关联 chips 的 `related` 降噪和多关联选择器 polish 只发生在展示层，不删除 legacy 字段或回填 rows，不新增 migration。内容详情页只展示后台附件摘要和现有后台下载入口，不输出 Storage path 或 signed URL。
 - 批量删除文件和删除整个文档包及文件采用保守顺序：先删除 private Storage object，再删除 `documents` / `document_collections` 记录；该流程不新增数据库事务或 RPC，失败时显示中文安全错误并要求人工复核。
 - 下载使用 60 秒短时 signed URL，不保存到数据库，也不在公开页面输出。
 - zip 下载通过 `jszip` 在请求时临时生成，不保存到 Storage；仅管理员后台可用，不公开 signed URL、Storage 路径或 zip 持久链接。

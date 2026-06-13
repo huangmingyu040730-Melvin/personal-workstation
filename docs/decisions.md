@@ -1615,3 +1615,28 @@
 - 不删除 `documents.related_type / related_id`、`document_collections.related_type / related_id`、`document_asset_links` 或 `document_collection_asset_links` 中的 `related` rows。
 - 不新增 migration，不新增 RPC，不修改 RLS，不修改 Storage policy，不移动、不重命名、不删除 Storage object，也不修改 `storage_path`。
 - Documents 仍不纳入 `research_asset_links`，四类研究资产之间的显式关系系统不受影响。
+
+## 2026-06-14 - Polish Document Multi-Association UI
+
+类型：decision
+
+决策：
+
+- #99 追加文件中心 UI polish，不改变 Documents 多关联数据模型。
+- `/dashboard/documents` 文件列表的“权限”列使用专用轻量私密状态标签，不再复用更大的全局 visibility pill。
+- 上传页、文件详情页、文档包详情页和文件中心批量添加关联统一使用 checkbox / chips 分组选择器，替代原生 `<select multiple>`。
+- 选择器按学术成果、研究项目、知识库和 Skill 库分组，显示已选 chips，并保留本地标题筛选。
+- 表单仍提交多个 `asset_links` 值，第一项继续作为 legacy primary relation 兼容来源。
+
+原因：
+
+- 原生多选框不够直观，用户不容易理解如何多选 Project / Publication / Knowledge / Skill。
+- 文件列表中的大号“私密”胶囊视觉上像按钮，和文件表格行、上传时间和下载操作不协调。
+- UI polish 可以提升可读性和操作确认感，同时不扩大权限、数据库或 Storage 边界。
+
+影响：
+
+- 新增复用的 `DocumentAssetLinkPicker` 和文件中心专用 `DocumentVisibilityBadge`。
+- 不新增 migration，仍依赖 `0020_document_asset_links.sql`。
+- 不修改 `document_asset_links`、`document_collection_asset_links`、legacy `related_type / related_id`、Storage policy、zip 下载、删除流程或 `research_asset_links`。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 secret。

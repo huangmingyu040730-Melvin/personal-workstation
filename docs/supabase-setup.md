@@ -538,6 +538,7 @@ Phase 2C 使用：
 - Document collections 和文件夹上传 metadata 依赖 0018 migration；未执行 0018 时，多文件 / 文件夹上传、Knowledge 附件关联和 collection 详情页无法完成真实读写。
 - Document metadata、collection metadata 的 legacy primary relation 编辑不需要 0019 migration；多资产关联添加、移除、清空、关联 chips、按关联筛选和新上传多关联写入需要 0020 migration。
 - Documents 关联 chips 降噪不需要新增 migration；它只归一化查询返回的 relation summaries，不修改 legacy 字段、link rows、Storage object 或 `storage_path`。
+- #99 追加的多关联选择器和文件中心权限标签 polish 不需要新增 migration；仍复用 0020 表结构和既有 Server Actions，不修改 Storage policy。
 - `/dashboard/search` metadata 搜索、type 筛选和关键词高亮不需要 0019 migration；未执行 0018 时，文档包相关搜索结果会缺少真实 collection 数据。
 - 研究资产显式关系依赖 0019 migration；未执行 0019 时，四类后台详情页的显式关系读写会失败或显示空关系。
 - Documents 多资产关联依赖 0020 migration；未执行 0020 时，文件 / 文档包多关联读写会失败或只显示 legacy fallback 关联。

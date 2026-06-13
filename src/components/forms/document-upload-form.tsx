@@ -6,7 +6,7 @@ import { useState } from "react";
 import { AdminFormSection, AdminSecurityNote } from "@/components/admin-ui";
 import type { DocumentCategory, DocumentCollectionType, KnowledgeNoteRecord, ProjectRecord, PublicationRecord, SkillRecord } from "@/lib/content-types";
 import type { DocumentAssetLinkInput } from "@/lib/queries/document-asset-links";
-import { documentAssetRelationTypes, documentCategories, documentCollectionTypes, documentRelatedTypes } from "@/lib/content-options";
+import { documentAssetRelationTypes, documentCategories, documentCollectionTypes } from "@/lib/content-options";
 import { formatFileSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -25,6 +25,7 @@ import {
   rollbackPreparedDocumentUploadAction,
   type PreparedDocumentUpload
 } from "@/actions/documents";
+import { DocumentAssetLinkPicker } from "./document-asset-link-picker";
 import { ErrorNotice, Field, Select, TextInput, Textarea } from "./form-fields";
 
 type UploadPhase = "idle" | "preparing" | "uploading" | "finalizing" | "rolling_back";
@@ -195,6 +196,12 @@ export function DocumentUploadForm({
 
   const pending = phase !== "idle";
   const directoryInputProps = { webkitdirectory: "true", directory: "true" } as React.InputHTMLAttributes<HTMLInputElement>;
+  const relatedOptions = {
+    publications,
+    projects,
+    knowledgeNotes,
+    skills: skills.map((skill) => ({ id: skill.id, title: skill.name }))
+  };
 
   async function onSingleSubmit(formData: FormData) {
     const file = formData.get("file");
@@ -543,38 +550,18 @@ export function DocumentUploadForm({
 
       <AdminFormSection title="关联对象" description="文件和文档包可以同时关联多个 Project、Publication、Knowledge 或 Skill；附件仍保持私密。">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
-          <Field label="关联对象" hint="可选。按住 Command/Ctrl 可多选；第一项会写入 legacy primary relation 用于兼容。">
-          <select
-            name="asset_links"
-            multiple
-            defaultValue={initialValues?.relatedKey ? [initialValues.relatedKey] : []}
-            disabled={pending}
-            className="min-h-48 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+          <Field
+            label="关联对象"
+            hint="可以同时关联多个资产；添加或移除关联不会移动、重命名或删除 Storage object。"
           >
-            <optgroup label={documentRelatedTypes.find((type) => type.value === "publication")?.label}>
-              {publications.map((publication) => (
-                <option key={publication.id} value={`publication:${publication.id}`}>{publication.title}</option>
-              ))}
-            </optgroup>
-            <optgroup label={documentRelatedTypes.find((type) => type.value === "project")?.label}>
-              {projects.map((project) => (
-                <option key={project.id} value={`project:${project.id}`}>{project.title}</option>
-              ))}
-            </optgroup>
-            <optgroup label={documentRelatedTypes.find((type) => type.value === "knowledge")?.label}>
-              {knowledgeNotes.map((note) => (
-                <option key={note.id} value={`knowledge:${note.id}`}>{note.title}</option>
-              ))}
-            </optgroup>
-            <optgroup label={documentRelatedTypes.find((type) => type.value === "skill")?.label}>
-              {skills.map((skill) => (
-                <option key={skill.id} value={`skill:${skill.id}`}>{skill.name}</option>
-              ))}
-            </optgroup>
-          </select>
+            <DocumentAssetLinkPicker
+              options={relatedOptions}
+              defaultValues={initialValues?.relatedKey ? [initialValues.relatedKey] : []}
+              disabled={pending}
+            />
           </Field>
           <div className="space-y-5">
-            <Field label="关联语义">
+            <Field label="这批文件与所选资产的关系" hint="例如：交付物 / 支持材料 / 原始材料。">
               <Select name="asset_relation_type" defaultValue="related" disabled={pending}>
                 {documentAssetRelationTypes.map((type) => (
                   <option key={type.value} value={type.value}>{type.label}</option>

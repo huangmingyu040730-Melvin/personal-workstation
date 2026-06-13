@@ -282,7 +282,7 @@ npm run build
 5. 上传继续使用两阶段流程：Server Action 准备 metadata 和安全 Storage path，浏览器用管理员 Supabase Auth 会话直接上传到 private bucket，Server Action finalize 写入 `documents` 记录和必要的专用关联记录。
 6. 多文件 / 文件夹上传通过 `document_collections` 表记录批次、文件夹、附件包或 Skill 包，并通过 `documents.collection_id` 关联具体文件。
 7. Documents 多资产关联写入 `document_asset_links`，文档包多资产关联写入 `document_collection_asset_links`；不要把 Documents 写入 `research_asset_links`。
-8. `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 只作为 legacy primary relation、路径 fallback 和兼容 query params；新展示、筛选和搜索应优先读取专用 link tables。展示关联 chips 时，同一资产已有具体关系则隐藏 legacy `related` fallback，只有 `related` 是唯一关系时才显示。
+8. `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 只作为 legacy primary relation、路径 fallback 和兼容 query params；新展示、筛选和搜索应优先读取专用 link tables。展示关联 chips 时，同一资产已有具体关系则隐藏 legacy `related` fallback，只有 `related` 是唯一关系时才显示。多关联选择应使用 checkbox / chips 分组选择器，覆盖上传页、文件详情页、文档包详情页和批量添加关联；不要重新引入原生 `<select multiple>`。
 9. `original_name`、`relative_path` 和 `folder_path` 可保存中文或原始路径信息用于后台展示。
 10. `storage_path` 必须使用 ASCII-safe object key；最终 Storage 文件名使用 `documentId + extension`，中文文件名和中文目录不得直接进入 object key。
 11. Project / Publication / Knowledge / Skill 后台详情页只嵌入关联文件和文档包区域，不重复实现上传系统。
