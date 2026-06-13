@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包，Phase 2Q-A-4 增强 Publication 后台详情页成果中枢。Phase 2Q-B-1 新增 `research_asset_links` 显式关系表，用于 Project / Knowledge / Skill / Publication 的管理员后台关系与 backlinks。Phase 2Q-B-2 只优化显式关系管理体验，不新增 Supabase migration。Phase 2Q-B-3 新增后台只读研究资产关系图谱 `/dashboard/network`，继续读取 0019 已有关系表和四类资产基础 metadata，不新增 Supabase migration。Phase 2Q-B-4 将 `/dashboard/network` 升级为 `react-force-graph-2d` 动态 2D force graph，仍只读且不新增 Supabase migration。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包，Phase 2Q-A-4 增强 Publication 后台详情页成果中枢。Phase 2Q-B-1 新增 `research_asset_links` 显式关系表，用于 Project / Knowledge / Skill / Publication 的管理员后台关系与 backlinks。Phase 2Q-B-2 只优化显式关系管理体验，不新增 Supabase migration。Phase 2Q-B-3 新增后台只读研究资产关系图谱 `/dashboard/network`，继续读取 0019 已有关系表和四类资产基础 metadata，不新增 Supabase migration。Phase 2Q-B-4 将 `/dashboard/network` 升级为 `react-force-graph-2d` 动态 2D force graph，并在 #97 后续优化首屏图谱、2D 视觉质感和节点局部 focus mode；这些仍是只读前端展示能力，不新增 Supabase migration。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -410,7 +410,7 @@ Research Asset Links 权限边界：
 - 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除。
 - Phase 2Q-B-2 不新增 migration；编辑关系只允许更新 `relation_type` 与 `note`，source / target 需要删除后重新创建。
 - Phase 2Q-B-3 不新增 migration；`/dashboard/network` 只读展示最近更新的 200 条关系、节点分组、统计、筛选和全局关系列表，不提供 create / edit / delete。
-- Phase 2Q-B-4 不新增 migration；`/dashboard/network` 使用 `react-force-graph-2d` 动态展示同一批关系，支持节点拖动、缩放 / 平移、节点 / 关系详情，不提供 create / edit / delete。
+- Phase 2Q-B-4 不新增 migration；`/dashboard/network` 使用 `react-force-graph-2d` 动态展示同一批关系，支持首屏图谱主视觉、节点拖动、缩放 / 平移、节点 / 关系详情和节点局部 focus mode，不提供 create / edit / delete。
 - 不新增 RPC，不引入数据库事务，不做 AI 自动关联、3D 图谱、拖拽创建关系、图谱编辑、批量关系管理或复杂权限继承。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 

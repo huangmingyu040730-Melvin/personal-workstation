@@ -452,19 +452,21 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 已完成代码实现。基于 2Q-B-3 的 `/dashboard/network`，将列表式 Network MVP 升级为动态 2D force-directed 关系图谱：
 
 - 新增 `react-force-graph-2d` 依赖，通过 client component 与 dynamic import 加载浏览器侧 canvas 图谱，避免 SSR / build 问题。
-- `/dashboard/network` 保留统计、筛选和全部关系列表，但动态图谱成为页面主视觉。
+- `/dashboard/network` 保留统计、筛选和全部关系列表，但 #97 后续优化后动态图谱主卡片移动到 PageHeader 下方，成为首屏主视觉；网络总览和筛选图谱下移为辅助模块。
 - 图谱节点继续只来自 Project / Knowledge / Skill / Publication，边继续来自 `research_asset_links`。
-- 节点大小按 degree 派生，连接越多越醒目；节点颜色按资产类型区分。
+- 节点大小按 degree 派生，连接越多越醒目；节点颜色按资产类型区分，并通过柔和 halo、内外圈、阴影、深色渐变背景、关系线透明度和轻量关系粒子增强 2D 空间感。
 - 支持拖动节点、缩放 / 平移画布、适配画布、重置视图、hover 标题、点击节点详情和点击关系详情。
+- 点击节点后会高亮当前节点与一度邻居、淡化非相关节点和关系；详情面板提供“只看该节点网络”和“恢复全局网络”，用于复杂关系网络下的局部 focus mode / 思维导图式探索。
+- 节点详情面板展示 degree、inbound、outbound、一度邻居数量和 inbound / outbound 关系列表；关系详情面板展示 source、relation_type、target、note、updated_at 和 source / target 跳转。
 - 关系线按 relation_type 使用颜色 / 样式区分，并可在 hover / 详情面板查看 relation_type、note 和更新时间。
-- 资产类型、relation_type、关键词筛选会同步影响动态图谱、统计和辅助关系列表。
+- 资产类型、relation_type、关键词筛选会同步影响动态图谱、统计和辅助关系列表；局部 focus mode 叠加在当前前端筛选结果之上，不写入 URL，不重新查库。
 
 边界：
 
 - `/dashboard/network` 仍只读，不提供 create / edit / delete；关系维护仍在资产详情页完成。
 - 不新增 schema，不修改 `0019_research_asset_links.sql`，不新增 migration、RPC 或数据库事务。
 - 不把 Documents 纳入图谱，不读取 Documents 内容、文件正文或 Storage object，不生成 signed URL，不展示 Storage path。
-- 不做 3D 图谱、粒子动画、拖拽创建关系、图谱编辑、批量关系管理、AI 自动关联、公开展示、向量搜索、外部搜索服务或复杂权限继承。
+- 不做真正 3D 图谱，不引入 three.js、react-force-graph-3d、d3、cytoscape 或 react-flow；不做拖拽创建关系、图谱编辑、批量关系管理、AI 自动关联、公开展示、向量搜索、外部搜索服务或复杂权限继承。
 - 不修改 Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
 
 ### Phase 2D - Public Research Workstation

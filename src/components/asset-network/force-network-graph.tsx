@@ -11,6 +11,8 @@ export type ForceNetworkNode = AssetNetworkNode & {
   outboundCount: number;
   nodeSize: number;
   nodeColor: string;
+  x?: number;
+  y?: number;
 };
 
 export type ForceNetworkLink = {
@@ -35,6 +37,9 @@ export type ForceNetworkGraphProps = {
   edges: AssetNetworkEdge[];
   nodeById: Record<string, AssetNetworkNode>;
   degrees: Record<string, AssetNetworkNodeDegree>;
+  focusNodeId: string | null;
+  onFocusNodeChange: (nodeId: string | null) => void;
+  isLocalFocusActive: boolean;
 };
 
 const ForceNetworkGraphPanel = dynamic(
@@ -97,11 +102,14 @@ export function ForceNetworkGraph({
   nodes,
   edges,
   nodeById,
-  degrees
+  degrees,
+  focusNodeId,
+  onFocusNodeChange,
+  isLocalFocusActive
 }: ForceNetworkGraphProps) {
-  if (nodes.length === 0 || edges.length === 0) {
+  if (nodes.length === 0 || (edges.length === 0 && !isLocalFocusActive)) {
     return (
-      <div className="rounded-2xl border border-slate-100 bg-slate-50">
+      <div className="flex min-h-[480px] items-center justify-center rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_50%_20%,rgba(59,130,246,0.22),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.95),rgba(30,41,59,0.96))] md:min-h-[580px] xl:min-h-[680px]">
         <AdminEmptyState
           title="当前筛选条件下没有可视化关系"
           description="可以放宽资产类型、关系类型或关键词筛选，或先在资产详情页创建显式关系。"
@@ -116,6 +124,9 @@ export function ForceNetworkGraph({
     <ForceNetworkGraphPanel
       graphData={graphData}
       nodeById={nodeById}
+      focusNodeId={focusNodeId}
+      onFocusNodeChange={onFocusNodeChange}
+      isLocalFocusActive={isLocalFocusActive}
     />
   );
 }

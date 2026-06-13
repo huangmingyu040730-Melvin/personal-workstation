@@ -48,7 +48,7 @@
 - Phase 2Q-B-1：新增研究资产显式关联关系底座，支持 Project / Knowledge / Skill / Publication 之间的管理员手动关系与 backlinks。
 - Phase 2Q-B-2：优化研究资产显式关系管理体验，支持目标资产本地筛选、关系统计 / 筛选和只修改 relation_type / note 的关系编辑。
 - Phase 2Q-B-3：新增后台研究资产关系图谱 MVP，通过 `/dashboard/network` 只读展示最近更新的 200 条显式关系、节点分组、统计、筛选和全局关系列表。
-- Phase 2Q-B-4：将 `/dashboard/network` 从列表式 MVP 升级为动态 2D force-directed 关系图谱，支持节点拖动、画布缩放 / 平移、节点 / 关系详情和居中 / 重置视图。
+- Phase 2Q-B-4：将 `/dashboard/network` 从列表式 MVP 升级为动态 2D force-directed 关系图谱；#97 后续优化后，动态图谱主卡片成为 PageHeader 后的首屏主视觉，支持节点拖动、画布缩放 / 平移、视觉增强、节点 / 关系详情、局部 focus mode 和居中 / 重置视图。
 
 当前网站包括：
 
@@ -167,8 +167,10 @@ Research Asset Links：
 - 关系列表可显示总数、outbound、inbound、当前筛选数量和 relation_type 统计，并按方向、对方资产类型和 relation_type 客户端筛选。
 - 后台 `/dashboard/network` 提供全局只读研究资产动态关系图谱，读取最近更新的 200 条 `research_asset_links`，并聚合 Project / Knowledge / Skill / Publication 的基础 metadata 形成节点和边。
 - `/dashboard/network` 使用 `react-force-graph-2d` 作为动态 2D force graph 组件；通过 client component + dynamic import 隔离浏览器依赖，避免 Next.js SSR / build 问题。
+- `/dashboard/network` 的动态图谱主卡片位于 PageHeader 后第一屏，网络总览、筛选图谱和全部关系列表位于图谱之后作为辅助信息。
 - `/dashboard/network` 支持资产类型、relation_type 和节点标题 / metadata 关键词本地筛选，筛选同步影响动态图谱、统计和辅助全部关系列表，并从节点或 source / target 跳回对应后台详情页。
-- `/dashboard/network` 的节点大小按前端派生 degree 调整，节点颜色按资产类型区分；关系线按 relation_type 使用颜色 / 样式和 hover / detail 信息区分。
+- `/dashboard/network` 的节点大小按前端派生 degree 调整，节点颜色按资产类型区分；通过节点 halo、内外圈、深色空间背景、关系线透明度、方向箭头和轻量粒子提示提升 2D 视觉质感，但不做真正 3D。
+- 点击节点后会高亮当前节点和一度邻居并淡化非相关节点 / 关系；“只看该节点网络 / 恢复全局网络”提供复杂网络下的局部 focus mode，叠加在当前前端筛选结果上，不写入 URL、不重新查库。
 - 创建关系时必须校验管理员身份、source / target 类型、source / target 记录存在性、自关联和重复关系。
 - 编辑关系时必须校验管理员身份和关系存在性；source / target 不允许编辑，如需更换目标需删除后重新创建。
 - Documents 不纳入 `research_asset_links`；Documents 与文档包继续使用 `documents.related_type / related_id` 和 `document_collections.related_type / related_id`。
@@ -200,7 +202,7 @@ Research Asset Links：
 - Phase 2Q-B-1 采用 admin-only research asset links 决策：新增 `research_asset_links` 覆盖 Project / Knowledge / Skill / Publication；Documents 暂不纳入；保留既有 `project_id` 关系；只在管理员后台展示 outbound 和 backlinks；不做 AI 自动关联、图谱、公开展示或复杂权限继承。
 - Phase 2Q-B-2 采用 management-polish 决策：只增强显式关系管理体验；关系仍只覆盖 Project / Knowledge / Skill / Publication；Documents 仍不纳入；edit link 只允许修改 relation_type 和 note，不允许修改 source / target；不新增 schema、migration、RPC、数据库事务、AI 自动关联、图谱可视化、公开展示或复杂权限继承。
 - Phase 2Q-B-3 采用 read-only network view 决策：新增 `/dashboard/network` 作为管理员后台只读全局关系图谱；仅读取最近更新的 200 条 `research_asset_links` 和四类研究资产基础 metadata；使用轻量分组列表图谱、筛选和关系列表，不引入 d3、cytoscape、react-flow 等复杂图谱库；不新增 schema、migration、RPC、数据库事务、AI 自动关联、公开展示或权限继承。
-- Phase 2Q-B-4 采用 interactive-force-graph 决策：在不改数据库的前提下使用 `react-force-graph-2d` 将 `/dashboard/network` 升级为动态 2D force graph；图谱只读，关系维护仍在资产详情页；不新增 schema、migration、RPC、数据库事务、3D 图谱、图谱编辑、批量关系管理、AI 自动关联、公开展示或权限继承。
+- Phase 2Q-B-4 采用 interactive-force-graph 决策：在不改数据库的前提下使用 `react-force-graph-2d` 将 `/dashboard/network` 升级为动态 2D force graph；#97 后续优化把动态图谱提升为首屏主视觉，并增加视觉质感和局部 focus mode；图谱只读，关系维护仍在资产详情页；不新增 schema、migration、RPC、数据库事务、真正 3D 图谱、图谱编辑、批量关系管理、AI 自动关联、公开展示或权限继承。
 - 后续数据库变更必须新增 `0020_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -284,7 +286,7 @@ Research Asset Links：
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
 - Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。
 - Publication 成果中枢维护：进入 `/dashboard/publications/[id]` 先查看 summary、abstract、成果类型、标签、发表日期和关联 Project；整理成果材料时使用页面内上传成果材料 / 文件夹或 Publication Documents 筛选入口；查找相关资产时查看同项目 Knowledge，并用搜索入口查找 Project / Knowledge / Skill；`file_path` 不作为下载入口。
-- 研究资产显式关系维护：进入任意 Project / Knowledge / Skill / Publication 后台详情页，在“显式关联资产”区域选择目标资产、relation_type 和可选备注；目标较多时用“筛选目标资产”按标题或 metadata 本地过滤；保存后当前页显示 outbound，对方详情页显示 backlink；关系较多时按方向、对方资产类型和 relation_type 筛选；如需全局理解网络，从详情页点击“查看关系图谱”或进入 `/dashboard/network`，按资产类型、relation_type 和关键词筛选最近 200 条关系，在动态图谱中拖动节点、缩放 / 平移画布、查看节点 / 关系详情，并从节点或关系列表跳回详情页维护；如需修正关系语义或说明，展开“编辑关系”只修改 relation_type / note；如需更换 source / target，删除后重新创建；Documents 仍通过文件面板、Documents 列表和文档包详情页管理。
+- 研究资产显式关系维护：进入任意 Project / Knowledge / Skill / Publication 后台详情页，在“显式关联资产”区域选择目标资产、relation_type 和可选备注；目标较多时用“筛选目标资产”按标题或 metadata 本地过滤；保存后当前页显示 outbound，对方详情页显示 backlink；关系较多时按方向、对方资产类型和 relation_type 筛选；如需全局理解网络，从详情页点击“查看关系图谱”或进入 `/dashboard/network`，先在首屏动态图谱中拖动节点、缩放 / 平移画布、查看节点 / 关系详情，再按资产类型、relation_type 和关键词筛选最近 200 条关系；复杂网络中点击节点可高亮一度邻居，并用“只看该节点网络 / 恢复全局网络”做局部探索；如需维护关系，仍从节点、关系列表或详情面板跳回资产详情页；如需修正关系语义或说明，展开“编辑关系”只修改 relation_type / note；如需更换 source / target，删除后重新创建；Documents 仍通过文件面板、Documents 列表和文档包详情页管理。
 - 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
 
 详细流程见 `docs/workflows.md`。

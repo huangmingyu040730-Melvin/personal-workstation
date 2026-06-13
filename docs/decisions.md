@@ -1541,8 +1541,11 @@
 - 图谱仍只读取最近更新的 200 条 `research_asset_links` 和 Project / Knowledge / Skill / Publication 基础 metadata。
 - 节点大小按前端派生的 degree 调整，节点颜色按资产类型区分；关系线按 relation_type 使用颜色 / 样式和 hover / detail 信息区分。
 - 图谱支持节点拖动、画布缩放 / 平移、适配画布、重置视图、hover 节点标题、点击节点详情和点击关系详情。
-- `/dashboard/network` 保留统计、筛选和全部关系列表，但动态图谱是页面主视觉；关系列表仅作为辅助核对。
+- `/dashboard/network` 保留统计、筛选和全部关系列表，但动态图谱是页面主视觉；#97 用户审查后进一步将动态图谱主卡片移动到 PageHeader 下方，网络总览和筛选图谱下移，关系列表仅作为辅助核对。
+- #97 用户审查后继续在 2D canvas 上增强视觉质感：使用深色空间背景、节点柔和 halo、内外圈、degree-based size、关系线透明度层次、方向箭头和轻量关系粒子，而不切换到真正 3D 图谱。
 - 资产类型、relation_type 和关键词筛选只在已加载数据内前端执行，并同步影响动态图谱、统计和辅助关系列表。
+- 新增节点 focus mode / 局部网络探索：点击节点后高亮当前节点与一度邻居、淡化非相关节点和关系；管理员可切换“只看该节点网络”和“恢复全局网络”，该局部视图叠加在当前筛选结果之上，不写入 URL，不重新查库。
+- 节点详情面板展示类型、标题、metadata、degree、inbound、outbound、一度邻居数量、打开详情页和 inbound / outbound 关系摘要；关系详情面板展示 source、relation_type、target、note、updated_at，并保留 source / target 跳转。
 - Network View 继续只读，不提供 create / edit / delete；关系创建、编辑和删除仍在各资产详情页的 AssetLinksPanel 完成。
 - Documents 不纳入图谱；Documents 与文档包继续使用 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
 - 本阶段不新增 schema，不修改 `0019_research_asset_links.sql`，不新增 migration、RPC 或数据库事务。
@@ -1553,12 +1556,13 @@
 - 2Q-B-3 的全局网络视图能展示关系列表和节点分组，但视觉上仍偏普通后台列表，难以一眼看出中心资产、孤立资产或连接密集区域。
 - force-directed graph 更适合表达研究资产之间的多对多显式关系，同时可以保持只读，避免把图谱变成另一个关系编辑入口。
 - `react-force-graph-2d` 能以较低实现成本提供拖拽、缩放、平移和 canvas 渲染；通过 dynamic import 可以避免 SSR 风险。
+- 复杂网络下自由力导向图容易变成乱线，因此需要局部 focus mode 帮助管理员以一度邻居方式理解单个资产的上下文，但不需要引入树状图、3D 图谱或新的图谱编辑器。
 - 已执行的 0019 migration 应保持稳定，动态图谱只使用前端派生字段，不新增数据库字段。
 
 影响：
 
 - 新增 `src/components/asset-network/force-network-graph.tsx` 和 `src/components/asset-network/force-network-graph-panel.tsx`。
-- `/dashboard/network` 页面标题升级为“研究资产关系图谱”，主视觉为动态 canvas graph。
+- `/dashboard/network` 页面标题升级为“研究资产关系图谱”，主视觉为首屏动态 canvas graph，筛选、总览和全局关系列表作为下方辅助模块。
 - `package.json` / `package-lock.json` 新增 `react-force-graph-2d`。
 - 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。

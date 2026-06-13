@@ -113,8 +113,10 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 关系列表支持总数、outbound、inbound、当前筛选数量和关系类型数量统计，并支持按方向、对方资产类型和 relation_type 筛选。
 - 已有关系可编辑 relation_type 和 note；source / target 不允许编辑，如需更换目标资产需删除后重新创建。
 - `/dashboard/network` 只读研究资产关系图谱最多读取最近更新的 200 条显式关系，展示节点总数、关系总数、四类资产节点数量、relation_type 数量、动态 force graph 和全局关系列表。
-- Phase 2Q-B-4 起 `/dashboard/network` 使用 `react-force-graph-2d` 从列表式 MVP 升级为 2D force-directed graph；节点按 degree 调整大小、按资产类型区分颜色，支持拖动节点、缩放 / 平移画布、适配画布、重置视图、节点详情和关系详情。
-- 关系图谱页支持按资产类型、relation_type 和节点标题 / metadata 关键词做前端本地筛选；筛选会同步影响动态图谱、统计和辅助关系列表；点击节点、source 或 target 可回到对应后台详情页。
+- Phase 2Q-B-4 起 `/dashboard/network` 使用 `react-force-graph-2d` 从列表式 MVP 升级为 2D force-directed graph；#97 后续优化后动态图谱主卡片成为 PageHeader 后的首屏视觉焦点，网络总览和筛选图谱下移为辅助模块。
+- 动态图谱节点按 degree 调整大小、按资产类型区分颜色，并使用柔和光晕、内外圈、深色空间背景、关系线透明度层次和轻量粒子提示增强 2D 视觉质感；仍不做真正 3D 图谱。
+- 关系图谱页支持按资产类型、relation_type 和节点标题 / metadata 关键词做前端本地筛选；筛选会同步影响动态图谱、统计和辅助关系列表；点击节点可高亮当前节点和一度邻居，并可切换“只看该节点网络 / 恢复全局网络”用于复杂网络下的局部 focus mode。
+- 节点详情面板展示类型、标题、metadata、degree、inbound、outbound、一度邻居数量、打开详情页和 inbound / outbound 关系摘要；点击关系可查看 source、relation_type、target、note 和更新时间，并从 source 或 target 回到对应后台详情页。
 - 现有 `knowledge_notes.project_id`、`publications.project_id` 关系继续保留，不迁移、不删除、不自动推断。
 
 边界：
