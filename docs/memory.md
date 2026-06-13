@@ -43,6 +43,7 @@
 - Phase 2P-F-2：后台全局搜索支持类型筛选、每类数量统计、选中类型空状态、结果卡片类型 badge 和标题 / 描述关键词高亮。
 - Phase 2Q-A-1：Project 后台详情页升级为研究项目中枢，整合项目研究框架、私密附件、相关知识笔记 / 学术成果和快捷操作。
 - Phase 2Q-A-2：Knowledge 后台详情页升级为知识节点，整合知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口。
+- Phase 2Q-A-3：Skill 后台详情页升级为能力包 / 工作流包，整合用途说明、平台版本、私密资料、版本记录和相关资产搜索入口。
 
 当前网站包括：
 
@@ -132,6 +133,16 @@ Knowledge 知识节点：
 - Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计。
 - 本阶段不新增 migration、RPC、索引、关系表或字段，不修改 Storage policy，不读取附件正文，不做 AI、OCR、文件内容索引或向量搜索，不暴露 Storage path 或 signed URL。
 
+Skill 能力包：
+
+- `/dashboard/skills/[id]` 现在是单个能力包 / 工作流包，展示 Skill 用途说明、分类、平台、状态、当前版本、输入说明、输出说明、使用指南、`SKILL.md`、版本记录和 metadata。
+- Skill 详情页保留返回 Skill 库、编辑 Skill、删除 Skill 和新增版本记录入口。
+- Skill 详情页继续复用 RelatedDocumentsPanel 展示私密文档包、独立文件和跨文档包文件，不重复实现 Documents 行为。
+- Skill package、代码包和压缩包仅作为私密资料存储和管理，不安装、不解析、不执行。
+- 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段；Skill 详情页只提供按 Skill 名称、platform 和搜索类型查找相关资产的快捷入口。
+- 资产之间的显式关系留到后续 Phase 2Q-B 统一设计。
+- 本阶段不新增 migration、RPC、索引、关系表或字段，不修改 Storage policy，不读取附件正文，不做 AI、OCR、文件内容索引或向量搜索，不暴露 Storage path 或 signed URL。
+
 ## Recent Decisions
 
 - 公开研究工作站与私密后台已经分离：公开只读路由为 `/projects`、`/publications`、`/skills`、`/knowledge`；后台管理路由为 `/dashboard/...`。
@@ -151,6 +162,7 @@ Knowledge 知识节点：
 - Phase 2P-F-2 搜索体验增强继续采用 metadata-only 决策：类型筛选只是结果过滤，关键词高亮只在展示层完成，不保存索引，不新增外部搜索、OCR、AI 摘要或向量搜索。
 - Phase 2Q-A-1 采用 Project-first 研究中枢决策：先把 `/dashboard/projects/[id]` 打磨为研究项目中枢，使用既有 Project 字段、RelatedDocumentsPanel、`knowledge_notes.project_id`、`publications.project_id` 和后台搜索，不新增资产关系表或数据库能力。
 - Phase 2Q-A-2 采用 Knowledge-node 决策：继 Project 后把 `/dashboard/knowledge/[id]` 打磨为知识节点，使用既有 Knowledge 字段、`knowledge_notes.project_id`、`publications.project_id`、RelatedDocumentsPanel 和后台搜索，不新增资产关系表；显式跨资产关系留到 2Q-B。
+- Phase 2Q-A-3 采用 Skill-capability 决策：继 Project、Knowledge 后把 `/dashboard/skills/[id]` 打磨为能力包 / 工作流包，使用既有 Skill 字段、`skill_versions`、RelatedDocumentsPanel 和后台搜索，不新增资产关系表；Skill package 只存储和管理，不安装、不解析、不执行。
 - 后续数据库变更必须新增 `0019_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -228,6 +240,7 @@ Knowledge 知识节点：
 - Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类、关联对象；文档包详情页修正文档包名称、描述、类型、关联对象；列表页用 category、related_type、collection 筛选整理；Documents 列表或文档包详情页批量移动多个文件关联对象、批量解除关联、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件分组理解附件关系；文档包详情页整体迁移 / 同步关联工具用于同步调整整个资料包和包内全部文件；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
+- Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。
 - 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
 
 详细流程见 `docs/workflows.md`。
@@ -236,7 +249,7 @@ Knowledge 知识节点：
 
 建议顺序：
 
-1. Phase 2P / 2Q-A 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]` 研究项目中枢和 `/dashboard/knowledge/[id]` 知识节点展示与快捷操作。
+1. Phase 2P / 2Q-A 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]` 研究项目中枢、`/dashboard/knowledge/[id]` 知识节点和 `/dashboard/skills/[id]` 能力包展示与快捷操作。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。

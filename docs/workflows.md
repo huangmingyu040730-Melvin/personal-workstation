@@ -413,3 +413,43 @@ npm run build
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
 - 确认相关成果只展示同项目 Publications，Skill 只提供搜索快捷入口。
 - 确认公开 Knowledge 页面不展示后台知识节点、附件下载、Storage 路径或 signed URL。
+
+## Skill Capability Package Workflow
+
+日期：2026-06-13
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2Q-A-3 的 Skill 后台详情页能力包 / 工作流包，围绕单个 Skill 整理用途、平台、版本、使用说明、私密资料和相关资产搜索入口。
+
+步骤：
+
+1. 在 `/dashboard/skills/new` 创建 Skill，填写名称、分类、平台、状态、当前版本和说明。
+2. 进入 `/dashboard/skills/[id]` 查看单个能力包 / 工作流包。
+3. 先核对 Skill 名称、分类、平台、状态、当前版本、可见性和更新时间。
+4. 在“能力包概览”中确认用途说明、平台、状态、版本和公开边界是否完整。
+5. 在“使用说明 / 工作流内容”中查看 `content`；空正文显示“尚未填写 Skill 使用说明。”
+6. 继续查看输入说明、输出说明、使用指南和 `SKILL.md`；这些字段只展示现有文本，不新增富文本编辑器。
+7. 需要修改 Skill 本身时使用“编辑 Skill”入口，不在详情页新增复杂 workflow。
+8. 需要记录版本时使用现有新增版本记录表单，只写入 `skill_versions`。
+9. 需要管理 Skill 资料时使用页面内 RelatedDocumentsPanel，继续按文档包、独立文件和跨文档包文件理解附件关系。
+10. 需要上传单个 Skill 资料时使用“上传 Skill 资料”，由统一 `/dashboard/documents/upload` 通过 query params 预填 `related_type=skill` 和当前 `related_id`。
+11. 需要上传 Skill 资料文件夹或能力包时使用“上传 Skill 资料文件夹”，继续复用 Documents 文件夹上传和 `skill_package` 文档包流程。
+12. Skill package、代码包和压缩包只作为私密资料管理，不在站内安装、解析或执行。
+13. 需要查看该 Skill 全部附件时使用“查看相关 Documents”，进入带当前 Skill 关联筛选的 Documents 列表。
+14. 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段；需要查找相关资产时使用 Skill 名称或 platform 进入 `/dashboard/search`。
+15. 资产之间的显式关联关系留到后续 Phase 2Q-B 统一设计。
+16. 本阶段不新增资产关系表、数据库字段、migration、RPC、索引、AI、OCR、文件内容索引或向量搜索。
+17. Skill 能力包不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 确认 `/dashboard/skills/[id]` 保留返回、编辑、删除和新增版本记录入口。
+- 确认用途说明、平台、状态、版本、可见性、输入输出说明、使用指南、`SKILL.md` 和 metadata 展示正常，空字段有友好空状态。
+- 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
+- 确认相关 Project / Knowledge / Publication 只提供搜索快捷入口，不伪造关联数据。
+- 确认公开 Skill 页面不展示后台能力包、附件下载、Storage 路径或 signed URL。

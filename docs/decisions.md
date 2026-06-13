@@ -1384,3 +1384,30 @@
 - RelatedDocumentsPanel 继续保持既有私密附件分组和上传入口，不读取附件正文，不生成 signed URL，不显示 Storage path。
 - 公开 Knowledge 页面、Project / Publication / Skill 详情页、viewer/restricted、Resume、Career、Market Brief、Storage policy 和 RLS 不受影响。
 - 不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-13 - Use Skill Detail As Capability Package
+
+类型：decision
+
+决策：
+
+- Phase 2Q-A-3 继 Project、Knowledge 之后，第三个 polish 对象选择 `/dashboard/skills/[id]`。
+- Skill 详情页作为能力包 / 工作流包，连接用途说明、平台、版本、状态、私密资料、版本记录和后台搜索入口。
+- Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
+- 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段，本阶段不新增资产关系表，不伪造相关资产。
+- 没有显式关联字段时，先通过 `/dashboard/search?q=...&type=...` 辅助查找相关 Project / Knowledge / Publication，并可按 platform 搜索全局资产。
+- 资产之间的显式关联关系留到后续 Phase 2Q-B 统一设计。
+- 本 PR 不引入 AI、OCR、文件内容索引、向量搜索、migration、RPC、索引、关系表或 Storage 行为。
+
+原因：
+
+- Project 研究中枢和 Knowledge 知识节点已经建立后，Skill 是第三类高频研究资产，需要从普通详情页升级为可复用能力包的整理入口。
+- 现有 Skill 字段已经能表达用途、平台、版本、输入输出、使用指南和 `SKILL.md`，可以先通过 UI 重组提升后台维护效率。
+- 直接的跨资产关系模型需要统一设计，过早给 Skill 单点加字段容易和后续 Project / Knowledge / Publication 关系模型冲突。
+
+影响：
+
+- `/dashboard/skills/[id]` 视觉和信息架构变为能力包 / 工作流包，但保留返回、编辑、删除和新增版本记录能力。
+- RelatedDocumentsPanel 继续保持既有私密附件分组和上传入口，不读取附件正文，不生成 signed URL，不显示 Storage path。
+- 公开 Skill 页面、Project / Knowledge / Publication 详情页、viewer/restricted、Resume、Career、Market Brief、Storage policy 和 RLS 不受影响。
+- 不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
