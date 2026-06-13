@@ -518,6 +518,22 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不新增 migration，不新增 RPC，不修改 RLS 或 Storage policy。
 - 不修改 Documents 上传、删除、zip 下载、Resume / Career、Market Brief 或后台显式关系管理。
 
+### Phase 2R-A-2 - Public Homepage Hero Visual Identity
+
+已完成代码实现。在不改变首页信息架构和公开边界的前提下，继续 refine 首屏视觉识别：
+
+- Hero 仍采用左侧个人定位、说明、标签 chips 和 CTA，右侧公开项目、公开成果、公开 Skill、知识笔记统计卡片。
+- H1 文案继续保持“个人研究工作站”，但使用更适合中文研究标题的系统 serif 字体栈、克制渐变和兼容 fallback。
+- Hero 背景增加自绘 CSS 装饰层：轻量网格、研究纸张轮廓、抽象 K 线 / bar、散点、曲线和公式片段，用于表达金融、量化、研究和学术氛围。
+- 统计卡片继续保持轻量 hover，上浮、阴影、icon grid 和箭头位移动效更统一。
+- 背景元素不使用真实市场数据、具体股票代码、外部图片、字体文件、外部字体服务、图表库或动画库。
+
+边界：
+
+- 不新增 migration，不新增 RPC，不修改 RLS 或 Storage policy。
+- 不修改 Supabase schema、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career 或 Market Brief。
+- 不改变公开内容查询；公开页面仍只展示 public 内容，不公开 Documents、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理能力。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -576,7 +592,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，不改变公开内容边界。
 - Documents 继续保持私密，不开放公开下载或 viewer signed URL。
 - Documents 作为可维护的统一私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的私密附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页只嵌入后台私密附件视图，公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件下载入口。

@@ -1676,3 +1676,29 @@
 - 公开 Publication 查询对历史 `file_path` / `cover_url` 做公开边界处理，避免公开组件误用附件字段。
 - 本阶段不新增 migration，不新增 RPC，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、Resume / Career、Market Brief 或后台显式关系管理。
 - 不公开附件下载，不展示 Storage 路径，不生成 signed URL，不输出 API key、Supabase key、Authorization header、cookie、token、service role key 或 secret。
+
+## 2026-06-14 - Refine Public Homepage Hero Visual Identity
+
+类型：decision
+
+决策：
+
+- Phase 2R-A-2 只 refine 公开首页 hero 的视觉识别，不改变首页信息架构、公开查询或后台能力。
+- Hero 继续保留左侧定位 / 标签 / CTA 与右侧四张公开统计卡片结构，H1 文案继续为“个人研究工作站”。
+- H1 改用更适合中文研究标题的系统 serif 字体栈，并用克制渐变、line-height、text-wrap 和兼容 fallback 增强标题质感。
+- Hero 背景使用项目内自绘 CSS 装饰，加入低对比网格、研究纸张轮廓、抽象 K 线 / bar、散点、曲线和公式片段，表达金融、量化、研究和学术氛围。
+- 统计卡片、CTA、标签 chips 和背景 glow 的 micro-interactions 继续保持轻量、低对比和专业，不引入动画库。
+
+原因：
+
+- 用户验收 2R-A-1 后认可当前 hero 信息架构，但认为背景仍偏普通，H1 字体还可以更专业、更有研究感。
+- 首页首屏需要更快传达投资研究、量化分析、AI 工作流和学术沉淀的站点气质，同时不能像后台 dashboard、金融终端截图或花哨营销页。
+- 使用 CSS 装饰可以避免外部素材、真实行情数据、图表库、字体文件或外部字体服务带来的权限、性能和维护成本。
+
+影响：
+
+- `src/app/page.tsx` 新增 hero 研究背景装饰组件，只渲染静态、aria-hidden 的视觉层。
+- `src/app/globals.css` 新增 `public-research-title` 和 hero 背景 / 统计卡片装饰样式。
+- 不使用真实市场数据、具体股票代码、外部图片、字体文件、外部字体服务、图表库或动画库。
+- 不新增 migration，不新增 RPC，不修改 RLS、Storage policy、Supabase schema、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career 或 Market Brief。
+- 公开页面仍只展示 public 内容，不公开 Documents、附件下载、Storage path、signed URL、`file_path`、`document_asset_links`、`research_asset_links` 管理功能或任何 secret。

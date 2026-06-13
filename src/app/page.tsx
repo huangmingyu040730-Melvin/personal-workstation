@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import { ArrowRight, BarChart3, BookOpen, Bot, BrainCircuit, FileText, FolderKanban, KeyRound, ShieldCheck, Sparkles } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
 import { HomeSection } from "@/components/home/home-section";
@@ -28,6 +29,46 @@ function EmptyPublicState({ label }: { label: string }) {
   );
 }
 
+const heroCandles = [
+  { height: "34%", offset: "14%", tone: "up" },
+  { height: "52%", offset: "28%", tone: "down" },
+  { height: "43%", offset: "22%", tone: "up" },
+  { height: "68%", offset: "18%", tone: "up" },
+  { height: "38%", offset: "35%", tone: "down" },
+  { height: "57%", offset: "24%", tone: "up" },
+  { height: "46%", offset: "31%", tone: "down" },
+  { height: "72%", offset: "16%", tone: "up" }
+];
+
+function HeroResearchBackdrop() {
+  return (
+    <div aria-hidden="true" className="public-hero-research-backdrop">
+      <div className="public-hero-formula public-hero-formula-top">α β Sharpe IR Factor Risk</div>
+      <div className="public-hero-formula public-hero-formula-bottom">R = α + βF + ε</div>
+      <div className="public-hero-paper-panel public-hero-paper-primary">
+        <span />
+        <span />
+        <span />
+      </div>
+      <div className="public-hero-paper-panel public-hero-paper-secondary">
+        <span />
+        <span />
+      </div>
+      <div className="public-hero-candles">
+        {heroCandles.map((candle, index) => (
+          <span
+            key={`${candle.height}-${index}`}
+            className={candle.tone === "up" ? "is-up" : "is-down"}
+            style={{ "--candle-height": candle.height, "--candle-offset": candle.offset } as CSSProperties}
+          />
+        ))}
+      </div>
+      <div className="public-hero-scatter" />
+      <div className="public-hero-frontier" />
+    </div>
+  );
+}
+
 function HeroStatCard({
   href,
   icon: Icon,
@@ -42,9 +83,9 @@ function HeroStatCard({
   tone: string;
 }) {
   return (
-    <Link href={href} className="public-stat-card group/stat block rounded-3xl border border-white/80 bg-white/90 p-5 shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+    <Link href={href} className="public-stat-card group/stat relative block overflow-hidden rounded-3xl border border-white/80 bg-white/90 p-5 shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
       <div className="flex items-start justify-between gap-4">
-        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tone} transition duration-300 group-hover/stat:rotate-3 group-hover/stat:scale-110`}>
+        <div className={`public-stat-icon relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl ${tone} transition duration-300 group-hover/stat:rotate-3 group-hover/stat:scale-110`}>
           <Icon size={21} />
         </div>
         <ArrowRight className="mt-1 text-slate-300 transition duration-300 group-hover/stat:translate-x-1 group-hover/stat:text-blue-700" size={18} />
@@ -177,7 +218,7 @@ export default async function HomePage() {
 
   return (
     <PublicShell>
-      <section className="relative overflow-hidden border-b border-slate-200 bg-white">
+      <section className="public-hero-shell relative overflow-hidden border-b border-slate-200 bg-white">
         <Image
           src="/research-workstation-hero.png"
           alt=""
@@ -188,10 +229,11 @@ export default async function HomePage() {
         />
         <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-blue-50/88 to-white/90" />
         <div className="absolute inset-0 public-soft-grid opacity-70" />
+        <HeroResearchBackdrop />
         <div className="public-reveal-slow relative z-10 mx-auto grid max-w-[1680px] gap-10 px-5 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.78fr)] lg:items-center lg:px-12 lg:py-20 2xl:px-16">
           <div className="max-w-4xl">
             <p className="text-sm font-semibold uppercase text-sage-700">MINGYU RESEARCH WORKSTATION</p>
-            <h1 className="public-display mt-4 max-w-4xl text-5xl font-semibold leading-tight text-navy-950 md:text-7xl">
+            <h1 className="public-research-title mt-4 max-w-4xl text-5xl font-semibold leading-tight text-navy-950 md:text-7xl">
               个人研究工作站
             </h1>
             <p className="mt-4 text-lg font-semibold leading-8 text-blue-700 md:text-xl">
