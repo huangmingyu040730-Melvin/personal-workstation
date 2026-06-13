@@ -13,6 +13,7 @@ import {
   Upload
 } from "lucide-react";
 import { AdminEmptyState, AdminFormSection, AdminSecurityNote } from "@/components/admin-ui";
+import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { Field, Textarea, TextInput } from "@/components/forms/form-fields";
@@ -23,11 +24,14 @@ import type { SkillRecord, SkillVersionRecord } from "@/lib/content-types";
 import { buildRelatedDocumentUploadHref } from "@/lib/document-upload-hrefs";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
+import type { AssetLinksForAsset, AssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import { statusLabel, visibilityLabel } from "@/lib/utils";
 
 type SkillCapabilityHubProps = {
   skill: SkillRecord;
   versions: SkillVersionRecord[];
+  assetLinks: AssetLinksForAsset;
+  assetLinkOptions: AssetLinkTargetOptions;
   deleteAction: (formData: FormData) => void | Promise<void>;
   createVersionAction: (formData: FormData) => void | Promise<void>;
   error?: string;
@@ -57,6 +61,8 @@ function platformSummary(platforms: string[]) {
 export function SkillCapabilityHub({
   skill,
   versions,
+  assetLinks,
+  assetLinkOptions,
   deleteAction,
   createVersionAction,
   error,
@@ -148,6 +154,13 @@ export function SkillCapabilityHub({
             uploadBatchCollectionType="skill_package"
             emptyText="还没有关联 Skill 资料。可以上传说明文档、提示词、代码包、zip 包或文件夹作为私密附件。"
             securityNote="Skill package 只作为私密资料存储和管理。不安装、不解析、不执行上传代码，也不会生成公开下载入口。"
+          />
+          <AssetLinksPanel
+            assetType="skill"
+            assetId={skill.id}
+            links={assetLinks}
+            targetOptions={assetLinkOptions}
+            returnTo={`/dashboard/skills/${skill.id}`}
           />
           <SkillRelatedAssetsCard skill={skill} />
         </main>
@@ -352,10 +365,10 @@ function SkillRelatedAssetsCard({ skill }: { skill: SkillRecord }) {
 
   return (
     <Card>
-      <CardHeader title="相关研究资产" description="当前 Skill 没有 Project / Knowledge / Publication 显式关联字段，先通过后台全局搜索辅助定位。" />
+      <CardHeader title="相关研究资产搜索" description="显式跨资产关系已在上方维护；这里保留后台全局搜索辅助定位。" />
       <AdminEmptyState
-        title="尚未建立显式资产关联"
-        description="当前 Skill 尚未建立显式资产关联，可先通过标题或平台搜索相关研究资产。"
+        title="搜索相关资产"
+        description="可通过标题或平台搜索相关研究资产；已确认的关系请在上方显式关联区域维护。"
       />
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
         {assetLinks.map((item) => (
@@ -376,7 +389,7 @@ function SkillRelatedAssetsCard({ skill }: { skill: SkillRecord }) {
       ) : null}
       <div className="mt-5">
         <AdminSecurityNote>
-          本页不推断或伪造相关资产；直接跨资产关系留到后续 Phase 2Q-B 统一设计。
+          本页不推断或伪造相关资产；显式关系只由管理员手动创建。
         </AdminSecurityNote>
       </div>
     </Card>

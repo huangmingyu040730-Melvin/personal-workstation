@@ -1,4 +1,4 @@
-import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentCollectionType, DocumentRelatedType, ProjectStatus, PublicationType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
+import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentCollectionType, DocumentRelatedType, ProjectStatus, PublicationType, ResearchAssetRelationType, ResearchAssetType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -69,6 +69,22 @@ export const documentCollectionTypes: Array<{ value: DocumentCollectionType; lab
   { value: "attachment_bundle", label: "附件包" },
   { value: "skill_package", label: "Skill 包" },
   { value: "general_batch", label: "通用批次" }
+];
+
+export const researchAssetTypes: Array<{ value: ResearchAssetType; label: string }> = [
+  { value: "project", label: "研究项目" },
+  { value: "knowledge", label: "知识节点" },
+  { value: "skill", label: "Skill" },
+  { value: "publication", label: "学术成果" }
+];
+
+export const researchAssetRelationTypes: Array<{ value: ResearchAssetRelationType; label: string }> = [
+  { value: "related", label: "相关" },
+  { value: "supports", label: "支持" },
+  { value: "references", label: "引用" },
+  { value: "uses", label: "使用" },
+  { value: "produces", label: "产出" },
+  { value: "derived_from", label: "来源于" }
 ];
 
 export const accessRequestContentTypes: Array<{ value: AccessRequestContentType; label: string }> = [
@@ -156,6 +172,14 @@ export function getDocumentRelatedTypeLabel(value: string | null | undefined) {
 
 export function getDocumentCollectionTypeLabel(value: string | null | undefined) {
   return documentCollectionTypes.find((item) => item.value === value)?.label ?? "通用批次";
+}
+
+export function getResearchAssetTypeLabel(value: string | null | undefined) {
+  return researchAssetTypes.find((item) => item.value === value)?.label ?? "研究资产";
+}
+
+export function getResearchAssetRelationTypeLabel(value: string | null | undefined) {
+  return researchAssetRelationTypes.find((item) => item.value === value)?.label ?? "相关";
 }
 
 export function getAccessRequestContentTypeLabel(value: string | null | undefined) {

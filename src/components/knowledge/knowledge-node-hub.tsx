@@ -12,6 +12,7 @@ import {
   Upload
 } from "lucide-react";
 import { AdminEmptyState } from "@/components/admin-ui";
+import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
@@ -22,12 +23,15 @@ import type { KnowledgeNoteRecord, ProjectRecord, PublicationRecord } from "@/li
 import { buildRelatedDocumentUploadHref } from "@/lib/document-upload-hrefs";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
+import type { AssetLinksForAsset, AssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import { visibilityLabel } from "@/lib/utils";
 
 type KnowledgeNodeHubProps = {
   note: KnowledgeNoteRecord;
   relatedProject: ProjectRecord | null;
   relatedPublications: PublicationRecord[];
+  assetLinks: AssetLinksForAsset;
+  assetLinkOptions: AssetLinkTargetOptions;
   deleteAction: (formData: FormData) => void | Promise<void>;
   error?: string;
   notice?: boolean;
@@ -53,6 +57,8 @@ export function KnowledgeNodeHub({
   note,
   relatedProject,
   relatedPublications,
+  assetLinks,
+  assetLinkOptions,
   deleteAction,
   error,
   notice
@@ -141,6 +147,13 @@ export function KnowledgeNodeHub({
             uploadBatchCategory="research_material"
             uploadBatchCollectionType="attachment_bundle"
             emptyText="还没有关联知识资料。可以上传参考文献、摘录、数据文件或资料包作为私密附件。"
+          />
+          <AssetLinksPanel
+            assetType="knowledge"
+            assetId={note.id}
+            links={assetLinks}
+            targetOptions={assetLinkOptions}
+            returnTo={`/dashboard/knowledge/${note.id}`}
           />
           <KnowledgeRelatedPublicationsCard
             note={note}
@@ -280,7 +293,7 @@ function KnowledgeRelatedPublicationsCard({
     <Card>
       <CardHeader
         title="相关成果"
-        description="当前没有 Knowledge 与 Publication 的直接关系；若知识节点关联了 Project，这里展示同项目成果。"
+        description="这里继续使用 project_id 展示同项目成果；显式 Knowledge / Publication 关系在上方独立维护。"
         action={
           <Link href={buildSearchHref(note.title, "publications")} className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
             <Search size={15} />
@@ -290,7 +303,7 @@ function KnowledgeRelatedPublicationsCard({
       />
       {relatedProject ? (
         <p className="text-sm leading-6 text-slate-500">
-          基于关联 Project“{relatedProject.title}”展示同项目成果，最多 5 条；本阶段不新增直接成果关系。
+          基于关联 Project“{relatedProject.title}”展示同项目成果，最多 5 条；直接成果关系可在上方显式关联区域维护。
         </p>
       ) : (
         <AdminEmptyState
@@ -342,7 +355,7 @@ function KnowledgeAssetSearchCard({ note }: { note: KnowledgeNoteRecord }) {
 
   return (
     <Card>
-      <CardHeader title="相关资产搜索" description="没有显式关联字段时，先使用后台全局搜索定位资产。" />
+      <CardHeader title="相关资产搜索" description="保留后台 metadata 搜索入口，用于扩展查找相关资产。" />
       <div className="space-y-3">
         {searchLinks.map((item) => (
           <Link key={item.href} href={item.href} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">

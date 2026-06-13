@@ -1368,8 +1368,8 @@
 - Knowledge 详情页作为知识节点，连接摘要、正文、分类、标签、关联 Project、私密资料、同项目成果和后台搜索入口。
 - 关联 Project 只使用现有 `knowledge_notes.project_id`，不新增字段或关系表。
 - 相关成果不伪造直接关系；如果 Knowledge 已关联 Project，则展示同项目 `publications.project_id` 成果，最多 5 条。
-- Publication / Skill 与 Knowledge 的直接显式关联留到后续 Phase 2Q-B 再设计。
-- 没有显式关联字段时，先通过 `/dashboard/search?q=...&type=...` 辅助查找相关 Project / Publication / Skill。
+- 2Q-A-2 当时将 Publication / Skill 与 Knowledge 的直接显式关联留到后续 Phase 2Q-B；该边界已由 2Q-B-1 的 `research_asset_links` 扩展。
+- 2Q-A-2 当时没有显式关联字段时，先通过 `/dashboard/search?q=...&type=...` 辅助查找相关 Project / Publication / Skill；当前仍保留搜索入口作为辅助。
 - 本 PR 不引入 AI、OCR、文件内容索引、向量搜索、migration、RPC、索引、关系表或 Storage 行为。
 
 原因：
@@ -1394,9 +1394,9 @@
 - Phase 2Q-A-3 继 Project、Knowledge 之后，第三个 polish 对象选择 `/dashboard/skills/[id]`。
 - Skill 详情页作为能力包 / 工作流包，连接用途说明、平台、版本、状态、私密资料、版本记录和后台搜索入口。
 - Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
-- 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段，本阶段不新增资产关系表，不伪造相关资产。
-- 没有显式关联字段时，先通过 `/dashboard/search?q=...&type=...` 辅助查找相关 Project / Knowledge / Publication，并可按 platform 搜索全局资产。
-- 资产之间的显式关联关系留到后续 Phase 2Q-B 统一设计。
+- 2Q-A-3 当时 Skill 没有 Project / Knowledge / Publication 显式关联字段，因此不新增资产关系表，不伪造相关资产；该边界已由 2Q-B-1 的 `research_asset_links` 扩展。
+- 2Q-A-3 当时没有显式关联字段时，先通过 `/dashboard/search?q=...&type=...` 辅助查找相关 Project / Knowledge / Publication，并可按 platform 搜索全局资产；当前仍保留搜索入口作为辅助。
+- 资产之间的显式关联关系已在 Phase 2Q-B-1 建立管理员后台底座。
 - 本 PR 不引入 AI、OCR、文件内容索引、向量搜索、migration、RPC、索引、关系表或 Storage 行为。
 
 原因：
@@ -1421,9 +1421,9 @@
 - Phase 2Q-A-4 继 Project、Knowledge、Skill 之后，第四个 polish 对象选择 `/dashboard/publications/[id]`。
 - Publication 详情页作为研究成果中枢，连接 summary、abstract、关联 Project、私密成果材料、同项目 Knowledge 和后台搜索入口。
 - 关联 Project 只使用现有 `publications.project_id`，不新增字段或关系表。
-- 同项目 Knowledge 只使用现有 `knowledge_notes.project_id`；如果 Publication 未关联 Project，则不展示推断关系，只提供搜索入口。
-- 当前不新增 Publication 到 Knowledge / Skill 的显式关系，不伪造相关资产。
-- 资产之间的显式跨关系留到后续 Phase 2Q-B 统一设计。
+- 同项目 Knowledge 只使用现有 `knowledge_notes.project_id`；如果 Publication 未关联 Project，则不展示推断关系，并保留搜索入口。
+- 2Q-A-4 当时不新增 Publication 到 Knowledge / Skill 的显式关系，不伪造相关资产；该边界已由 2Q-B-1 的 `research_asset_links` 扩展。
+- 资产之间的显式跨关系已在 Phase 2Q-B-1 建立管理员后台底座。
 - `file_path` 不在后台详情页展示，也不作为下载入口；`cover_url` 仅作为安全 metadata 状态展示。
 - 本 PR 不引入 AI、OCR、文件内容索引、向量搜索、migration、RPC、索引、关系表或 Storage 行为。
 
@@ -1440,3 +1440,33 @@
 - RelatedDocumentsPanel 继续保持既有私密附件分组和上传入口，不读取附件正文，不生成 signed URL，不显示 Storage path。
 - 公开 Publication 页面、Project / Knowledge / Skill 详情页、viewer/restricted、Resume、Career、Market Brief、Storage policy 和 RLS 不受影响。
 - 不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-13 - Add Admin-Only Research Asset Links
+
+类型：decision
+
+决策：
+
+- Phase 2Q-B-1 新增 `research_asset_links`，作为 Project / Knowledge / Skill / Publication 之间的显式关系底座。
+- 关系先只覆盖四类研究资产：`project`、`knowledge`、`skill`、`publication`。
+- relation_type 先支持 `related`、`supports`、`references`、`uses`、`produces`、`derived_from`，作为管理员维护标签，不驱动权限继承或公开展示。
+- Documents 暂不纳入此关系表，继续使用现有 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
+- 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换为 `research_asset_links`。
+- 关系只在管理员后台使用，四类后台详情页展示 outbound relationships 与 inbound backlinks，并提供创建和删除能力。
+- 本阶段不做 AI 自动关联、关系图谱可视化、拖拽连线、公开页面展示、复杂权限继承、edit link、向量搜索或外部搜索服务。
+- 本阶段不新增 RPC，不引入数据库事务；Server Action 分步校验 source / target 存在性后写入或删除关系。
+
+原因：
+
+- 2Q-A 已把四类详情页打磨成研究资产中枢，但跨 Project / Knowledge / Skill / Publication 的语义关系仍分散在 `project_id` 和搜索入口中。
+- 用一张管理员后台关系表可以表达“知识支持项目”“Skill 用于项目”“成果引用知识”等明确关系，同时避免给每个资产表新增多组单点字段。
+- Documents 已经是独立私密附件底座，贸然纳入关系表会混淆“研究资产关系”和“私密文件归属 / 文档包关系”两个模型。
+- 保留 `project_id` 可以避免迁移风险，并让既有同项目展示继续稳定运行。
+
+影响：
+
+- 新增 `supabase/migrations/0019_research_asset_links.sql`，启用 RLS，并通过 `public.is_admin()` 限定管理员 select / insert / update / delete。
+- 新增 `src/lib/queries/asset-links.ts`、`src/lib/validations/asset-link.ts`、`src/actions/asset-links.ts` 和通用 AssetLinksPanel 组件。
+- `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 显示显式关联资产区域。
+- 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。

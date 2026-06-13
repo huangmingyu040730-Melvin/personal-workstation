@@ -360,10 +360,10 @@ npm run build
 7. 需要上传项目文件时使用“上传项目文件”，由统一 `/dashboard/documents/upload` 通过 query params 预填 `related_type=project` 和当前 `related_id`。
 8. 需要上传项目文件夹或资料包时使用“上传项目文件夹”，继续复用 Documents 文件夹上传和文档包流程。
 9. 需要查看项目全部附件时使用“查看项目 Documents”，进入带当前 Project 关联筛选的 Documents 列表。
-10. 相关知识笔记只读取 `knowledge_notes.project_id` 显式关系；没有关联时不推断内容关系。
-11. 相关学术成果只读取 `publications.project_id` 显式关系；没有关联时不推断内容关系。
-12. Skill 当前没有显式 Project 关系；需要查找相关 Skill 时使用项目标题或标签进入 `/dashboard/search`。
-13. 本阶段不新增资产关系表、数据库字段、migration、RPC、索引或外部搜索服务。
+10. 相关知识笔记继续读取 `knowledge_notes.project_id` 显式关系；没有关联时不推断内容关系。
+11. 相关学术成果继续读取 `publications.project_id` 显式关系；没有关联时不推断内容关系。
+12. 需要维护 Project 与 Knowledge / Skill / Publication / Project 的直接关系时，使用“显式关联资产”区域。
+13. 需要查找尚未确认的相关资产时，仍可使用项目标题或标签进入 `/dashboard/search`。
 14. Project 研究中枢不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
 
 验证要求：
@@ -372,7 +372,7 @@ npm run build
 - 运行 `npm run build`。
 - 确认 `/dashboard/projects/[id]` 保留返回、编辑和删除入口。
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
-- 确认相关资产只展示通过 `project_id` 显式关联的知识笔记和学术成果，Skill 只提供搜索快捷入口。
+- 确认相关资产继续展示通过 `project_id` 显式关联的知识笔记和学术成果，显式关联资产区域可展示 outbound 与 backlink，搜索入口仍可用。
 - 确认公开 Project 页面不展示后台研究中枢、附件下载、Storage 路径或 signed URL。
 
 ## Knowledge Node Workflow
@@ -399,10 +399,9 @@ npm run build
 10. 需要查看该知识节点全部附件时使用“查看相关 Documents”，进入带当前 Knowledge 关联筛选的 Documents 列表。
 11. 关联 Project 只读取 `knowledge_notes.project_id`；没有关联时不推断 Project，改用 Project 搜索入口。
 12. 相关成果优先使用关联 Project 下的 `publications.project_id` 同项目成果；没有关联 Project 时不伪造成果关系。
-13. Skill 当前没有显式 Knowledge 关系；需要查找相关 Skill 时使用知识标题或标签进入 `/dashboard/search`。
-14. Publication / Skill 与 Knowledge 的直接显式关联关系留到后续 Phase 2Q-B 统一设计。
-15. 本阶段不新增资产关系表、数据库字段、migration、RPC、索引、AI、OCR、文件内容索引或向量搜索。
-16. Knowledge 节点不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+13. 需要维护 Knowledge 与 Project / Skill / Publication / Knowledge 的直接关系时，使用“显式关联资产”区域。
+14. 需要查找尚未确认的相关资产时，仍可使用知识标题或标签进入 `/dashboard/search`。
+15. Knowledge 节点不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
 
 验证要求：
 
@@ -411,7 +410,7 @@ npm run build
 - 确认 `/dashboard/knowledge/[id]` 保留返回、编辑和删除入口。
 - 确认摘要、正文、分类、标签、可见性、关联 Project 和 metadata 展示正常，空字段有友好空状态。
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
-- 确认相关成果只展示同项目 Publications，Skill 只提供搜索快捷入口。
+- 确认相关成果继续展示同项目 Publications，显式关联资产区域可展示 outbound 与 backlink，搜索入口仍可用。
 - 确认公开 Knowledge 页面不展示后台知识节点、附件下载、Storage 路径或 signed URL。
 
 ## Skill Capability Package Workflow
@@ -439,10 +438,9 @@ npm run build
 11. 需要上传 Skill 资料文件夹或能力包时使用“上传 Skill 资料文件夹”，继续复用 Documents 文件夹上传和 `skill_package` 文档包流程。
 12. Skill package、代码包和压缩包只作为私密资料管理，不在站内安装、解析或执行。
 13. 需要查看该 Skill 全部附件时使用“查看相关 Documents”，进入带当前 Skill 关联筛选的 Documents 列表。
-14. 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段；需要查找相关资产时使用 Skill 名称或 platform 进入 `/dashboard/search`。
-15. 资产之间的显式关联关系留到后续 Phase 2Q-B 统一设计。
-16. 本阶段不新增资产关系表、数据库字段、migration、RPC、索引、AI、OCR、文件内容索引或向量搜索。
-17. Skill 能力包不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+14. 需要维护 Skill 与 Project / Knowledge / Publication / Skill 的直接关系时，使用“显式关联资产”区域。
+15. 需要查找尚未确认的相关资产时，仍可使用 Skill 名称或 platform 进入 `/dashboard/search`。
+16. Skill 能力包不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
 
 验证要求：
 
@@ -451,7 +449,7 @@ npm run build
 - 确认 `/dashboard/skills/[id]` 保留返回、编辑、删除和新增版本记录入口。
 - 确认用途说明、平台、状态、版本、可见性、输入输出说明、使用指南、`SKILL.md` 和 metadata 展示正常，空字段有友好空状态。
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
-- 确认相关 Project / Knowledge / Publication 只提供搜索快捷入口，不伪造关联数据。
+- 确认显式关联资产区域可展示 Project / Knowledge / Publication / Skill 的 outbound 与 backlink，搜索入口仍可用且不伪造未确认关系。
 - 确认公开 Skill 页面不展示后台能力包、附件下载、Storage 路径或 signed URL。
 
 ## Publication Output Hub Workflow
@@ -478,11 +476,10 @@ npm run build
 10. 需要查看该成果全部附件时使用“查看相关 Documents”，进入带当前 Publication 关联筛选的 Documents 列表。
 11. 关联 Project 只读取 `publications.project_id`；没有关联时不推断 Project，改用 Project 搜索入口。
 12. 同项目 Knowledge 只读取关联 Project 下的 `knowledge_notes.project_id`；没有关联 Project 时不伪造 Knowledge 关系。
-13. Skill 当前没有显式 Publication 关系；需要查找相关 Skill 时使用成果标题或标签进入 `/dashboard/search`。
-14. Publication / Knowledge / Skill 的直接显式关联关系留到后续 Phase 2Q-B 统一设计。
+13. 需要维护 Publication 与 Project / Knowledge / Skill / Publication 的直接关系时，使用“显式关联资产”区域。
+14. 需要查找尚未确认的相关资产时，仍可使用成果标题或标签进入 `/dashboard/search`。
 15. `file_path` 不展示、不作为下载入口；`cover_url` 仅作为后台 metadata 状态展示。
-16. 本阶段不新增资产关系表、数据库字段、migration、RPC、索引、AI、OCR、文件内容索引或向量搜索。
-17. Publication 成果中枢不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+16. Publication 成果中枢不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
 
 验证要求：
 
@@ -491,5 +488,38 @@ npm run build
 - 确认 `/dashboard/publications/[id]` 保留返回、编辑和删除入口。
 - 确认 summary、abstract、成果类型、标签、可见性、关联 Project 和 metadata 展示正常，空字段有友好空状态。
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
-- 确认同项目 Knowledge 只通过现有 `project_id` 展示，Skill 只提供搜索快捷入口。
+- 确认同项目 Knowledge 继续通过现有 `project_id` 展示，显式关联资产区域可展示 outbound 与 backlink，搜索入口仍可用。
 - 确认公开 Publication 页面不展示后台成果中枢、附件下载、Storage 路径、signed URL 或 `file_path`。
+
+## Research Asset Links Workflow
+
+日期：2026-06-13
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2Q-B-1 的研究资产显式关系底座，在 Project / Knowledge / Skill / Publication 之间记录管理员手动确认的关系。
+
+步骤：
+
+1. 进入任意后台资产详情页：`/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]` 或 `/dashboard/publications/[id]`。
+2. 在“显式关联资产”区域选择目标类型和目标资产。
+3. 使用 relation_type 表达关系语义：`related` 表示相关，`supports` 表示支持，`references` 表示引用，`uses` 表示使用，`produces` 表示产出，`derived_from` 表示来源于。
+4. 如有必要填写备注，说明这条关系的上下文。
+5. 保存后，当前资产会在 outbound relationships 中看到该关系。
+6. 打开目标资产详情页，可在 backlinks / 反向关系中看到来源资产。
+7. 需要移除关系时，在任一显示该关系的详情页使用“删除关系”。
+8. Documents 仍通过 RelatedDocumentsPanel、Documents 列表和文档包详情页管理，不通过 `research_asset_links` 管理。
+9. 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
+10. 未确认关系时先用 `/dashboard/search` 查找候选资产，不用 AI 或推断自动建立关系。
+
+验证要求：
+
+- 确认目标 Supabase 环境已执行 `0019_research_asset_links.sql`。
+- 确认非管理员无法读取或写入 `research_asset_links`。
+- 确认管理员可以创建 Project -> Knowledge、Skill -> Project、Publication -> Knowledge 等关系。
+- 确认目标页面出现 backlink。
+- 确认自关联会被拒绝，重复关系会显示友好错误。
+- 确认删除关系后双方详情页都不再显示该关系。
+- 确认公开页面不展示显式关系，不展示 Storage path、signed URL 或 secret。

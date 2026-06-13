@@ -331,7 +331,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 继续复用 RelatedDocumentsPanel 展示知识资料与附件，包括文档包、独立文件和跨文档包文件。
 - 快捷操作支持编辑知识节点、上传知识资料、上传知识资料文件夹、进入该知识节点 Documents 筛选页、按知识标题搜索、搜索相关 Project / Publication / Skill，以及打开关联 Project。
 - 关联 Project 使用现有 `knowledge_notes.project_id`，没有关联时显示空状态和 Project 搜索入口。
-- 相关成果不新增直接关系；如果 Knowledge 关联 Project，则展示同项目 `publications.project_id` 成果，最多 5 条。
+- 相关成果在 2Q-A-2 阶段不新增直接关系；如果 Knowledge 关联 Project，则展示同项目 `publications.project_id` 成果，最多 5 条。该边界已由 2Q-B-1 的 `research_asset_links` 扩展。
 - Skill 当前没有显式 Knowledge 关联字段，本阶段只提供按知识标题或标签搜索 Skill 的入口。
 
 边界：
@@ -352,7 +352,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 保留返回、编辑和删除 Skill 入口。
 - 继续复用 RelatedDocumentsPanel 展示 Skill 资料与能力包附件，包括文档包、独立文件和跨文档包文件。
 - 快捷操作支持编辑 Skill、上传 Skill 资料、上传 Skill 资料文件夹、进入该 Skill Documents 筛选页、按 Skill 名称搜索、搜索相关 Project / Knowledge / Publication，以及按 platform 搜索全局资产。
-- 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段，本阶段不伪造相关资产，只提供搜索入口。
+- 2Q-A-3 阶段 Skill 没有 Project / Knowledge / Publication 显式关联字段，因此不伪造相关资产，只提供搜索入口。该边界已由 2Q-B-1 的 `research_asset_links` 扩展。
 - Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
 
 边界：
@@ -375,7 +375,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 快捷操作支持编辑成果、上传成果材料、上传成果材料文件夹、进入该成果 Documents 筛选页、按成果标题搜索、搜索相关 Project / Knowledge / Skill，以及打开关联 Project。
 - 关联 Project 使用现有 `publications.project_id`，没有关联时显示空状态和 Project 搜索入口。
 - 同项目 Knowledge 使用现有 `knowledge_notes.project_id`，最多展示 5 条。
-- Skill 当前没有 Publication 显式关联字段，本阶段只提供按成果标题或标签搜索 Skill 的入口。
+- 2Q-A-4 阶段 Skill 没有 Publication 显式关联字段，因此只提供按成果标题或标签搜索 Skill 的入口。该边界已由 2Q-B-1 的 `research_asset_links` 扩展。
 - `file_path` 不展示、不作为下载入口；`cover_url` 仅作为后台 metadata 状态展示。
 
 边界：
@@ -386,6 +386,24 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 流程或 `storage_path` 生成规则。
 - 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
+- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+
+### Phase 2Q-B-1 - Research Asset Links Foundation
+
+已完成代码实现。Project、Knowledge、Skill、Publication 之间新增管理员后台显式关系底座：
+
+- 新增 `research_asset_links` 表，支持 source / target 多态资产关系。
+- 支持关系类型：相关、支持、引用、使用、产出、来源于。
+- 四类后台详情页新增“显式关联资产”区域，支持创建 outbound 关系、查看 inbound backlinks、打开对方后台详情页和删除关系。
+- Server Action 校验管理员身份、资产类型、source / target 存在性、自关联和重复关系。
+- `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动推断。
+
+边界：
+
+- 关系只在管理员后台使用，不新增公开页面展示。
+- Documents 暂不纳入 `research_asset_links`，继续使用现有 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
+- 不新增 RPC，不保存 zip，不修改 Storage policy，不读取 Storage object，不生成 signed URL。
+- 不做 AI 自动关联、关系图谱可视化、拖拽连线、公开展示或复杂权限继承。
 - 不修改 Resume / Career、viewer/restricted 或 Market Brief。
 
 ### Phase 2D - Public Research Workstation
@@ -437,10 +455,10 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 后续主要投入应集中在已有研究资产质量：
 
-- Projects：补齐研究背景、问题、方法和进度；用 Project 后台详情页作为单项目研究资产中枢，继续整理私密附件、相关知识笔记和学术成果。
-- Publications：沉淀报告、论文草稿、策略分析和阅读综述。
-- Knowledge：维护研究方法、工具笔记和知识文章；用 Knowledge 后台详情页作为单知识节点中枢，继续整理摘要、正文、关联 Project、私密资料和相关资产搜索。
-- Skills：整理可公开复用的 AI / Codex 工作流说明。
+- Projects：补齐研究背景、问题、方法和进度；用 Project 后台详情页作为单项目研究资产中枢，继续整理私密附件、project_id 关系、显式资产关系和相关搜索。
+- Publications：沉淀报告、论文草稿、策略分析和阅读综述；用显式资产关系记录成果引用、产出或来源于哪些 Knowledge / Project / Skill。
+- Knowledge：维护研究方法、工具笔记和知识文章；用 Knowledge 后台详情页作为单知识节点中枢，继续整理摘要、正文、关联 Project、私密资料、显式资产关系和相关资产搜索。
+- Skills：整理可公开复用的 AI / Codex 工作流说明；用显式资产关系记录 Skill 使用、支持或产出的研究资产。
 
 ### Public Display And Private Asset Management
 
