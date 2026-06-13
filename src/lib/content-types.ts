@@ -5,6 +5,7 @@ export type SkillStatus = "idea" | "developing" | "testing" | "available" | "arc
 export type PublicationType = "research_report" | "academic_paper" | "strategy_report" | "market_analysis" | "data_analysis" | "meeting_notes" | "reading_review" | "other";
 export type DocumentCategory = "research_material" | "publication_attachment" | "data_file" | "final_report" | "meeting_material" | "skill_attachment" | "other";
 export type DocumentRelatedType = "publication" | "project" | "skill" | "knowledge";
+export type DocumentAssetRelationType = "related" | "source_material" | "supporting_material" | "deliverable" | "reference" | "input" | "output";
 export type DocumentCollectionType = "folder_upload" | "attachment_bundle" | "skill_package" | "general_batch";
 export type ResearchAssetType = "project" | "knowledge" | "skill" | "publication";
 export type ResearchAssetRelationType = "related" | "supports" | "references" | "uses" | "produces" | "derived_from";
@@ -140,12 +141,24 @@ export type DocumentCollectionRecord = {
   updated_at: string;
 };
 
+export type DocumentAssetLinkSummary = {
+  id: string;
+  asset_type: DocumentRelatedType;
+  asset_id: string;
+  relation_type: DocumentAssetRelationType;
+  relation_label: string;
+  title: string;
+  href: string;
+  note: string | null;
+};
+
 export type DocumentWithRelation = DocumentRecord & {
   related?: {
     type: DocumentRelatedType;
     title: string;
     href: string;
   } | null;
+  relations: DocumentAssetLinkSummary[];
   collection?: Pick<DocumentCollectionRecord, "id" | "title" | "collection_type" | "root_folder_name" | "file_count" | "total_size"> | null;
 };
 
@@ -155,6 +168,7 @@ export type DocumentCollectionWithRelation = DocumentCollectionRecord & {
     title: string;
     href: string;
   } | null;
+  relations: DocumentAssetLinkSummary[];
 };
 
 export type ResearchAssetLinkRecord = {

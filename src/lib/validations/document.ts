@@ -1,10 +1,16 @@
 import { z } from "zod";
-import { documentCategories, documentCollectionTypes, documentRelatedTypes } from "@/lib/content-options";
+import { documentAssetRelationTypes, documentCategories, documentCollectionTypes, documentRelatedTypes } from "@/lib/content-options";
 import { optionalText } from "./common";
 
 const documentCategoryValues = documentCategories.map((item) => item.value) as [string, ...string[]];
 const relatedTypeValues = documentRelatedTypes.map((item) => item.value) as [string, ...string[]];
 const collectionTypeValues = documentCollectionTypes.map((item) => item.value) as [string, ...string[]];
+const documentAssetRelationTypeValues = documentAssetRelationTypes.map((item) => item.value) as [string, ...string[]];
+
+const documentAssetLinkTargetSchema = z.object({
+  asset_type: z.enum(relatedTypeValues, { message: "请选择有效关联类型" }),
+  asset_id: z.string().uuid("关联对象无效")
+});
 
 export const documentMetadataSchema = z.object({
   name: z.string().trim().min(2, "文件显示名称至少需要 2 个字符").max(180, "文件显示名称不能超过 180 个字符"),
@@ -154,6 +160,76 @@ export const documentBulkDeleteSchema = z.object({
       path: ["delete_confirm"]
     });
   }
+});
+
+export const addDocumentAssetLinksSchema = z.object({
+  document_ids: z.array(z.string().uuid("文件选择无效")).min(1, "请至少选择一个文件。"),
+  asset_links: z.array(documentAssetLinkTargetSchema).min(1, "请至少选择一个关联对象。"),
+  relation_type: z.enum(documentAssetRelationTypeValues, { message: "请选择有效关系类型" }),
+  note: optionalText(),
+  return_to: optionalText()
+});
+
+export const bulkRemoveDocumentAssetLinksSchema = z.object({
+  document_ids: z.array(z.string().uuid("文件选择无效")).min(1, "请至少选择一个文件。"),
+  remove_scope: z.enum(["specific", "all"], { message: "请选择有效移除方式" }),
+  asset_type: z.preprocess((value) => (value === "" ? null : value), z.enum(relatedTypeValues).nullable()).optional().transform((value) => value ?? null),
+  asset_id: optionalText(),
+  clear_confirm: optionalText(),
+  return_to: optionalText()
+}).superRefine((value, ctx) => {
+  if (value.remove_scope === "all") {
+    if (value.clear_confirm !== "yes") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "清空全部关联前请先确认。",
+        path: ["clear_confirm"]
+      });
+    }
+
+    return;
+  }
+
+  if (value.asset_id && !value.asset_type) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "移除指定关联时需要同时选择关联类型",
+      path: ["asset_type"]
+    });
+  }
+
+  if (value.asset_type && !value.asset_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "移除指定关联时需要选择关联对象",
+      path: ["asset_id"]
+    });
+  }
+
+  if (!value.asset_type && !value.asset_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "移除指定关联前请选择目标关联对象。",
+      path: ["asset_type"]
+    });
+  }
+});
+
+export const removeDocumentAssetLinkSchema = z.object({
+  return_to: optionalText()
+});
+
+export const addDocumentCollectionAssetLinksSchema = z.object({
+  asset_links: z.array(documentAssetLinkTargetSchema).min(1, "请至少选择一个关联对象。"),
+  relation_type: z.enum(documentAssetRelationTypeValues, { message: "请选择有效关系类型" }),
+  note: optionalText(),
+  apply_to_documents: z.boolean(),
+  return_to: optionalText()
+});
+
+export const removeDocumentCollectionAssetLinkSchema = z.object({
+  apply_to_documents: z.boolean(),
+  return_to: optionalText()
 });
 
 export const documentCollectionRelationSyncSchema = z.object({

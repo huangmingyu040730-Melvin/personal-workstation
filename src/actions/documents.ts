@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { DocumentCollectionRecord, DocumentCollectionType, DocumentRelatedType } from "@/lib/content-types";
+import type { DocumentAssetRelationType, DocumentCollectionRecord, DocumentCollectionType, DocumentRelatedType } from "@/lib/content-types";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getOptionalString, getString } from "@/lib/forms";
+import { getDocumentAssetLinkKey, type DocumentAssetLinkInput } from "@/lib/queries/document-asset-links";
 import {
   buildDocumentStoragePath,
   getFolderPath,
@@ -19,12 +20,17 @@ import {
 import {
   documentBulkDeleteSchema,
   documentBulkRelationSchema,
+  addDocumentAssetLinksSchema,
+  addDocumentCollectionAssetLinksSchema,
+  bulkRemoveDocumentAssetLinksSchema,
   documentCollectionDeleteWithFilesSchema,
   documentCollectionEditableMetadataSchema,
   documentCollectionRelationSyncSchema,
   documentCollectionMetadataSchema,
   documentEditableMetadataSchema,
-  documentMetadataSchema
+  documentMetadataSchema,
+  removeDocumentAssetLinkSchema,
+  removeDocumentCollectionAssetLinkSchema
 } from "@/lib/validations/document";
 
 export type PreparedDocumentUpload = {
@@ -41,6 +47,7 @@ export type PreparedDocumentUpload = {
   folderPath: string | null;
   relatedType: DocumentRelatedType | null;
   relatedId: string | null;
+  assetLinks: DocumentAssetLinkInput[];
 };
 
 export type PreparedDocumentCollectionUpload = {
@@ -49,6 +56,7 @@ export type PreparedDocumentCollectionUpload = {
   collectionType: DocumentCollectionType;
   relatedType: DocumentRelatedType | null;
   relatedId: string | null;
+  assetLinks: DocumentAssetLinkInput[];
   rootFolderName: string | null;
   fileCount: number;
   totalSize: number;
@@ -120,6 +128,100 @@ function relatedValuesFromForm(formData: FormData) {
     related_type: relatedType,
     related_id: idParts.join(":") || null
   };
+}
+
+function getBooleanFromForm(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return value === "on" || value === "true" || value === "yes" || value === "1";
+}
+
+function getDocumentAssetTargetsFromForm(formData: FormData) {
+  const rawLinks = formData
+    .getAll("asset_links")
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const legacyRelated = relatedValuesFromForm(formData);
+  const targets = rawLinks.flatMap((value) => {
+    const [assetType, ...idParts] = value.split(":");
+    const assetId = idParts.join(":");
+
+    if (!assetType || !assetId) {
+      return [];
+    }
+
+    return [{
+      asset_type: assetType as DocumentRelatedType,
+      asset_id: assetId
+    }];
+  });
+
+  if (legacyRelated.related_type && legacyRelated.related_id) {
+    targets.push({
+      asset_type: legacyRelated.related_type as DocumentRelatedType,
+      asset_id: legacyRelated.related_id
+    });
+  }
+
+  const seen = new Set<string>();
+  return targets.filter((target) => {
+    const key = `${target.asset_type}:${target.asset_id}`;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function buildDocumentAssetLinkInputs(
+  targets: Array<{ asset_type: DocumentRelatedType; asset_id: string }>,
+  relationType: DocumentAssetRelationType,
+  note: string | null
+): DocumentAssetLinkInput[] {
+  const seen = new Set<string>();
+
+  return targets
+    .map((target) => ({
+      asset_type: target.asset_type,
+      asset_id: target.asset_id,
+      relation_type: relationType,
+      note
+    }))
+    .filter((link) => {
+      const key = getDocumentAssetLinkKey(link);
+
+      if (seen.has(key)) {
+        return false;
+      }
+
+      seen.add(key);
+      return true;
+    });
+}
+
+function mergeDocumentAssetLinks(...groups: DocumentAssetLinkInput[][]) {
+  const seen = new Set<string>();
+  const merged: DocumentAssetLinkInput[] = [];
+
+  for (const link of groups.flat()) {
+    const key = getDocumentAssetLinkKey(link);
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    merged.push(link);
+  }
+
+  return merged;
+}
+
+function getPrimaryAssetLink(assetLinks: DocumentAssetLinkInput[]) {
+  return assetLinks[0] ?? null;
 }
 
 function getDocumentIdsFromForm(formData: FormData) {
@@ -288,6 +390,170 @@ async function ensureRelatedRecordExists(
   return Boolean(data);
 }
 
+async function ensureDocumentAssetLinksExist(
+  supabase: AdminSupabaseClient,
+  assetLinks: DocumentAssetLinkInput[]
+) {
+  for (const link of assetLinks) {
+    const exists = await ensureRelatedRecordExists(supabase, link.asset_type, link.asset_id);
+
+    if (!exists) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function getCollectionAssetLinksForUpload(
+  supabase: AdminSupabaseClient,
+  collectionId: string | null
+): Promise<DocumentAssetLinkInput[]> {
+  if (!collectionId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("document_collection_asset_links")
+    .select("asset_type,asset_id,relation_type,note")
+    .eq("collection_id", collectionId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("getCollectionAssetLinksForUpload failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  return ((data ?? []) as DocumentAssetLinkInput[]).map((link) => ({
+    asset_type: link.asset_type,
+    asset_id: link.asset_id,
+    relation_type: link.relation_type,
+    note: link.note
+  }));
+}
+
+async function insertDocumentAssetLinks(
+  supabase: AdminSupabaseClient,
+  documentIds: string[],
+  assetLinks: DocumentAssetLinkInput[],
+  actorId: string | null
+) {
+  if (documentIds.length === 0 || assetLinks.length === 0) {
+    return { ok: true as const };
+  }
+
+  const rows = documentIds.flatMap((documentId) => assetLinks.map((link) => ({
+    document_id: documentId,
+    asset_type: link.asset_type,
+    asset_id: link.asset_id,
+    relation_type: link.relation_type,
+    note: link.note,
+    created_by: actorId
+  })));
+
+  const { error } = await supabase
+    .from("document_asset_links")
+    .upsert(rows, {
+      onConflict: "document_id,asset_type,asset_id,relation_type",
+      ignoreDuplicates: true
+    });
+
+  if (error) {
+    console.error("insertDocumentAssetLinks failed", { code: error.code, message: error.message });
+    return {
+      ok: false as const,
+      message: error.message || "添加文件关联失败。"
+    };
+  }
+
+  return { ok: true as const };
+}
+
+async function insertDocumentCollectionAssetLinks(
+  supabase: AdminSupabaseClient,
+  collectionIds: string[],
+  assetLinks: DocumentAssetLinkInput[],
+  actorId: string | null
+) {
+  if (collectionIds.length === 0 || assetLinks.length === 0) {
+    return { ok: true as const };
+  }
+
+  const rows = collectionIds.flatMap((collectionId) => assetLinks.map((link) => ({
+    collection_id: collectionId,
+    asset_type: link.asset_type,
+    asset_id: link.asset_id,
+    relation_type: link.relation_type,
+    note: link.note,
+    created_by: actorId
+  })));
+
+  const { error } = await supabase
+    .from("document_collection_asset_links")
+    .upsert(rows, {
+      onConflict: "collection_id,asset_type,asset_id,relation_type",
+      ignoreDuplicates: true
+    });
+
+  if (error) {
+    console.error("insertDocumentCollectionAssetLinks failed", { code: error.code, message: error.message });
+    return {
+      ok: false as const,
+      message: error.message || "添加文档包关联失败。"
+    };
+  }
+
+  return { ok: true as const };
+}
+
+async function setDocumentPrimaryRelationIfEmpty(
+  supabase: AdminSupabaseClient,
+  documentIds: string[],
+  primaryLink: DocumentAssetLinkInput | null
+) {
+  if (documentIds.length === 0 || !primaryLink) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      related_type: primaryLink.asset_type,
+      related_id: primaryLink.asset_id
+    })
+    .in("id", documentIds)
+    .is("related_type", null)
+    .is("related_id", null);
+
+  if (error) {
+    console.error("setDocumentPrimaryRelationIfEmpty failed", { code: error.code, message: error.message });
+  }
+}
+
+async function setCollectionPrimaryRelationIfEmpty(
+  supabase: AdminSupabaseClient,
+  collectionIds: string[],
+  primaryLink: DocumentAssetLinkInput | null
+) {
+  if (collectionIds.length === 0 || !primaryLink) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("document_collections")
+    .update({
+      related_type: primaryLink.asset_type,
+      related_id: primaryLink.asset_id
+    })
+    .in("id", collectionIds)
+    .is("related_type", null)
+    .is("related_id", null);
+
+  if (error) {
+    console.error("setCollectionPrimaryRelationIfEmpty failed", { code: error.code, message: error.message });
+  }
+}
+
 async function getDocumentCollectionForUpload(
   supabase: AdminSupabaseClient,
   collectionId: string | null
@@ -376,6 +642,15 @@ function revalidateDocumentPaths(options: {
   }
 }
 
+function revalidateDocumentAssetLinks(assetLinks: DocumentAssetLinkInput[]) {
+  for (const link of assetLinks) {
+    revalidateDocumentPaths({
+      relatedType: link.asset_type,
+      relatedId: link.asset_id
+    });
+  }
+}
+
 function getRelatedDetailHref(relatedType: DocumentRelatedType | null, relatedId: string | null) {
   if (!relatedType || !relatedId) {
     return null;
@@ -432,12 +707,16 @@ export async function prepareDocumentCollectionUploadAction(formData: FormData):
     return documentResultError(error ?? "当前账号没有管理员权限。");
   }
 
+  const assetTargets = getDocumentAssetTargetsFromForm(formData);
+  const assetRelationType = (getString(formData, "asset_relation_type") || "related") as DocumentAssetRelationType;
+  const assetLinks = buildDocumentAssetLinkInputs(assetTargets, assetRelationType, getOptionalString(formData, "asset_note"));
+  const primaryLink = getPrimaryAssetLink(assetLinks);
   const metadata = documentCollectionMetadataSchema.safeParse({
     title: getString(formData, "title"),
     description: getOptionalString(formData, "description"),
     collection_type: getString(formData, "collection_type"),
-    related_type: getOptionalString(formData, "related_type"),
-    related_id: getOptionalString(formData, "related_id"),
+    related_type: primaryLink?.asset_type ?? getOptionalString(formData, "related_type"),
+    related_id: primaryLink?.asset_id ?? getOptionalString(formData, "related_id"),
     root_folder_name: getOptionalString(formData, "root_folder_name"),
     file_count: getString(formData, "file_count"),
     total_size: getString(formData, "total_size")
@@ -457,8 +736,9 @@ export async function prepareDocumentCollectionUploadAction(formData: FormData):
 
   const relatedType = metadata.data.related_type as DocumentRelatedType | null;
   const relatedExists = await ensureRelatedRecordExists(supabase, relatedType, metadata.data.related_id);
+  const assetLinksExist = await ensureDocumentAssetLinksExist(supabase, assetLinks);
 
-  if (!relatedExists) {
+  if (!relatedExists || !assetLinksExist) {
     return documentResultError("关联对象不存在，请重新选择。");
   }
 
@@ -484,6 +764,13 @@ export async function prepareDocumentCollectionUploadAction(formData: FormData):
     return documentResultError(getDocumentErrorMessage(insertError ?? { message: "创建文档包失败，请稍后重试。" }));
   }
 
+  const linkInsertResult = await insertDocumentCollectionAssetLinks(supabase, [data.id], assetLinks, actorId);
+
+  if (!linkInsertResult.ok) {
+    await supabase.from("document_collections").delete().eq("id", data.id);
+    return documentResultError(linkInsertResult.message);
+  }
+
   await writeActivityLog({
     action: "document_collection.create",
     entityType: "document_collection",
@@ -493,6 +780,7 @@ export async function prepareDocumentCollectionUploadAction(formData: FormData):
       collection_type: data.collection_type,
       related_type: data.related_type,
       related_id: data.related_id,
+      asset_link_count: assetLinks.length,
       requested_file_count: metadata.data.file_count,
       requested_total_size: metadata.data.total_size
     }
@@ -503,6 +791,7 @@ export async function prepareDocumentCollectionUploadAction(formData: FormData):
     relatedType: data.related_type as DocumentRelatedType | null,
     relatedId: data.related_id
   });
+  revalidateDocumentAssetLinks(assetLinks);
 
   return {
     ok: true,
@@ -512,6 +801,7 @@ export async function prepareDocumentCollectionUploadAction(formData: FormData):
       collectionType: data.collection_type as DocumentCollectionType,
       relatedType: data.related_type as DocumentRelatedType | null,
       relatedId: data.related_id,
+      assetLinks,
       rootFolderName: data.root_folder_name,
       fileCount: data.file_count,
       totalSize: data.total_size
@@ -542,6 +832,9 @@ export async function prepareDocumentUploadAction(formData: FormData): Promise<P
     return documentResultError(metadata.error.issues[0]?.message ?? "请检查文件信息。");
   }
 
+  const submittedAssetTargets = getDocumentAssetTargetsFromForm(formData);
+  const submittedRelationType = (getString(formData, "asset_relation_type") || "related") as DocumentAssetRelationType;
+  const submittedAssetLinks = buildDocumentAssetLinkInputs(submittedAssetTargets, submittedRelationType, getOptionalString(formData, "asset_note"));
   const relatedType = metadata.data.related_type as DocumentRelatedType | null;
   const collection = await getDocumentCollectionForUpload(supabase, metadata.data.collection_id);
 
@@ -549,19 +842,21 @@ export async function prepareDocumentUploadAction(formData: FormData): Promise<P
     return documentResultError("文档包不存在，请重新创建批次。");
   }
 
-  if (collection && metadata.data.related_type && collection.related_type && metadata.data.related_type !== collection.related_type) {
-    return documentResultError("文件关联类型与文档包不一致。");
-  }
-
-  if (collection && metadata.data.related_id && collection.related_id && metadata.data.related_id !== collection.related_id) {
-    return documentResultError("文件关联对象与文档包不一致。");
-  }
-
-  const effectiveRelatedType = (collection?.related_type ?? relatedType) as DocumentRelatedType | null;
-  const effectiveRelatedId = collection?.related_id ?? metadata.data.related_id;
+  const collectionAssetLinks = await getCollectionAssetLinksForUpload(supabase, collection?.id ?? null);
+  const collectionLegacyLinks = collection?.related_type && collection.related_id
+    ? buildDocumentAssetLinkInputs([{
+        asset_type: collection.related_type as DocumentRelatedType,
+        asset_id: collection.related_id
+      }], "related", null)
+    : [];
+  const effectiveAssetLinks = mergeDocumentAssetLinks(collectionAssetLinks, collectionLegacyLinks, submittedAssetLinks);
+  const primaryLink = getPrimaryAssetLink(effectiveAssetLinks);
+  const effectiveRelatedType = (primaryLink?.asset_type ?? collection?.related_type ?? relatedType) as DocumentRelatedType | null;
+  const effectiveRelatedId = primaryLink?.asset_id ?? collection?.related_id ?? metadata.data.related_id;
   const relatedExists = await ensureRelatedRecordExists(supabase, effectiveRelatedType, effectiveRelatedId);
+  const assetLinksExist = await ensureDocumentAssetLinksExist(supabase, effectiveAssetLinks);
 
-  if (!relatedExists) {
+  if (!relatedExists || !assetLinksExist) {
     return documentResultError("关联对象不存在，请重新选择。");
   }
 
@@ -600,7 +895,8 @@ export async function prepareDocumentUploadAction(formData: FormData): Promise<P
       relativePath,
       folderPath,
       relatedType: effectiveRelatedType,
-      relatedId: effectiveRelatedId
+      relatedId: effectiveRelatedId,
+      assetLinks: effectiveAssetLinks
     }
   };
 }
@@ -648,19 +944,10 @@ export async function finalizeDocumentUploadAction(upload: PreparedDocumentUploa
     return documentResultError("文档包不存在，已尝试清理刚上传的文件。");
   }
 
-  if (collection && relatedType && collection.related_type && relatedType !== collection.related_type) {
-    await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([upload.storagePath]);
-    return documentResultError("文件关联类型与文档包不一致，已尝试清理刚上传的文件。");
-  }
-
-  if (collection && metadata.data.related_id && collection.related_id && metadata.data.related_id !== collection.related_id) {
-    await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([upload.storagePath]);
-    return documentResultError("文件关联对象与文档包不一致，已尝试清理刚上传的文件。");
-  }
-
   const relatedExists = await ensureRelatedRecordExists(supabase, relatedType, metadata.data.related_id);
+  const assetLinksExist = await ensureDocumentAssetLinksExist(supabase, upload.assetLinks);
 
-  if (!relatedExists) {
+  if (!relatedExists || !assetLinksExist) {
     await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([upload.storagePath]);
     return documentResultError("关联对象不存在，已尝试清理刚上传的文件。");
   }
@@ -703,6 +990,14 @@ export async function finalizeDocumentUploadAction(upload: PreparedDocumentUploa
     return documentResultError(getDocumentErrorMessage(insertError));
   }
 
+  const linkInsertResult = await insertDocumentAssetLinks(supabase, [data.id], upload.assetLinks, actorId);
+
+  if (!linkInsertResult.ok) {
+    await supabase.from("documents").delete().eq("id", data.id);
+    await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([upload.storagePath]);
+    return documentResultError(linkInsertResult.message);
+  }
+
   await writeActivityLog({
     action: "document.upload",
     entityType: "document",
@@ -711,7 +1006,8 @@ export async function finalizeDocumentUploadAction(upload: PreparedDocumentUploa
       name: data.name,
       collection_id: metadata.data.collection_id,
       related_type: data.related_type,
-      related_id: data.related_id
+      related_id: data.related_id,
+      asset_link_count: upload.assetLinks.length
     }
   });
 
@@ -722,6 +1018,7 @@ export async function finalizeDocumentUploadAction(upload: PreparedDocumentUploa
     relatedType: data.related_type as DocumentRelatedType | null,
     relatedId: data.related_id
   });
+  revalidateDocumentAssetLinks(upload.assetLinks);
 
   return { ok: true, documentId: data.id };
 }
@@ -1050,6 +1347,23 @@ export async function syncDocumentCollectionRelationsAction(id: string, formData
   }
 
   const isUnlink = parsed.data.collection_sync_action === "unlink";
+  const syncedAssetLinks = nextRelatedType && nextRelatedId
+    ? buildDocumentAssetLinkInputs([{ asset_type: nextRelatedType, asset_id: nextRelatedId }], "related", null)
+    : [];
+
+  if (isUnlink) {
+    await supabase.from("document_collection_asset_links").delete().eq("collection_id", id);
+
+    if (documentsInCollection.length > 0) {
+      await supabase
+        .from("document_asset_links")
+        .delete()
+        .in("document_id", documentsInCollection.map((document) => document.id));
+    }
+  } else {
+    await insertDocumentCollectionAssetLinks(supabase, [id], syncedAssetLinks, null);
+    await insertDocumentAssetLinks(supabase, documentsInCollection.map((document) => document.id), syncedAssetLinks, null);
+  }
 
   await writeActivityLog({
     action: isUnlink ? "document_collection.bulk_unlink" : "document_collection.sync_relations",
@@ -1077,6 +1391,7 @@ export async function syncDocumentCollectionRelationsAction(id: string, formData
     relatedType: nextRelatedType,
     relatedId: nextRelatedId
   });
+  revalidateDocumentAssetLinks(syncedAssetLinks);
 
   for (const relation of oldDocumentRelations) {
     revalidateDocumentPaths({
@@ -1087,6 +1402,537 @@ export async function syncDocumentCollectionRelationsAction(id: string, formData
 
   const notice = isUnlink ? "collection_relations_unlinked" : "collection_relations_synced";
   redirect(`${detailPath}?notice=${notice}&count=${documentsInCollection.length}`);
+}
+
+export async function addDocumentAssetLinksAction(formData: FormData) {
+  const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to"));
+  const { supabase, isAdmin, actorId, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(error ?? "当前账号没有管理员权限。") }));
+  }
+
+  const assetTargets = getDocumentAssetTargetsFromForm(formData);
+  const parsed = addDocumentAssetLinksSchema.safeParse({
+    document_ids: getDocumentIdsFromForm(formData),
+    asset_links: assetTargets,
+    relation_type: getString(formData, "asset_relation_type") || "related",
+    note: getOptionalString(formData, "asset_note"),
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(parsed.error.issues[0]?.message ?? "请检查关联信息。")
+    }));
+  }
+
+  const assetLinks = buildDocumentAssetLinkInputs(
+    parsed.data.asset_links as Array<{ asset_type: DocumentRelatedType; asset_id: string }>,
+    parsed.data.relation_type as DocumentAssetRelationType,
+    parsed.data.note
+  );
+  const assetLinksExist = await ensureDocumentAssetLinksExist(supabase, assetLinks);
+
+  if (!assetLinksExist) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError("关联对象不存在，请重新选择。") }));
+  }
+
+  const { data: documents, error: fetchError } = await supabase
+    .from("documents")
+    .select("id,collection_id,related_type,related_id")
+    .in("id", parsed.data.document_ids);
+
+  if (fetchError || !documents || documents.length !== parsed.data.document_ids.length) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(fetchError?.message || "部分文件不存在或没有权限访问。")
+    }));
+  }
+
+  const insertResult = await insertDocumentAssetLinks(supabase, parsed.data.document_ids, assetLinks, actorId);
+
+  if (!insertResult.ok) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(insertResult.message) }));
+  }
+
+  await setDocumentPrimaryRelationIfEmpty(supabase, parsed.data.document_ids, getPrimaryAssetLink(assetLinks));
+
+  await writeActivityLog({
+    action: "document.asset_links.add",
+    entityType: "document",
+    entityId: parsed.data.document_ids[0],
+    metadata: {
+      document_ids: parsed.data.document_ids,
+      document_count: parsed.data.document_ids.length,
+      asset_links: assetLinks.map((link) => ({
+        asset_type: link.asset_type,
+        asset_id: link.asset_id,
+        relation_type: link.relation_type
+      }))
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/documents");
+  revalidatePath(getDashboardPathname(returnTo));
+
+  for (const documentId of parsed.data.document_ids) {
+    revalidatePath(`/dashboard/documents/${documentId}`);
+  }
+
+  for (const collectionId of uniqueNullableValues(documents.map((document) => document.collection_id))) {
+    revalidatePath(`/dashboard/documents/collections/${collectionId}`);
+  }
+
+  revalidateDocumentAssetLinks(assetLinks);
+
+  redirect(getReturnPathWithMessage(returnTo, {
+    notice: "document_asset_links_added",
+    count: `${parsed.data.document_ids.length}`
+  }));
+}
+
+export async function removeDocumentAssetLinkAction(linkId: string, formData: FormData) {
+  const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to"));
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(error ?? "当前账号没有管理员权限。") }));
+  }
+
+  const parsed = removeDocumentAssetLinkSchema.safeParse({
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(parsed.error.issues[0]?.message ?? "请检查移除关联信息。")
+    }));
+  }
+
+  const { data: link, error: fetchError } = await supabase
+    .from("document_asset_links")
+    .select("id,document_id,asset_type,asset_id,relation_type")
+    .eq("id", linkId)
+    .maybeSingle();
+
+  if (fetchError || !link) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(fetchError?.message || "关联记录不存在。") }));
+  }
+
+  const { data: document } = await supabase
+    .from("documents")
+    .select("id,collection_id,related_type,related_id")
+    .eq("id", link.document_id)
+    .maybeSingle();
+
+  const { error: deleteError } = await supabase
+    .from("document_asset_links")
+    .delete()
+    .eq("id", linkId);
+
+  if (deleteError) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(deleteError.message || "移除文件关联失败。") }));
+  }
+
+  if (
+    document &&
+    link.relation_type === "related" &&
+    document.related_type === link.asset_type &&
+    document.related_id === link.asset_id
+  ) {
+    await supabase
+      .from("documents")
+      .update({ related_type: null, related_id: null })
+      .eq("id", link.document_id);
+  }
+
+  await writeActivityLog({
+    action: "document.asset_link.remove",
+    entityType: "document",
+    entityId: link.document_id,
+    metadata: {
+      document_id: link.document_id,
+      asset_type: link.asset_type,
+      asset_id: link.asset_id,
+      relation_type: link.relation_type
+    }
+  });
+
+  revalidateDocumentPaths({
+    documentId: link.document_id,
+    collectionId: document?.collection_id,
+    relatedType: link.asset_type as DocumentRelatedType,
+    relatedId: link.asset_id
+  });
+  revalidatePath(getDashboardPathname(returnTo));
+
+  redirect(getReturnPathWithMessage(returnTo, { notice: "document_asset_link_removed" }));
+}
+
+export async function bulkRemoveDocumentAssetLinksAction(formData: FormData) {
+  const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to"));
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(error ?? "当前账号没有管理员权限。") }));
+  }
+
+  const relatedValues = relatedValuesFromForm(formData);
+  const removeScope = getString(formData, "remove_scope") || "specific";
+  const parsed = bulkRemoveDocumentAssetLinksSchema.safeParse({
+    document_ids: getDocumentIdsFromForm(formData),
+    remove_scope: removeScope,
+    asset_type: removeScope === "all" ? null : relatedValues.related_type,
+    asset_id: removeScope === "all" ? null : relatedValues.related_id,
+    clear_confirm: getOptionalString(formData, "clear_confirm"),
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(parsed.error.issues[0]?.message ?? "请检查移除关联信息。")
+    }));
+  }
+
+  const { data: documents, error: documentsError } = await supabase
+    .from("documents")
+    .select("id,collection_id,related_type,related_id")
+    .in("id", parsed.data.document_ids);
+
+  if (documentsError || !documents || documents.length !== parsed.data.document_ids.length) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(documentsError?.message || "部分文件不存在或没有权限访问。")
+    }));
+  }
+
+  const { data: existingLinks } = await supabase
+    .from("document_asset_links")
+    .select("asset_type,asset_id")
+    .in("document_id", parsed.data.document_ids);
+
+  let linksQuery = supabase
+    .from("document_asset_links")
+    .delete()
+    .in("document_id", parsed.data.document_ids);
+
+  if (parsed.data.remove_scope === "specific" && parsed.data.asset_type && parsed.data.asset_id) {
+    linksQuery = linksQuery
+      .eq("asset_type", parsed.data.asset_type)
+      .eq("asset_id", parsed.data.asset_id);
+  }
+
+  const { error: deleteError } = await linksQuery;
+
+  if (deleteError) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(deleteError.message || "批量移除文件关联失败。") }));
+  }
+
+  if (parsed.data.remove_scope === "all") {
+    await supabase
+      .from("documents")
+      .update({ related_type: null, related_id: null })
+      .in("id", parsed.data.document_ids);
+  } else if (parsed.data.asset_type && parsed.data.asset_id) {
+    await supabase
+      .from("documents")
+      .update({ related_type: null, related_id: null })
+      .in("id", parsed.data.document_ids)
+      .eq("related_type", parsed.data.asset_type)
+      .eq("related_id", parsed.data.asset_id);
+  }
+
+  await writeActivityLog({
+    action: parsed.data.remove_scope === "all" ? "document.asset_links.clear" : "document.asset_links.remove",
+    entityType: "document",
+    entityId: parsed.data.document_ids[0],
+    metadata: {
+      document_ids: parsed.data.document_ids,
+      document_count: parsed.data.document_ids.length,
+      remove_scope: parsed.data.remove_scope,
+      asset_type: parsed.data.asset_type,
+      asset_id: parsed.data.asset_id
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/documents");
+  revalidatePath(getDashboardPathname(returnTo));
+
+  for (const documentId of parsed.data.document_ids) {
+    revalidatePath(`/dashboard/documents/${documentId}`);
+  }
+
+  for (const collectionId of uniqueNullableValues(documents.map((document) => document.collection_id))) {
+    revalidatePath(`/dashboard/documents/collections/${collectionId}`);
+  }
+
+  if (parsed.data.asset_type && parsed.data.asset_id) {
+    revalidateDocumentPaths({
+      relatedType: parsed.data.asset_type as DocumentRelatedType,
+      relatedId: parsed.data.asset_id
+    });
+  } else {
+    const affectedLinkRelations = (existingLinks ?? []).map((link) => ({
+      relatedType: link.asset_type as DocumentRelatedType,
+      relatedId: link.asset_id as string
+    }));
+    const affectedLegacyRelations = uniqueRelationKeys(documents);
+    const affectedRelations = Array.from(new Map(
+      [...affectedLinkRelations, ...affectedLegacyRelations].map((relation) => [
+        `${relation.relatedType}:${relation.relatedId}`,
+        relation
+      ])
+    ).values());
+
+    for (const relation of affectedRelations) {
+      revalidateDocumentPaths({
+        relatedType: relation.relatedType,
+        relatedId: relation.relatedId
+      });
+    }
+  }
+
+  redirect(getReturnPathWithMessage(returnTo, {
+    notice: parsed.data.remove_scope === "all" ? "document_asset_links_cleared" : "document_asset_links_removed",
+    count: `${parsed.data.document_ids.length}`
+  }));
+}
+
+export async function addDocumentCollectionAssetLinksAction(collectionId: string, formData: FormData) {
+  const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to")) || `/dashboard/documents/collections/${collectionId}`;
+  const { supabase, isAdmin, actorId, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(error ?? "当前账号没有管理员权限。") }));
+  }
+
+  const assetTargets = getDocumentAssetTargetsFromForm(formData);
+  const parsed = addDocumentCollectionAssetLinksSchema.safeParse({
+    asset_links: assetTargets,
+    relation_type: getString(formData, "asset_relation_type") || "related",
+    note: getOptionalString(formData, "asset_note"),
+    apply_to_documents: getBooleanFromForm(formData, "apply_to_documents"),
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(parsed.error.issues[0]?.message ?? "请检查文档包关联信息。")
+    }));
+  }
+
+  const { data: collection, error: collectionError } = await supabase
+    .from("document_collections")
+    .select("id,related_type,related_id")
+    .eq("id", collectionId)
+    .maybeSingle();
+
+  if (collectionError || !collection) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(collectionError?.message || "文档包不存在。") }));
+  }
+
+  const assetLinks = buildDocumentAssetLinkInputs(
+    parsed.data.asset_links as Array<{ asset_type: DocumentRelatedType; asset_id: string }>,
+    parsed.data.relation_type as DocumentAssetRelationType,
+    parsed.data.note
+  );
+  const assetLinksExist = await ensureDocumentAssetLinksExist(supabase, assetLinks);
+
+  if (!assetLinksExist) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError("关联对象不存在，请重新选择。") }));
+  }
+
+  const collectionInsert = await insertDocumentCollectionAssetLinks(supabase, [collectionId], assetLinks, actorId);
+
+  if (!collectionInsert.ok) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(collectionInsert.message) }));
+  }
+
+  await setCollectionPrimaryRelationIfEmpty(supabase, [collectionId], getPrimaryAssetLink(assetLinks));
+
+  let syncedDocumentCount = 0;
+
+  if (parsed.data.apply_to_documents) {
+    const { data: documents, error: documentsError } = await supabase
+      .from("documents")
+      .select("id")
+      .eq("collection_id", collectionId);
+
+    if (documentsError) {
+      redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(documentsError.message || "读取包内文件失败。") }));
+    }
+
+    const documentIds = (documents ?? []).map((document) => document.id as string);
+    const documentInsert = await insertDocumentAssetLinks(supabase, documentIds, assetLinks, actorId);
+
+    if (!documentInsert.ok) {
+      redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(documentInsert.message) }));
+    }
+
+    await setDocumentPrimaryRelationIfEmpty(supabase, documentIds, getPrimaryAssetLink(assetLinks));
+    syncedDocumentCount = documentIds.length;
+
+    for (const documentId of documentIds) {
+      revalidatePath(`/dashboard/documents/${documentId}`);
+    }
+  }
+
+  await writeActivityLog({
+    action: "document_collection.asset_links.add",
+    entityType: "document_collection",
+    entityId: collectionId,
+    metadata: {
+      collection_id: collectionId,
+      apply_to_documents: parsed.data.apply_to_documents,
+      synced_document_count: syncedDocumentCount,
+      asset_links: assetLinks.map((link) => ({
+        asset_type: link.asset_type,
+        asset_id: link.asset_id,
+        relation_type: link.relation_type
+      }))
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/documents");
+  revalidatePath(`/dashboard/documents/collections/${collectionId}`);
+  revalidatePath(getDashboardPathname(returnTo));
+  revalidateDocumentAssetLinks(assetLinks);
+
+  redirect(getReturnPathWithMessage(returnTo, {
+    notice: parsed.data.apply_to_documents ? "collection_asset_links_added_to_documents" : "collection_asset_links_added",
+    count: `${syncedDocumentCount}`
+  }));
+}
+
+export async function removeDocumentCollectionAssetLinkAction(linkId: string, formData: FormData) {
+  const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to"));
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(error ?? "当前账号没有管理员权限。") }));
+  }
+
+  const parsed = removeDocumentCollectionAssetLinkSchema.safeParse({
+    apply_to_documents: getBooleanFromForm(formData, "apply_to_documents"),
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(parsed.error.issues[0]?.message ?? "请检查移除文档包关联信息。")
+    }));
+  }
+
+  const { data: link, error: fetchError } = await supabase
+    .from("document_collection_asset_links")
+    .select("id,collection_id,asset_type,asset_id,relation_type")
+    .eq("id", linkId)
+    .maybeSingle();
+
+  if (fetchError || !link) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(fetchError?.message || "文档包关联记录不存在。") }));
+  }
+
+  const { data: collection } = await supabase
+    .from("document_collections")
+    .select("id,related_type,related_id")
+    .eq("id", link.collection_id)
+    .maybeSingle();
+
+  const { error: deleteError } = await supabase
+    .from("document_collection_asset_links")
+    .delete()
+    .eq("id", linkId);
+
+  if (deleteError) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(deleteError.message || "移除文档包关联失败。") }));
+  }
+
+  if (
+    collection &&
+    link.relation_type === "related" &&
+    collection.related_type === link.asset_type &&
+    collection.related_id === link.asset_id
+  ) {
+    await supabase
+      .from("document_collections")
+      .update({ related_type: null, related_id: null })
+      .eq("id", link.collection_id);
+  }
+
+  let syncedDocumentCount = 0;
+
+  if (parsed.data.apply_to_documents) {
+    const { data: documents, error: documentsError } = await supabase
+      .from("documents")
+      .select("id,related_type,related_id")
+      .eq("collection_id", link.collection_id);
+
+    if (documentsError) {
+      redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(documentsError.message || "读取包内文件失败。") }));
+    }
+
+    const documentIds = (documents ?? []).map((document) => document.id as string);
+
+    if (documentIds.length > 0) {
+      const { error: documentLinkDeleteError } = await supabase
+        .from("document_asset_links")
+        .delete()
+        .in("document_id", documentIds)
+        .eq("asset_type", link.asset_type)
+        .eq("asset_id", link.asset_id)
+        .eq("relation_type", link.relation_type);
+
+      if (documentLinkDeleteError) {
+        redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(documentLinkDeleteError.message || "移除包内文件关联失败。") }));
+      }
+
+      const { error: legacyUpdateError } = await supabase
+        .from("documents")
+        .update({ related_type: null, related_id: null })
+        .in("id", documentIds)
+        .eq("related_type", link.asset_type)
+        .eq("related_id", link.asset_id);
+
+      if (legacyUpdateError) {
+        redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(legacyUpdateError.message || "清理包内文件主关联失败。") }));
+      }
+
+      syncedDocumentCount = documentIds.length;
+
+      for (const documentId of documentIds) {
+        revalidatePath(`/dashboard/documents/${documentId}`);
+      }
+    }
+  }
+
+  await writeActivityLog({
+    action: "document_collection.asset_link.remove",
+    entityType: "document_collection",
+    entityId: link.collection_id,
+    metadata: {
+      collection_id: link.collection_id,
+      asset_type: link.asset_type,
+      asset_id: link.asset_id,
+      relation_type: link.relation_type,
+      apply_to_documents: parsed.data.apply_to_documents,
+      synced_document_count: syncedDocumentCount
+    }
+  });
+
+  revalidateDocumentPaths({
+    collectionId: link.collection_id,
+    relatedType: link.asset_type as DocumentRelatedType,
+    relatedId: link.asset_id
+  });
+  revalidatePath(getDashboardPathname(returnTo));
+
+  redirect(getReturnPathWithMessage(returnTo, {
+    notice: parsed.data.apply_to_documents ? "collection_asset_link_removed_from_documents" : "collection_asset_link_removed",
+    count: `${syncedDocumentCount}`
+  }));
 }
 
 export async function bulkUpdateDocumentRelationsAction(formData: FormData) {
@@ -1151,6 +1997,14 @@ export async function bulkUpdateDocumentRelationsAction(formData: FormData) {
     redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(updateError.message || "批量更新文件关联失败。") }));
   }
 
+  const legacyAssetLinks = nextRelatedType && nextRelatedId
+    ? buildDocumentAssetLinkInputs([{ asset_type: nextRelatedType, asset_id: nextRelatedId }], "related", null)
+    : [];
+
+  if (parsed.data.bulk_action !== "unlink") {
+    await insertDocumentAssetLinks(supabase, parsed.data.document_ids, legacyAssetLinks, null);
+  }
+
   const action = parsed.data.bulk_action === "unlink" ? "document.bulk_unlink" : "document.bulk_update_relations";
   await writeActivityLog({
     action,
@@ -1183,6 +2037,7 @@ export async function bulkUpdateDocumentRelationsAction(formData: FormData) {
     relatedType: nextRelatedType,
     relatedId: nextRelatedId
   });
+  revalidateDocumentAssetLinks(legacyAssetLinks);
 
   const notice = parsed.data.bulk_action === "unlink" ? "bulk_unlinked" : "bulk_relations_updated";
   redirect(getReturnPathWithMessage(returnTo, {

@@ -25,6 +25,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const documentsDeletedNotice = params.notice === "documents_deleted";
   const bulkUpdatedNotice = params.notice === "bulk_relations_updated";
   const bulkUnlinkedNotice = params.notice === "bulk_unlinked";
+  const assetLinksAddedNotice = params.notice === "document_asset_links_added";
+  const assetLinksRemovedNotice = params.notice === "document_asset_links_removed";
+  const assetLinksClearedNotice = params.notice === "document_asset_links_cleared";
   const bulkCount = Number(params.count ?? 0);
   const [documents, projects, publications, knowledgeNotes, skills] = await Promise.all([
     getDocuments({ category, relatedType, relatedId, collection }),
@@ -75,6 +78,21 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           已解除 {bulkCount || documents.length} 个文件的关联对象。Storage object 未移动、未删除。
         </div>
       ) : null}
+      {assetLinksAddedNotice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          已为 {bulkCount || documents.length} 个文件添加多关联。Storage object 未移动、未重命名。
+        </div>
+      ) : null}
+      {assetLinksRemovedNotice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          已从 {bulkCount || documents.length} 个文件移除指定关联，其他关联已保留。
+        </div>
+      ) : null}
+      {assetLinksClearedNotice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          已清空 {bulkCount || documents.length} 个文件的全部多关联。Storage object 未移动、未删除。
+        </div>
+      ) : null}
       <AdminSecurityNote>文件中心只面向管理员后台。文件默认私密，公开页面不会展示下载入口、Storage 路径或 signed URL。</AdminSecurityNote>
       <AdminSection>
       <form className="flex flex-wrap gap-3">
@@ -106,7 +124,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
       {documents.length === 0 ? (
         <AdminEmptyState title="还没有文件记录" description="上传第一个文件后，文件中心会显示真实 Storage 元数据。" action={<Link href="/dashboard/documents/upload" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">上传文件</Link>} />
       ) : (
-        <Card className="overflow-x-auto p-0">
+        <Card className="p-0">
           <DocumentBulkActionsForm
             documents={documents}
             relatedOptions={{ projects, publications, knowledgeNotes, skills }}

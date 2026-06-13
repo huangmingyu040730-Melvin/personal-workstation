@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包，Phase 2Q-A-4 增强 Publication 后台详情页成果中枢。Phase 2Q-B-1 新增 `research_asset_links` 显式关系表，用于 Project / Knowledge / Skill / Publication 的管理员后台关系与 backlinks。Phase 2Q-B-2 只优化显式关系管理体验，不新增 Supabase migration。Phase 2Q-B-4 移除此前的后台全局研究资产关系视图页面，不新增 Supabase migration，并继续保留 0019 支撑四类资产详情页内的显式关系管理。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2P-G-1 新增 Documents / 文档包专用多资产关联表并压缩文件中心批量操作 UI。Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包，Phase 2Q-A-4 增强 Publication 后台详情页成果中枢。Phase 2Q-B-1 新增 `research_asset_links` 显式关系表，用于 Project / Knowledge / Skill / Publication 的管理员后台关系与 backlinks。Phase 2Q-B-2 只优化显式关系管理体验，不新增 Supabase migration。Phase 2Q-B-4 移除此前的后台全局研究资产关系视图页面，不新增 Supabase migration，并继续保留 0019 支撑四类资产详情页内的显式关系管理。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -58,7 +58,7 @@ AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODE
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 均不新增 migration，继续依赖既有字段。Phase 2Q-B-1 新增 `0019_research_asset_links.sql`，只创建管理员后台显式资产关系表，不修改 Documents、Storage policy 或公开读取规则。Phase 2Q-B-2 / 2Q-B-3 / 2Q-B-4 不新增 migration，继续依赖已执行的 0019；2Q-B-4 只移除独立全局关系视图页面，四类资产详情页内的显式关系系统仍需要 0019。执行 0019 后，后续数据库变更应新增 `0020_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 均不新增 migration，继续依赖既有字段。Phase 2Q-B-1 新增 `0019_research_asset_links.sql`，只创建管理员后台显式资产关系表，不修改 Documents、Storage policy 或公开读取规则。Phase 2Q-B-2 / 2Q-B-3 / 2Q-B-4 不新增 migration，继续依赖已执行的 0019；2Q-B-4 只移除独立全局关系视图页面，四类资产详情页内的显式关系系统仍需要 0019。Phase 2P-G-1 新增 `0020_document_asset_links.sql`，只创建 Documents / 文档包专用多资产关联表，回填 legacy 关联，不修改 Storage policy 或 `research_asset_links`。执行 0020 后，后续数据库变更应新增 `0021_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -406,12 +406,40 @@ Research Asset Links 权限边界：
 
 - 只在管理员后台使用，不新增公开关系展示。
 - 不给 viewer / restricted 访问链路开放关系读取。
-- Documents 不纳入 `research_asset_links`；文件和文档包继续走 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
+- Documents 不纳入 `research_asset_links`；文件和文档包走专用 `document_asset_links` / `document_collection_asset_links`，legacy `related_type / related_id` 仅保留为兼容字段。
 - 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除。
 - Phase 2Q-B-2 不新增 migration；编辑关系只允许更新 `relation_type` 与 `note`，source / target 需要删除后重新创建。
 - Phase 2Q-B-3 曾新增独立全局关系视图；Phase 2Q-B-4 已移除该应用层页面、入口、查询和组件，不新增 migration。
 - 不新增 RPC，不引入数据库事务，不做 AI 自动关联、复杂关系可视化、拖拽连线或复杂权限继承。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
+
+Phase 2P-G-1 新增 Documents 专用多资产关联。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0020_document_asset_links.sql
+```
+
+`0020` 会：
+
+- 创建 `public.document_asset_links`，用于记录单个文件到 Project / Knowledge / Skill / Publication 的多资产关联。
+- 创建 `public.document_collection_asset_links`，用于记录文档包到 Project / Knowledge / Skill / Publication 的多资产关联。
+- 限定 `asset_type` 只能是 `project`、`knowledge`、`skill`、`publication`。
+- 限定 `relation_type` 只能是 `related`、`source_material`、`supporting_material`、`deliverable`、`reference`、`input`、`output`。
+- 为文件 / 文档包、资产类型与资产 ID、relation_type 和 created_at 增加常用索引。
+- 通过 unique constraint 防止同一文件或文档包重复写入同一资产与关系类型。
+- 启用 RLS，并通过 `public.is_admin()` 限定管理员 select / insert / update / delete。
+- 向 `authenticated` 授予表级 `select, insert, update, delete`，最终行级权限仍由 RLS 控制。
+- 撤销 `anon` 与 `public` 对两张表的权限。
+- 将已有 `documents.related_type / related_id` 和 `document_collections.related_type / related_id` 回填为 `relation_type = 'related'` 的 link rows，并使用 `on conflict do nothing` 避免重复。
+
+Document Asset Links 权限边界：
+
+- `0020` 不修改 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql` 或任何已执行旧 migration。
+- `0020` 不修改 Storage bucket、Storage policy、文件大小限制、MIME 白名单或 `storage_path` 生成规则。
+- `0020` 不新增 RPC，不放宽 RLS，不开放 anon、viewer 或 restricted 用户读取 Documents 关联。
+- Documents 和文档包仍只在管理员后台使用；公开页面、viewer 页面、sitemap 和 robots 不展示附件、关联表数据、Storage 路径或 signed URL。
+- `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 仍保留为 legacy primary relation、路径 fallback 和兼容 query params。
+- 新展示、筛选、RelatedDocumentsPanel 和搜索应优先读取 `document_asset_links` / `document_collection_asset_links`，仅在缺少等价 link row 时 fallback 到 legacy 字段。
 
 ## 创建管理员
 
@@ -478,7 +506,7 @@ Phase 2C 使用：
 
 - `projects`、`knowledge_notes`、`skills` 和 `skill_versions` 使用现有 `0001_initial_schema.sql` 字段实现 CRUD。
 - `publications` 使用现有 `0001_initial_schema.sql` 字段实现 CRUD，不新增复杂中间表。
-- `documents.related_type` + `documents.related_id` 用于关联 Publication、Project、Knowledge 或 Skill。
+- `documents.related_type` + `documents.related_id` 作为 legacy primary relation 兼容 Publication、Project、Knowledge 或 Skill；多资产关联以 `document_asset_links` 和 `document_collection_asset_links` 为准。
 - `document_collections` 用于统一承载批量上传、文件夹上传、附件包和 Skill 包；`documents.collection_id` 指向所属文档包。
 - Publication 详情页展示关联附件；如果仍有关联附件，Publication 删除会被阻止。
 - `activity_logs` 记录创建、更新、删除和 Skill 版本新增等核心操作。
@@ -507,9 +535,10 @@ Phase 2C 使用：
 - Resume Template 字段依赖 0011 migration；未执行 0011 时，简历素材详情字段、版本顶部个人字段开关、逐条素材可见字段控制和贴近 PDF 的打印预览会因为缺少列而无法稳定保存或读取。
 - Resume JD 分析历史依赖 0012 migration；未执行 0012 时，AI JD 分析仍可生成当前页建议，但无法保存为历史记录或投递状态。
 - Document collections 和文件夹上传 metadata 依赖 0018 migration；未执行 0018 时，多文件 / 文件夹上传、Knowledge 附件关联和 collection 详情页无法完成真实读写。
-- Document metadata、collection metadata 编辑和批量关联整理不需要 0019 migration；只要求既有 `documents` 与 `document_collections` 字段可用。
+- Document metadata、collection metadata 的 legacy primary relation 编辑不需要 0019 migration；多资产关联添加、移除、清空、关联 chips、按关联筛选和新上传多关联写入需要 0020 migration。
 - `/dashboard/search` metadata 搜索、type 筛选和关键词高亮不需要 0019 migration；未执行 0018 时，文档包相关搜索结果会缺少真实 collection 数据。
 - 研究资产显式关系依赖 0019 migration；未执行 0019 时，四类后台详情页的显式关系读写会失败或显示空关系。
+- Documents 多资产关联依赖 0020 migration；未执行 0020 时，文件 / 文档包多关联读写会失败或只显示 legacy fallback 关联。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。
@@ -529,6 +558,8 @@ npm run build
 - 后台一直跳回登录页：确认 `.env.local` 中 URL 和 publishable key 正确。
 - 查询不到 private 数据：确认当前登录用户是管理员，并确认 RLS migration 已执行。
 - 文件上传失败：确认生产 Supabase 已执行 `0003_publications_documents_storage.sql` 和 `0018_document_collections_and_folder_uploads.sql`，bucket 为 private，且当前用户在 `admin_users` 中。
+- Documents 多关联保存失败：确认生产 Supabase 已执行 `0020_document_asset_links.sql`，当前用户在 `admin_users` 中，且目标 Project / Knowledge / Skill / Publication 记录真实存在。
+- Documents 关联 chips 或按关联筛选结果不完整：确认 `0020_document_asset_links.sql` 已执行并完成 legacy 回填；未回填前旧记录只能依赖 legacy primary relation fallback。
 - 显式资产关系保存失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且 source / target 资产真实存在。
 - 显式资产关系列表为空或读取失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且目标环境已有 Project / Knowledge / Skill / Publication 之间的显式关系记录。
 - 文件类型被拒绝：确认扩展名和 MIME type 都在白名单中，单文件不超过 50 MB，批次不超过 100 个文件 / 200 MB，且不是 exe、dmg、app、msi、bat 或 cmd。

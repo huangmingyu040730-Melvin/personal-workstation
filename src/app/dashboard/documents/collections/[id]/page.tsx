@@ -1,18 +1,21 @@
 import Link from "next/link";
-import { Download, Upload } from "lucide-react";
+import { Download, Upload, X } from "lucide-react";
 import { notFound } from "next/navigation";
-import { deleteDocumentCollectionAction, deleteDocumentCollectionWithFilesAction, syncDocumentCollectionRelationsAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
+import { addDocumentCollectionAssetLinksAction, deleteDocumentCollectionAction, deleteDocumentCollectionWithFilesAction, removeDocumentCollectionAssetLinkAction, syncDocumentCollectionRelationsAction, updateDocumentCollectionMetadataAction } from "@/actions/documents";
 import { AdminDangerZone, AdminEmptyState, AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { AppShell } from "@/components/app-shell";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { DocumentRelationChips } from "@/components/documents/document-relation-chips";
+import { DocumentAssetLinksForm } from "@/components/forms/document-asset-links-form";
 import { DocumentBulkActionsForm } from "@/components/forms/document-bulk-actions-form";
 import { DocumentCollectionDeleteForm } from "@/components/forms/document-collection-delete-form";
 import { DocumentCollectionForm } from "@/components/forms/document-collection-form";
 import { DocumentCollectionSyncForm } from "@/components/forms/document-collection-sync-form";
 import { DeleteButton, SubmitButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
-import { getDocumentCollectionTypeLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
+import { getDocumentCollectionTypeLabel } from "@/lib/content-options";
+import type { DocumentAssetLinkSummary } from "@/lib/content-types";
 import { formatDateTime, formatFileSize } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { getDocumentCollectionById, getDocumentsByCollectionId } from "@/lib/queries/documents";
@@ -50,11 +53,16 @@ export default async function DocumentCollectionDetailPage({
   const documentsDeletedNotice = query.notice === "documents_deleted";
   const collectionSyncedNotice = query.notice === "collection_relations_synced";
   const collectionUnlinkedNotice = query.notice === "collection_relations_unlinked";
+  const collectionLinksAddedNotice = query.notice === "collection_asset_links_added";
+  const collectionLinksAddedToDocumentsNotice = query.notice === "collection_asset_links_added_to_documents";
+  const collectionLinkRemovedNotice = query.notice === "collection_asset_link_removed";
+  const collectionLinkRemovedFromDocumentsNotice = query.notice === "collection_asset_link_removed_from_documents";
   const bulkCount = Number(getSingleQueryValue(query.count) ?? 0);
   const deleteAction = deleteDocumentCollectionAction.bind(null, collection.id);
   const deleteWithFilesAction = deleteDocumentCollectionWithFilesAction.bind(null, collection.id);
   const updateAction = updateDocumentCollectionMetadataAction.bind(null, collection.id);
   const syncAction = syncDocumentCollectionRelationsAction.bind(null, collection.id);
+  const addCollectionLinksAction = addDocumentCollectionAssetLinksAction.bind(null, collection.id);
   const relatedOptions = { projects, publications, knowledgeNotes, skills };
   const collectionReturnTo = `/dashboard/documents/collections/${collection.id}`;
   const hasRelationMismatch = documents.some((document) => (
@@ -109,6 +117,26 @@ export default async function DocumentCollectionDetailPage({
         {collectionUnlinkedNotice ? (
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
             已解除文档包及 {bulkCount || documents.length} 个文件的关联。Storage object 未移动、未删除。
+          </div>
+        ) : null}
+        {collectionLinksAddedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            文档包关联已添加。包内文件未自动修改。
+          </div>
+        ) : null}
+        {collectionLinksAddedToDocumentsNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            文档包关联已添加，并同步到 {bulkCount || documents.length} 个包内文件。
+          </div>
+        ) : null}
+        {collectionLinkRemovedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            文档包关联已移除，其他关联已保留。
+          </div>
+        ) : null}
+        {collectionLinkRemovedFromDocumentsNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            文档包关联已移除，并同步移除 {bulkCount || documents.length} 个包内文件的相同关联。
           </div>
         ) : null}
         <AdminSecurityNote>文档包只是私密附件管理层。即使关联公开 Project、Publication、Knowledge 或 Skill，也不会在公开页面展示附件下载入口。</AdminSecurityNote>
@@ -171,15 +199,22 @@ export default async function DocumentCollectionDetailPage({
             </Card>
 
             <Card className="overflow-hidden">
-              <CardHeader title="关联对象" />
-              {collection.related ? (
-                <div className="rounded-2xl bg-blue-50 p-4">
-                  <p className="text-sm text-blue-700">{getDocumentRelatedTypeLabel(collection.related.type)}</p>
-                  <Link href={collection.related.href} className="mt-1 block break-words font-semibold text-slate-950 hover:text-blue-700">{collection.related.title}</Link>
-                </div>
-              ) : (
-                <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">未关联任何对象。</p>
-              )}
+              <CardHeader title="关联资产" description="文档包可以同时关联多个资产；可选择同步到包内文件。" />
+              <div className="space-y-4">
+                <DocumentRelationChips relations={collection.relations} emptyLabel="未关联任何对象。" />
+                <RemovableCollectionRelations relations={collection.relations} returnTo={collectionReturnTo} />
+              </div>
+            </Card>
+
+            <Card className="overflow-hidden">
+              <CardHeader title="添加文档包关联" description="默认只修改文档包关系；勾选后可同步添加到包内文件。" />
+              <DocumentAssetLinksForm
+                action={addCollectionLinksAction}
+                relatedOptions={relatedOptions}
+                returnTo={collectionReturnTo}
+                submitLabel="添加到文档包"
+                includeApplyToDocuments
+              />
             </Card>
 
             {collection.description ? (
@@ -220,6 +255,47 @@ export default async function DocumentCollectionDetailPage({
         </div>
       </AdminPageSurface>
     </AppShell>
+  );
+}
+
+function RemovableCollectionRelations({
+  relations,
+  returnTo
+}: {
+  relations: DocumentAssetLinkSummary[];
+  returnTo: string;
+}) {
+  const removableRelations = relations.filter((relation) => !relation.id.startsWith("legacy:"));
+
+  if (removableRelations.length === 0) {
+    return relations.length > 0 ? (
+      <p className="rounded-2xl bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500">
+        当前仅有 legacy primary relation。执行 0020 回填后可作为独立关联移除。
+      </p>
+    ) : null;
+  }
+
+  return (
+    <div className="space-y-2">
+      {removableRelations.map((relation) => (
+        <form key={relation.id} action={removeDocumentCollectionAssetLinkAction.bind(null, relation.id)} className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
+          <input type="hidden" name="return_to" value={returnTo} />
+          <div className="flex items-center justify-between gap-3">
+            <span className="min-w-0 truncate text-sm text-slate-600">
+              {relation.title} · {relation.relation_label}
+            </span>
+            <SubmitButton variant="secondary" pendingLabel="移除中..." className="shrink-0 gap-1 px-2.5 py-1.5 text-xs">
+              <X size={13} />
+              移除
+            </SubmitButton>
+          </div>
+          <label className="flex items-start gap-2 text-xs leading-5 text-slate-500">
+            <input type="checkbox" name="apply_to_documents" className="mt-0.5 size-4 rounded border-slate-300 text-blue-700 focus:ring-blue-200" />
+            <span>同时移除包内文件的相同关联</span>
+          </label>
+        </form>
+      ))}
+    </div>
   );
 }
 

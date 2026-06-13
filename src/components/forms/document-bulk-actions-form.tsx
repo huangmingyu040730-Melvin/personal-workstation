@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Download, FileText, MoveRight, Trash2, Unlink } from "lucide-react";
+import { Download, FileText, Link2, MoveRight, Trash2, Unlink } from "lucide-react";
 import { useState } from "react";
-import { bulkDeleteDocumentsAction, bulkUpdateDocumentRelationsAction } from "@/actions/documents";
+import { addDocumentAssetLinksAction, bulkDeleteDocumentsAction, bulkRemoveDocumentAssetLinksAction, bulkUpdateDocumentRelationsAction } from "@/actions/documents";
 import { VisibilityBadge } from "@/components/badge";
-import { getDocumentCategoryLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
+import { DocumentRelationChips } from "@/components/documents/document-relation-chips";
+import { documentAssetRelationTypes, getDocumentCategoryLabel } from "@/lib/content-options";
 import type { DocumentWithRelation } from "@/lib/content-types";
 import { formatDateTime, formatFileSize } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -56,94 +57,126 @@ export function DocumentBulkActionsForm({
   }
 
   const gridClass = mode === "documents"
-    ? "grid-cols-[0.24fr_1.28fr_0.5fr_0.45fr_0.72fr_0.72fr_0.58fr_0.38fr_0.42fr]"
-    : "grid-cols-[0.24fr_1.28fr_0.52fr_0.45fr_0.82fr_0.72fr_0.58fr_0.42fr]";
+    ? "grid-cols-[44px_minmax(240px,1.35fr)_130px_96px_minmax(180px,0.72fr)_minmax(260px,0.95fr)_150px_96px_96px]"
+    : "grid-cols-[44px_minmax(240px,1.35fr)_130px_96px_minmax(220px,0.9fr)_minmax(260px,0.95fr)_150px_96px]";
+  const hiddenSelectedInputs = selectedDocumentIds.map((documentId) => (
+    <input key={documentId} type="hidden" name="document_ids" value={documentId} />
+  ));
 
   return (
     <div>
-      <div className="border-b border-slate-100 bg-slate-50 px-5 py-4">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
-          <div className="space-y-2 text-sm leading-6 text-slate-600">
-            <p className="font-semibold text-slate-900">已选择 {selectedCount} 个文件</p>
-            <p>
-              批量移动只修改文件 metadata，不会移动或重命名 Supabase Storage object，不会删除文件，也不会修改文档包归属。
-            </p>
-            <p className="text-xs text-slate-500">
-              私密附件仍不会在公开页面展示下载入口；Skill 包只作为文件存储，不执行、不解析、不安装。
-            </p>
-          </div>
-          <div className="space-y-4">
-            <form action={bulkUpdateDocumentRelationsAction} className="space-y-3">
-              <input type="hidden" name="return_to" value={returnTo} />
-              {selectedDocumentIds.map((documentId) => (
-                <input key={documentId} type="hidden" name="document_ids" value={documentId} />
-              ))}
-              <DocumentRelatedSelect
-                options={relatedOptions}
-                hint="批量移动时选择目标对象；批量解除关联会忽略此选择。"
-              />
-              <div className="flex flex-wrap gap-2">
-                <SubmitButton name="bulk_action" value="move" pendingLabel="批量移动中..." disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
-                  <MoveRight size={16} />
-                  批量移动到关联对象
-                </SubmitButton>
-                <SubmitButton name="bulk_action" value="unlink" pendingLabel="批量解除中..." variant="secondary" disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
-                  <Unlink size={16} />
-                  批量解除关联
-                </SubmitButton>
+      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+          <p className="text-sm leading-6 text-slate-600">
+            <span className="font-semibold text-slate-950">已选择 {selectedCount} 个文件。</span>
+            {" "}选择文件后可批量添加关联、移除关联、下载 zip 或删除；所有关联操作都不会移动 Storage object。
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <details className="group relative">
+              <summary className={cn("inline-flex cursor-pointer list-none items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-semibold", selectedCount > 0 ? "border-blue-200 bg-white text-blue-700 hover:bg-blue-50" : "border-slate-200 bg-white text-slate-400")}>
+                <Link2 size={15} />
+                添加关联
+              </summary>
+              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,520px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                <form action={addDocumentAssetLinksAction} className="space-y-3">
+                  <input type="hidden" name="return_to" value={returnTo} />
+                  {hiddenSelectedInputs}
+                  <select name="asset_links" multiple disabled={selectedCount === 0} className="min-h-36 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+                    <AssetOptions relatedOptions={relatedOptions} />
+                  </select>
+                  <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
+                    <select name="asset_relation_type" defaultValue="related" disabled={selectedCount === 0} className="h-10 rounded-2xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+                      {documentAssetRelationTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
+                    </select>
+                    <input name="asset_note" placeholder="可选备注" disabled={selectedCount === 0} className="h-10 rounded-2xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100" />
+                  </div>
+                  <SubmitButton pendingLabel="添加中..." disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                    <Link2 size={15} />
+                    批量添加关联
+                  </SubmitButton>
+                </form>
               </div>
-            </form>
+            </details>
 
-            <form method="post" action="/dashboard/documents/download-zip" className="rounded-2xl border border-blue-100 bg-white p-4">
-              <input type="hidden" name="return_to" value={returnTo} />
-              {selectedDocumentIds.map((documentId) => (
-                <input key={documentId} type="hidden" name="document_ids" value={documentId} />
-              ))}
-              <div className="space-y-2 text-xs leading-5 text-blue-700">
-                <p className="font-semibold text-slate-950">下载选中文件 zip</p>
-                <p>会临时打包选中文件，不会删除、移动或修改文件，也不会公开附件。</p>
-                <p>当前限制：最多 50 个文件，总大小 100 MB。</p>
+            <details className="group relative">
+              <summary className={cn("inline-flex cursor-pointer list-none items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-semibold", selectedCount > 0 ? "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:text-blue-700" : "border-slate-200 bg-white text-slate-400")}>
+                <Unlink size={15} />
+                移除关联
+              </summary>
+              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,520px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                <form action={bulkRemoveDocumentAssetLinksAction} className="space-y-3">
+                  <input type="hidden" name="return_to" value={returnTo} />
+                  {hiddenSelectedInputs}
+                  <DocumentRelatedSelect options={relatedOptions} hint="移除选中文件中匹配该对象的关联；其他关联保留。" />
+                  <label className="flex items-start gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                    <input type="checkbox" name="clear_confirm" value="yes" className="mt-0.5 size-4 rounded border-amber-300 text-amber-700 focus:ring-amber-200" />
+                    <span>如需清空选中文件全部关联，请先勾选确认；指定移除不需要勾选。</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <SubmitButton name="remove_scope" value="specific" pendingLabel="移除中..." variant="secondary" disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                      <Unlink size={15} />
+                      移除指定关联
+                    </SubmitButton>
+                    <SubmitButton name="remove_scope" value="all" pendingLabel="清空中..." variant="secondary" disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                      清空全部关联
+                    </SubmitButton>
+                  </div>
+                </form>
               </div>
-              <SubmitButton
-                variant="secondary"
-                pendingLabel="zip 生成中..."
-                disabled={selectedCount === 0}
-                className="mt-3 gap-2 px-4 py-2.5"
-              >
-                <Download size={16} />
-                下载选中文件 zip
+            </details>
+
+            <form method="post" action="/dashboard/documents/download-zip">
+              <input type="hidden" name="return_to" value={returnTo} />
+              {hiddenSelectedInputs}
+              <SubmitButton variant="secondary" pendingLabel="zip 生成中..." disabled={selectedCount === 0} className="gap-2 px-3 py-2">
+                <Download size={15} />
+                下载 zip
               </SubmitButton>
             </form>
 
-            <form action={bulkDeleteDocumentsAction} className="rounded-2xl border border-rose-100 bg-white p-4">
-              <input type="hidden" name="return_to" value={returnTo} />
-              {selectedDocumentIds.map((documentId) => (
-                <input key={documentId} type="hidden" name="document_ids" value={documentId} />
-              ))}
-              <div className="space-y-2 text-xs leading-5 text-rose-700">
-                <p className="font-semibold text-rose-950">批量删除选中文件</p>
-                <p>将删除选中文件的数据库记录和 Supabase Storage object；不会自动删除文档包本身，文档包可能变为空。</p>
-                <p>此操作不可撤销。</p>
+            <details className="group relative">
+              <summary className={cn("inline-flex cursor-pointer list-none items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-semibold", selectedCount > 0 ? "border-rose-200 bg-white text-rose-700 hover:bg-rose-50" : "border-slate-200 bg-white text-slate-400")}>
+                <Trash2 size={15} />
+                删除
+              </summary>
+              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,420px)] rounded-2xl border border-rose-100 bg-white p-4 shadow-xl">
+                <form action={bulkDeleteDocumentsAction} className="space-y-3">
+                  <input type="hidden" name="return_to" value={returnTo} />
+                  {hiddenSelectedInputs}
+                  <p className="text-xs leading-5 text-rose-700">删除会清理数据库记录和 Storage object，此操作不可撤销。</p>
+                  <label className="flex items-start gap-2 text-xs leading-5 text-slate-700">
+                    <input type="checkbox" name="delete_confirm" value="yes" className="mt-0.5 size-4 rounded border-slate-300 text-rose-600 focus:ring-rose-200" />
+                    <span>我确认删除选中文件及其 Storage object</span>
+                  </label>
+                  <SubmitButton variant="danger" pendingLabel="删除中..." disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                    <Trash2 size={15} />
+                    删除选中文件
+                  </SubmitButton>
+                </form>
               </div>
-              <label className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="delete_confirm"
-                  value="yes"
-                  className="mt-0.5 size-4 rounded border-slate-300 text-rose-600 focus:ring-rose-200"
-                />
-                <span>我确认删除选中的文件及其 Storage object</span>
-              </label>
-              <SubmitButton
-                variant="danger"
-                pendingLabel="批量删除中..."
-                disabled={selectedCount === 0}
-                className="mt-3 gap-2 px-4 py-2.5"
-              >
-                <Trash2 size={16} />
-                批量删除选中文件
-              </SubmitButton>
-            </form>
+            </details>
+
+            <details className="group relative">
+              <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-500 hover:border-blue-200 hover:text-blue-700">
+                高级主关联
+              </summary>
+              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,520px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                <form action={bulkUpdateDocumentRelationsAction} className="space-y-3">
+                  <input type="hidden" name="return_to" value={returnTo} />
+                  {hiddenSelectedInputs}
+                  <DocumentRelatedSelect options={relatedOptions} hint="兼容旧字段：设置或清空 legacy primary relation；不会限制多关联。" />
+                  <div className="flex flex-wrap gap-2">
+                    <SubmitButton name="bulk_action" value="move" pendingLabel="设置中..." disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                      <MoveRight size={15} />
+                      设置主关联
+                    </SubmitButton>
+                    <SubmitButton name="bulk_action" value="unlink" pendingLabel="清空中..." variant="secondary" disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                      清空主关联
+                    </SubmitButton>
+                  </div>
+                </form>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -204,7 +237,7 @@ export function DocumentBulkActionsForm({
             ) : (
               <span className="truncate text-slate-500">{document.relative_path ?? document.original_name ?? document.name}</span>
             )}
-            <span className="truncate text-slate-500">{document.related?.title ?? getDocumentRelatedTypeLabel(document.related_type)}</span>
+            <DocumentRelationChips relations={document.relations} compact />
             <span className="text-slate-500">{formatDateTime(document.created_at)}</span>
             {mode === "documents" ? <VisibilityBadge visibility={document.visibility} /> : null}
             <Link href={`/dashboard/documents/${document.id}/download`} className="inline-flex items-center gap-1 font-medium text-blue-700">
@@ -215,5 +248,32 @@ export function DocumentBulkActionsForm({
         ))}
       </div>
     </div>
+  );
+}
+
+function AssetOptions({ relatedOptions }: { relatedOptions: DocumentRelatedOptions }) {
+  return (
+    <>
+      <optgroup label="学术成果">
+        {relatedOptions.publications.map((publication) => (
+          <option key={publication.id} value={`publication:${publication.id}`}>{publication.title}</option>
+        ))}
+      </optgroup>
+      <optgroup label="研究项目">
+        {relatedOptions.projects.map((project) => (
+          <option key={project.id} value={`project:${project.id}`}>{project.title}</option>
+        ))}
+      </optgroup>
+      <optgroup label="知识文章">
+        {relatedOptions.knowledgeNotes.map((note) => (
+          <option key={note.id} value={`knowledge:${note.id}`}>{note.title}</option>
+        ))}
+      </optgroup>
+      <optgroup label="Skill">
+        {relatedOptions.skills.map((skill) => (
+          <option key={skill.id} value={`skill:${skill.id}`}>{skill.title}</option>
+        ))}
+      </optgroup>
+    </>
   );
 }

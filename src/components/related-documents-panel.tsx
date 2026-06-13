@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Download, FileText, FolderArchive, Upload } from "lucide-react";
 import { AdminEmptyState, AdminSecurityNote } from "@/components/admin-ui";
 import { Card, CardHeader } from "@/components/card";
+import { DocumentRelationChips } from "@/components/documents/document-relation-chips";
 import type { DocumentCategory, DocumentCollectionType, DocumentCollectionWithRelation, DocumentRelatedType, DocumentWithRelation } from "@/lib/content-types";
 import { getDocumentCategoryLabel, getDocumentCollectionTypeLabel } from "@/lib/content-options";
 import { formatDateTime, formatFileSize } from "@/lib/format";
@@ -169,6 +170,9 @@ export async function RelatedDocumentsPanel({
                           </span>
                         ) : null}
                         <p className="mt-1 truncate text-xs text-slate-400">{collection.root_folder_name ?? "未记录根文件夹"} · {formatDateTime(collection.updated_at)}</p>
+                        <div className="mt-3">
+                          <DocumentRelationChips relations={collection.relations} compact />
+                        </div>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <Link href={`/dashboard/documents/collections/${collection.id}`} className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:text-blue-700">
                             查看文档包
@@ -236,6 +240,9 @@ function RelatedDocumentRow({ document, showCollection = false }: { document: Do
             {getDocumentCategoryLabel(document.category)} · {formatFileSize(document.file_size)} · {formatDateTime(document.created_at)}
           </p>
           {document.relative_path ? <p className="mt-1 break-all text-xs text-slate-400">{document.relative_path}</p> : null}
+          <div className="mt-2">
+            <DocumentRelationChips relations={document.relations} compact />
+          </div>
           {showCollection && document.collection ? (
             <Link href={`/dashboard/documents/collections/${document.collection.id}`} className="mt-1 inline-flex max-w-full text-xs font-medium text-blue-700 hover:text-blue-900">
               <span className="truncate">所属文档包：{document.collection.title}</span>

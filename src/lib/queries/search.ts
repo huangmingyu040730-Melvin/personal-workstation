@@ -6,7 +6,9 @@ import {
   getDocumentRelatedTypeLabel,
   getPublicationTypeLabel
 } from "@/lib/content-options";
+import { getDocumentCollectionRelationsMap, getDocumentRelationsMap } from "@/lib/queries/document-asset-links";
 import { formatFileSize } from "@/lib/format";
+import type { DocumentRelatedType } from "@/lib/content-types";
 import type { Visibility } from "@/lib/types";
 
 export const WORKSPACE_SEARCH_MIN_QUERY_LENGTH = 2;
@@ -116,6 +118,7 @@ type DocumentSearchRow = {
   relative_path: string | null;
   folder_path: string | null;
   related_type: string | null;
+  related_id: string | null;
   updated_at: string;
   document_collections?: { id: string; title: string } | Array<{ id: string; title: string }> | null;
 };
@@ -127,6 +130,7 @@ type CollectionSearchRow = {
   collection_type: string;
   root_folder_name: string | null;
   related_type: string | null;
+  related_id: string | null;
   file_count: number;
   total_size: number;
   updated_at: string;
@@ -423,7 +427,7 @@ async function searchSkills(supabase: SupabaseClient, query: string): Promise<Wo
 async function searchDocuments(supabase: SupabaseClient, query: string): Promise<WorkspaceSearchItem[]> {
   const { data, error } = await supabase
     .from("documents")
-    .select("id,name,category,original_name,relative_path,folder_path,related_type,updated_at,document_collections(id,title)")
+    .select("id,name,category,original_name,relative_path,folder_path,related_type,related_id,updated_at,document_collections(id,title)")
     .or(buildIlikeOr(["name", "original_name", "relative_path", "folder_path", "category", "related_type"], query))
     .order("updated_at", { ascending: false })
     .limit(WORKSPACE_SEARCH_LIMIT);
@@ -432,8 +436,16 @@ async function searchDocuments(supabase: SupabaseClient, query: string): Promise
     console.error("workspace search documents failed", { code: error.code, message: error.message });
   }
 
-  return ((data ?? []) as DocumentSearchRow[]).map((document) => {
+  const rows = (data ?? []) as DocumentSearchRow[];
+  const relationsByDocumentId = await getDocumentRelationsMap(supabase, rows.map((document) => ({
+    id: document.id,
+    related_type: document.related_type as DocumentRelatedType | null,
+    related_id: document.related_id
+  })));
+
+  return rows.map((document) => {
     const collectionTitle = getDocumentCollectionTitle(document.document_collections);
+    const relations = relationsByDocumentId.get(document.id) ?? [];
 
     return {
       id: document.id,
@@ -448,7 +460,7 @@ async function searchDocuments(supabase: SupabaseClient, query: string): Promise
       href: `/dashboard/documents/${document.id}`,
       metadata: compactMetadata([
         getDocumentCategoryLabel(document.category),
-        getDocumentRelatedTypeLabel(document.related_type),
+        relations.length > 0 ? `关联：${relations.slice(0, 3).map((relation) => relation.title).join("、")}${relations.length > 3 ? " 等" : ""}` : getDocumentRelatedTypeLabel(document.related_type),
         document.original_name ? `原始文件名：${document.original_name}` : null,
         document.relative_path ? `相对路径：${document.relative_path}` : null,
         document.folder_path ? `文件夹：${document.folder_path}` : null,
@@ -462,7 +474,7 @@ async function searchDocuments(supabase: SupabaseClient, query: string): Promise
 async function searchCollections(supabase: SupabaseClient, query: string): Promise<WorkspaceSearchItem[]> {
   const { data, error } = await supabase
     .from("document_collections")
-    .select("id,title,description,collection_type,root_folder_name,related_type,file_count,total_size,updated_at")
+    .select("id,title,description,collection_type,root_folder_name,related_type,related_id,file_count,total_size,updated_at")
     .or(buildIlikeOr(["title", "description", "collection_type", "root_folder_name", "related_type"], query))
     .order("updated_at", { ascending: false })
     .limit(WORKSPACE_SEARCH_LIMIT);
@@ -471,20 +483,31 @@ async function searchCollections(supabase: SupabaseClient, query: string): Promi
     console.error("workspace search collections failed", { code: error.code, message: error.message });
   }
 
-  return ((data ?? []) as CollectionSearchRow[]).map((collection) => ({
+  const rows = (data ?? []) as CollectionSearchRow[];
+  const relationsByCollectionId = await getDocumentCollectionRelationsMap(supabase, rows.map((collection) => ({
     id: collection.id,
-    type: "collections",
-    typeLabel: WORKSPACE_SEARCH_RESULT_TYPE_LABELS.collections,
-    title: collection.title,
-    description: summarize([collection.description, collection.root_folder_name], "文档包 metadata 待补充。"),
-    href: `/dashboard/documents/collections/${collection.id}`,
-    metadata: compactMetadata([
-      getDocumentCollectionTypeLabel(collection.collection_type),
-      `${collection.file_count} 个文件`,
-      `总大小：${formatFileSize(collection.total_size)}`,
-      getDocumentRelatedTypeLabel(collection.related_type),
-      collection.root_folder_name ? `根文件夹：${collection.root_folder_name}` : null
-    ]),
-    updatedAt: collection.updated_at
-  }));
+    related_type: collection.related_type as DocumentRelatedType | null,
+    related_id: collection.related_id
+  })));
+
+  return rows.map((collection) => {
+    const relations = relationsByCollectionId.get(collection.id) ?? [];
+
+    return {
+      id: collection.id,
+      type: "collections",
+      typeLabel: WORKSPACE_SEARCH_RESULT_TYPE_LABELS.collections,
+      title: collection.title,
+      description: summarize([collection.description, collection.root_folder_name], "文档包 metadata 待补充。"),
+      href: `/dashboard/documents/collections/${collection.id}`,
+      metadata: compactMetadata([
+        getDocumentCollectionTypeLabel(collection.collection_type),
+        `${collection.file_count} 个文件`,
+        `总大小：${formatFileSize(collection.total_size)}`,
+        relations.length > 0 ? `关联：${relations.slice(0, 3).map((relation) => relation.title).join("、")}${relations.length > 3 ? " 等" : ""}` : getDocumentRelatedTypeLabel(collection.related_type),
+        collection.root_folder_name ? `根文件夹：${collection.root_folder_name}` : null
+      ]),
+      updatedAt: collection.updated_at
+    };
+  });
 }
