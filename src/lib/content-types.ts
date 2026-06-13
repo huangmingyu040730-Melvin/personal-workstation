@@ -6,6 +6,8 @@ export type PublicationType = "research_report" | "academic_paper" | "strategy_r
 export type DocumentCategory = "research_material" | "publication_attachment" | "data_file" | "final_report" | "meeting_material" | "skill_attachment" | "other";
 export type DocumentRelatedType = "publication" | "project" | "skill" | "knowledge";
 export type DocumentCollectionType = "folder_upload" | "attachment_bundle" | "skill_package" | "general_batch";
+export type ResearchAssetType = "project" | "knowledge" | "skill" | "publication";
+export type ResearchAssetRelationType = "related" | "supports" | "references" | "uses" | "produces" | "derived_from";
 export type AccessRequestStatus = "pending" | "approved" | "rejected";
 export type AccessRequestContentType = "project" | "publication" | "skill" | "knowledge" | "other";
 export type AccessGrantStatus = "active" | "revoked";
@@ -153,6 +155,19 @@ export type DocumentCollectionWithRelation = DocumentCollectionRecord & {
     title: string;
     href: string;
   } | null;
+};
+
+export type ResearchAssetLinkRecord = {
+  id: string;
+  source_type: ResearchAssetType;
+  source_id: string;
+  target_type: ResearchAssetType;
+  target_id: string;
+  relation_type: ResearchAssetRelationType;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ActivityLogRecord = {

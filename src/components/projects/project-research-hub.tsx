@@ -12,6 +12,7 @@ import {
   Upload
 } from "lucide-react";
 import { AdminEmptyState } from "@/components/admin-ui";
+import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
@@ -23,12 +24,15 @@ import { getPublicationTypeLabel } from "@/lib/content-options";
 import { buildRelatedDocumentUploadHref } from "@/lib/document-upload-hrefs";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
+import type { AssetLinksForAsset, AssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import type { ProjectRelatedAssets } from "@/lib/queries/projects";
 import { statusLabel, visibilityLabel } from "@/lib/utils";
 
 type ProjectResearchHubProps = {
   project: ProjectRecord;
   relatedAssets: ProjectRelatedAssets;
+  assetLinks: AssetLinksForAsset;
+  assetLinkOptions: AssetLinkTargetOptions;
   deleteAction: (formData: FormData) => void | Promise<void>;
   error?: string;
   notice?: boolean;
@@ -50,7 +54,15 @@ function buildDocumentsHref(projectId: string) {
   return `/dashboard/documents?${params.toString()}`;
 }
 
-export function ProjectResearchHub({ project, relatedAssets, deleteAction, error, notice }: ProjectResearchHubProps) {
+export function ProjectResearchHub({
+  project,
+  relatedAssets,
+  assetLinks,
+  assetLinkOptions,
+  deleteAction,
+  error,
+  notice
+}: ProjectResearchHubProps) {
   const uploadFileHref = buildRelatedDocumentUploadHref({
     relatedType: "project",
     relatedId: project.id,
@@ -135,6 +147,13 @@ export function ProjectResearchHub({ project, relatedAssets, deleteAction, error
             uploadBatchCategory="research_material"
             uploadBatchCollectionType="folder_upload"
             emptyText="还没有关联项目文件。可以上传研究资料、数据文件或项目文件夹作为私密附件。"
+          />
+          <AssetLinksPanel
+            assetType="project"
+            assetId={project.id}
+            links={assetLinks}
+            targetOptions={assetLinkOptions}
+            returnTo={`/dashboard/projects/${project.id}`}
           />
           <ProjectRelatedAssetsCard project={project} relatedAssets={relatedAssets} />
         </main>
@@ -273,7 +292,7 @@ function ProjectRelatedAssetsCard({ project, relatedAssets }: { project: Project
     <Card>
       <CardHeader
         title="相关研究资产"
-        description="知识笔记与学术成果使用现有 project_id 关系；Skill 当前没有显式项目关联字段，先通过全局搜索查找。"
+        description="知识笔记与学术成果继续使用现有 project_id 关系；显式跨资产关系在上方独立维护。"
         action={
           <Link href={buildSearchHref(project.title, "all")} className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
             <Search size={15} />
@@ -285,7 +304,7 @@ function ProjectRelatedAssetsCard({ project, relatedAssets }: { project: Project
       {!hasExplicitAssets ? (
         <AdminEmptyState
           title="暂无显式关联资产"
-          description="当前项目尚未建立显式知识笔记 / 学术成果关联；Skill 也暂无项目关联字段。可以先通过搜索按标题或标签查找相关资产。"
+          description="当前项目尚未读取到基于 project_id 的知识笔记 / 学术成果关联。可以先通过搜索按标题或标签查找相关资产。"
         />
       ) : null}
 
@@ -300,7 +319,7 @@ function ProjectRelatedAssetsCard({ project, relatedAssets }: { project: Project
           <div>
             <p className="text-sm font-semibold text-slate-950">搜索相关资产</p>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              本阶段不新增资产关系表。若需要查找相关知识笔记、学术成果或 Skill，可先用项目标题和标签进入全局搜索。
+              显式跨资产关系已在上方维护；这里保留按项目标题和标签进入全局搜索的辅助入口。
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {titleSearchLinks.map((item) => (

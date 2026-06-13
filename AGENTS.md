@@ -48,6 +48,7 @@ npm run build
 - Documents 和 Storage 始终保持私密；公开页面、viewer 页面、sitemap、robots 不得输出附件下载入口、Storage 路径或 signed URL。
 - Documents 上传继续使用两阶段浏览器直传 Supabase Storage；Server Action 只处理管理员验证、metadata 校验、安全路径生成和 finalize 写库，不接收文件二进制。
 - Documents 的 `storage_path` 必须保持 ASCII-safe object key；中文文件名和文件夹名只保存在显示字段中。
+- `research_asset_links` 只用于 Project / Knowledge / Skill / Publication 之间的管理员后台显式关系；Documents 与文档包继续使用既有 `related_type / related_id`，不得混入显式关系表。
 - Skill 包、代码包和压缩包只作为私密文件存储，不执行、不解析、不安装。
 - 不提交密钥、`.env`、API token、私钥或任何敏感文件。
 - 保留 `.gitignore` 对 `.env`、`node_modules`、`.next`、`dist`、`out` 等文件的忽略规则。

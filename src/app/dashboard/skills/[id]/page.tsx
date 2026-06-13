@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface } from "@/components/admin-ui";
 import { SkillCapabilityHub } from "@/components/skills/skill-capability-hub";
 import { getFormError } from "@/lib/forms";
+import { getAssetLinksForAsset, getAssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import { getSkillById, getSkillVersions } from "@/lib/queries/skills";
 
 export default async function SkillDetailPage({
@@ -20,6 +21,10 @@ export default async function SkillDetailPage({
     notFound();
   }
 
+  const [assetLinks, assetLinkOptions] = await Promise.all([
+    getAssetLinksForAsset("skill", skill.id),
+    getAssetLinkTargetOptions()
+  ]);
   const error = getFormError(query);
   const notice = query.notice === "collection_deleted";
 
@@ -29,6 +34,8 @@ export default async function SkillDetailPage({
         <SkillCapabilityHub
           skill={skill}
           versions={versions}
+          assetLinks={assetLinks}
+          assetLinkOptions={assetLinkOptions}
           deleteAction={deleteSkillAction.bind(null, skill.id)}
           createVersionAction={createSkillVersionAction.bind(null, skill.id)}
           error={error}

@@ -13,6 +13,7 @@ import {
   Upload
 } from "lucide-react";
 import { AdminEmptyState, AdminSecurityNote } from "@/components/admin-ui";
+import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { DeleteButton } from "@/components/forms/submit-button";
@@ -23,12 +24,15 @@ import type { KnowledgeNoteRecord, ProjectRecord, PublicationRecord } from "@/li
 import { buildRelatedDocumentUploadHref } from "@/lib/document-upload-hrefs";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
+import type { AssetLinksForAsset, AssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import { visibilityLabel } from "@/lib/utils";
 
 type PublicationOutputHubProps = {
   publication: PublicationRecord;
   relatedProject: ProjectRecord | null;
   relatedKnowledge: KnowledgeNoteRecord[];
+  assetLinks: AssetLinksForAsset;
+  assetLinkOptions: AssetLinkTargetOptions;
   deleteAction: (formData: FormData) => void | Promise<void>;
   error?: string;
   notice?: boolean;
@@ -54,6 +58,8 @@ export function PublicationOutputHub({
   publication,
   relatedProject,
   relatedKnowledge,
+  assetLinks,
+  assetLinkOptions,
   deleteAction,
   error,
   notice
@@ -142,6 +148,13 @@ export function PublicationOutputHub({
             uploadBatchCategory="publication_attachment"
             uploadBatchCollectionType="attachment_bundle"
             emptyText="还没有关联成果材料。可以上传论文、报告、补充材料、数据文件或资料包作为私密附件。"
+          />
+          <AssetLinksPanel
+            assetType="publication"
+            assetId={publication.id}
+            links={assetLinks}
+            targetOptions={assetLinkOptions}
+            returnTo={`/dashboard/publications/${publication.id}`}
           />
           <PublicationRelatedKnowledgeCard
             publication={publication}
@@ -289,7 +302,7 @@ function PublicationRelatedKnowledgeCard({
     <Card>
       <CardHeader
         title="同项目知识节点"
-        description="只使用现有 `project_id` 关系展示同项目 Knowledge；没有显式关系时改用搜索入口。"
+        description="这里继续使用现有 `project_id` 关系展示同项目 Knowledge；显式 Publication / Knowledge 关系在上方维护。"
         action={<Link href={buildSearchHref(publication.title, "knowledge")} className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"><Search size={15} />搜索 Knowledge</Link>}
       />
       {relatedProject && relatedKnowledge.length > 0 ? (
@@ -318,7 +331,7 @@ function PublicationRelatedKnowledgeCard({
       )}
       <div className="mt-5">
         <AdminSecurityNote>
-          本页不伪造 Publication 与 Knowledge / Skill 的直接关系；显式跨资产关系留到后续 Phase 2Q-B 统一设计。
+          本页不伪造 Publication 与 Knowledge / Skill 的直接关系；显式关系只由管理员手动创建。
         </AdminSecurityNote>
       </div>
     </Card>
@@ -345,7 +358,7 @@ function PublicationMetadataCard({ publication }: { publication: PublicationReco
 function PublicationAssetSearchCard({ publication, relatedProject }: { publication: PublicationRecord; relatedProject: ProjectRecord | null }) {
   return (
     <Card>
-      <CardHeader title="相关资产搜索" description="没有显式关系时，用后台 metadata 搜索辅助定位相关资产。" />
+      <CardHeader title="相关资产搜索" description="保留后台 metadata 搜索入口，用于扩展查找相关资产。" />
       <div className="space-y-3">
         <ActionLink href={buildSearchHref(publication.title, "projects")} icon={BookOpen} label="搜索 Project" description="按成果标题查找可能相关的研究项目。" />
         <ActionLink href={buildSearchHref(publication.title, "knowledge")} icon={Library} label="搜索 Knowledge" description="按成果标题查找可能相关的知识节点。" />

@@ -45,6 +45,7 @@
 - Phase 2Q-A-2：Knowledge 后台详情页升级为知识节点，整合知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口。
 - Phase 2Q-A-3：Skill 后台详情页升级为能力包 / 工作流包，整合用途说明、平台版本、私密资料、版本记录和相关资产搜索入口。
 - Phase 2Q-A-4：Publication 后台详情页升级为成果中枢，整合成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
+- Phase 2Q-B-1：新增研究资产显式关联关系底座，支持 Project / Knowledge / Skill / Publication 之间的管理员手动关系与 backlinks。
 
 当前网站包括：
 
@@ -119,9 +120,9 @@ Project 研究中枢：
 - `/dashboard/projects/[id]` 现在是单个研究项目中枢，展示项目概览、研究问题、背景、方法、状态、进度、标签、开始日期、里程碑和项目 metadata。
 - Project 详情页保留返回项目列表、编辑项目和删除项目入口。
 - Project 详情页继续复用 RelatedDocumentsPanel 展示私密文档包、独立文件和跨文档包文件，不重复实现 Documents 行为。
-- 相关研究资产只读取现有显式关系：`knowledge_notes.project_id` 与 `publications.project_id`，每类最多展示 5 条。
-- Skill 当前没有显式 Project 关系；Project 详情页只提供按项目标题或标签搜索 Skill 的快捷入口。
-- 本阶段不新增 migration、RPC、索引、关系表或字段，不修改 Storage policy，不读取附件正文，不暴露 Storage path 或 signed URL。
+- 相关研究资产继续读取现有 `knowledge_notes.project_id` 与 `publications.project_id`，每类最多展示 5 条。
+- Project 详情页新增显式关联资产区域，可维护 Project 与 Knowledge / Skill / Publication / Project 的人工确认关系和 backlinks。
+- 除 `research_asset_links` 关系底座外，不修改 Storage policy，不读取附件正文，不暴露 Storage path 或 signed URL。
 
 Knowledge 知识节点：
 
@@ -129,10 +130,9 @@ Knowledge 知识节点：
 - Knowledge 详情页保留返回知识库、编辑知识节点和删除知识节点入口。
 - Knowledge 详情页继续复用 RelatedDocumentsPanel 展示私密文档包、独立文件和跨文档包文件，不重复实现 Documents 行为。
 - 关联 Project 只读取现有 `knowledge_notes.project_id`；没有关联时显示空状态和 Project 搜索入口。
-- 相关成果没有直接 Knowledge 关系；如果 Knowledge 关联了 Project，则展示同项目 `publications.project_id` 成果，最多 5 条。
-- Skill 当前没有显式 Knowledge 关系；Knowledge 详情页只提供按标题或标签搜索 Skill 的快捷入口。
-- Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计。
-- 本阶段不新增 migration、RPC、索引、关系表或字段，不修改 Storage policy，不读取附件正文，不做 AI、OCR、文件内容索引或向量搜索，不暴露 Storage path 或 signed URL。
+- 相关成果保留同项目 `publications.project_id` 展示，最多 5 条。
+- Knowledge 详情页新增显式关联资产区域，可维护 Knowledge 与 Project / Skill / Publication / Knowledge 的人工确认关系和 backlinks。
+- 除 `research_asset_links` 关系底座外，不修改 Storage policy，不读取附件正文，不做 AI、OCR、文件内容索引或向量搜索，不暴露 Storage path 或 signed URL。
 
 Skill 能力包：
 
@@ -140,9 +140,9 @@ Skill 能力包：
 - Skill 详情页保留返回 Skill 库、编辑 Skill、删除 Skill 和新增版本记录入口。
 - Skill 详情页继续复用 RelatedDocumentsPanel 展示私密文档包、独立文件和跨文档包文件，不重复实现 Documents 行为。
 - Skill package、代码包和压缩包仅作为私密资料存储和管理，不安装、不解析、不执行。
-- 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段；Skill 详情页只提供按 Skill 名称、platform 和搜索类型查找相关资产的快捷入口。
-- 资产之间的显式关系留到后续 Phase 2Q-B 统一设计。
-- 本阶段不新增 migration、RPC、索引、关系表或字段，不修改 Storage policy，不读取附件正文，不做 AI、OCR、文件内容索引或向量搜索，不暴露 Storage path 或 signed URL。
+- Skill 不新增单独 Project / Knowledge / Publication 外键字段；跨资产关系通过 `research_asset_links` 维护。
+- Skill 详情页新增显式关联资产区域，也继续保留按 Skill 名称、platform 和搜索类型查找相关资产的快捷入口。
+- 除 `research_asset_links` 关系底座外，不修改 Storage policy，不读取附件正文，不做 AI、OCR、文件内容索引或向量搜索，不暴露 Storage path 或 signed URL。
 
 Publication 成果中枢：
 
@@ -151,10 +151,20 @@ Publication 成果中枢：
 - Publication 详情页继续复用 RelatedDocumentsPanel 展示私密文档包、独立文件和跨文档包文件，不重复实现 Documents 行为。
 - 关联 Project 只读取现有 `publications.project_id`；没有关联时显示空状态和 Project 搜索入口。
 - 同项目 Knowledge 只读取关联 Project 下的 `knowledge_notes.project_id`，最多展示 5 条。
-- Skill 当前没有显式 Publication 关系；Publication 详情页只提供按成果标题或标签搜索 Skill 的快捷入口。
-- Publication / Knowledge / Skill 的显式关系留到后续 Phase 2Q-B 统一设计。
+- Publication 详情页新增显式关联资产区域，可维护 Publication 与 Project / Knowledge / Skill / Publication 的人工确认关系和 backlinks，也继续保留搜索入口。
 - `file_path` 不在后台详情页展示，也不作为下载入口；`cover_url` 仅作为后台 metadata 状态展示。
-- 本阶段不新增 migration、RPC、索引、关系表或字段，不修改 Storage policy，不读取附件正文，不做 AI、OCR、文件内容索引或向量搜索，不暴露 Storage path 或 signed URL。
+- 除 `research_asset_links` 关系底座外，不修改 Storage policy，不读取附件正文，不做 AI、OCR、文件内容索引或向量搜索，不暴露 Storage path 或 signed URL。
+
+Research Asset Links：
+
+- `research_asset_links` 是 Project / Knowledge / Skill / Publication 之间的显式关系表，只在管理员后台使用。
+- 关系类型为 `related`、`supports`、`references`、`uses`、`produces`、`derived_from`，当前只作为管理员维护标签，不驱动权限继承、公开展示或自动推理。
+- 四类后台详情页均展示显式关联资产区域，支持创建 outbound 关系、查看 inbound backlinks、打开对方后台详情页和删除关系。
+- 创建关系时必须校验管理员身份、source / target 类型、source / target 记录存在性、自关联和重复关系。
+- Documents 不纳入 `research_asset_links`；Documents 与文档包继续使用 `documents.related_type / related_id` 和 `document_collections.related_type / related_id`。
+- 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
+- 本阶段不新增 RPC，不引入数据库事务，不做 AI 自动关联、图谱可视化、拖拽连线、公开页面展示或复杂权限继承。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 
 ## Recent Decisions
 
@@ -177,7 +187,8 @@ Publication 成果中枢：
 - Phase 2Q-A-2 采用 Knowledge-node 决策：继 Project 后把 `/dashboard/knowledge/[id]` 打磨为知识节点，使用既有 Knowledge 字段、`knowledge_notes.project_id`、`publications.project_id`、RelatedDocumentsPanel 和后台搜索，不新增资产关系表；显式跨资产关系留到 2Q-B。
 - Phase 2Q-A-3 采用 Skill-capability 决策：继 Project、Knowledge 后把 `/dashboard/skills/[id]` 打磨为能力包 / 工作流包，使用既有 Skill 字段、`skill_versions`、RelatedDocumentsPanel 和后台搜索，不新增资产关系表；Skill package 只存储和管理，不安装、不解析、不执行。
 - Phase 2Q-A-4 采用 Publication-output 决策：继 Project、Knowledge、Skill 后把 `/dashboard/publications/[id]` 打磨为成果中枢，使用既有 Publication 字段、`publications.project_id`、`knowledge_notes.project_id`、RelatedDocumentsPanel 和后台搜索，不新增资产关系表；`file_path` 不展示也不作为下载入口。
-- 后续数据库变更必须新增 `0019_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
+- Phase 2Q-B-1 采用 admin-only research asset links 决策：新增 `research_asset_links` 覆盖 Project / Knowledge / Skill / Publication；Documents 暂不纳入；保留既有 `project_id` 关系；只在管理员后台展示 outbound 和 backlinks；不做 AI 自动关联、图谱、公开展示或复杂权限继承。
+- 后续数据库变更必须新增 `0020_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
 
@@ -234,12 +245,13 @@ Publication 成果中枢：
 - Phase 2K-H：`0012_resume_jd_reviews.sql`
 - Phase 2N 旧 Market Brief 遗留迁移：`0013_market_briefs.sql` 至 `0017_market_brief_material_packages.sql`
 - Phase 2P-A：`0018_document_collections_and_folder_uploads.sql`
+- Phase 2Q-B-1：`0019_research_asset_links.sql`
 
 规则：
 
 - 已执行 migration 不应修改或重跑。
 - 0013 至 0017 是 Market Brief unused legacy data 对应迁移；当前产品代码不再依赖这些旧表，本轮不 drop。
-- 执行 0018 后，后续数据库变更应新增 `0019_*` 或更高编号。
+- 执行 0019 后，后续数据库变更应新增 `0020_*` 或更高编号。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Workflows
@@ -256,6 +268,7 @@ Publication 成果中枢：
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
 - Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。
 - Publication 成果中枢维护：进入 `/dashboard/publications/[id]` 先查看 summary、abstract、成果类型、标签、发表日期和关联 Project；整理成果材料时使用页面内上传成果材料 / 文件夹或 Publication Documents 筛选入口；查找相关资产时查看同项目 Knowledge，并用搜索入口查找 Project / Knowledge / Skill；`file_path` 不作为下载入口。
+- 研究资产显式关系维护：进入任意 Project / Knowledge / Skill / Publication 后台详情页，在“显式关联资产”区域选择目标资产、relation_type 和可选备注；保存后当前页显示 outbound，对方详情页显示 backlink；Documents 仍通过文件面板、Documents 列表和文档包详情页管理。
 - 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
 
 详细流程见 `docs/workflows.md`。
@@ -264,7 +277,7 @@ Publication 成果中枢：
 
 建议顺序：
 
-1. Phase 2P / 2Q-A 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]` 研究项目中枢、`/dashboard/knowledge/[id]` 知识节点、`/dashboard/skills/[id]` 能力包和 `/dashboard/publications/[id]` 成果中枢展示与快捷操作。
+1. Phase 2P / 2Q 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 和 `0019_research_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系和 backlinks。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
@@ -286,4 +299,7 @@ Publication 成果中枢：
 - “Phase 2K-D 才做 AI JD 优化”已过时。Resume 已完成规则化质量检查、AI JD 建议、JD 分析历史、投递看板和 Career Center；后续默认稳定维护。
 - “Market Brief 是可继续扩展模块”已废弃。Market Brief 已在 Phase 2N-Z 移除产品入口和代码主路径，后续不维护相关 runner、素材包、探针或环境变量。
 - “Documents 只服务 Publication 附件”已过时。Documents 已升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
-- “后续数据库变更应新增 `0018_*`”已过时。`0018_document_collections_and_folder_uploads.sql` 已存在，后续应使用 `0019_*` 或更高编号。
+- “后续数据库变更应新增 `0018_*`”已过时。`0018_document_collections_and_folder_uploads.sql` 已存在；该过渡备注也已被 2Q-B-1 的 `0019` 取代。
+- “后续数据库变更应新增 `0019_*`”已过时。`0019_research_asset_links.sql` 已存在，后续应使用 `0020_*` 或更高编号。
+- “Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计”已过时。Phase 2Q-B-1 已新增 `research_asset_links` 管理员后台显式关系底座，但 Documents 仍保持独立附件关系模型。
+- “Skill 当前没有 Project / Knowledge / Publication 显式关联字段，只能搜索相关资产”已过时。Skill 仍不新增单独外键字段，但可通过 `research_asset_links` 建立显式关系。
