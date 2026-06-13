@@ -1330,3 +1330,30 @@
 - 结果组件负责渲染类型筛选、每类数量、选中类型空状态和关键词高亮。
 - 查询层继续只选择必要 metadata 字段，不读取 Storage object，不生成 signed URL，不输出 Storage path。
 - 公开页面、viewer 页面、sitemap、robots、Resume、Career、Calendar、Profile、Market Brief 和 Storage policy 不受影响。
+
+## 2026-06-13 - Use Project Detail As First Research Asset Hub
+
+类型：decision
+
+决策：
+
+- Phase 2Q-A-1 先优化 `/dashboard/projects/[id]`，将 Project 后台详情页作为单个研究项目的研究中枢。
+- Project 详情页集中展示现有 Project 字段：`title`、`summary`、`background`、`research_question`、`methodology`、`status`、`progress`、`is_featured`、`start_date`、`tags`、`milestones`、`visibility`、`created_at` 和 `updated_at`。
+- Project 详情页继续复用 RelatedDocumentsPanel 展示私密附件，不重复实现 Documents 上传、下载、删除或文档包分组逻辑。
+- 相关研究资产只使用现有显式关系：`knowledge_notes.project_id` 与 `publications.project_id`；每类最多展示 5 条，并链接到对应后台详情页。
+- Skills 当前没有显式 Project 关系，本阶段不新增字段或关系表，只提供按项目标题和标签进入后台全局搜索的快捷入口。
+- 快捷操作统一进入编辑项目、上传项目文件、上传项目文件夹、项目 Documents 筛选页、后台全局搜索和新建知识笔记。
+- 本阶段不新增数据库事务、migration、RPC、索引、关系表或 Storage 行为。
+
+原因：
+
+- Documents 全生命周期和后台全局搜索已经完成后，单个 Project 仍需要一个稳定入口来承接研究问题、研究方法、私密附件和相关资产。
+- 先用已有 Project 字段、RelatedDocumentsPanel、`project_id` 显式关系和搜索入口即可改善研究整理效率，避免过早扩展新的跨资产关系模型。
+- Skill 与 Project 的显式关系仍未建模，使用搜索入口比临时推断关系更清晰，也更安全。
+
+影响：
+
+- `/dashboard/projects/[id]` 视觉和信息架构变为研究中枢，但保留返回、编辑和删除项目能力。
+- 公开 Project 页面、viewer/restricted、Resume、Career、Market Brief、Storage policy、RLS 和 Documents 底层流程不受影响。
+- 不读取文件正文，不解析附件，不做 OCR、AI 摘要、向量搜索或文件内容索引。
+- 不暴露 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。

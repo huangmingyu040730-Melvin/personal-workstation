@@ -1,6 +1,6 @@
 # Project Memory
 
-日期：2026-06-12
+日期：2026-06-13
 
 ## Current State
 
@@ -41,6 +41,7 @@
 - Phase 2P-E-3：Documents 列表和文档包详情页支持选中文件 zip 临时下载；文档包详情页和内容详情页文档包卡片支持下载整个文档包 zip。
 - Phase 2P-F-1：后台新增 `/dashboard/search` 全局搜索入口，用于按数据库 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包。
 - Phase 2P-F-2：后台全局搜索支持类型筛选、每类数量统计、选中类型空状态、结果卡片类型 badge 和标题 / 描述关键词高亮。
+- Phase 2Q-A-1：Project 后台详情页升级为研究项目中枢，整合项目研究框架、私密附件、相关知识笔记 / 学术成果和快捷操作。
 
 当前网站包括：
 
@@ -110,6 +111,15 @@ Documents / Storage：
 - 不支持 exe、dmg、app、msi、bat、cmd。
 - 上传的代码、Skill 包和压缩包只作为私密文件存储，不执行、不解析、不安装。
 
+Project 研究中枢：
+
+- `/dashboard/projects/[id]` 现在是单个研究项目中枢，展示项目概览、研究问题、背景、方法、状态、进度、标签、开始日期、里程碑和项目 metadata。
+- Project 详情页保留返回项目列表、编辑项目和删除项目入口。
+- Project 详情页继续复用 RelatedDocumentsPanel 展示私密文档包、独立文件和跨文档包文件，不重复实现 Documents 行为。
+- 相关研究资产只读取现有显式关系：`knowledge_notes.project_id` 与 `publications.project_id`，每类最多展示 5 条。
+- Skill 当前没有显式 Project 关系；Project 详情页只提供按项目标题或标签搜索 Skill 的快捷入口。
+- 本阶段不新增 migration、RPC、索引、关系表或字段，不修改 Storage policy，不读取附件正文，不暴露 Storage path 或 signed URL。
+
 ## Recent Decisions
 
 - 公开研究工作站与私密后台已经分离：公开只读路由为 `/projects`、`/publications`、`/skills`、`/knowledge`；后台管理路由为 `/dashboard/...`。
@@ -127,6 +137,7 @@ Documents / Storage：
 - Phase 2P-E-3 zip 下载继续保持 Documents 私密边界：zip 不保存到 Storage，Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 - Phase 2P-F-1 全局搜索采用 metadata-first 决策：只在管理员后台搜索数据库字段，不新增 migration、索引、RPC、外部搜索服务、向量库或文件内容解析。
 - Phase 2P-F-2 搜索体验增强继续采用 metadata-only 决策：类型筛选只是结果过滤，关键词高亮只在展示层完成，不保存索引，不新增外部搜索、OCR、AI 摘要或向量搜索。
+- Phase 2Q-A-1 采用 Project-first 研究中枢决策：先把 `/dashboard/projects/[id]` 打磨为研究项目中枢，使用既有 Project 字段、RelatedDocumentsPanel、`knowledge_notes.project_id`、`publications.project_id` 和后台搜索，不新增资产关系表或数据库能力。
 - 后续数据库变更必须新增 `0019_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -202,6 +213,7 @@ Documents / Storage：
 - Documents 上传：prepare metadata -> 浏览器直传 private `workspace-files` -> finalize 写库 -> 必要时清理失败对象。
 - 新建内容并上传附件：先创建 Project / Publication / Knowledge / Skill，成功后跳转 `/dashboard/documents/upload` 并通过 query params 预填关联对象、上传模式、分类和文档包类型。
 - Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类、关联对象；文档包详情页修正文档包名称、描述、类型、关联对象；列表页用 category、related_type、collection 筛选整理；Documents 列表或文档包详情页批量移动多个文件关联对象、批量解除关联、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件分组理解附件关系；文档包详情页整体迁移 / 同步关联工具用于同步调整整个资料包和包内全部文件；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
+- Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
 - 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
 
 详细流程见 `docs/workflows.md`。
@@ -210,7 +222,7 @@ Documents / Storage：
 
 建议顺序：
 
-1. Phase 2P 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载和 `/dashboard/search` metadata 搜索、type 筛选与关键词高亮。
+1. Phase 2P / 2Q-A-1 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]` 研究项目中枢展示和快捷操作。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。

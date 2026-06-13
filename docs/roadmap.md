@@ -302,6 +302,26 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不新增公开搜索页，不修改公开页面导航。
 - 不修改 Storage policy、RLS、Resume / Career 或 Market Brief。
 
+### Phase 2Q-A-1 - Project Detail Research Hub
+
+已完成代码实现。Project 后台详情页从普通详情页升级为单个研究项目中枢：
+
+- `/dashboard/projects/[id]` 集中展示项目概览、研究问题、研究背景、研究方法、状态、进度、标签、开始日期、里程碑和项目 metadata。
+- 保留返回、编辑和删除项目入口。
+- 继续复用 RelatedDocumentsPanel 展示项目关联文档包、独立文件和跨文档包文件。
+- 快捷操作支持编辑项目、上传单个项目文件、上传项目文件夹、进入项目 Documents 筛选页、按项目标题搜索和创建知识笔记。
+- 相关研究资产使用现有显式关系展示 `knowledge_notes.project_id` 与 `publications.project_id`，每类最多 5 条。
+- Skill 当前没有显式项目关联字段，本阶段只提供按项目标题或标签搜索 Skill 的入口。
+
+边界：
+
+- 不新增 migration、RPC、索引、关系表或字段。
+- 不新增公开页面入口，不修改公开 Project 详情页。
+- 不修改 Storage policy、Documents 上传 / 下载 / 删除流程或 `storage_path` 生成规则。
+- 不读取文件正文，不解析附件，不做 OCR、AI 摘要、向量搜索或文件内容索引。
+- 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
+- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -351,7 +371,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 后续主要投入应集中在已有研究资产质量：
 
-- Projects：补齐研究背景、问题、方法和进度。
+- Projects：补齐研究背景、问题、方法和进度；用 Project 后台详情页作为单项目研究资产中枢，继续整理私密附件、相关知识笔记和学术成果。
 - Publications：沉淀报告、论文草稿、策略分析和阅读综述。
 - Knowledge：维护研究方法、工具笔记和知识文章。
 - Skills：整理可公开复用的 AI / Codex 工作流说明。
