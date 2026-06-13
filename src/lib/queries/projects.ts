@@ -141,7 +141,7 @@ export async function getViewableProjectBySlug(slug: string) {
   const { data, error } = await supabase
     .from("projects")
     .select("*")
-    .in("visibility", ["public", "restricted", "private"] satisfies Visibility[])
+    .in("visibility", ["public", "restricted"] satisfies Visibility[])
     .eq("slug", slug)
     .maybeSingle();
 

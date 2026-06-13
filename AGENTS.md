@@ -11,6 +11,7 @@
 - 当前产品定位为“公开研究工作站 + 私密数字资产后台”。
 - Phase 2B 起接入 Projects、Knowledge Base、Skills Library 的真实 Supabase CRUD；Phase 2C 接入 Publications、Documents 与 private Storage；Phase 2E-B 建立 restricted 内容授权基础；Phase 2P 起 Documents 成为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
 - Phase 2O-A 后主线收口为研究资产沉淀、公开展示、文件 / 知识管理和求职闭环维护；Market Brief / 市场简报模块已弃用，不恢复产品入口、API、runner、素材包、数据探针或推荐环境变量。
+- Phase 2R-A 起公开首页与公开导航进入“公开研究工作站”展示 polish，公开页面只展示 public 内容，访问申请用于处理未公开或受限材料请求。
 
 ## Tech Stack
 
@@ -45,7 +46,9 @@ npm run build
 - 示例数据集中维护在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的页面或未配置 Supabase 时的开发预览。
 - Projects、Knowledge Base、Skills Library、Publications、Documents、Access Requests 与 Access Grants 的查询逻辑集中在 `src/lib/queries/`，校验逻辑集中在 `src/lib/validations/`，写入逻辑集中在 `src/actions/`。
 - Supabase 写操作必须在 Server Action 中验证当前用户为管理员，并继续依赖 RLS 作为数据库权限边界。
+- 公开首页和公开导航面向普通访客，主入口应保持为首页、研究项目、学术成果、知识库、Skill 库和访问申请；不要在公开导航中加入后台管理、文件中心或全局关系图谱入口。
 - Documents 和 Storage 始终保持私密；公开页面、viewer 页面、sitemap、robots 不得输出附件下载入口、Storage 路径或 signed URL。
+- 公开 Project / Publication / Knowledge / Skill 页面不得展示 Documents 多资产关联、`research_asset_links` 管理能力、`file_path`、Storage path 或 signed URL；Publication 公开查询应避免把历史附件字段作为展示数据使用。
 - Documents 上传继续使用两阶段浏览器直传 Supabase Storage；Server Action 只处理管理员验证、metadata 校验、安全路径生成和 finalize 写库，不接收文件二进制。
 - Documents 的 `storage_path` 必须保持 ASCII-safe object key；中文文件名和文件夹名只保存在显示字段中。
 - `research_asset_links` 只用于 Project / Knowledge / Skill / Publication 之间的管理员后台显式关系；Documents 与文档包不得混入该表。

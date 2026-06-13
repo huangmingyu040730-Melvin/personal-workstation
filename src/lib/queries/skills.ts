@@ -135,7 +135,7 @@ export async function getViewableSkillBySlug(slug: string) {
   const { data, error } = await supabase
     .from("skills")
     .select("*")
-    .in("visibility", ["public", "restricted", "private"] satisfies Visibility[])
+    .in("visibility", ["public", "restricted"] satisfies Visibility[])
     .eq("slug", slug)
     .maybeSingle();
 

@@ -90,10 +90,7 @@ select {
 }
 
 .public-soft-grid {
-  background:
-    radial-gradient(circle at 18% 16%, rgba(37, 99, 235, 0.08), transparent 28rem),
-    radial-gradient(circle at 82% 32%, rgba(99, 102, 241, 0.08), transparent 26rem),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 58%, #f1f5f9 100%);
+  background-color: #f8fafc;
 }
 
 .public-card-motion {
