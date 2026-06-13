@@ -18,7 +18,7 @@ export function DocumentCollectionForm({
     <form action={action}>
       <AdminFormSection
         title="编辑文档包信息"
-        description="只修改文档包 metadata，不会批量同步包内文件关联对象。"
+        description="只修改文档包 metadata 和 legacy primary relation，不会批量同步包内文件关联对象。"
       >
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="文档包名称">
@@ -42,7 +42,7 @@ export function DocumentCollectionForm({
             defaultRelatedType={collection.related_type}
             defaultRelatedId={collection.related_id}
             options={relatedOptions}
-            hint="可解除关联，或改为关联到 Publication、Project、Knowledge、Skill。"
+            hint="兼容字段：可设置一个主关联作为旧流程 fallback，不会限制文档包的多关联。"
           />
         </div>
         <p className="mt-4 text-sm leading-6 text-slate-500">

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AdminFormSection, AdminSecurityNote } from "@/components/admin-ui";
 import type { DocumentCategory, DocumentCollectionType, KnowledgeNoteRecord, ProjectRecord, PublicationRecord, SkillRecord } from "@/lib/content-types";
-import { documentCategories, documentCollectionTypes, documentRelatedTypes } from "@/lib/content-options";
+import type { DocumentAssetLinkInput } from "@/lib/queries/document-asset-links";
+import { documentAssetRelationTypes, documentCategories, documentCollectionTypes } from "@/lib/content-options";
 import { formatFileSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -24,6 +25,7 @@ import {
   rollbackPreparedDocumentUploadAction,
   type PreparedDocumentUpload
 } from "@/actions/documents";
+import { DocumentAssetLinkPicker } from "./document-asset-link-picker";
 import { ErrorNotice, Field, Select, TextInput, Textarea } from "./form-fields";
 
 type UploadPhase = "idle" | "preparing" | "uploading" | "finalizing" | "rolling_back";
@@ -74,10 +76,29 @@ function phaseLabel(phase: UploadPhase, mode: UploadMode) {
   }
 }
 
-function getRelatedParts(formData: FormData) {
-  const relatedKey = String(formData.get("related_key") ?? "");
-  const [relatedType, relatedId] = relatedKey ? relatedKey.split(":") : ["", ""];
+function getAssetLinkValues(formData: FormData) {
+  return formData
+    .getAll("asset_links")
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function getPrimaryRelatedParts(assetLinks: string[]) {
+  const [relatedType, relatedId] = assetLinks[0] ? assetLinks[0].split(":") : ["", ""];
   return { relatedType: relatedType ?? "", relatedId: relatedId ?? "" };
+}
+
+function appendAssetLinks(metadata: FormData, assetLinks: string[]) {
+  for (const value of assetLinks) {
+    metadata.append("asset_links", value);
+  }
+}
+
+function appendPreparedAssetLinks(metadata: FormData, assetLinks: DocumentAssetLinkInput[]) {
+  for (const link of assetLinks) {
+    metadata.append("asset_links", `${link.asset_type}:${link.asset_id}`);
+  }
 }
 
 function getFileRelativePath(file: File) {
@@ -175,6 +196,12 @@ export function DocumentUploadForm({
 
   const pending = phase !== "idle";
   const directoryInputProps = { webkitdirectory: "true", directory: "true" } as React.InputHTMLAttributes<HTMLInputElement>;
+  const relatedOptions = {
+    publications,
+    projects,
+    knowledgeNotes,
+    skills: skills.map((skill) => ({ id: skill.id, title: skill.name }))
+  };
 
   async function onSingleSubmit(formData: FormData) {
     const file = formData.get("file");
@@ -191,12 +218,16 @@ export function DocumentUploadForm({
       return;
     }
 
-    const { relatedType, relatedId } = getRelatedParts(formData);
+    const assetLinks = getAssetLinkValues(formData);
+    const { relatedType, relatedId } = getPrimaryRelatedParts(assetLinks);
     const metadata = new FormData();
     metadata.set("name", String(formData.get("name") ?? ""));
     metadata.set("category", String(formData.get("category") ?? ""));
     metadata.set("related_type", relatedType);
     metadata.set("related_id", relatedId);
+    metadata.set("asset_relation_type", String(formData.get("asset_relation_type") ?? "related"));
+    metadata.set("asset_note", String(formData.get("asset_note") ?? ""));
+    appendAssetLinks(metadata, assetLinks);
     metadata.set("file_name", file.name);
     metadata.set("file_type", file.type);
     metadata.set("file_size", String(file.size));
@@ -256,7 +287,8 @@ export function DocumentUploadForm({
       return;
     }
 
-    const { relatedType, relatedId } = getRelatedParts(formData);
+    const assetLinks = getAssetLinkValues(formData);
+    const { relatedType, relatedId } = getPrimaryRelatedParts(assetLinks);
     const rootFolderName = getRootFolderName(files);
     const collectionTitle = String(formData.get("collection_title") ?? "").trim() || rootFolderName || "文档包";
     const collectionMetadata = new FormData();
@@ -265,6 +297,9 @@ export function DocumentUploadForm({
     collectionMetadata.set("collection_type", String(formData.get("collection_type") ?? "general_batch"));
     collectionMetadata.set("related_type", relatedType);
     collectionMetadata.set("related_id", relatedId);
+    collectionMetadata.set("asset_relation_type", String(formData.get("asset_relation_type") ?? "related"));
+    collectionMetadata.set("asset_note", String(formData.get("asset_note") ?? ""));
+    appendAssetLinks(collectionMetadata, assetLinks);
     collectionMetadata.set("root_folder_name", rootFolderName);
     collectionMetadata.set("file_count", String(batchValidation.fileCount));
     collectionMetadata.set("total_size", String(batchValidation.totalSize));
@@ -302,6 +337,9 @@ export function DocumentUploadForm({
       metadata.set("category", String(formData.get("category") ?? ""));
       metadata.set("related_type", preparedCollection.collection.relatedType ?? "");
       metadata.set("related_id", preparedCollection.collection.relatedId ?? "");
+      metadata.set("asset_relation_type", String(formData.get("asset_relation_type") ?? "related"));
+      metadata.set("asset_note", String(formData.get("asset_note") ?? ""));
+      appendPreparedAssetLinks(metadata, preparedCollection.collection.assetLinks);
       metadata.set("collection_id", collectionId);
       metadata.set("original_name", file.name);
       metadata.set("relative_path", relativePath);
@@ -510,32 +548,31 @@ export function DocumentUploadForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="关联对象" description="文件可关联到 Publication、Project、Knowledge 或 Skill；附件本轮仍保持私密。">
-        <Field label="关联对象" hint="可选。关联类型与对象绑定在同一个选项中，避免误选。">
-          <Select name="related_key" defaultValue={initialValues?.relatedKey ?? ""} disabled={pending}>
-            <option value="">不关联对象</option>
-            <optgroup label={documentRelatedTypes.find((type) => type.value === "publication")?.label}>
-              {publications.map((publication) => (
-                <option key={publication.id} value={`publication:${publication.id}`}>{publication.title}</option>
-              ))}
-            </optgroup>
-            <optgroup label={documentRelatedTypes.find((type) => type.value === "project")?.label}>
-              {projects.map((project) => (
-                <option key={project.id} value={`project:${project.id}`}>{project.title}</option>
-              ))}
-            </optgroup>
-            <optgroup label={documentRelatedTypes.find((type) => type.value === "knowledge")?.label}>
-              {knowledgeNotes.map((note) => (
-                <option key={note.id} value={`knowledge:${note.id}`}>{note.title}</option>
-              ))}
-            </optgroup>
-            <optgroup label={documentRelatedTypes.find((type) => type.value === "skill")?.label}>
-              {skills.map((skill) => (
-                <option key={skill.id} value={`skill:${skill.id}`}>{skill.name}</option>
-              ))}
-            </optgroup>
-          </Select>
-        </Field>
+      <AdminFormSection title="关联对象" description="文件和文档包可以同时关联多个 Project、Publication、Knowledge 或 Skill；附件仍保持私密。">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <Field
+            label="关联对象"
+            hint="可以同时关联多个资产；添加或移除关联不会移动、重命名或删除 Storage object。"
+          >
+            <DocumentAssetLinkPicker
+              options={relatedOptions}
+              defaultValues={initialValues?.relatedKey ? [initialValues.relatedKey] : []}
+              disabled={pending}
+            />
+          </Field>
+          <div className="space-y-5">
+            <Field label="这批文件与所选资产的关系" hint="例如：交付物 / 支持材料 / 原始材料。">
+              <Select name="asset_relation_type" defaultValue="related" disabled={pending}>
+                {documentAssetRelationTypes.map((type) => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="备注">
+              <Textarea name="asset_note" placeholder="可选：说明这批文件与所选资产的关系。" disabled={pending} />
+            </Field>
+          </div>
+        </div>
       </AdminFormSection>
 
       {progress ? (

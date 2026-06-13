@@ -48,7 +48,11 @@ npm run build
 - Documents 和 Storage 始终保持私密；公开页面、viewer 页面、sitemap、robots 不得输出附件下载入口、Storage 路径或 signed URL。
 - Documents 上传继续使用两阶段浏览器直传 Supabase Storage；Server Action 只处理管理员验证、metadata 校验、安全路径生成和 finalize 写库，不接收文件二进制。
 - Documents 的 `storage_path` 必须保持 ASCII-safe object key；中文文件名和文件夹名只保存在显示字段中。
-- `research_asset_links` 只用于 Project / Knowledge / Skill / Publication 之间的管理员后台显式关系；Documents 与文档包继续使用既有 `related_type / related_id`，不得混入显式关系表。
+- `research_asset_links` 只用于 Project / Knowledge / Skill / Publication 之间的管理员后台显式关系；Documents 与文档包不得混入该表。
+- Documents 与文档包的多资产关联使用专用 `document_asset_links` / `document_collection_asset_links`；`documents.related_type / related_id` 与 `document_collections.related_type / related_id` 仅保留为 legacy primary relation、路径 fallback 与兼容筛选输入。
+- Documents 关联 chips 需要做展示归一化：同一 `asset_type + asset_id` 已有 `deliverable`、`supporting_material` 等具体关系时，隐藏同一资产的 legacy `related` fallback；只有完全没有该资产 link row 时才展示 legacy `related`，不得通过删除数据或新增 migration 处理。
+- Documents 多关联选择器应使用清晰的 checkbox / chips UI，避免在上传页、文件详情页、文档包详情页或批量添加关联中重新引入原生 `<select multiple>`；文件中心权限列使用轻量状态标签，不改权限语义。
+- 新增、移除或同步 Documents 关联时不得移动、重命名或重写 Storage object，不得修改既有 `storage_path` 生成规则。
 - 编辑 `research_asset_links` 时只允许修改 `relation_type` 和 `note`；如需更换 source / target，应删除后重新创建，不新增 schema 或迁移来绕过该边界。
 - 全局研究资产关系图谱页面已取消并移除；不要恢复 `/dashboard/network`、Network View、force graph 或其它可视化网络入口。`research_asset_links` 显式关系系统仍保留在 Project / Knowledge / Skill / Publication 后台详情页的 AssetLinksPanel 中，Documents 不纳入显式关系表。
 - Skill 包、代码包和压缩包只作为私密文件存储，不执行、不解析、不安装。

@@ -1,4 +1,4 @@
-import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentCategory, DocumentCollectionType, DocumentRelatedType, ProjectStatus, PublicationType, ResearchAssetRelationType, ResearchAssetType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
+import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentAssetRelationType, DocumentCategory, DocumentCollectionType, DocumentRelatedType, ProjectStatus, PublicationType, ResearchAssetRelationType, ResearchAssetType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -62,6 +62,16 @@ export const documentRelatedTypes: Array<{ value: DocumentRelatedType; label: st
   { value: "project", label: "研究项目" },
   { value: "knowledge", label: "知识文章" },
   { value: "skill", label: "Skill" }
+];
+
+export const documentAssetRelationTypes: Array<{ value: DocumentAssetRelationType; label: string }> = [
+  { value: "related", label: "相关" },
+  { value: "source_material", label: "原始材料" },
+  { value: "supporting_material", label: "支持材料" },
+  { value: "deliverable", label: "交付物" },
+  { value: "reference", label: "参考资料" },
+  { value: "input", label: "输入材料" },
+  { value: "output", label: "输出材料" }
 ];
 
 export const documentCollectionTypes: Array<{ value: DocumentCollectionType; label: string }> = [
@@ -168,6 +178,10 @@ export function getDocumentCategoryLabel(value: string | null | undefined) {
 
 export function getDocumentRelatedTypeLabel(value: string | null | undefined) {
   return documentRelatedTypes.find((item) => item.value === value)?.label ?? "未关联";
+}
+
+export function getDocumentAssetRelationTypeLabel(value: string | null | undefined) {
+  return documentAssetRelationTypes.find((item) => item.value === value)?.label ?? "相关";
 }
 
 export function getDocumentCollectionTypeLabel(value: string | null | undefined) {

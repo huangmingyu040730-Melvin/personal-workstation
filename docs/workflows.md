@@ -271,7 +271,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理、批量关联整理、内容详情页分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除能力、zip 临时下载和后台 metadata 搜索体验。
+- 维护 Phase 2P-A / 2P-B / 2P-C / 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2P-G-1 的 Documents 统一私密附件底座、多文件 / 文件夹上传、内容详情页附件区域、create-and-upload flow、metadata 管理、多资产关联整理、内容详情页分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除能力、zip 临时下载和后台 metadata 搜索体验。
 
 步骤：
 
@@ -279,49 +279,51 @@ npm run build
 2. Documents 校验逻辑继续集中在 `src/lib/validations/document.ts`。
 3. Documents 写入、prepare、finalize、删除和 collection 维护继续集中在 `src/actions/documents.ts`。
 4. 文件类型、大小、文件名清理、Storage path 和 signed URL 配置继续集中在 `src/lib/storage/documents.ts`。
-5. 上传继续使用两阶段流程：Server Action 准备 metadata 和安全 Storage path，浏览器用管理员 Supabase Auth 会话直接上传到 private bucket，Server Action finalize 写入 `documents` 记录。
+5. 上传继续使用两阶段流程：Server Action 准备 metadata 和安全 Storage path，浏览器用管理员 Supabase Auth 会话直接上传到 private bucket，Server Action finalize 写入 `documents` 记录和必要的专用关联记录。
 6. 多文件 / 文件夹上传通过 `document_collections` 表记录批次、文件夹、附件包或 Skill 包，并通过 `documents.collection_id` 关联具体文件。
-7. `original_name`、`relative_path` 和 `folder_path` 可保存中文或原始路径信息用于后台展示。
-8. `storage_path` 必须使用 ASCII-safe object key；最终 Storage 文件名使用 `documentId + extension`，中文文件名和中文目录不得直接进入 object key。
-9. Project / Publication / Knowledge / Skill 后台详情页只嵌入关联文件和文档包区域，不重复实现上传系统。
-10. 新建 Project / Publication / Knowledge / Skill 时，“保存并上传文件 / 文件夹或文档包”必须先创建内容记录，成功后跳转 `/dashboard/documents/upload` 并用 query params 预填 `related_type`、`related_id`、`mode`、`category` 和 `collection_type`。
-11. query params 只用于预填；服务端必须继续通过 `ensureRelatedRecordExists` 或同等逻辑验证关联对象存在且管理员可读。
-12. Publication 删除前同时检查关联 `documents` 和 `document_collections`，存在附件或文档包时阻止删除。
-13. Skill 包、代码文件和压缩包只作为私密文件存储，不执行、不解析、不安装。
-14. 文件详情页只允许编辑显示名称、分类和关联对象，不允许编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id。
-15. 文档包详情页只允许编辑名称、描述、类型和关联对象，不允许手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。
-16. 普通“编辑文档包信息”只修改文档包 metadata，不自动批量修改包内文件的 `related_type` / `related_id`。
-17. Documents 列表和文档包详情页允许勾选多个文件后批量移动关联对象或批量解除关联。
-18. 批量移动只更新 `documents.related_type` 与 `documents.related_id`，目标关联对象必须在 Server Action 中重新校验存在。
-19. 批量解除关联只把 `documents.related_type` 与 `documents.related_id` 置空；不修改 `collection_id`。
-20. 文档包详情页的批量操作只修改包内文件 metadata，不修改文档包自身关联对象。
-21. 批量操作的 `return_to` 必须限制为站内 `/dashboard` 路径，避免 open redirect。
-22. RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件展示：当前对象文档包内文件由文档包卡片代表，不在独立文件中重复展示。
-23. 单个文件调整：使用文件详情页，只修改该文件 metadata。
-24. 多个文件调整：使用 Documents 列表或文档包详情页的批量移动 / 批量解除关联，只修改所选文件 metadata。
-25. 整个资料包调整：使用文档包详情页的整体迁移 / 同步关联工具，同步修改文档包和包内全部文件的 `related_type` / `related_id`。
-26. 文档包整体迁移 / 同步关联必须由 Server Action 按 `collection_id` 查询包内文件，不接收前端传入的文件 ID 或文件数量。
-27. 文档包整体解除关联会把文档包和包内全部文件的 `related_type` / `related_id` 置空，但不修改 `collection_id`。
-28. Documents 列表筛选只影响后台文件中心，不读取文件内容，不生成 signed URL。
-29. 批量删除文件必须在 Server Action 中重新读取所选文件记录；读取失败或选择为空时不得执行删除。
-30. 批量删除文件必须要求确认 checkbox，缺失时返回“请先确认删除操作。”。
-31. 批量删除文件先删除 Supabase Storage object，再删除 `documents` 记录；Storage 删除失败时不删除数据库记录。
-32. 批量删除文件成功后重新计算受影响文档包的 `file_count` 与 `total_size`，但不自动删除空文档包。
-33. 删除整个文档包及文件必须要求确认文本 `DELETE` 或 `删除`；确认失败时不得执行删除。
-34. 删除整个文档包及文件先删除包内文件的 Storage object 和 `documents` 记录，再删除 `document_collections` 记录。
-35. 当前删除流程不新增数据库事务或 RPC；如果 Storage 成功但数据库删除失败，显示中文安全错误并在日志中记录 id、code/message 供人工复核。
-36. 删除相关 Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
-37. 需要下载多个附件时，在 Documents 列表或文档包详情页勾选文件后使用“下载选中文件 zip”。
-38. 需要下载整个资料包时，在文档包详情页或内容详情页文档包卡片使用“下载 zip”。
-39. zip 下载由 Route Handler 重新校验管理员身份并重新查询文件记录，不信任前端传入的文件名、Storage 路径、大小或数量。
-40. zip 按请求临时生成，不保存到 Storage，不创建持久化 zip 记录。
-41. zip 下载限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限时拆分下载，系统不生成部分 zip。
-42. zip 下载失败时不部分打包，不输出 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
-43. 上传和整理文件后，先通过 `/dashboard/search?q=关键词` 按文件名、original_name、relative_path、文档包标题、项目、知识笔记、成果或 Skill metadata 全局查找资产。
-44. 需要聚焦某类结果时，在搜索页使用 `type=documents`、`type=knowledge`、`type=projects` 等类型筛选；切回 `type=all` 可恢复全部分组。
-45. 全局搜索只查询数据库 metadata；q trim 后少于 2 个字符时不执行查询，每类最多返回 8 条，并显示全部和每类命中数量。
-46. 搜索结果标题和描述可高亮关键词，但高亮只在 React 展示层完成，不保存索引。
-47. 文件正文搜索、PDF / Word / Excel / zip 解析、OCR、AI 摘要和向量搜索属于后续阶段；当前全局搜索不得读取文件正文、生成 signed URL 或输出 Storage path。
+7. Documents 多资产关联写入 `document_asset_links`，文档包多资产关联写入 `document_collection_asset_links`；不要把 Documents 写入 `research_asset_links`。
+8. `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 只作为 legacy primary relation、路径 fallback 和兼容 query params；新展示、筛选和搜索应优先读取专用 link tables。展示关联 chips 时，同一资产已有具体关系则隐藏 legacy `related` fallback，只有 `related` 是唯一关系时才显示。多关联选择应使用 checkbox / chips 分组选择器，覆盖上传页、文件详情页、文档包详情页和批量添加关联；不要重新引入原生 `<select multiple>`。
+9. `original_name`、`relative_path` 和 `folder_path` 可保存中文或原始路径信息用于后台展示。
+10. `storage_path` 必须使用 ASCII-safe object key；最终 Storage 文件名使用 `documentId + extension`，中文文件名和中文目录不得直接进入 object key。
+11. Project / Publication / Knowledge / Skill 后台详情页只嵌入关联文件和文档包区域，不重复实现上传系统。
+12. 新建 Project / Publication / Knowledge / Skill 时，“保存并上传文件 / 文件夹或文档包”必须先创建内容记录，成功后跳转 `/dashboard/documents/upload` 并用 query params 预填 `related_type`、`related_id`、`mode`、`category` 和 `collection_type`；上传页可在此默认关联之外继续选择更多资产关联。
+13. query params 只用于预填；服务端必须继续通过 `ensureRelatedRecordExists` 或同等逻辑验证每个关联对象存在且管理员可读。
+14. 上传到已有文档包时，文件应继承文档包多关联，并允许叠加当前上传页传入的关联；不要因为文件和文档包 legacy primary relation 不一致而阻断上传。
+15. Publication 删除前同时检查关联 `documents` 和 `document_collections`，存在附件或文档包时阻止删除。
+16. Skill 包、代码文件和压缩包只作为私密文件存储，不执行、不解析、不安装。
+17. 文件详情页只允许编辑显示名称、分类和 legacy primary relation，不允许编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id；多资产关联在详情页的关联区域添加或移除。
+18. 文档包详情页只允许编辑名称、描述、类型和 legacy primary relation，不允许手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳；多资产关联在文档包关联区域添加或移除。
+19. 普通“编辑文档包信息”只修改文档包 metadata，不自动批量修改包内文件的多关联或 legacy primary relation。
+20. Documents 列表和文档包详情页允许勾选多个文件后批量添加关联、按指定资产移除关联、清空全部关联，legacy primary relation 操作放在高级兼容区域。
+21. 批量添加关联写入 `document_asset_links`，目标关联对象必须在 Server Action 中重新校验存在；如果文件没有 legacy primary relation，可用首个新关联补齐 legacy 字段。
+22. 批量移除指定关联只删除对应 link rows；清空全部关联会删除所选文件的 link rows，并清空 legacy primary relation。
+23. 文档包详情页的“添加文档包关联”可选择同步到包内文件；移除文档包关联也可选择从包内文件移除等价关联。
+24. 批量操作的 `return_to` 必须限制为站内 `/dashboard` 路径，避免 open redirect。
+25. RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件展示：当前对象文档包内文件由文档包卡片代表，不在独立文件中重复展示；每个文件或文档包显示关联 chips。
+26. 单个文件调整：使用文件详情页，只修改该文件 metadata 或专用 link rows。
+27. 多个文件调整：使用 Documents 列表或文档包详情页的紧凑批量工具栏，只修改所选文件 metadata 或专用 link rows。
+28. 整个资料包调整：使用文档包详情页的关联管理和可选同步到包内文件；legacy “同步主关联”只作为兼容工具保留。
+29. 文档包整体同步必须由 Server Action 按 `collection_id` 查询包内文件，不接收前端传入的文件 ID 或文件数量。
+30. Documents 列表筛选只影响后台文件中心；`related_type / related_id` 表示“包含该资产关联”，不得读取文件内容或生成 signed URL。
+31. 批量删除文件必须在 Server Action 中重新读取所选文件记录；读取失败或选择为空时不得执行删除。
+32. 批量删除文件必须要求确认 checkbox，缺失时返回“请先确认删除操作。”。
+33. 批量删除文件先删除 Supabase Storage object，再删除 `documents` 记录；Storage 删除失败时不删除数据库记录。
+34. 批量删除文件成功后重新计算受影响文档包的 `file_count` 与 `total_size`，但不自动删除空文档包。
+35. 删除整个文档包及文件必须要求确认文本 `DELETE` 或 `删除`；确认失败时不得执行删除。
+36. 删除整个文档包及文件先删除包内文件的 Storage object 和 `documents` 记录，再删除 `document_collections` 记录。
+37. 当前删除流程不新增数据库事务或 RPC；如果 Storage 成功但数据库删除失败，显示中文安全错误并在日志中记录 id、code/message 供人工复核。
+38. 删除相关 Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
+39. 需要下载多个附件时，在 Documents 列表或文档包详情页勾选文件后使用“下载选中文件 zip”。
+40. 需要下载整个资料包时，在文档包详情页或内容详情页文档包卡片使用“下载 zip”。
+41. zip 下载由 Route Handler 重新校验管理员身份并重新查询文件记录，不信任前端传入的文件名、Storage 路径、大小或数量。
+42. zip 按请求临时生成，不保存到 Storage，不创建持久化 zip 记录。
+43. zip 下载限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限时拆分下载，系统不生成部分 zip。
+44. zip 下载失败时不部分打包，不输出 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
+45. 上传和整理文件后，先通过 `/dashboard/search?q=关键词` 按文件名、original_name、relative_path、文档包标题、项目、知识笔记、成果或 Skill metadata 全局查找资产。
+46. 需要聚焦某类结果时，在搜索页使用 `type=documents`、`type=knowledge`、`type=projects` 等类型筛选；切回 `type=all` 可恢复全部分组。
+47. 全局搜索只查询数据库 metadata；q trim 后少于 2 个字符时不执行查询，每类最多返回 8 条，并显示全部和每类命中数量。
+48. 搜索结果标题和描述可高亮关键词，但高亮只在 React 展示层完成，不保存索引。
+49. 文件正文搜索、PDF / Word / Excel / zip 解析、OCR、AI 摘要和向量搜索属于后续阶段；当前全局搜索不得读取文件正文、生成 signed URL 或输出 Storage path。
 
 验证要求：
 
@@ -329,11 +331,11 @@ npm run build
 - 运行 `npm run build`。
 - 确认公开 Projects、Publications、Knowledge、Skills 页面不展示附件、Storage 路径、signed URL 或下载入口。
 - 确认未配置或未执行 `0018_document_collections_and_folder_uploads.sql` 的环境会清晰失败或降级，不假装上传成功。
-- 真实上传验收需要用户本人登录管理员账号，并确认目标 Supabase 环境已执行 0003 和 0018。
-- metadata 编辑验收不需要新增 migration；确认 0018 已执行即可。
-- 批量移动和批量解除关联验收不需要新增 migration；确认 0018 已执行即可。
-- RelatedDocumentsPanel 分组展示验收不需要新增 migration；确认当前查询返回文档包和文件记录即可。
-- 文档包整体迁移 / 同步关联验收不需要新增 migration；确认 0018 已执行，并验证文档包和包内文件的关联对象一起更新或一起置空。
+- 真实上传验收需要用户本人登录管理员账号，并确认目标 Supabase 环境已执行 0003、0018 和 0020。
+- metadata 编辑验收需要确认 0018 已执行；多关联添加 / 移除验收需要确认 0020 已执行。
+- 批量添加、移除和清空关联验收需要确认 0020 已执行。
+- RelatedDocumentsPanel 分组和关联 chips 展示验收需要确认 0018 与 0020 已执行，并确认当前查询返回文档包、文件和专用关联记录。
+- 文档包整体关联同步验收需要确认 0018 与 0020 已执行，并验证文档包和包内文件的专用关联与 legacy primary relation 按预期更新或清空。
 - 批量删除文件和删除整个文档包及文件验收不需要新增 migration；确认 0018 已执行，并验证 Storage object 与数据库记录按确认操作清理。
 - zip 下载验收不需要新增 migration；确认 0018 已执行，并验证选中文件 zip、文档包 zip、超限拒绝和空文档包错误。
 - 全局搜索验收不需要新增 migration；确认 `/dashboard/search` 只查 metadata，短关键词不查询，`type` 筛选保留当前 `q`，每类数量统计和关键词高亮可见，结果能跳转后台详情页。

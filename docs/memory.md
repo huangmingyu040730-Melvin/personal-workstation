@@ -41,6 +41,9 @@
 - Phase 2P-E-3：Documents 列表和文档包详情页支持选中文件 zip 临时下载；文档包详情页和内容详情页文档包卡片支持下载整个文档包 zip。
 - Phase 2P-F-1：后台新增 `/dashboard/search` 全局搜索入口，用于按数据库 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包。
 - Phase 2P-F-2：后台全局搜索支持类型筛选、每类数量统计、选中类型空状态、结果卡片类型 badge 和标题 / 描述关键词高亮。
+- Phase 2P-G-1：Documents 文件中心批量操作区改为紧凑工具栏，并新增 `document_asset_links` / `document_collection_asset_links` 专用多资产关联表；legacy `related_type / related_id` 保留为 primary relation 兼容字段。
+- Phase 2P-G-1 后续修复：Documents 与文档包关联 chips 会对同一资产下的 legacy `related` fallback 做展示降噪；已有具体关系时不重复显示“相关”，不删除 legacy 数据或新增 migration。
+- Phase 2P-G-1 追加 UI polish：上传页、文件详情页、文档包详情页和批量添加关联使用 checkbox / chips 分组选择器；文件中心权限列使用轻量私密状态标签。
 - Phase 2Q-A-1：Project 后台详情页升级为研究项目中枢，整合项目研究框架、私密附件、相关知识笔记 / 学术成果和快捷操作。
 - Phase 2Q-A-2：Knowledge 后台详情页升级为知识节点，整合知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口。
 - Phase 2Q-A-3：Skill 后台详情页升级为能力包 / 工作流包，整合用途说明、平台版本、私密资料、版本记录和相关资产搜索入口。
@@ -100,12 +103,16 @@ Documents / Storage：
 - `document_collections` 表示一次上传批次、文件夹、附件包或 Skill 包。
 - `documents.collection_id`、`original_name`、`relative_path`、`folder_path` 保存多文件 / 文件夹上传 metadata。
 - `documents.storage_path` 必须使用 ASCII-safe object key；中文文件名和文件夹名只用于后台展示字段。
-- 文件 metadata 可编辑字段为显示名称、分类和关联对象；不可编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id。
-- 文档包 metadata 可编辑字段为名称、描述、类型和关联对象；不可手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。
-- 文件级关联和文档包级关联允许不一致；修改文档包关联对象不自动批量同步包内文件。
-- 批量移动关联对象和批量解除关联只更新 `documents.related_type` / `documents.related_id`；不修改 Storage object、`storage_path`、`collection_id` 或文档包自身关联对象。
+- `document_asset_links` 与 `document_collection_asset_links` 是 Documents / 文档包专用多资产关联表，可把一个文件或文档包关联到多个 Project / Knowledge / Skill / Publication，并记录 relation_type 与 note。
+- `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 仅保留为 legacy primary relation、路径 fallback 与兼容 query params；新展示、筛选和搜索应优先读取专用 link tables。
+- 关联 chips 的展示归一化规则：同一 `asset_type + asset_id` 如果只有 `related`，显示“相关”；如果同时存在 `related` 和更具体关系，只显示具体关系；如果有多个具体关系，保留多个具体 chips。
+- 多关联选择器是展示层 UI：通过 checkbox / chips 生成多个 `asset_links` hidden inputs，后端 Server Actions 和 0020 表结构不变。
+- 文件 metadata 可编辑字段为显示名称、分类和 legacy primary relation；不可编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id。多资产关联在文件详情页关联区域添加或移除。
+- 文档包 metadata 可编辑字段为名称、描述、类型和 legacy primary relation；不可手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。多资产关联在文档包详情页关联区域添加或移除。
+- 文件级关联和文档包级关联允许不一致；修改文档包 legacy primary relation 或多关联不自动批量同步包内文件，除非管理员显式选择同步。
+- 批量添加 / 移除 / 清空关联只写入或删除专用 link rows，并必要时同步 legacy primary relation；不修改 Storage object、`storage_path`、`collection_id` 或文档包统计字段。
 - RelatedDocumentsPanel 中，当前对象文档包内文件由文档包卡片代表；文件级关联指向当前对象但仍属于其他文档包的文件展示为跨文档包文件并提示。
-- 文档包整体迁移 / 同步关联工具会主动同步更新 `document_collections.related_type / related_id` 和该文档包下全部 `documents.related_type / related_id`；整体解除关联会一起置空。
+- 文档包整体关联同步会主动同步专用 link rows 和 legacy primary relation；整体解除关联会一起清空，但不修改文件 `collection_id`。
 - 文档包整体迁移 / 同步关联只修改 metadata，不移动、不重命名、不删除 Storage object，也不修改 `documents.collection_id`。
 - 批量删除文件会删除所选 `documents` 记录和对应 Storage object，但不会自动删除空文档包。
 - 删除整个文档包及文件会删除包内文件记录、对应 Storage object 和 `document_collections` 记录；确认文本必须为 `DELETE` 或 `删除`。
@@ -169,7 +176,7 @@ Research Asset Links：
 - 显式关系维护仍在 Project / Knowledge / Skill / Publication 后台详情页的 AssetLinksPanel 内完成，通过单个资产详情页查看 outbound 和 backlinks。
 - 创建关系时必须校验管理员身份、source / target 类型、source / target 记录存在性、自关联和重复关系。
 - 编辑关系时必须校验管理员身份和关系存在性；source / target 不允许编辑，如需更换目标需删除后重新创建。
-- Documents 不纳入 `research_asset_links`；Documents 与文档包继续使用 `documents.related_type / related_id` 和 `document_collections.related_type / related_id`。
+- Documents 不纳入 `research_asset_links`；Documents 与文档包使用专用 `document_asset_links` / `document_collection_asset_links`，legacy `related_type / related_id` 只保留为兼容字段。
 - 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
 - 2Q-B-2 / 2Q-B-3 / 2Q-B-4 不新增 schema、不修改 0019 migration、不新增 RPC、不引入数据库事务；本阶段不做 AI 自动关联、复杂关系可视化、拖拽连线、公开页面展示或复杂权限继承。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
@@ -186,7 +193,10 @@ Research Asset Links：
 - Career Center 已进入稳定维护状态；后续只做 bugfix、文案修正和 broken link 修复，不主动扩展面试记录、提醒、邮件、Notion 同步或自动投递。
 - Market Brief / 市场简报已因数据可靠性不足弃用并从产品入口和代码主路径移除；历史迁移 0013-0017 暂作 unused legacy data，不在当前路线继续维护。
 - Phase 2P-A / 2P-B / 2P-C 将 Documents 扩展为统一私密附件底座，并把附件查看、预填上传、新建后上传串到 Project / Publication / Knowledge / Skill 后台流程中。
-- Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 将 Documents 进一步打磨为可维护的私密附件管理系统；metadata 修正、批量关联整理、详情页分组展示、文档包整体迁移、受确认保护的删除能力和 zip 临时下载均不新增 migration。
+- Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 将 Documents 进一步打磨为可维护的私密附件管理系统；metadata 修正、legacy 批量关联整理、详情页分组展示、文档包整体迁移、受确认保护的删除能力和 zip 临时下载均不新增 migration。
+- Phase 2P-G-1 采用 dedicated document asset links 决策：新增 `0020_document_asset_links.sql`，用 Documents 专用 link tables 支持文件和文档包多资产关联；不把 Documents 混入 `research_asset_links`，不修改 Storage policy，不新增 RPC。
+- Documents relation chips 采用展示降噪决策：legacy primary relation 或 0020 回填产生的 `related` 只在同一资产没有具体关系时显示；该决策不删除旧字段、回填 rows 或 Storage object。
+- Documents multi-association UI polish 决策：替换原生多选框和大号权限 pill，但不改变上传、删除、zip、Storage、RLS 或多关联写入逻辑。
 - Phase 2P-E-2 删除能力继续保持 Documents 私密边界：Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 - Phase 2P-E-3 zip 下载继续保持 Documents 私密边界：zip 不保存到 Storage，Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 - Phase 2P-F-1 全局搜索采用 metadata-first 决策：只在管理员后台搜索数据库字段，不新增 migration、索引、RPC、外部搜索服务、向量库或文件内容解析。
@@ -199,7 +209,7 @@ Research Asset Links：
 - Phase 2Q-B-2 采用 management-polish 决策：只增强显式关系管理体验；关系仍只覆盖 Project / Knowledge / Skill / Publication；Documents 仍不纳入；edit link 只允许修改 relation_type 和 note，不允许修改 source / target；不新增 schema、migration、RPC、数据库事务、AI 自动关联、图谱可视化、公开展示或复杂权限继承。
 - Phase 2Q-B-3 的 read-only global relation view 决策已被 Phase 2Q-B-4 取代；旧的独立全局关系页面不再是当前能力。
 - Phase 2Q-B-4 采用 remove network view 决策：用户判断全局关系可视化对实际工作效率帮助有限，因此移除独立全局关系页面、侧边栏入口和 AssetLinksPanel 附近的全局入口；保留 `research_asset_links`、0019 migration、Server Action、查询、校验、AssetLinksPanel、outbound / backlink、relation_type / note 和详情页内关系筛选 / 编辑。
-- 后续数据库变更必须新增 `0020_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
+- 后续数据库变更必须新增 `0021_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
 
@@ -259,12 +269,13 @@ Research Asset Links：
 - Phase 2Q-B-1：`0019_research_asset_links.sql`
 - Phase 2Q-B-2：不新增 migration，继续依赖已执行的 `0019_research_asset_links.sql`
 - Phase 2Q-B-3：不新增 migration，继续依赖已执行的 `0019_research_asset_links.sql`
+- Phase 2P-G-1：`0020_document_asset_links.sql`
 
 规则：
 
 - 已执行 migration 不应修改或重跑。
 - 0013 至 0017 是 Market Brief unused legacy data 对应迁移；当前产品代码不再依赖这些旧表，本轮不 drop。
-- 执行 0019 后，后续数据库变更应新增 `0020_*` 或更高编号。
+- 执行 0020 后，后续数据库变更应新增 `0021_*` 或更高编号。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Workflows
@@ -276,7 +287,7 @@ Research Asset Links：
 - Supabase 数据库变更：新增 migration，不修改已执行旧 migration。
 - Documents 上传：prepare metadata -> 浏览器直传 private `workspace-files` -> finalize 写库 -> 必要时清理失败对象。
 - 新建内容并上传附件：先创建 Project / Publication / Knowledge / Skill，成功后跳转 `/dashboard/documents/upload` 并通过 query params 预填关联对象、上传模式、分类和文档包类型。
-- Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类、关联对象；文档包详情页修正文档包名称、描述、类型、关联对象；列表页用 category、related_type、collection 筛选整理；Documents 列表或文档包详情页批量移动多个文件关联对象、批量解除关联、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件分组理解附件关系；文档包详情页整体迁移 / 同步关联工具用于同步调整整个资料包和包内全部文件；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
+- Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类和 legacy primary relation，并在关联区域用 checkbox / chips 添加或移除多资产关联；文档包详情页修正文档包名称、描述、类型和 legacy primary relation，并在关联区域添加 / 移除文档包关联，可选择同步到包内文件；列表页用 category、related_type、collection 筛选整理，其中 related_type / related_id 表示包含该资产关联；Documents 列表或文档包详情页用紧凑批量工具栏批量添加、移除或清空关联、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件和关联 chips 理解附件关系，chips 已对同一资产的 legacy `related` 做展示降噪；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
 - Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。
@@ -290,7 +301,7 @@ Research Asset Links：
 
 建议顺序：
 
-1. Phase 2P / 2Q 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 和 `0019_research_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
+1. Phase 2P / 2Q 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql` 和 `0020_document_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
@@ -313,7 +324,8 @@ Research Asset Links：
 - “Market Brief 是可继续扩展模块”已废弃。Market Brief 已在 Phase 2N-Z 移除产品入口和代码主路径，后续不维护相关 runner、素材包、探针或环境变量。
 - “Documents 只服务 Publication 附件”已过时。Documents 已升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
 - “后续数据库变更应新增 `0018_*`”已过时。`0018_document_collections_and_folder_uploads.sql` 已存在；该过渡备注也已被 2Q-B-1 的 `0019` 取代。
-- “后续数据库变更应新增 `0019_*`”已过时。`0019_research_asset_links.sql` 已存在，后续应使用 `0020_*` 或更高编号。
+- “后续数据库变更应新增 `0019_*`”已过时。`0019_research_asset_links.sql` 已存在，且已被 2P-G-1 的 `0020_document_asset_links.sql` 继续推进。
+- “后续数据库变更应新增 `0020_*`”已过时。`0020_document_asset_links.sql` 已存在，后续应使用 `0021_*` 或更高编号。
 - “Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计”已过时。Phase 2Q-B-1 已新增 `research_asset_links` 管理员后台显式关系底座，但 Documents 仍保持独立附件关系模型。
 - “Skill 当前没有 Project / Knowledge / Publication 显式关联字段，只能搜索相关资产”已过时。Skill 仍不新增单独外键字段，但可通过 `research_asset_links` 建立显式关系。
 - “后台存在独立全局研究资产关系视图页面”已过时。Phase 2Q-B-4 已移除该模块；显式关系仍在四类资产详情页维护。

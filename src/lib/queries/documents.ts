@@ -1,6 +1,7 @@
 import type { DocumentCollectionRecord, DocumentCollectionWithRelation, DocumentRecord, DocumentRelatedType, DocumentWithRelation } from "@/lib/content-types";
 import { documents as mockDocuments } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
+import { getDocumentCollectionRelationsMap, getDocumentRelationsMap } from "./document-asset-links";
 
 function mockDocumentFallback(): DocumentWithRelation[] {
   return mockDocuments.map((document) => ({
@@ -21,7 +22,8 @@ function mockDocumentFallback(): DocumentWithRelation[] {
     owner_id: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    related: null
+    related: null,
+    relations: []
   }));
 }
 
@@ -100,21 +102,82 @@ type DocumentRow = DocumentRecord & {
   document_collections?: Pick<DocumentCollectionRecord, "id" | "title" | "collection_type" | "root_folder_name" | "file_count" | "total_size"> | null;
 };
 
+function firstRelationAsRelated(document: Pick<DocumentWithRelation, "relations">) {
+  const firstRelation = document.relations[0];
+
+  return firstRelation
+    ? {
+        type: firstRelation.asset_type,
+        title: firstRelation.title,
+        href: firstRelation.href
+      }
+    : null;
+}
+
 async function resolveDocumentRelations(documents: DocumentRow[]): Promise<DocumentWithRelation[]> {
+  const supabase = await createClient();
   const resolveRelated = await getRelatedResolver(documents);
+  const relationsByDocumentId = supabase ? await getDocumentRelationsMap(supabase, documents) : new Map();
 
   return documents.map((document) => {
+    const relations = relationsByDocumentId.get(document.id) ?? [];
+    const related = resolveRelated(document);
+
     return {
       ...document,
-      related: resolveRelated(document),
+      related: related ?? firstRelationAsRelated({ relations }),
+      relations,
       collection: document.document_collections ?? null
     };
   });
 }
 
 async function resolveCollectionRelations(collections: DocumentCollectionRecord[]): Promise<DocumentCollectionWithRelation[]> {
+  const supabase = await createClient();
   const resolveRelated = await getRelatedResolver(collections);
-  return collections.map((collection) => ({ ...collection, related: resolveRelated(collection) }));
+  const relationsByCollectionId = supabase ? await getDocumentCollectionRelationsMap(supabase, collections) : new Map();
+
+  return collections.map((collection) => {
+    const relations = relationsByCollectionId.get(collection.id) ?? [];
+    const related = resolveRelated(collection);
+
+    return {
+      ...collection,
+      related: related ?? firstRelationAsRelated({ relations }),
+      relations
+    };
+  });
+}
+
+function hasRelation(
+  item: Pick<DocumentWithRelation | DocumentCollectionWithRelation, "relations" | "related_type" | "related_id">,
+  relatedType: string,
+  relatedId?: string
+) {
+  if (relatedType === "unlinked") {
+    return item.relations.length === 0 && !item.related_type && !item.related_id;
+  }
+
+  if (relatedType === "all") {
+    return true;
+  }
+
+  return item.relations.some((relation) => (
+    relation.asset_type === relatedType &&
+    (!relatedId || relation.asset_id === relatedId)
+  ));
+}
+
+function filterByRelation<T extends DocumentWithRelation | DocumentCollectionWithRelation>(
+  items: T[],
+  relatedType?: string,
+  relatedId?: string
+) {
+  if (!relatedType || relatedType === "all") {
+    return items;
+  }
+
+  return items.filter((item) => hasRelation(item, relatedType, relatedId));
 }
 
 export async function getDocuments(filters?: { category?: string; relatedType?: string; relatedId?: string; collection?: string }) {
@@ -133,18 +196,6 @@ export async function getDocuments(filters?: { category?: string; relatedType?: 
     query = query.eq("category", filters.category);
   }
 
-  if (filters?.relatedType && filters.relatedType !== "all") {
-    if (filters.relatedType === "unlinked") {
-      query = query.is("related_type", null);
-    } else {
-      query = query.eq("related_type", filters.relatedType);
-
-      if (filters.relatedId) {
-        query = query.eq("related_id", filters.relatedId);
-      }
-    }
-  }
-
   if (filters?.collection === "with_collection") {
     query = query.not("collection_id", "is", null);
   }
@@ -160,7 +211,8 @@ export async function getDocuments(filters?: { category?: string; relatedType?: 
     return [];
   }
 
-  return resolveDocumentRelations((data ?? []) as DocumentRow[]);
+  const documents = await resolveDocumentRelations((data ?? []) as DocumentRow[]);
+  return filterByRelation(documents, filters?.relatedType, filters?.relatedId);
 }
 
 export async function countDocuments() {
@@ -209,25 +261,7 @@ export async function getDocumentById(id: string) {
 }
 
 export async function getDocumentsByRelated(relatedType: DocumentRelatedType, relatedId: string) {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    return [];
-  }
-
-  const { data, error } = await supabase
-    .from("documents")
-    .select("*, document_collections(id,title,collection_type,root_folder_name,file_count,total_size)")
-    .eq("related_type", relatedType)
-    .eq("related_id", relatedId)
-    .order("updated_at", { ascending: false });
-
-  if (error) {
-    console.error("getDocumentsByRelated failed", { code: error.code, message: error.message });
-    return [];
-  }
-
-  return resolveDocumentRelations((data ?? []) as DocumentRow[]);
+  return getDocuments({ relatedType, relatedId });
 }
 
 export async function getDocumentCollectionById(id: string) {
@@ -266,8 +300,6 @@ export async function getDocumentCollectionsByRelated(relatedType: DocumentRelat
   const { data, error } = await supabase
     .from("document_collections")
     .select("*")
-    .eq("related_type", relatedType)
-    .eq("related_id", relatedId)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -275,7 +307,8 @@ export async function getDocumentCollectionsByRelated(relatedType: DocumentRelat
     return [];
   }
 
-  return resolveCollectionRelations((data ?? []) as DocumentCollectionRecord[]);
+  const collections = await resolveCollectionRelations((data ?? []) as DocumentCollectionRecord[]);
+  return filterByRelation(collections, relatedType, relatedId);
 }
 
 export async function getDocumentsByCollectionId(collectionId: string) {

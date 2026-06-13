@@ -20,8 +20,8 @@ export function DocumentCollectionSyncForm({
   return (
     <form action={action}>
       <AdminFormSection
-        title="同步文档包与包内文件关联"
-        description="用于整体迁移一个资料包，或一起解除文档包和包内文件的关联。"
+        title="高级：同步主关联"
+        description="兼容旧字段的整体迁移工具；多关联请优先使用上方“添加文档包关联”。"
         className="border-blue-100 bg-blue-50/50"
       >
         <div className="rounded-2xl border border-blue-100 bg-white p-4 text-sm leading-6">
@@ -49,12 +49,13 @@ export function DocumentCollectionSyncForm({
             defaultRelatedType={collection.related_type}
             defaultRelatedId={collection.related_id}
             options={relatedOptions}
-            hint="整体迁移会把文档包和包内全部文件同步到同一个关联对象；整体解除关联会忽略此选择。"
+            hint="整体迁移会把文档包和包内全部文件的 legacy primary relation 同步到同一个对象；整体解除会忽略此选择。"
           />
         </div>
 
         <div className="mt-4 space-y-2 rounded-2xl bg-white px-4 py-3 text-xs leading-5 text-slate-500">
           <p>此操作只修改文档包和包内文件的关联 metadata。</p>
+          <p>为保持兼容，会同步写入或清空对应多关联 link rows。</p>
           <p>不会移动、重命名、删除 Storage object，也不会修改文件的 collection_id 或公开附件下载入口。</p>
           <p>Skill 包只作为私密文件存储，不执行、不解析、不安装。</p>
         </div>

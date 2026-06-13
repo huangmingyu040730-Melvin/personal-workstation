@@ -302,6 +302,34 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不新增公开搜索页，不修改公开页面导航。
 - 不修改 Storage policy、RLS、Resume / Career 或 Market Brief。
 
+### Phase 2P-G-1 - File Center UI And Multi-Asset Document Associations
+
+已完成代码实现。Documents 文件中心继续作为统一私密附件底座，并把文件 / 文档包从单一关联对象扩展为专用多资产关联：
+
+- 新增 `document_asset_links` 与 `document_collection_asset_links`，分别记录文件和文档包到 Project / Knowledge / Skill / Publication 的关联。
+- 关系类型支持 `related`、`source_material`、`supporting_material`、`deliverable`、`reference`、`input`、`output`，并支持备注。
+- `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 保留为 legacy primary relation、路径 fallback 和兼容输入，不作为新展示与筛选的唯一来源。
+- 上传页支持一次选择多个关联资产；首个关联会写入 legacy primary relation，全部关联写入专用 link tables。
+- 上传到已有文档包时继承文档包多关联，并允许叠加当前页面传入的关联，不再因单一关联不一致而阻断上传。
+- `/dashboard/documents` 批量操作区改为紧凑工具栏，支持批量添加关联、按资产移除关联、清空关联、zip 下载、批量删除和高级 legacy primary relation 操作。
+- 文件详情页和文档包详情页展示全部关联 chips，并支持添加 / 移除 link-table 关联；文档包关联可选择同步到包内文件。
+- RelatedDocumentsPanel 按多关联查询文档包、独立文件和跨文档包文件，并显示关联 chips，避免当前对象文档包内文件重复展示。
+- 关联 chips 对同一资产下的 legacy `related` fallback 做展示归一化：已有 `deliverable`、`supporting_material` 等具体关系时不重复显示“相关”。
+- #99 追加 UI polish：多关联选择器从原生多选框升级为 checkbox / chips 分组选择器，覆盖上传页、文件详情页、文档包详情页和批量添加关联；文件中心权限列改为轻量状态标签。
+- Documents 列表的 `related_type / related_id` 筛选语义改为“包含该资产关联”；`unlinked` 表示既没有专用关联，也没有 legacy primary relation。
+- 后台全局搜索继续只查 metadata，但可展示由专用关联表解析出的关联标题。
+
+边界：
+
+- Documents 不纳入 `research_asset_links`；研究资产显式关系仍只覆盖 Project / Knowledge / Skill / Publication。
+- 不修改 `0019_research_asset_links.sql`，不修改全局关系图谱移除决策。
+- 新增 migration 仅为 `0020_document_asset_links.sql`；不新增 RPC，不修改 Storage policy，不改 RLS 旧策略。
+- 不移动、不重命名、不重写 Storage object，不修改 `storage_path` 生成规则。
+- `related` 降噪是展示归一化，不删除 legacy 字段、0020 回填 rows 或任何 Storage object。
+- UI polish 不新增 migration，仍依赖 0020 的专用多关联表。
+- 不公开附件、不生成 public signed URL，不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 文件总结或向量搜索。
+- 不修改 Resume / Career、viewer/restricted、Calendar、Profile 或 Market Brief。
+
 ### Phase 2Q-A-1 - Project Detail Research Hub
 
 已完成代码实现。Project 后台详情页从普通详情页升级为单个研究项目中枢：
@@ -401,7 +429,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 边界：
 
 - 关系只在管理员后台使用，不新增公开页面展示。
-- Documents 暂不纳入 `research_asset_links`，继续使用现有 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
+- Documents 不纳入 `research_asset_links`；当前 Documents 多关联由专用 `document_asset_links` / `document_collection_asset_links` 管理，legacy `related_type / related_id` 仅作兼容字段。
 - 不新增 RPC，不保存 zip，不修改 Storage policy，不读取 Storage object，不生成 signed URL。
 - 不做 AI 自动关联、关系图谱可视化、拖拽连线、公开展示或复杂权限继承。
 - 不修改 Resume / Career、viewer/restricted 或 Market Brief。
@@ -465,7 +493,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不新增 migration，不新增 RPC，不修改 RLS 或 Storage policy。
 - 不做新的可视化替代方案，不引入新的可视化库。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
-- Documents 不纳入 `research_asset_links`，继续使用文件和文档包的既有关联模型。
+- Documents 不纳入 `research_asset_links`，继续使用文件和文档包专用关联模型。
 - 不修改 Resume / Career、viewer/restricted 或 Market Brief。
 
 ### Phase 2D - Public Research Workstation
@@ -528,7 +556,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - public 页面只展示明确设为 `public` 的内容。
 - Documents 继续保持私密，不开放公开下载或 viewer signed URL。
-- Documents 作为可维护的统一私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的私密附件，避免每个模块重复实现文件系统。
+- Documents 作为可维护的统一私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的私密附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页只嵌入后台私密附件视图，公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件下载入口。
 - 新建内容时的“保存并上传附件”仅在创建成功后跳转统一上传页，不创建临时上传记录或 staging 文件。
 - Access Requests / Access Grants 继续作为 restricted 访问基础。

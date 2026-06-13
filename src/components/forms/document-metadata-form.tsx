@@ -18,7 +18,7 @@ export function DocumentMetadataForm({
     <form action={action}>
       <AdminFormSection
         title="编辑文件信息"
-        description="只修改后台 metadata，不移动、不重命名 Storage object。"
+        description="只修改后台 metadata 和 legacy primary relation，不移动、不重命名 Storage object；多关联请使用关联资产区域。"
       >
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="文件显示名称">
@@ -37,7 +37,7 @@ export function DocumentMetadataForm({
             defaultRelatedType={document.related_type}
             defaultRelatedId={document.related_id}
             options={relatedOptions}
-            hint="可解除关联，或改为关联到 Publication、Project、Knowledge、Skill。"
+            hint="兼容字段：可设置一个主关联作为旧流程 fallback，不会限制文件的多关联。"
           />
         </div>
         <p className="mt-4 text-sm leading-6 text-slate-500">

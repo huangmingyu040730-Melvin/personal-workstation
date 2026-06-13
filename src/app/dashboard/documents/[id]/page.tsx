@@ -1,15 +1,18 @@
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { notFound } from "next/navigation";
-import { deleteDocumentAction, updateDocumentMetadataAction } from "@/actions/documents";
+import { addDocumentAssetLinksAction, deleteDocumentAction, removeDocumentAssetLinkAction, updateDocumentMetadataAction } from "@/actions/documents";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSecurityNote } from "@/components/admin-ui";
 import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { DocumentRelationChips } from "@/components/documents/document-relation-chips";
+import { DocumentAssetLinksForm } from "@/components/forms/document-asset-links-form";
 import { DocumentMetadataForm } from "@/components/forms/document-metadata-form";
-import { DeleteButton } from "@/components/forms/submit-button";
+import { DeleteButton, SubmitButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
-import { getDocumentCategoryLabel, getDocumentCollectionTypeLabel, getDocumentRelatedTypeLabel } from "@/lib/content-options";
+import { getDocumentCategoryLabel, getDocumentCollectionTypeLabel } from "@/lib/content-options";
+import type { DocumentAssetLinkSummary } from "@/lib/content-types";
 import { formatDateTime, formatFileSize } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
 import { getKnowledgeNoteOptions } from "@/lib/queries/knowledge";
@@ -40,7 +43,11 @@ export default async function DocumentDetailPage({
 
   const error = getFormError(query);
   const notice = query.notice === "metadata_updated";
+  const assetLinksAddedNotice = query.notice === "document_asset_links_added";
+  const assetLinkRemovedNotice = query.notice === "document_asset_link_removed";
   const updateAction = updateDocumentMetadataAction.bind(null, document.id);
+  const addLinksAction = addDocumentAssetLinksAction;
+  const detailReturnTo = `/dashboard/documents/${document.id}`;
 
   return (
     <AppShell>
@@ -65,6 +72,16 @@ export default async function DocumentDetailPage({
         {notice ? (
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
             文件信息已更新。Storage object 未移动、未重命名。
+          </div>
+        ) : null}
+        {assetLinksAddedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            文件关联已添加。Storage object 未移动、未重命名。
+          </div>
+        ) : null}
+        {assetLinkRemovedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            文件关联已移除，其他关联已保留。
           </div>
         ) : null}
         <AdminSecurityNote>文件始终保存在 private bucket 中。下载操作会生成短时链接，公开站点不会展示文件路径或下载入口。</AdminSecurityNote>
@@ -104,19 +121,60 @@ export default async function DocumentDetailPage({
           )}
         </Card>
         <Card className="overflow-hidden">
-          <CardHeader title="关联对象" />
-          {document.related ? (
-            <div className="rounded-2xl bg-blue-50 p-4">
-              <p className="text-sm text-blue-700">{getDocumentRelatedTypeLabel(document.related.type)}</p>
-              <Link href={document.related.href} className="mt-1 block break-words font-semibold text-slate-950 hover:text-blue-700">{document.related.title}</Link>
-            </div>
-          ) : (
-            <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">未关联任何项目、成果、知识文章或 Skill。</p>
-          )}
+          <CardHeader title="关联资产" description="一个文件可以同时关联多个 Project、Publication、Knowledge 或 Skill。" />
+          <div className="space-y-4">
+            <DocumentRelationChips relations={document.relations} emptyLabel="未关联任何项目、成果、知识文章或 Skill。" />
+            <RemovableDocumentRelations relations={document.relations} returnTo={detailReturnTo} />
+          </div>
+        </Card>
+        <Card className="overflow-hidden">
+          <CardHeader title="添加关联" description="只新增文件与资产的关系，不移动或重命名 Storage object。" />
+          <DocumentAssetLinksForm
+            action={addLinksAction}
+            documentIds={[document.id]}
+            relatedOptions={{ projects, publications, knowledgeNotes, skills }}
+            returnTo={detailReturnTo}
+            submitLabel="添加到该文件"
+          />
         </Card>
         </div>
         </div>
       </AdminPageSurface>
     </AppShell>
+  );
+}
+
+function RemovableDocumentRelations({
+  relations,
+  returnTo
+}: {
+  relations: DocumentAssetLinkSummary[];
+  returnTo: string;
+}) {
+  const removableRelations = relations.filter((relation) => !relation.id.startsWith("legacy:"));
+
+  if (removableRelations.length === 0) {
+    return relations.length > 0 ? (
+      <p className="rounded-2xl bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500">
+        当前仅有 legacy primary relation。执行 0020 回填后可作为独立关联移除。
+      </p>
+    ) : null;
+  }
+
+  return (
+    <div className="space-y-2">
+      {removableRelations.map((relation) => (
+        <form key={relation.id} action={removeDocumentAssetLinkAction.bind(null, relation.id)} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
+          <input type="hidden" name="return_to" value={returnTo} />
+          <span className="min-w-0 truncate text-sm text-slate-600">
+            {relation.title} · {relation.relation_label}
+          </span>
+          <SubmitButton variant="secondary" pendingLabel="移除中..." className="shrink-0 gap-1 px-2.5 py-1.5 text-xs">
+            <X size={13} />
+            移除
+          </SubmitButton>
+        </form>
+      ))}
+    </div>
   );
 }

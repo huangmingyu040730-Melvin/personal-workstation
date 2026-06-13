@@ -1559,3 +1559,84 @@
 - `src/lib/mock-data.ts` 不再提供全局关系入口。
 - 不新增 migration，不修改 `0019_research_asset_links.sql`，不修改 RLS、Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-13 - Use Dedicated Document Asset Links For Multi-Associations
+
+类型：decision
+
+决策：
+
+- Phase 2P-G-1 为 Documents 和文档包新增专用多资产关联表：`document_asset_links` 与 `document_collection_asset_links`。
+- Documents 仍不纳入 `research_asset_links`；`research_asset_links` 继续只表达 Project / Knowledge / Skill / Publication 之间的显式研究资产关系。
+- `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 保留为 legacy primary relation，用于路径 fallback、兼容 query params 和迁移前数据 fallback。
+- 新上传文件或文档包时，首个关联写入 legacy primary relation，全部关联写入专用 link tables。
+- 新展示、RelatedDocumentsPanel、Documents 列表筛选和后台搜索优先读取专用 link tables；legacy 字段只在同一 `asset_type + asset_id` 没有任何 link row 时作为 fallback。
+- 文件中心批量操作区改为紧凑工具栏，支持批量添加关联、按资产移除关联、清空全部关联，并把 legacy primary relation 操作降级为高级兼容工具。
+- 文件详情页和文档包详情页显示全部关联 chips，并提供添加 / 移除关联；文档包关联可以选择同步到包内文件。
+- 新增 `supabase/migrations/0020_document_asset_links.sql`，创建两张 link tables、管理员 RLS、索引、唯一约束，并把既有 legacy related_type / related_id 回填为 `related` 关系。
+
+原因：
+
+- Documents 是私密附件底座，同一个文件或文档包常常同时服务多个 Project / Knowledge / Skill / Publication；单一 `related_type / related_id` 不足以表达真实工作流。
+- Documents 关系属于“附件归属 / 材料用途”，语义不同于 Project / Knowledge / Skill / Publication 之间的研究资产显式关系；复用 `research_asset_links` 会混淆两个模型。
+- 保留 legacy primary relation 可以避免破坏既有上传路径、旧筛选 URL 和旧数据展示，同时让新功能逐步迁移到更清晰的 link-table 模型。
+- 文件中心原批量操作区占用过高，紧凑工具栏更适合长期整理大量附件。
+
+影响：
+
+- 新增查询、校验、Server Actions 和表单组件来管理 Documents 多关联。
+- `/dashboard/documents`、文件详情页、文档包详情页、上传页、RelatedDocumentsPanel 和后台搜索都会显示或使用多关联。
+- 新增 migration 仅限 `0020_document_asset_links.sql`；不修改已执行的 0018 / 0019，不新增 RPC，不修改 Storage policy。
+- 新增 / 移除关联不会移动、重命名或重写 Storage object，不修改 `storage_path`、MIME type、文件大小、原始路径或 `collection_id`。
+- 公开页面、viewer/restricted、Resume、Career、Calendar、Profile、Market Brief 和全局研究资产关系图谱移除决策不受影响。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-14 - Normalize Document Relation Chip Display
+
+类型：decision
+
+决策：
+
+- Documents 与文档包的关联展示按同一 `asset_type + asset_id` 做归一化。
+- 如果同一资产只有 `related` 关系，继续显示“相关”。
+- 如果同一资产同时存在 `related` 和一个或多个更具体关系，例如 `deliverable`、`supporting_material`、`source_material`、`reference`、`input` 或 `output`，展示层隐藏该资产的 `related` fallback。
+- 如果同一资产存在多个具体关系，暂时保留多个具体 chips，不强行合并。
+- legacy primary relation 只在同一资产没有任何 link-table relation 时追加为 fallback。
+
+原因：
+
+- `0020_document_asset_links.sql` 会把旧 `related_type / related_id` 回填为 `related` link row；新多关联又允许管理员为同一资产添加更具体语义。
+- 同一文件同时显示“学术成果 · 交付物”和“学术成果 · 相关”会让用户误以为存在两类同等价值关系；实际 `related` 只是低价值兼容 fallback。
+- 在查询展示层降噪能保留数据兼容和历史回填，同时让文件中心、详情页、RelatedDocumentsPanel 和搜索结果更贴近工作语义。
+
+影响：
+
+- 只调整 `src/lib/queries/document-asset-links.ts` 返回的 relation summaries。
+- 不删除 `documents.related_type / related_id`、`document_collections.related_type / related_id`、`document_asset_links` 或 `document_collection_asset_links` 中的 `related` rows。
+- 不新增 migration，不新增 RPC，不修改 RLS，不修改 Storage policy，不移动、不重命名、不删除 Storage object，也不修改 `storage_path`。
+- Documents 仍不纳入 `research_asset_links`，四类研究资产之间的显式关系系统不受影响。
+
+## 2026-06-14 - Polish Document Multi-Association UI
+
+类型：decision
+
+决策：
+
+- #99 追加文件中心 UI polish，不改变 Documents 多关联数据模型。
+- `/dashboard/documents` 文件列表的“权限”列使用专用轻量私密状态标签，不再复用更大的全局 visibility pill。
+- 上传页、文件详情页、文档包详情页和文件中心批量添加关联统一使用 checkbox / chips 分组选择器，替代原生 `<select multiple>`。
+- 选择器按学术成果、研究项目、知识库和 Skill 库分组，显示已选 chips，并保留本地标题筛选。
+- 表单仍提交多个 `asset_links` 值，第一项继续作为 legacy primary relation 兼容来源。
+
+原因：
+
+- 原生多选框不够直观，用户不容易理解如何多选 Project / Publication / Knowledge / Skill。
+- 文件列表中的大号“私密”胶囊视觉上像按钮，和文件表格行、上传时间和下载操作不协调。
+- UI polish 可以提升可读性和操作确认感，同时不扩大权限、数据库或 Storage 边界。
+
+影响：
+
+- 新增复用的 `DocumentAssetLinkPicker` 和文件中心专用 `DocumentVisibilityBadge`。
+- 不新增 migration，仍依赖 `0020_document_asset_links.sql`。
+- 不修改 `document_asset_links`、`document_collection_asset_links`、legacy `related_type / related_id`、Storage policy、zip 下载、删除流程或 `research_asset_links`。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 secret。

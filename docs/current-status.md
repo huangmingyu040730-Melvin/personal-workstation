@@ -52,7 +52,7 @@
 - Documents 文件中心。
 - Documents 文档包、多文件 / 文件夹上传与统一私密附件底座。
 - Documents 文件 metadata、文档包 metadata、关联对象与列表筛选维护能力。
-- Documents 批量移动文件关联对象与批量解除关联能力。
+- Documents 文件中心紧凑批量操作工具栏，以及批量添加 / 移除多资产关联能力。
 - Documents 批量删除文件与删除整个文档包及文件能力。
 - Documents 多文件与文档包 zip 临时下载能力。
 - 后台全局搜索 `/dashboard/search`，按研究资产 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包，并支持类型筛选、统计和关键词高亮。
@@ -97,7 +97,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 类型筛选 chips 显示全部和每类命中数量；选中某类但无结果时保留切换入口并显示“当前类型没有匹配结果”。
 - 结果标题和描述用安全 React 文本切片做关键词高亮，不保存索引，不使用 HTML 注入。
 - q trim 后少于 2 个字符时不执行查询并提示“请输入至少 2 个字符。”
-- Documents 搜索只查文件名、原始文件名、relative_path、folder_path、category 和 related_type 等 metadata。
+- Documents 搜索只查文件名、原始文件名、relative_path、folder_path、category、legacy related_type 和专用关联表解析出的关联标题等 metadata。
 - 搜索不读取 Supabase Storage 文件内容，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要或向量搜索，不生成 signed URL，不输出 Storage path。
 
 ### Research Asset Links
@@ -119,7 +119,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 边界：
 
 - 关系只在管理员后台使用，不新增公开关系展示。
-- Documents 不纳入 `research_asset_links`，继续使用 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
+- Documents 不纳入 `research_asset_links`；文件和文档包使用专用 `document_asset_links` / `document_collection_asset_links` 管理多资产关联，legacy `related_type / related_id` 只保留为 primary relation 兼容字段。
 - Phase 2Q-B-2 / 2Q-B-4 不新增 migration，不修改 `0019_research_asset_links.sql`，不新增 RPC，也不引入数据库事务。
 - 不保留独立全局关系可视化页面；如未来重新需要，应作为独立新阶段重新设计。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
@@ -221,14 +221,14 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 文件夹上传 metadata。
 - 管理员下载。
 - signed URL 短时下载。
-- 文件关联 Publication / Project / Knowledge / Skill。
+- 文件和文档包可关联 Publication / Project / Knowledge / Skill，并支持一个文件或文档包同时关联多个研究资产。
 - Project / Publication / Knowledge / Skill 后台详情页可直接查看关联文件和文档包。
 - 各内容详情页上传入口复用 `/dashboard/documents/upload`，并通过 query params 预填关联对象、上传模式、分类和文档包类型。
 - Project / Publication / Knowledge / Skill 新建表单支持“保存并上传附件”操作：对象先创建成功，再跳转统一上传页并预选新对象。
-- 文件详情页支持编辑文件显示名称、分类和关联对象。
-- 文档包详情页支持编辑文档包名称、描述、类型和关联对象。
-- Documents 列表支持按 category、related_type 和 collection 状态筛选；`related_type=unlinked` 可查看未关联文件。
-- Documents 列表支持批量选择文件、批量移动关联对象和批量解除关联，并尽量保留当前筛选 URL。
+- 文件详情页支持编辑文件显示名称、分类和 legacy primary relation，并可查看全部关联 chips、添加关联或移除 link-table 关联。
+- 文档包详情页支持编辑文档包名称、描述、类型和 legacy primary relation，并可查看全部关联 chips、添加 / 移除文档包关联，可选择同步到包内文件。
+- Documents 列表支持按 category、related_type 和 collection 状态筛选；`related_type / related_id` 现在表示“包含该资产关联”，`related_type=unlinked` 可查看没有专用关联和 legacy 关联的文件。
+- Documents 文件中心批量区已改为紧凑工具栏，支持批量添加关联、按资产批量移除关联、清空全部关联、zip 下载、批量删除和高级 legacy primary relation 操作。
 - Documents 列表支持批量删除选中文件，删除数据库记录和对应 private Storage object，但不会自动删除空文档包。
 - Documents 列表支持勾选多个文件后临时下载 zip。
 - 文档包详情页支持批量修改包内文件关联对象或批量解除包内文件关联，不修改文档包自身关联或文件 `collection_id`。
@@ -236,10 +236,13 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 文档包详情页支持下载整个文档包 zip；Project / Publication / Knowledge / Skill 后台详情页的文档包卡片也提供后台 zip 下载入口。
 - Project / Publication / Knowledge / Skill 后台详情页的 RelatedDocumentsPanel 将附件分为文档包、独立文件和跨文档包文件；当前对象文档包内文件不再在独立文件区域重复展示。
 - 跨文档包文件表示文件级关联指向当前对象，但文件仍属于其他文档包；页面只提示该状态，不自动同步或修复关联。
-- 文档包详情页支持“同步文档包与包内文件关联”：整体迁移时同步更新 `document_collections.related_type / related_id` 和该文档包下全部 `documents.related_type / related_id`；整体解除关联时一起置空。
+- 文档包详情页支持“同步文档包与包内文件关联”：整体迁移时同步更新专用 link tables 和 legacy `related_type / related_id`；整体解除关联时一起清空。
 - 空文档包也可以执行整体迁移或整体解除关联，此时只修改文档包自身关联，记录的 `document_count` 为 0。
 - 文档包关联对象修改不会自动批量修改包内文件的关联对象；不一致时页面提示管理员在文件详情页单独调整。
 - `document_collections` 文档包记录上传批次、文件夹、附件包或 Skill 包。
+- `document_asset_links` 与 `document_collection_asset_links` 记录文件 / 文档包到 Project / Knowledge / Skill / Publication 的多资产关联，支持 `related`、`source_material`、`supporting_material`、`deliverable`、`reference`、`input`、`output` 关系类型和备注。
+- 关联 chips 在展示查询层归一化：同一文件 / 文档包对同一资产如果已有具体关系，则隐藏同一资产的 legacy `related` fallback；只有 `related` 是唯一关系时才显示“相关”。
+- #99 追加 UI polish：上传页、文件详情页、文档包详情页和文件中心批量添加关联都使用 checkbox / chips 分组选择器，不再使用原生多选框；文件中心“权限”列显示为轻量私密状态标签。
 - `documents.relative_path` / `documents.folder_path` 保存文件夹上传的相对路径信息。
 - `documents.storage_path` 使用 ASCII-safe object key；中文文件名和文件夹名只保存在显示名、`original_name`、`relative_path` 等展示字段中。
 - 单文件最大 50 MB；批量 / 文件夹上传单次最多 100 个文件，总量 200 MB。
@@ -248,7 +251,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 公开页面不展示 signed URL。
 - 公开页面不展示 Storage 路径。
 
-文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示；Phase 2P-E-1-C 只增加主动整体迁移 / 同步关联工具；Phase 2P-E-2 只增加管理员批量删除文件和删除整个文档包及文件能力；Phase 2P-E-3 只增加管理员后台 zip 临时下载能力。zip 按请求生成，不保存到 Storage。不新增 migration，不改 Storage policy，不新增 RPC。
+文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示；Phase 2P-E-1-C 只增加主动整体迁移 / 同步关联工具；Phase 2P-E-2 只增加管理员批量删除文件和删除整个文档包及文件能力；Phase 2P-E-3 只增加管理员后台 zip 临时下载能力。Phase 2P-G-1 新增 0020 migration 和专用多关联表，同时保留 legacy primary relation 兼容；关联 chips 的 `related` 降噪、多关联选择器和权限列 polish 只在展示层完成，不删除 legacy 数据，不新增 migration，不改 Storage policy，不新增 RPC。zip 按请求生成，不保存到 Storage。
 
 ### Access Requests
 
@@ -346,12 +349,18 @@ Phase 2Q-B-1 新增研究资产显式关系底座后需要继续执行：
 
 `0019` 创建 `research_asset_links`，只覆盖 Project / Knowledge / Skill / Publication 的管理员后台显式关系。该 migration 不纳入 Documents，不修改 Storage policy，不新增 RPC，不开放 public / viewer / restricted 读取。
 
-Phase 2Q-B-2 / 2Q-B-3 只优化显式关系管理体验和后台只读网络视图，不新增 migration，不修改已执行的 `0019_research_asset_links.sql`。
+Phase 2Q-B-2 只优化显式关系管理体验，不新增 migration，不修改已执行的 `0019_research_asset_links.sql`。Phase 2Q-B-3 的后台只读网络视图是已被 2Q-B-4 移除的历史能力，当前不再提供全局关系页面。
+
+Phase 2P-G-1 新增 Documents 专用多资产关联后需要继续执行：
+
+- `0020_document_asset_links.sql`
+
+`0020` 创建 `document_asset_links` 与 `document_collection_asset_links`，从 legacy `documents.related_type / related_id` 和 `document_collections.related_type / related_id` 回填 `related` 关系，并通过 `public.is_admin()` 限定管理员读写。当前展示查询会在同一资产已有更具体关系时隐藏 legacy `related` fallback，但不删除回填 rows。该 migration 不修改 Storage policy，不新增 RPC，不纳入 `research_asset_links`，不开放 public / viewer / restricted 读取。
 
 规则：
 
 - 已执行过的 migration 不应修改。
-- 执行 0019 后，后续数据库变更应新增 `0020_*` 或更高编号。
+- 执行 0020 后，后续数据库变更应新增 `0021_*` 或更高编号。
 - 不得重跑旧 migration。
 - 不得放宽 Storage / RLS。
 - 不得提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL 或 `service_role`。
@@ -372,7 +381,7 @@ Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有
 
 - 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系；Project 后台详情页可作为单个研究项目的中枢入口，Knowledge 后台详情页可作为单个知识节点入口，Skill 后台详情页可作为能力包 / 工作流包入口，Publication 后台详情页可作为成果中枢入口，先整理研究框架、成果摘要、正文摘要、使用说明、平台版本、私密附件、显式资产关系和相关搜索入口。
 - 公开展示：保持公开首页、About、Projects、Publications、Knowledge 和 Skills 的只读展示稳定。
-- 文件 / 知识管理：Documents 作为可维护的统一私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；Knowledge Base 继续维护内容本身，不开放公开附件下载。需要调整单个文件时使用文件详情页，需要调整多个文件时使用 Documents 批量移动，需要调整整个资料包关联时使用文档包整体迁移 / 同步关联工具，需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。
+- 文件 / 知识管理：Documents 作为可维护的统一私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；Knowledge Base 继续维护内容本身，不开放公开附件下载。需要调整单个文件时使用文件详情页添加 / 移除多资产关联；需要整理多个文件时使用 Documents 紧凑批量工具栏添加、移除或清空关联；需要调整整个资料包时使用文档包详情页的关联管理和可选同步到包内文件；legacy primary relation 仅作为兼容字段处理。需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 受限访问：Viewer magic link 和 restricted 访问可作为独立 bugfix 专项处理，但不得开放 Documents 或 signed URL。
 
