@@ -338,3 +338,39 @@ npm run build
 - zip 下载验收不需要新增 migration；确认 0018 已执行，并验证选中文件 zip、文档包 zip、超限拒绝和空文档包错误。
 - 全局搜索验收不需要新增 migration；确认 `/dashboard/search` 只查 metadata，短关键词不查询，`type` 筛选保留当前 `q`，每类数量统计和关键词高亮可见，结果能跳转后台详情页。
 - 不新增公开下载、OCR、文件内容索引、AI 文件总结、Skill 包解析或执行能力。
+
+## Project Research Hub Workflow
+
+日期：2026-06-13
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2Q-A-1 的 Project 后台详情页研究中枢，围绕单个研究项目整理研究框架、私密附件、相关知识笔记、学术成果和搜索入口。
+
+步骤：
+
+1. 进入 `/dashboard/projects/[id]` 查看单个研究项目。
+2. 先核对项目标题、状态、可见性、标签、更新时间和进度。
+3. 在“项目概览”“研究问题”“研究背景”“研究方法”中确认研究框架是否完整。
+4. 需要修改项目本身时使用页面保留的“编辑项目”入口。
+5. 需要删除项目时继续使用页面保留的删除按钮，并遵守既有删除保护。
+6. 需要管理项目附件时优先使用页面内 RelatedDocumentsPanel，理解文档包、独立文件和跨文档包文件分组。
+7. 需要上传项目文件时使用“上传项目文件”，由统一 `/dashboard/documents/upload` 通过 query params 预填 `related_type=project` 和当前 `related_id`。
+8. 需要上传项目文件夹或资料包时使用“上传项目文件夹”，继续复用 Documents 文件夹上传和文档包流程。
+9. 需要查看项目全部附件时使用“查看项目 Documents”，进入带当前 Project 关联筛选的 Documents 列表。
+10. 相关知识笔记只读取 `knowledge_notes.project_id` 显式关系；没有关联时不推断内容关系。
+11. 相关学术成果只读取 `publications.project_id` 显式关系；没有关联时不推断内容关系。
+12. Skill 当前没有显式 Project 关系；需要查找相关 Skill 时使用项目标题或标签进入 `/dashboard/search`。
+13. 本阶段不新增资产关系表、数据库字段、migration、RPC、索引或外部搜索服务。
+14. Project 研究中枢不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 确认 `/dashboard/projects/[id]` 保留返回、编辑和删除入口。
+- 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
+- 确认相关资产只展示通过 `project_id` 显式关联的知识笔记和学术成果，Skill 只提供搜索快捷入口。
+- 确认公开 Project 页面不展示后台研究中枢、附件下载、Storage 路径或 signed URL。

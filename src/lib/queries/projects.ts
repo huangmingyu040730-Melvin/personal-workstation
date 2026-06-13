@@ -1,4 +1,4 @@
-import type { ProjectRecord, ProjectStatus } from "@/lib/content-types";
+import type { KnowledgeNoteRecord, ProjectRecord, ProjectStatus, PublicationRecord } from "@/lib/content-types";
 import { projects as mockProjects } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 import type { Visibility } from "@/lib/types";
@@ -23,6 +23,14 @@ function mockProjectFallback(): ProjectRecord[] {
     updated_at: project.updatedAt
   }));
 }
+
+export type ProjectRelatedKnowledgeNote = Pick<KnowledgeNoteRecord, "id" | "title" | "category" | "excerpt" | "visibility" | "updated_at">;
+export type ProjectRelatedPublication = Pick<PublicationRecord, "id" | "title" | "publication_type" | "summary" | "published_on" | "visibility" | "updated_at">;
+
+export type ProjectRelatedAssets = {
+  knowledgeNotes: ProjectRelatedKnowledgeNote[];
+  publications: ProjectRelatedPublication[];
+};
 
 export async function getProjects(filters?: { status?: string; visibility?: string }) {
   const supabase = await createClient();
@@ -174,6 +182,42 @@ export async function getPublicProjectById(id: string | null | undefined) {
 export async function getProjectOptions() {
   const projects = await getProjects();
   return projects.map((project) => ({ id: project.id, title: project.title }));
+}
+
+export async function getProjectRelatedAssets(projectId: string, limit = 5): Promise<ProjectRelatedAssets> {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return { knowledgeNotes: [], publications: [] };
+  }
+
+  const [knowledgeResult, publicationsResult] = await Promise.all([
+    supabase
+      .from("knowledge_notes")
+      .select("id,title,category,excerpt,visibility,updated_at")
+      .eq("project_id", projectId)
+      .order("updated_at", { ascending: false })
+      .limit(limit),
+    supabase
+      .from("publications")
+      .select("id,title,publication_type,summary,published_on,visibility,updated_at")
+      .eq("project_id", projectId)
+      .order("published_on", { ascending: false, nullsFirst: false })
+      .order("updated_at", { ascending: false })
+      .limit(limit)
+  ]);
+
+  if (knowledgeResult.error || publicationsResult.error) {
+    console.error("getProjectRelatedAssets failed", {
+      knowledge: knowledgeResult.error ? { code: knowledgeResult.error.code, message: knowledgeResult.error.message } : null,
+      publications: publicationsResult.error ? { code: publicationsResult.error.code, message: publicationsResult.error.message } : null
+    });
+  }
+
+  return {
+    knowledgeNotes: (knowledgeResult.data ?? []) as ProjectRelatedKnowledgeNote[],
+    publications: (publicationsResult.data ?? []) as ProjectRelatedPublication[]
+  };
 }
 
 function normalizeSearchTerm(value: string) {
