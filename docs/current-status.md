@@ -24,8 +24,9 @@
 已完成：
 
 - 公开首页 `/`。
-- Phase 2R-A-1 后，首页首屏明确表达“公开研究工作站”定位，并聚合研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请 CTA。
-- 公开导航包含首页、研究项目、学术成果、知识库、Skill 库和访问申请，不显示后台管理、文件中心或全局关系图谱入口。
+- Phase 2R-A-1 后，首页首屏明确表达“黄铭语研究工作站”定位，并聚合研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请 CTA。
+- #100 追加 UI polish 后，hero 主标题使用“黄铭语研究工作站”和系统 serif/display 字体栈，区块之间使用清晰 section wrapper、边框和交替背景分隔。
+- 公开导航包含首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”；不显示后台菜单、文件中心或全局关系图谱入口。
 - About 页面 `/about`。
 - 公开 Projects 列表与详情 `/projects`、`/projects/[slug]`。
 - 公开 Publications 列表与详情 `/publications`、`/publications/[slug]`。
@@ -36,7 +37,7 @@
 - `sitemap.xml`。
 - `robots.txt`。
 - SEO metadata。
-- 首页 metadata 调整为“公开研究工作站 | 黄铭语”，描述聚焦研究项目、学术成果、知识笔记和 AI 工作流。
+- 首页 metadata 调整为“黄铭语研究工作站 | Public Research Workstation”，描述聚焦研究项目、学术成果、知识笔记和 AI 工作流。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化。
 - 大屏左右留白已改善。
 - 卡片和按钮动效已增强。
@@ -385,7 +386,7 @@ Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行�
 Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有工作台”：
 
 - 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系；Project 后台详情页可作为单个研究项目的中枢入口，Knowledge 后台详情页可作为单个知识节点入口，Skill 后台详情页可作为能力包 / 工作流包入口，Publication 后台详情页可作为成果中枢入口，先整理研究框架、成果摘要、正文摘要、使用说明、平台版本、私密附件、显式资产关系和相关搜索入口。
-- 公开展示：Phase 2R-A-1 起把公开首页作为“公开研究工作站”入口维护，清晰展示研究方向、公开 Projects、Publications、Knowledge、Skills 和访问申请；公开导航不显示后台管理、文件中心或全局关系图谱入口，公开页面继续只读展示 public 内容。
+- 公开展示：Phase 2R-A-1 起把公开首页作为“黄铭语研究工作站”入口维护，清晰展示研究方向、公开 Projects、Publications、Knowledge、Skills 和访问申请；公开导航保留轻量“管理员登录”入口但不显示后台菜单、文件中心或全局关系图谱入口，公开页面继续只读展示 public 内容。
 - 文件 / 知识管理：Documents 作为可维护的统一私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；Knowledge Base 继续维护内容本身，不开放公开附件下载。需要调整单个文件时使用文件详情页添加 / 移除多资产关联；需要整理多个文件时使用 Documents 紧凑批量工具栏添加、移除或清空关联；需要调整整个资料包时使用文档包详情页的关联管理和可选同步到包内文件；legacy primary relation 仅作为兼容字段处理。需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 受限访问：Viewer magic link 和 restricted 访问可作为独立 bugfix 专项处理，但不得开放 Documents 或 signed URL。

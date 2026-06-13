@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogIn } from "lucide-react";
 import { profile } from "@/lib/mock-data";
 
 const navItems = [
@@ -30,13 +31,17 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
                 {item.label}
               </Link>
             ))}
+            <Link href="/login?next=/dashboard" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+              <LogIn size={15} />
+              管理员登录
+            </Link>
           </nav>
         </div>
       </header>
       {children}
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-[1680px] flex-col gap-4 px-5 py-9 text-sm text-slate-500 md:flex-row md:items-center md:justify-between lg:px-12 2xl:px-16">
-          <p>黄铭语公开研究工作站 · 仅展示明确设为 public 的研究内容</p>
+          <p>黄铭语研究工作站 · 仅展示明确设为 public 的研究内容</p>
           <div className="flex flex-wrap gap-3">
             <Link href="/projects" className="font-medium text-slate-600 hover:text-blue-700">研究项目</Link>
             <Link href="/publications" className="font-medium text-slate-600 hover:text-blue-700">学术成果</Link>
@@ -44,6 +49,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             <Link href="/skills" className="font-medium text-slate-600 hover:text-blue-700">Skill 库</Link>
             <Link href="/about" className="font-medium text-slate-600 hover:text-blue-700">关于我</Link>
             <Link href="/access-request" className="font-medium text-slate-600 hover:text-blue-700">访问申请</Link>
+            <Link href="/login?next=/dashboard" className="font-medium text-slate-600 hover:text-blue-700">管理员登录</Link>
           </div>
         </div>
       </footer>

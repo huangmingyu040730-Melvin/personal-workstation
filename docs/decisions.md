@@ -1648,22 +1648,26 @@
 决策：
 
 - 后台核心能力阶段性完成后，Phase 2R-A 转向公开展示质量，而不是继续扩展后台大模块。
-- Phase 2R-A-1 polish 公开首页和公开导航，让生产站首屏清楚表达“公开研究工作站”定位。
+- Phase 2R-A-1 polish 公开首页和公开导航，让生产站首屏清楚表达“黄铭语研究工作站”定位。
 - 首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口。
-- 公开导航面向普通访客，只保留首页、研究项目、学术成果、知识库、Skill 库和访问申请等公开入口。
+- #100 追加 UI polish 后，hero 主标题不再只用“公开研究工作站”，而是使用“黄铭语研究工作站”和系统 serif/display 字体栈。
+- 首页 section 使用更清楚的 wrapper、边框、间距和交替背景；公开项目与学术成果内部两列分隔，Knowledge 与 Skill 独立成段。
+- 公开导航面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”入口。
 - 公开页面只展示 public 内容；restricted 内容通过访问申请和授权流程处理；private 内容不进入公开页面。
 - Documents、多资产文件关联、`research_asset_links`、AssetLinksPanel、后台搜索和文件中心仍只在管理员后台使用。
 
 原因：
 
 - Documents 全生命周期、后台搜索、研究资产详情页和显式关系系统已经能支撑管理员整理资产，下一步需要让外部访客更快理解这个站点是什么。
-- 原公开首页更像个人简介和统计入口，对“公开研究工作站”的定位、研究方向和访问申请路径表达不够集中。
+- 原公开首页更像个人简介和统计入口，对个人化研究站定位、研究方向和访问申请路径表达不够集中。
+- 站点 owner 需要从公开站点方便进入后台登录，但该入口不应暴露后台菜单或跳过登录。
 - 公开展示需要强化权限边界：公开站点不能误导访客以为可以浏览私密附件、后台关系或文件关联。
 
 影响：
 
-- 首页 metadata 调整为“公开研究工作站 | 黄铭语”，描述聚焦研究项目、学术成果、知识笔记和 AI 工作流。
+- 首页 metadata 调整为“黄铭语研究工作站 | Public Research Workstation”，描述聚焦研究项目、学术成果、知识笔记和 AI 工作流。
 - 首页新增本地 hero 视觉资产和公开研究工作站信息架构；不引入新的 UI 库或复杂动画。
+- 公开导航新增“管理员登录”只链接到 `/login?next=/dashboard`，不展示后台内容、文件中心、关系图谱或 Career / Resume 菜单。
 - 公开 Publication 查询对历史 `file_path` / `cover_url` 做公开边界处理，避免公开组件误用附件字段。
 - 本阶段不新增 migration，不新增 RPC，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、Resume / Career、Market Brief 或后台显式关系管理。
 - 不公开附件下载，不展示 Storage 路径，不生成 signed URL，不输出 API key、Supabase key、Authorization header、cookie、token、service role key 或 secret。

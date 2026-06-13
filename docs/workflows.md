@@ -220,20 +220,21 @@ npm run build
 1. 管理员在后台维护正式内容：Project 使用 `/dashboard/projects`，Publication 使用 `/dashboard/publications`，Knowledge 使用 `/dashboard/knowledge`，Skill 使用 `/dashboard/skills`。
 2. 内容仍先在后台补齐标题、摘要、标签、状态、项目关联、正文或说明等公开字段；私密材料继续放在 Documents / 文档包中。
 3. 确认内容适合对外展示后，把对应记录的 `visibility` 设置为 `public`。
-4. 公开首页 `/` 会展示公开研究工作站定位、研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口。
-5. 公开导航只面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库和访问申请，不放后台管理、文件中心或全局关系图谱入口。
-6. 公开列表和详情页只展示 public 内容；restricted 内容通过访问申请和授权流程处理，private 内容不进入公开展示。
-7. 需要查看或下载附件时，管理员回到后台 Documents、内容详情页的 RelatedDocumentsPanel 或文档包详情页处理；公开页面不提供附件下载。
-8. Documents 多资产关联、显式资产关系和后台搜索只用于管理员整理，不在公开页面展示。
-9. 如需要外部访客申请未公开内容，引导其访问 `/access-request`；申请通过不自动开放 Documents、Storage、附件下载或后台入口。
-10. Publication 公开页面不得展示历史 `file_path`、Storage 路径、signed URL 或附件下载入口。
+4. 公开首页 `/` 会展示“黄铭语研究工作站”定位、研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口。
+5. 公开导航只面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”，不放后台菜单、文件中心或全局关系图谱入口。
+6. “管理员登录”只链接到登录流程；未登录访客不能直接进入后台，已登录管理员沿用现有 `/login?next=/dashboard` / dashboard 逻辑。
+7. 公开列表和详情页只展示 public 内容；restricted 内容通过访问申请和授权流程处理，private 内容不进入公开展示。
+8. 需要查看或下载附件时，管理员回到后台 Documents、内容详情页的 RelatedDocumentsPanel 或文档包详情页处理；公开页面不提供附件下载。
+9. Documents 多资产关联、显式资产关系和后台搜索只用于管理员整理，不在公开页面展示。
+10. 如需要外部访客申请未公开内容，引导其访问 `/access-request`；申请通过不自动开放 Documents、Storage、附件下载或后台入口。
+11. Publication 公开页面不得展示历史 `file_path`、Storage 路径、signed URL 或附件下载入口。
 
 验证要求：
 
 - 运行 `npm run lint`。
 - 运行 `npm run build`。
-- 确认首页首屏表达“公开研究工作站”，CTA 能进入研究项目、学术成果和访问申请。
-- 确认公开导航不显示后台管理、文件中心、关系图谱或 Documents 入口。
+- 确认首页首屏表达“黄铭语研究工作站”，CTA 能进入研究项目、学术成果和访问申请。
+- 确认公开导航显示“管理员登录”，但不显示后台菜单、文件中心、关系图谱或 Documents 入口。
 - 确认 private / restricted / unlisted 内容不会出现在公开列表、公开首页或 sitemap。
 - 确认公开 Project / Publication / Knowledge / Skill 页面不展示附件下载、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理功能。
 - 本流程不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或后台显式关系管理。

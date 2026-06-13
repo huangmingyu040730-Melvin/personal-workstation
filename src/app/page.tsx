@@ -3,8 +3,9 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { ArrowRight, BarChart3, BookOpen, BrainCircuit, FileText, FolderKanban, KeyRound, ShieldCheck, Sparkles } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
+import { HomeSection } from "@/components/home/home-section";
 import { PublicKnowledgeCard, PublicProjectCard, PublicPublicationCard, PublicSkillCard } from "@/components/public/public-content-cards";
-import { PublicSectionHeader, PublicShell } from "@/components/public/public-shell";
+import { PublicShell } from "@/components/public/public-shell";
 import { countPublicKnowledgeNotes, getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 import { countPublicProjects, getPublicProjects } from "@/lib/queries/projects";
 import { countPublicPublications, getPublicPublications } from "@/lib/queries/publications";
@@ -12,7 +13,7 @@ import { countPublicSkills, getPublicSkills } from "@/lib/queries/skills";
 import { publicPageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = publicPageMetadata({
-  title: "公开研究工作站 | 黄铭语",
+  title: "黄铭语研究工作站 | Public Research Workstation",
   description: "沉淀研究项目、学术成果、知识笔记和 AI 工作流的个人研究空间。",
   path: "/"
 });
@@ -83,8 +84,8 @@ export default async function HomePage() {
     getPublicSkills(),
     getPublicKnowledgeNotes({ limit: 4 })
   ]);
-  const projectPreviews = publicProjects.slice(0, 3);
-  const publicationPreviews = publicPublications.slice(0, 3);
+  const projectPreviews = publicProjects.slice(0, 2);
+  const publicationPreviews = publicPublications.slice(0, 2);
   const knowledgePreviews = publicKnowledge.slice(0, 2);
   const skillPreviews = publicSkills.slice(0, 2);
 
@@ -102,12 +103,12 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-white/85" />
         <div className="public-reveal-slow relative z-10 mx-auto max-w-[1680px] px-5 py-14 lg:px-12 lg:py-20 2xl:px-16">
           <div className="max-w-4xl">
-            <p className="text-sm font-semibold uppercase text-sage-700">Mingyu Personal Workstation</p>
-            <h1 className="public-display mt-3 text-4xl font-semibold leading-tight tracking-normal text-navy-950 md:text-6xl">
-              公开研究工作站
+            <p className="text-sm font-semibold uppercase text-sage-700">MINGYU RESEARCH WORKSTATION</p>
+            <h1 className="public-serif-display mt-4 max-w-4xl text-5xl font-medium leading-tight text-navy-950 md:text-7xl">
+              黄铭语研究工作站
             </h1>
             <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 md:text-lg md:leading-9">
-              沉淀研究项目、知识笔记、学术成果和 AI 工作流的个人研究空间。这里展示明确设为 public 的内容，私密文件、后台关系和内部管理数据保持隔离。
+              沉淀研究项目、学术成果、知识笔记与 AI 工作流的个人研究空间。这里展示明确设为 public 的内容，私密文件、后台关系和内部管理数据保持隔离。
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Link href="/projects" className="public-cta-motion group inline-flex items-center justify-center gap-2 rounded-2xl bg-navy-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-navy-800">
@@ -140,15 +141,15 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1680px] px-5 py-12 lg:px-12 2xl:px-16">
-        <PublicSectionHeader
-          eyebrow="Research Focus"
-          title="研究方向"
-          description="公开站点把长期关注的问题拆成可浏览的项目、成果、知识笔记和工作流。"
-        />
+      <HomeSection
+        surface="white"
+        eyebrow="Research Focus"
+        title="研究方向"
+        description="公开站点把长期关注的问题拆成可浏览的项目、成果、知识笔记和工作流。"
+      >
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {researchFocusAreas.map((area) => (
-            <Card key={area.title} className="public-card-motion border-slate-200 bg-white shadow-soft">
+            <Card key={area.title} className="public-card-motion border-slate-200 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
               <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${area.tone}`}>
                 <area.icon size={22} />
               </div>
@@ -162,17 +163,17 @@ export default async function HomePage() {
             </Card>
           ))}
         </div>
-      </section>
+      </HomeSection>
 
-      <section className="mx-auto max-w-[1680px] px-5 pb-12 lg:px-12 2xl:px-16">
-        <PublicSectionHeader
-          eyebrow="Browse"
-          title="公开入口"
-          description="首页只给外部访客提供公开研究内容入口，不展示后台管理、关系管理、附件下载或私密材料。"
-        />
+      <HomeSection
+        surface="muted"
+        eyebrow="Browse"
+        title="公开入口"
+        description="首页只给外部访客提供公开研究内容入口，不展示后台菜单、关系管理、附件下载或私密材料。"
+      >
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {workstationEntrypoints.map((item) => (
-            <Link key={item.href} href={item.href} className="public-card-motion group rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+            <Link key={item.href} href={item.href} className="public-card-motion group rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
               <item.icon className="text-blue-700 transition duration-300 group-hover:scale-110" size={22} />
               <p className="mt-4 font-semibold text-navy-950">{item.title}</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
@@ -182,39 +183,47 @@ export default async function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
+      </HomeSection>
 
-      <section className="mx-auto max-w-[1680px] px-5 pb-12 lg:px-12 2xl:px-16">
-        <PublicSectionHeader
-          eyebrow="Selected Work"
-          title="公开项目与学术成果"
-          description="优先展示精选或最近更新的 public 记录；不展示附件下载或内部文件路径。"
-        />
-        <div className="grid gap-8 xl:grid-cols-2">
-          <div>
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold text-navy-950">研究项目</h2>
+      <HomeSection
+        surface="white"
+        eyebrow="Selected Work"
+        title="公开项目与学术成果"
+        description="优先展示精选或最近更新的 public 记录；不展示附件下载或内部文件路径。"
+      >
+        <div className="grid gap-10 xl:grid-cols-2 xl:divide-x xl:divide-slate-200">
+          <div className="xl:pr-10">
+            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-blue-700">Projects</p>
+                <h2 className="mt-1 text-xl font-semibold text-navy-950">研究项目</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">从研究问题、方法框架和阶段进度进入公开研究脉络。</p>
+              </div>
               <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
                 全部项目 <ArrowRight size={15} />
               </Link>
             </div>
             {projectPreviews.length > 0 ? (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-3">
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                 {projectPreviews.map((project) => <PublicProjectCard key={project.id} project={project} />)}
               </div>
             ) : (
               <Card><CardHeader title="公开项目" /><EmptyPublicState label="公开项目" /></Card>
             )}
           </div>
-          <div>
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold text-navy-950">学术成果</h2>
+          <div className="xl:pl-10">
+            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-blue-700">Publications</p>
+                <h2 className="mt-1 text-xl font-semibold text-navy-950">学术成果</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">浏览公开报告、论文草稿、策略分析和阅读综述。</p>
+              </div>
               <Link href="/publications" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
                 全部成果 <ArrowRight size={15} />
               </Link>
             </div>
             {publicationPreviews.length > 0 ? (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-3">
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                 {publicationPreviews.map((publication) => <PublicPublicationCard key={publication.id} publication={publication} />)}
               </div>
             ) : (
@@ -222,36 +231,36 @@ export default async function HomePage() {
             )}
           </div>
         </div>
-      </section>
+      </HomeSection>
 
-      <section className="mx-auto grid max-w-[1680px] gap-8 px-5 pb-14 lg:grid-cols-2 lg:px-12 2xl:px-16">
-        <div>
-          <PublicSectionHeader
-            eyebrow="Knowledge"
-            title="知识笔记预览"
-            description="公开知识库沉淀研究框架、工具方法、阅读笔记和实践反思。"
-            action={<Link href="/knowledge" className="text-sm font-semibold text-blue-700">进入知识库</Link>}
-          />
-          <div className="grid gap-5 md:grid-cols-2">
-            {knowledgePreviews.length > 0 ? knowledgePreviews.map((note) => (
-              <PublicKnowledgeCard key={note.id} note={note} />
-            )) : <EmptyPublicState label="公开知识笔记" />}
-          </div>
+      <HomeSection
+        surface="muted"
+        eyebrow="Knowledge"
+        title="知识笔记预览"
+        description="公开知识库沉淀研究框架、工具方法、阅读笔记和实践反思。"
+        action={<Link href="/knowledge" className="text-sm font-semibold text-blue-700">进入知识库</Link>}
+      >
+        <div className="grid gap-5 md:grid-cols-2">
+          {knowledgePreviews.length > 0 ? knowledgePreviews.map((note) => (
+            <PublicKnowledgeCard key={note.id} note={note} />
+          )) : <EmptyPublicState label="公开知识笔记" />}
         </div>
-        <div>
-          <PublicSectionHeader
-            eyebrow="Skills"
-            title="Skill / 工作流预览"
-            description="公开 Skill 只展示用途、平台和工作流说明，不开放后台资料包或私密文件。"
-            action={<Link href="/skills" className="text-sm font-semibold text-blue-700">进入 Skill 库</Link>}
-          />
-          <div className="grid gap-5 md:grid-cols-2">
-            {skillPreviews.length > 0 ? skillPreviews.map((skill) => (
-              <PublicSkillCard key={skill.id} skill={skill} />
-            )) : <EmptyPublicState label="公开 Skill" />}
-          </div>
+      </HomeSection>
+
+      <HomeSection
+        surface="white"
+        eyebrow="Skills"
+        title="Skill / 工作流预览"
+        description="公开 Skill 只展示用途、平台和工作流说明，不开放后台资料包或私密文件。"
+        action={<Link href="/skills" className="text-sm font-semibold text-blue-700">进入 Skill 库</Link>}
+        innerClassName="pb-16"
+      >
+        <div className="grid gap-5 md:grid-cols-2">
+          {skillPreviews.length > 0 ? skillPreviews.map((skill) => (
+            <PublicSkillCard key={skill.id} skill={skill} />
+          )) : <EmptyPublicState label="公开 Skill" />}
         </div>
-      </section>
+      </HomeSection>
 
       <section className="border-t border-slate-200 bg-navy-950 text-white">
         <div className="mx-auto grid max-w-[1680px] gap-8 px-5 py-12 lg:grid-cols-[minmax(0,0.8fr)_auto] lg:items-center lg:px-12 2xl:px-16">
@@ -262,7 +271,7 @@ export default async function HomePage() {
             </p>
             <h2 className="public-display mt-3 text-2xl font-semibold tracking-normal md:text-3xl">需要更多材料时，通过访问申请处理</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">
-              部分内容可能保持 restricted 或 private。公开站点不提供附件下载，不生成 signed URL，也不展示文件路径或内部管理信息。
+              部分内容可能保持 restricted 或 private。公开站点不提供附件下载，不生成临时下载链接，也不展示文件路径或内部管理信息。
             </p>
           </div>
           <Link href="/access-request" className="public-cta-motion inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-navy-950 transition hover:bg-blue-50">
