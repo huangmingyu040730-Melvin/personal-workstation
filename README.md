@@ -45,7 +45,7 @@
 - Knowledge 后台详情页知识节点，整合知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口
 - Skill 后台详情页能力包 / 工作流包，整合用途、平台、版本、私密资料、版本记录和相关资产搜索入口
 - Publication 后台详情页成果中枢，整合成果摘要、abstract、关联 Project、私密材料、同项目知识节点和搜索入口
-- Phase 2R-A 起公开首页与公开导航转向“黄铭语研究工作站”展示 polish，首页聚合研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口，并在公开导航保留轻量“管理员登录”入口
+- Phase 2R-A 起公开首页与公开导航转向“黄铭语研究工作站”展示 polish；首页 H1 使用“个人研究工作站”，首屏恢复左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构，Knowledge / Skill 首页预览使用更紧凑卡片展示更多 public 条目，并在公开导航保留轻量“管理员登录”入口
 
 ## 本地启动
 
@@ -211,7 +211,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2Q-B-1 起 Project / Knowledge / Skill / Publication 后台详情页支持显式资产关系，管理员可手动维护“相关 / 支持 / 引用 / 使用 / 产出 / 来源于”关系并查看 backlinks。
 - Phase 2Q-B-2 起显式资产关系区域支持本地筛选目标资产、关系统计、方向 / 类型筛选，以及只修改关系类型和备注的编辑流程。
 - Phase 2Q-B-4 起取消此前的全局关系可视化页面；显式资产关系继续在 Project / Knowledge / Skill / Publication 后台详情页中维护。
-- Phase 2R-A-1 起公开首页和公开导航强调“黄铭语研究工作站”定位，首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口；#100 追加 UI polish 将 hero 主标题改为“黄铭语研究工作站”，使用系统 serif/display 字体栈，并在公开导航加入轻量“管理员登录”入口。公开页面仍只展示 public 内容，不公开 Documents、附件下载、Storage 路径、signed URL 或后台关系管理。
+- Phase 2R-A-1 起公开首页和公开导航强调“黄铭语研究工作站”站点身份，首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口；#100 追加 UI polish 将 hero H1 改为“个人研究工作站”，恢复左侧定位 / 标签 / CTA 与右侧统计卡片首屏结构，Knowledge / Skill 首页预览改为紧凑卡片并展示最多 4 条，补充克制的 hover / focus micro-interactions，并在公开导航加入轻量“管理员登录”入口。公开页面仍只展示 public 内容，不公开 Documents、附件下载、Storage 路径、signed URL 或后台关系管理。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。

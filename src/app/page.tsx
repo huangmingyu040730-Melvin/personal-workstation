@@ -1,11 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { ArrowRight, BarChart3, BookOpen, BrainCircuit, FileText, FolderKanban, KeyRound, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, Bot, BrainCircuit, FileText, FolderKanban, KeyRound, ShieldCheck, Sparkles } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
 import { HomeSection } from "@/components/home/home-section";
-import { PublicKnowledgeCard, PublicProjectCard, PublicPublicationCard, PublicSkillCard } from "@/components/public/public-content-cards";
+import { PublicProjectCard, PublicPublicationCard } from "@/components/public/public-content-cards";
 import { PublicShell } from "@/components/public/public-shell";
+import type { KnowledgeNoteRecord, SkillRecord } from "@/lib/content-types";
+import { formatRelative } from "@/lib/format";
 import { countPublicKnowledgeNotes, getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 import { countPublicProjects, getPublicProjects } from "@/lib/queries/projects";
 import { countPublicPublications, getPublicPublications } from "@/lib/queries/publications";
@@ -23,6 +25,82 @@ function EmptyPublicState({ label }: { label: string }) {
     <p className="rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-slate-500">
       暂无{label}，后续会逐步开放已整理完成的公开内容。
     </p>
+  );
+}
+
+function HeroStatCard({
+  href,
+  icon: Icon,
+  label,
+  value,
+  tone
+}: {
+  href: string;
+  icon: typeof FolderKanban;
+  label: string;
+  value: number;
+  tone: string;
+}) {
+  return (
+    <Link href={href} className="public-stat-card group/stat block rounded-3xl border border-white/80 bg-white/90 p-5 shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+      <div className="flex items-start justify-between gap-4">
+        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tone} transition duration-300 group-hover/stat:rotate-3 group-hover/stat:scale-110`}>
+          <Icon size={21} />
+        </div>
+        <ArrowRight className="mt-1 text-slate-300 transition duration-300 group-hover/stat:translate-x-1 group-hover/stat:text-blue-700" size={18} />
+      </div>
+      <p className="mt-5 text-3xl font-semibold tracking-normal text-navy-950">{value}</p>
+      <p className="mt-1 text-sm font-medium text-slate-600">{label}</p>
+      <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
+        查看全部 <ArrowRight className="transition duration-300 group-hover/stat:translate-x-1" size={14} />
+      </span>
+    </Link>
+  );
+}
+
+function CompactKnowledgePreviewCard({ note }: { note: KnowledgeNoteRecord }) {
+  return (
+    <Link href={`/knowledge/${note.slug}`} className="public-compact-card group block h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 transition duration-300 group-hover:rotate-3 group-hover:scale-105">
+          <BookOpen size={17} />
+        </span>
+        <div className="min-w-0">
+          <h2 className="line-clamp-2 text-base font-semibold leading-6 text-navy-950">{note.title}</h2>
+          <p className="mt-1 truncate text-xs font-medium text-slate-500">{note.category} · 更新于 {formatRelative(note.updated_at)}</p>
+        </div>
+      </div>
+      {note.excerpt ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+        <span className="truncate text-xs text-slate-500">{note.tags.slice(0, 2).join(" / ") || "公开知识笔记"}</span>
+        <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-blue-700">
+          阅读 <ArrowRight className="transition duration-300 group-hover:translate-x-1" size={14} />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function CompactSkillPreviewCard({ skill }: { skill: SkillRecord }) {
+  return (
+    <Link href={`/skills/${skill.slug}`} className="public-compact-card group block h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-950 text-white transition duration-300 group-hover:-rotate-3 group-hover:scale-105">
+          <Bot size={17} />
+        </span>
+        <div className="min-w-0">
+          <h2 className="line-clamp-2 text-base font-semibold leading-6 text-navy-950">{skill.name}</h2>
+          <p className="mt-1 truncate text-xs font-medium text-slate-500">{skill.category} · {skill.current_version ?? "未设版本"}</p>
+        </div>
+      </div>
+      <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{skill.description}</p>
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+        <span className="truncate text-xs text-slate-500">{skill.platforms.slice(0, 2).join(" / ") || "公开 Skill"}</span>
+        <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-blue-700">
+          详情 <ArrowRight className="transition duration-300 group-hover:translate-x-1" size={14} />
+        </span>
+      </div>
+    </Link>
   );
 }
 
@@ -64,6 +142,8 @@ const workstationEntrypoints = [
   { title: "Skill 库", description: "查看公开 AI Skill 与研究工作流说明。", href: "/skills", icon: Sparkles }
 ];
 
+const heroTags = ["私募基金研究", "量化策略分析", "AI 辅助研究", "数据分析", "知识管理", "自动化工作流"];
+
 export default async function HomePage() {
   const [
     publicProjectCount,
@@ -86,8 +166,14 @@ export default async function HomePage() {
   ]);
   const projectPreviews = publicProjects.slice(0, 2);
   const publicationPreviews = publicPublications.slice(0, 2);
-  const knowledgePreviews = publicKnowledge.slice(0, 2);
-  const skillPreviews = publicSkills.slice(0, 2);
+  const knowledgePreviews = publicKnowledge.slice(0, 4);
+  const skillPreviews = publicSkills.slice(0, 4);
+  const heroStats = [
+    { label: "公开项目", value: publicProjectCount, href: "/projects", icon: FolderKanban, tone: "bg-blue-50 text-blue-700" },
+    { label: "公开成果", value: publicPublicationCount, href: "/publications", icon: FileText, tone: "bg-earth-50 text-earth-700" },
+    { label: "公开 Skill", value: publicSkillCount, href: "/skills", icon: Sparkles, tone: "bg-navy-950 text-white" },
+    { label: "知识笔记", value: publicKnowledgeCount, href: "/knowledge", icon: BookOpen, tone: "bg-sage-50 text-sage-700" }
+  ];
 
   return (
     <PublicShell>
@@ -100,43 +186,50 @@ export default async function HomePage() {
           sizes="100vw"
           className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-white/85" />
-        <div className="public-reveal-slow relative z-10 mx-auto max-w-[1680px] px-5 py-14 lg:px-12 lg:py-20 2xl:px-16">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-blue-50/88 to-white/90" />
+        <div className="absolute inset-0 public-soft-grid opacity-70" />
+        <div className="public-reveal-slow relative z-10 mx-auto grid max-w-[1680px] gap-10 px-5 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.78fr)] lg:items-center lg:px-12 lg:py-20 2xl:px-16">
           <div className="max-w-4xl">
             <p className="text-sm font-semibold uppercase text-sage-700">MINGYU RESEARCH WORKSTATION</p>
-            <h1 className="public-serif-display mt-4 max-w-4xl text-5xl font-medium leading-tight text-navy-950 md:text-7xl">
-              黄铭语研究工作站
+            <h1 className="public-display mt-4 max-w-4xl text-5xl font-semibold leading-tight text-navy-950 md:text-7xl">
+              个人研究工作站
             </h1>
-            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 md:text-lg md:leading-9">
-              沉淀研究项目、学术成果、知识笔记与 AI 工作流的个人研究空间。这里展示明确设为 public 的内容，私密文件、后台关系和内部管理数据保持隔离。
+            <p className="mt-4 text-lg font-semibold leading-8 text-blue-700 md:text-xl">
+              投资研究、量化分析与 AI 工作流探索者
             </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link href="/projects" className="public-cta-motion group inline-flex items-center justify-center gap-2 rounded-2xl bg-navy-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-navy-800">
-                浏览研究项目
-                <ArrowRight className="transition group-hover:translate-x-0.5" size={18} />
+            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700 md:text-lg md:leading-9">
+              这里沉淀我的公开研究项目、学术成果、知识笔记与 AI Skill。公开页面只展示明确设为 public 的内容，私密后台和文件资产保持隔离。
+            </p>
+            <div className="mt-6 flex max-w-3xl flex-wrap gap-2.5">
+              {heroTags.map((tag) => (
+                <span key={tag} className="public-chip-motion rounded-full border border-white/80 bg-white/80 px-3 py-1.5 text-sm font-medium text-slate-700 shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link href="/projects" className="public-cta-motion group inline-flex items-center justify-center gap-2 rounded-2xl bg-navy-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                查看研究项目
+                <ArrowRight className="transition duration-300 group-hover:translate-x-1" size={18} />
               </Link>
-              <Link href="/publications" className="public-cta-motion inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100">
+              <Link href="/publications" className="public-cta-motion group inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                 查看学术成果
-                <ArrowRight size={18} />
+                <ArrowRight className="transition duration-300 group-hover:translate-x-1" size={18} />
               </Link>
-              <Link href="/access-request" className="public-cta-motion inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700">
+              <Link href="/skills" className="public-cta-motion group inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                进入 Skill 库
+                <Sparkles className="transition duration-300 group-hover:rotate-6 group-hover:scale-105" size={18} />
+              </Link>
+              <Link href="/access-request" className="public-cta-motion group inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/85 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                 申请访问
-                <KeyRound size={18} />
+                <KeyRound className="transition duration-300 group-hover:-rotate-6 group-hover:scale-105" size={18} />
               </Link>
             </div>
-            <dl className="mt-9 grid max-w-3xl grid-cols-2 gap-x-6 gap-y-4 border-y border-slate-200/80 py-5 text-sm sm:grid-cols-4">
-              {[
-                { label: "公开项目", value: publicProjectCount },
-                { label: "学术成果", value: publicPublicationCount },
-                { label: "知识笔记", value: publicKnowledgeCount },
-                { label: "公开 Skill", value: publicSkillCount }
-              ].map((item) => (
-                <div key={item.label}>
-                  <dt className="text-slate-500">{item.label}</dt>
-                  <dd className="mt-1 text-2xl font-semibold text-navy-950">{item.value}</dd>
-                </div>
-              ))}
-            </dl>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:gap-5">
+            {heroStats.map((item) => (
+              <HeroStatCard key={item.label} {...item} />
+            ))}
           </div>
         </div>
       </section>
@@ -240,9 +333,9 @@ export default async function HomePage() {
         description="公开知识库沉淀研究框架、工具方法、阅读笔记和实践反思。"
         action={<Link href="/knowledge" className="text-sm font-semibold text-blue-700">进入知识库</Link>}
       >
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {knowledgePreviews.length > 0 ? knowledgePreviews.map((note) => (
-            <PublicKnowledgeCard key={note.id} note={note} />
+            <CompactKnowledgePreviewCard key={note.id} note={note} />
           )) : <EmptyPublicState label="公开知识笔记" />}
         </div>
       </HomeSection>
@@ -255,9 +348,9 @@ export default async function HomePage() {
         action={<Link href="/skills" className="text-sm font-semibold text-blue-700">进入 Skill 库</Link>}
         innerClassName="pb-16"
       >
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {skillPreviews.length > 0 ? skillPreviews.map((skill) => (
-            <PublicSkillCard key={skill.id} skill={skill} />
+            <CompactSkillPreviewCard key={skill.id} skill={skill} />
           )) : <EmptyPublicState label="公开 Skill" />}
         </div>
       </HomeSection>

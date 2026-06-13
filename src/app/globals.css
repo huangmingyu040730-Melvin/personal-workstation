@@ -102,6 +102,10 @@ select {
 
 .public-soft-grid {
   background-color: #f8fafc;
+  background-image:
+    linear-gradient(rgba(15, 42, 88, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 42, 88, 0.045) 1px, transparent 1px);
+  background-size: 36px 36px;
 }
 
 .public-card-motion {
@@ -115,6 +119,52 @@ select {
 .public-card-motion:hover {
   transform: translateY(-6px);
   box-shadow: 0 18px 48px rgba(15, 42, 88, 0.10);
+}
+
+.public-stat-card {
+  transition:
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 360ms ease,
+    background-color 360ms ease;
+}
+
+.public-stat-card:hover {
+  transform: translateY(-7px);
+  border-color: rgba(59, 130, 246, 0.32);
+  background-color: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 70px rgba(15, 42, 88, 0.13);
+}
+
+.public-chip-motion {
+  transition:
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 260ms ease,
+    background-color 260ms ease,
+    color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.public-chip-motion:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.28);
+  background-color: rgba(239, 246, 255, 0.92);
+  color: #173a73;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.10);
+}
+
+.public-compact-card {
+  transition:
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 320ms ease,
+    background-color 320ms ease;
+}
+
+.public-compact-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(37, 99, 235, 0.24);
+  box-shadow: 0 18px 46px rgba(15, 42, 88, 0.09);
 }
 
 .admin-card-motion {

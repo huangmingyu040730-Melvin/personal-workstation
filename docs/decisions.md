@@ -1648,10 +1648,13 @@
 决策：
 
 - 后台核心能力阶段性完成后，Phase 2R-A 转向公开展示质量，而不是继续扩展后台大模块。
-- Phase 2R-A-1 polish 公开首页和公开导航，让生产站首屏清楚表达“黄铭语研究工作站”定位。
+- Phase 2R-A-1 polish 公开首页和公开导航，让生产站首屏清楚表达个人研究工作站定位，同时保留“黄铭语研究工作站”作为站点身份。
 - 首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口。
-- #100 追加 UI polish 后，hero 主标题不再只用“公开研究工作站”，而是使用“黄铭语研究工作站”和系统 serif/display 字体栈。
+- #100 后续 UI polish supersedes 上一版 hero H1：H1 使用“个人研究工作站”，不把“黄铭语”或“黄铭语研究工作站”作为 H1。
+- Hero 首屏恢复左侧个人定位、说明、标签 chips 和 CTA，右侧展示公开项目、公开成果、公开 Skill、知识笔记四张统计卡片。
 - 首页 section 使用更清楚的 wrapper、边框、间距和交替背景；公开项目与学术成果内部两列分隔，Knowledge 与 Skill 独立成段。
+- Knowledge / Skill 首页预览改为紧凑卡片，最多展示 4 条 public 内容；公开列表页卡片设计不受影响。
+- 首页增加克制的 micro-interactions，包括统计卡片、CTA、标签 chips 和预览卡片的 hover / focus 反馈。
 - 公开导航面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”入口。
 - 公开页面只展示 public 内容；restricted 内容通过访问申请和授权流程处理；private 内容不进入公开页面。
 - Documents、多资产文件关联、`research_asset_links`、AssetLinksPanel、后台搜索和文件中心仍只在管理员后台使用。
@@ -1659,7 +1662,8 @@
 原因：
 
 - Documents 全生命周期、后台搜索、研究资产详情页和显式关系系统已经能支撑管理员整理资产，下一步需要让外部访客更快理解这个站点是什么。
-- 原公开首页更像个人简介和统计入口，对个人化研究站定位、研究方向和访问申请路径表达不够集中。
+- 用户反馈认为最初“左侧文案 + 右侧统计卡片”的 hero 信息架构更合理，但 H1 应避免直接使用姓名，改为更可泛化的“个人研究工作站”。
+- Knowledge / Skill 上一版首页卡片占地偏大，只能展示 1-2 条，不利于快速浏览更多公开内容。
 - 站点 owner 需要从公开站点方便进入后台登录，但该入口不应暴露后台菜单或跳过登录。
 - 公开展示需要强化权限边界：公开站点不能误导访客以为可以浏览私密附件、后台关系或文件关联。
 
@@ -1667,6 +1671,7 @@
 
 - 首页 metadata 调整为“黄铭语研究工作站 | Public Research Workstation”，描述聚焦研究项目、学术成果、知识笔记和 AI 工作流。
 - 首页新增本地 hero 视觉资产和公开研究工作站信息架构；不引入新的 UI 库或复杂动画。
+- 首页 H1 为“个人研究工作站”；“黄铭语研究工作站”继续作为 metadata、品牌、footer 或 eyebrow 层面的站点身份。
 - 公开导航新增“管理员登录”只链接到 `/login?next=/dashboard`，不展示后台内容、文件中心、关系图谱或 Career / Resume 菜单。
 - 公开 Publication 查询对历史 `file_path` / `cover_url` 做公开边界处理，避免公开组件误用附件字段。
 - 本阶段不新增 migration，不新增 RPC，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、Resume / Career、Market Brief 或后台显式关系管理。

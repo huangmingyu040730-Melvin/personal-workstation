@@ -500,10 +500,12 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 已完成代码实现。后台 Documents、搜索、研究资产详情页和显式关系管理阶段性完成后，下一阶段转向公开展示质量，把首页和公开导航打磨为更清晰的“黄铭语研究工作站”入口：
 
-- 首页首屏主标题改为“黄铭语研究工作站”，不再只用“公开研究工作站”作为大标题。
-- Hero 使用系统 serif/display 字体栈增强个人研究室气质，不提交字体文件。
+- 首页首屏 H1 改为“个人研究工作站”，站点身份仍在品牌、metadata、footer 或 eyebrow 中保留“黄铭语研究工作站”。
+- Hero 恢复左侧个人定位、标题、说明、标签 chips 和 CTA，右侧展示公开项目、公开成果、公开 Skill、知识笔记四张统计卡片。
 - 首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口。
 - 首页 section 使用更明确的 wrapper、边框、间距和交替背景；公开项目与学术成果内部两列分隔，Knowledge 和 Skill 独立成段。
+- Knowledge / Skill 首页预览改为更紧凑的 preview card，最多展示 4 条 public 内容，不影响公开列表页卡片设计。
+- 首页增加克制的 micro-interactions：统计卡片、CTA、标签 chips 和预览卡片 hover / focus 时轻微上浮、边框变化和箭头位移。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”。
 - 普通访客公开导航不显示后台菜单、文件中心或全局关系图谱入口。
 - 公开 Publication 查询收窄展示边界，公开页面不使用历史 `file_path` 或附件字段。
@@ -574,7 +576,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明、研究方向、公开内容预览、访问申请和管理员登录入口。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。
 - Documents 继续保持私密，不开放公开下载或 viewer signed URL。
 - Documents 作为可维护的统一私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的私密附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页只嵌入后台私密附件视图，公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件下载入口。
