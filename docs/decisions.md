@@ -1502,7 +1502,7 @@
 
 ## 2026-06-13 - Add Read-Only Research Asset Network View
 
-类型：decision
+类型：decision，superseded by `2026-06-13 - Remove Research Asset Network View`
 
 决策：
 
@@ -1528,4 +1528,34 @@
 - 新增 `src/lib/queries/asset-network.ts`、`src/app/dashboard/network/page.tsx` 和轻量网络视图组件。
 - 后台侧边栏新增“关系图谱”入口，AssetLinksPanel 增加“查看关系图谱”快捷入口。
 - 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+替代说明：
+
+- 该全局视图已在 Phase 2Q-B-4 中移除；当前只保留四类资产详情页中的显式关系管理。
+
+## 2026-06-13 - Remove Research Asset Network View
+
+类型：decision
+
+决策：
+
+- Phase 2Q-B-4 移除此前的全局关系可视化页面，不继续推进动态图、蜘蛛网式可视化、3D 图谱、force graph 或 Network View。
+- 保留 `research_asset_links` 表、`0019_research_asset_links.sql` migration、Server Actions、查询、校验和四类资产详情页中的 AssetLinksPanel。
+- Project / Knowledge / Skill / Publication 详情页继续支持显式关系 create / update / delete、outbound、backlink、relation_type、note、目标资产本地筛选和关系列表筛选。
+- 删除后台侧边栏中的全局关系入口，删除 AssetLinksPanel 附近的全局页面入口。
+- 不新增替代图谱页面；未来如果重新需要全局可视化，应作为独立新阶段重新设计。
+
+原因：
+
+- 用户判断全局关系可视化模块对实际工作效率帮助有限，继续投入动态图、蜘蛛网或复杂网络可视化不符合当前稳定维护路线。
+- 单个资产详情页中的显式关系管理仍然有价值：它能清楚记录某个 Project / Knowledge / Skill / Publication 的人工确认关系和 backlinks。
+- 保留 `research_asset_links` 数据模型可以继续支持明确关系管理，同时避免维护一个低收益的大型全局可视化页面。
+
+影响：
+
+- 删除 `src/app/dashboard/network/page.tsx`、`src/lib/queries/asset-network.ts` 和 `src/components/asset-network/` 下的全局视图组件。
+- `src/components/asset-links/asset-links-panel.tsx` 保留，但移除全局页面跳转入口。
+- `src/lib/mock-data.ts` 不再提供全局关系入口。
+- 不新增 migration，不修改 `0019_research_asset_links.sql`，不修改 RLS、Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。

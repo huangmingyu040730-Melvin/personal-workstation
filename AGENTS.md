@@ -50,7 +50,7 @@ npm run build
 - Documents 的 `storage_path` 必须保持 ASCII-safe object key；中文文件名和文件夹名只保存在显示字段中。
 - `research_asset_links` 只用于 Project / Knowledge / Skill / Publication 之间的管理员后台显式关系；Documents 与文档包继续使用既有 `related_type / related_id`，不得混入显式关系表。
 - 编辑 `research_asset_links` 时只允许修改 `relation_type` 和 `note`；如需更换 source / target，应删除后重新创建，不新增 schema 或迁移来绕过该边界。
-- `/dashboard/network` 只读展示 `research_asset_links` 的全局研究资产网络，不提供 create / edit / delete，不引入复杂图谱库，不纳入 Documents，不读取 Storage 或文件正文。
+- 全局研究资产关系图谱页面已取消并移除；不要恢复 `/dashboard/network`、Network View、force graph 或其它可视化网络入口。`research_asset_links` 显式关系系统仍保留在 Project / Knowledge / Skill / Publication 后台详情页的 AssetLinksPanel 中，Documents 不纳入显式关系表。
 - Skill 包、代码包和压缩包只作为私密文件存储，不执行、不解析、不安装。
 - 不提交密钥、`.env`、API token、私钥或任何敏感文件。
 - 保留 `.gitignore` 对 `.env`、`node_modules`、`.next`、`dist`、`out` 等文件的忽略规则。

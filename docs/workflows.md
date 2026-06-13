@@ -499,7 +499,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2Q-B-1 / 2Q-B-2 / 2Q-B-3 的研究资产显式关系底座，在 Project / Knowledge / Skill / Publication 之间记录管理员手动确认的关系，并通过筛选、编辑、backlink 和全局网络视图日常整理关系。
+- 维护 Phase 2Q-B-1 / 2Q-B-2 / 2Q-B-4 的研究资产显式关系底座，在 Project / Knowledge / Skill / Publication 之间记录管理员手动确认的关系，并通过单个资产详情页的筛选、编辑、outbound 和 backlink 日常整理关系。
 
 步骤：
 
@@ -513,14 +513,12 @@ npm run build
 8. 查看关系较多的资产时，使用方向、对方资产类型和 relation_type 筛选器聚焦 outbound、backlink 或某类关系。
 9. 需要修正关系语义或说明时，展开“编辑关系”，只更新 relation_type 或 note。
 10. 如果 source / target 选错，删除该关系后重新创建；不要通过编辑流程更换关系两端。
-11. 需要查看全局结构时，进入 `/dashboard/network` 或点击显式关联资产区域的“查看关系图谱”。
-12. 在 `/dashboard/network` 查看节点总数、关系总数、四类资产节点数量、relation_type 数量、节点分组和全部关系列表。
-13. 在 `/dashboard/network` 中用资产类型、relation_type 和关键词筛选；关键词只匹配节点标题和 metadata。
-14. 从网络节点、source 或 target 点击进入对应资产详情页，再维护 create / edit / delete。
-15. 需要移除关系时，在任一显示该关系的详情页使用“删除关系”。
-16. Documents 仍通过 RelatedDocumentsPanel、Documents 列表和文档包详情页管理，不通过 `research_asset_links` 管理，也不出现在关系图谱中。
-17. 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
-18. 未确认关系时先用 `/dashboard/search` 查找候选资产，不用 AI 或推断自动建立关系。
+11. 后台不再提供独立全局关系页面；需要理解某个资产的关系时，回到该 Project / Knowledge / Skill / Publication 详情页查看 outbound 和 backlink。
+12. 从 AssetLinksPanel 中的对方资产链接进入对应详情页，再继续维护 create / edit / delete。
+13. 需要移除关系时，在任一显示该关系的详情页使用“删除关系”。
+14. Documents 仍通过 RelatedDocumentsPanel、Documents 列表和文档包详情页管理，不通过 `research_asset_links` 管理。
+15. 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
+16. 未确认关系时先用 `/dashboard/search` 查找候选资产，不用 AI 或推断自动建立关系。
 
 验证要求：
 
@@ -531,8 +529,8 @@ npm run build
 - 确认目标资产搜索可按中文标题或 metadata 过滤候选项。
 - 确认方向、对方资产类型和 relation_type 筛选不会触发公开页面变化。
 - 确认“编辑关系”只修改 relation_type 和 note，source / target 保持不变。
-- 确认 `/dashboard/network` 只读展示全局研究资产网络，可按资产类型、relation_type 和关键词筛选。
-- 确认 `/dashboard/network` 节点、source 和 target 均可跳转到对应后台详情页。
+- 确认后台侧边栏和 AssetLinksPanel 不再提供独立全局关系页面入口。
+- 确认访问已移除的全局关系页面时不再显示旧模块。
 - 确认自关联会被拒绝，重复关系会显示友好错误。
 - 确认删除关系后双方详情页都不再显示该关系。
 - 确认公开页面不展示显式关系，不展示 Storage path、signed URL 或 secret。
