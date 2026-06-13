@@ -439,7 +439,8 @@ Document Asset Links 权限边界：
 - `0020` 不新增 RPC，不放宽 RLS，不开放 anon、viewer 或 restricted 用户读取 Documents 关联。
 - Documents 和文档包仍只在管理员后台使用；公开页面、viewer 页面、sitemap 和 robots 不展示附件、关联表数据、Storage 路径或 signed URL。
 - `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 仍保留为 legacy primary relation、路径 fallback 和兼容 query params。
-- 新展示、筛选、RelatedDocumentsPanel 和搜索应优先读取 `document_asset_links` / `document_collection_asset_links`，仅在缺少等价 link row 时 fallback 到 legacy 字段。
+- 新展示、筛选、RelatedDocumentsPanel 和搜索应优先读取 `document_asset_links` / `document_collection_asset_links`，仅在同一 `asset_type + asset_id` 没有任何 link row 时 fallback 到 legacy 字段。
+- 关联 chips 的 legacy `related` 降噪是应用层展示归一化；同一资产已有具体关系时不重复显示“相关”，不删除 0020 回填 rows，不新增 migration。
 
 ## 创建管理员
 
@@ -536,6 +537,7 @@ Phase 2C 使用：
 - Resume JD 分析历史依赖 0012 migration；未执行 0012 时，AI JD 分析仍可生成当前页建议，但无法保存为历史记录或投递状态。
 - Document collections 和文件夹上传 metadata 依赖 0018 migration；未执行 0018 时，多文件 / 文件夹上传、Knowledge 附件关联和 collection 详情页无法完成真实读写。
 - Document metadata、collection metadata 的 legacy primary relation 编辑不需要 0019 migration；多资产关联添加、移除、清空、关联 chips、按关联筛选和新上传多关联写入需要 0020 migration。
+- Documents 关联 chips 降噪不需要新增 migration；它只归一化查询返回的 relation summaries，不修改 legacy 字段、link rows、Storage object 或 `storage_path`。
 - `/dashboard/search` metadata 搜索、type 筛选和关键词高亮不需要 0019 migration；未执行 0018 时，文档包相关搜索结果会缺少真实 collection 数据。
 - 研究资产显式关系依赖 0019 migration；未执行 0019 时，四类后台详情页的显式关系读写会失败或显示空关系。
 - Documents 多资产关联依赖 0020 migration；未执行 0020 时，文件 / 文档包多关联读写会失败或只显示 legacy fallback 关联。
@@ -559,7 +561,7 @@ npm run build
 - 查询不到 private 数据：确认当前登录用户是管理员，并确认 RLS migration 已执行。
 - 文件上传失败：确认生产 Supabase 已执行 `0003_publications_documents_storage.sql` 和 `0018_document_collections_and_folder_uploads.sql`，bucket 为 private，且当前用户在 `admin_users` 中。
 - Documents 多关联保存失败：确认生产 Supabase 已执行 `0020_document_asset_links.sql`，当前用户在 `admin_users` 中，且目标 Project / Knowledge / Skill / Publication 记录真实存在。
-- Documents 关联 chips 或按关联筛选结果不完整：确认 `0020_document_asset_links.sql` 已执行并完成 legacy 回填；未回填前旧记录只能依赖 legacy primary relation fallback。
+- Documents 关联 chips 或按关联筛选结果不完整：确认 `0020_document_asset_links.sql` 已执行并完成 legacy 回填；未回填前旧记录只能依赖 legacy primary relation fallback。同一资产同时有具体关系和 `related` 时，UI 会隐藏低价值 `related` fallback，这是预期展示降噪。
 - 显式资产关系保存失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且 source / target 资产真实存在。
 - 显式资产关系列表为空或读取失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且目标环境已有 Project / Knowledge / Skill / Publication 之间的显式关系记录。
 - 文件类型被拒绝：确认扩展名和 MIME type 都在白名单中，单文件不超过 50 MB，批次不超过 100 个文件 / 200 MB，且不是 exe、dmg、app、msi、bat 或 cmd。

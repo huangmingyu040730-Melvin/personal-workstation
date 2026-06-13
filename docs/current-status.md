@@ -241,6 +241,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 文档包关联对象修改不会自动批量修改包内文件的关联对象；不一致时页面提示管理员在文件详情页单独调整。
 - `document_collections` 文档包记录上传批次、文件夹、附件包或 Skill 包。
 - `document_asset_links` 与 `document_collection_asset_links` 记录文件 / 文档包到 Project / Knowledge / Skill / Publication 的多资产关联，支持 `related`、`source_material`、`supporting_material`、`deliverable`、`reference`、`input`、`output` 关系类型和备注。
+- 关联 chips 在展示查询层归一化：同一文件 / 文档包对同一资产如果已有具体关系，则隐藏同一资产的 legacy `related` fallback；只有 `related` 是唯一关系时才显示“相关”。
 - `documents.relative_path` / `documents.folder_path` 保存文件夹上传的相对路径信息。
 - `documents.storage_path` 使用 ASCII-safe object key；中文文件名和文件夹名只保存在显示名、`original_name`、`relative_path` 等展示字段中。
 - 单文件最大 50 MB；批量 / 文件夹上传单次最多 100 个文件，总量 200 MB。
@@ -249,7 +250,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 公开页面不展示 signed URL。
 - 公开页面不展示 Storage 路径。
 
-文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示；Phase 2P-E-1-C 只增加主动整体迁移 / 同步关联工具；Phase 2P-E-2 只增加管理员批量删除文件和删除整个文档包及文件能力；Phase 2P-E-3 只增加管理员后台 zip 临时下载能力。Phase 2P-G-1 新增 0020 migration 和专用多关联表，同时保留 legacy primary relation 兼容，不改 Storage policy，不新增 RPC。zip 按请求生成，不保存到 Storage。
+文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示；Phase 2P-E-1-C 只增加主动整体迁移 / 同步关联工具；Phase 2P-E-2 只增加管理员批量删除文件和删除整个文档包及文件能力；Phase 2P-E-3 只增加管理员后台 zip 临时下载能力。Phase 2P-G-1 新增 0020 migration 和专用多关联表，同时保留 legacy primary relation 兼容；关联 chips 的 `related` 降噪只在展示查询层完成，不删除 legacy 数据，不新增 migration，不改 Storage policy，不新增 RPC。zip 按请求生成，不保存到 Storage。
 
 ### Access Requests
 
@@ -353,7 +354,7 @@ Phase 2P-G-1 新增 Documents 专用多资产关联后需要继续执行：
 
 - `0020_document_asset_links.sql`
 
-`0020` 创建 `document_asset_links` 与 `document_collection_asset_links`，从 legacy `documents.related_type / related_id` 和 `document_collections.related_type / related_id` 回填 `related` 关系，并通过 `public.is_admin()` 限定管理员读写。该 migration 不修改 Storage policy，不新增 RPC，不纳入 `research_asset_links`，不开放 public / viewer / restricted 读取。
+`0020` 创建 `document_asset_links` 与 `document_collection_asset_links`，从 legacy `documents.related_type / related_id` 和 `document_collections.related_type / related_id` 回填 `related` 关系，并通过 `public.is_admin()` 限定管理员读写。当前展示查询会在同一资产已有更具体关系时隐藏 legacy `related` fallback，但不删除回填 rows。该 migration 不修改 Storage policy，不新增 RPC，不纳入 `research_asset_links`，不开放 public / viewer / restricted 读取。
 
 规则：
 

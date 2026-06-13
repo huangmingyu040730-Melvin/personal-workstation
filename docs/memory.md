@@ -42,6 +42,7 @@
 - Phase 2P-F-1：后台新增 `/dashboard/search` 全局搜索入口，用于按数据库 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包。
 - Phase 2P-F-2：后台全局搜索支持类型筛选、每类数量统计、选中类型空状态、结果卡片类型 badge 和标题 / 描述关键词高亮。
 - Phase 2P-G-1：Documents 文件中心批量操作区改为紧凑工具栏，并新增 `document_asset_links` / `document_collection_asset_links` 专用多资产关联表；legacy `related_type / related_id` 保留为 primary relation 兼容字段。
+- Phase 2P-G-1 后续修复：Documents 与文档包关联 chips 会对同一资产下的 legacy `related` fallback 做展示降噪；已有具体关系时不重复显示“相关”，不删除 legacy 数据或新增 migration。
 - Phase 2Q-A-1：Project 后台详情页升级为研究项目中枢，整合项目研究框架、私密附件、相关知识笔记 / 学术成果和快捷操作。
 - Phase 2Q-A-2：Knowledge 后台详情页升级为知识节点，整合知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口。
 - Phase 2Q-A-3：Skill 后台详情页升级为能力包 / 工作流包，整合用途说明、平台版本、私密资料、版本记录和相关资产搜索入口。
@@ -103,6 +104,7 @@ Documents / Storage：
 - `documents.storage_path` 必须使用 ASCII-safe object key；中文文件名和文件夹名只用于后台展示字段。
 - `document_asset_links` 与 `document_collection_asset_links` 是 Documents / 文档包专用多资产关联表，可把一个文件或文档包关联到多个 Project / Knowledge / Skill / Publication，并记录 relation_type 与 note。
 - `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 仅保留为 legacy primary relation、路径 fallback 与兼容 query params；新展示、筛选和搜索应优先读取专用 link tables。
+- 关联 chips 的展示归一化规则：同一 `asset_type + asset_id` 如果只有 `related`，显示“相关”；如果同时存在 `related` 和更具体关系，只显示具体关系；如果有多个具体关系，保留多个具体 chips。
 - 文件 metadata 可编辑字段为显示名称、分类和 legacy primary relation；不可编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id。多资产关联在文件详情页关联区域添加或移除。
 - 文档包 metadata 可编辑字段为名称、描述、类型和 legacy primary relation；不可手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳。多资产关联在文档包详情页关联区域添加或移除。
 - 文件级关联和文档包级关联允许不一致；修改文档包 legacy primary relation 或多关联不自动批量同步包内文件，除非管理员显式选择同步。
@@ -191,6 +193,7 @@ Research Asset Links：
 - Phase 2P-A / 2P-B / 2P-C 将 Documents 扩展为统一私密附件底座，并把附件查看、预填上传、新建后上传串到 Project / Publication / Knowledge / Skill 后台流程中。
 - Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 将 Documents 进一步打磨为可维护的私密附件管理系统；metadata 修正、legacy 批量关联整理、详情页分组展示、文档包整体迁移、受确认保护的删除能力和 zip 临时下载均不新增 migration。
 - Phase 2P-G-1 采用 dedicated document asset links 决策：新增 `0020_document_asset_links.sql`，用 Documents 专用 link tables 支持文件和文档包多资产关联；不把 Documents 混入 `research_asset_links`，不修改 Storage policy，不新增 RPC。
+- Documents relation chips 采用展示降噪决策：legacy primary relation 或 0020 回填产生的 `related` 只在同一资产没有具体关系时显示；该决策不删除旧字段、回填 rows 或 Storage object。
 - Phase 2P-E-2 删除能力继续保持 Documents 私密边界：Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 - Phase 2P-E-3 zip 下载继续保持 Documents 私密边界：zip 不保存到 Storage，Activity Log 不记录 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 - Phase 2P-F-1 全局搜索采用 metadata-first 决策：只在管理员后台搜索数据库字段，不新增 migration、索引、RPC、外部搜索服务、向量库或文件内容解析。
@@ -281,7 +284,7 @@ Research Asset Links：
 - Supabase 数据库变更：新增 migration，不修改已执行旧 migration。
 - Documents 上传：prepare metadata -> 浏览器直传 private `workspace-files` -> finalize 写库 -> 必要时清理失败对象。
 - 新建内容并上传附件：先创建 Project / Publication / Knowledge / Skill，成功后跳转 `/dashboard/documents/upload` 并通过 query params 预填关联对象、上传模式、分类和文档包类型。
-- Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类和 legacy primary relation，并在关联区域添加或移除多资产关联；文档包详情页修正文档包名称、描述、类型和 legacy primary relation，并在关联区域添加 / 移除文档包关联，可选择同步到包内文件；列表页用 category、related_type、collection 筛选整理，其中 related_type / related_id 表示包含该资产关联；Documents 列表或文档包详情页用紧凑批量工具栏批量添加、移除或清空关联、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件和关联 chips 理解附件关系；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
+- Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类和 legacy primary relation，并在关联区域添加或移除多资产关联；文档包详情页修正文档包名称、描述、类型和 legacy primary relation，并在关联区域添加 / 移除文档包关联，可选择同步到包内文件；列表页用 category、related_type、collection 筛选整理，其中 related_type / related_id 表示包含该资产关联；Documents 列表或文档包详情页用紧凑批量工具栏批量添加、移除或清空关联、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件和关联 chips 理解附件关系，chips 已对同一资产的 legacy `related` 做展示降噪；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
 - Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。

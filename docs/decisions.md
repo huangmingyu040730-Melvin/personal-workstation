@@ -1570,7 +1570,7 @@
 - Documents 仍不纳入 `research_asset_links`；`research_asset_links` 继续只表达 Project / Knowledge / Skill / Publication 之间的显式研究资产关系。
 - `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 保留为 legacy primary relation，用于路径 fallback、兼容 query params 和迁移前数据 fallback。
 - 新上传文件或文档包时，首个关联写入 legacy primary relation，全部关联写入专用 link tables。
-- 新展示、RelatedDocumentsPanel、Documents 列表筛选和后台搜索优先读取专用 link tables；legacy 字段只在没有等价 link row 时作为 fallback。
+- 新展示、RelatedDocumentsPanel、Documents 列表筛选和后台搜索优先读取专用 link tables；legacy 字段只在同一 `asset_type + asset_id` 没有任何 link row 时作为 fallback。
 - 文件中心批量操作区改为紧凑工具栏，支持批量添加关联、按资产移除关联、清空全部关联，并把 legacy primary relation 操作降级为高级兼容工具。
 - 文件详情页和文档包详情页显示全部关联 chips，并提供添加 / 移除关联；文档包关联可以选择同步到包内文件。
 - 新增 `supabase/migrations/0020_document_asset_links.sql`，创建两张 link tables、管理员 RLS、索引、唯一约束，并把既有 legacy related_type / related_id 回填为 `related` 关系。
@@ -1590,3 +1590,28 @@
 - 新增 / 移除关联不会移动、重命名或重写 Storage object，不修改 `storage_path`、MIME type、文件大小、原始路径或 `collection_id`。
 - 公开页面、viewer/restricted、Resume、Career、Calendar、Profile、Market Brief 和全局研究资产关系图谱移除决策不受影响。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-14 - Normalize Document Relation Chip Display
+
+类型：decision
+
+决策：
+
+- Documents 与文档包的关联展示按同一 `asset_type + asset_id` 做归一化。
+- 如果同一资产只有 `related` 关系，继续显示“相关”。
+- 如果同一资产同时存在 `related` 和一个或多个更具体关系，例如 `deliverable`、`supporting_material`、`source_material`、`reference`、`input` 或 `output`，展示层隐藏该资产的 `related` fallback。
+- 如果同一资产存在多个具体关系，暂时保留多个具体 chips，不强行合并。
+- legacy primary relation 只在同一资产没有任何 link-table relation 时追加为 fallback。
+
+原因：
+
+- `0020_document_asset_links.sql` 会把旧 `related_type / related_id` 回填为 `related` link row；新多关联又允许管理员为同一资产添加更具体语义。
+- 同一文件同时显示“学术成果 · 交付物”和“学术成果 · 相关”会让用户误以为存在两类同等价值关系；实际 `related` 只是低价值兼容 fallback。
+- 在查询展示层降噪能保留数据兼容和历史回填，同时让文件中心、详情页、RelatedDocumentsPanel 和搜索结果更贴近工作语义。
+
+影响：
+
+- 只调整 `src/lib/queries/document-asset-links.ts` 返回的 relation summaries。
+- 不删除 `documents.related_type / related_id`、`document_collections.related_type / related_id`、`document_asset_links` 或 `document_collection_asset_links` 中的 `related` rows。
+- 不新增 migration，不新增 RPC，不修改 RLS，不修改 Storage policy，不移动、不重命名、不删除 Storage object，也不修改 `storage_path`。
+- Documents 仍不纳入 `research_asset_links`，四类研究资产之间的显式关系系统不受影响。

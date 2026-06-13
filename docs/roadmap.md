@@ -314,6 +314,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - `/dashboard/documents` 批量操作区改为紧凑工具栏，支持批量添加关联、按资产移除关联、清空关联、zip 下载、批量删除和高级 legacy primary relation 操作。
 - 文件详情页和文档包详情页展示全部关联 chips，并支持添加 / 移除 link-table 关联；文档包关联可选择同步到包内文件。
 - RelatedDocumentsPanel 按多关联查询文档包、独立文件和跨文档包文件，并显示关联 chips，避免当前对象文档包内文件重复展示。
+- 关联 chips 对同一资产下的 legacy `related` fallback 做展示归一化：已有 `deliverable`、`supporting_material` 等具体关系时不重复显示“相关”。
 - Documents 列表的 `related_type / related_id` 筛选语义改为“包含该资产关联”；`unlinked` 表示既没有专用关联，也没有 legacy primary relation。
 - 后台全局搜索继续只查 metadata，但可展示由专用关联表解析出的关联标题。
 
@@ -323,6 +324,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 `0019_research_asset_links.sql`，不修改全局关系图谱移除决策。
 - 新增 migration 仅为 `0020_document_asset_links.sql`；不新增 RPC，不修改 Storage policy，不改 RLS 旧策略。
 - 不移动、不重命名、不重写 Storage object，不修改 `storage_path` 生成规则。
+- `related` 降噪是展示归一化，不删除 legacy 字段、0020 回填 rows 或任何 Storage object。
 - 不公开附件、不生成 public signed URL，不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 文件总结或向量搜索。
 - 不修改 Resume / Career、viewer/restricted、Calendar、Profile 或 Market Brief。
 

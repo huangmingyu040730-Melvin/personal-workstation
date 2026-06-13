@@ -53,12 +53,34 @@ function getLegacyRelationSummaryId(record: LegacyRelatedRecord) {
   return `legacy:${record.id}:${record.related_type}:${record.related_id}`;
 }
 
-function hasEquivalentRelation(relations: DocumentAssetLinkSummary[], relation: Pick<DocumentAssetLinkSummary, "asset_type" | "asset_id" | "relation_type">) {
+function getAssetRelationKey(relation: Pick<DocumentAssetLinkSummary, "asset_type" | "asset_id">) {
+  return `${relation.asset_type}:${relation.asset_id}`;
+}
+
+function hasRelationForAsset(relations: DocumentAssetLinkSummary[], relation: Pick<DocumentAssetLinkSummary, "asset_type" | "asset_id">) {
   return relations.some((item) => (
     item.asset_type === relation.asset_type &&
-    item.asset_id === relation.asset_id &&
-    item.relation_type === relation.relation_type
+    item.asset_id === relation.asset_id
   ));
+}
+
+export function normalizeDocumentAssetRelations(relations: DocumentAssetLinkSummary[]) {
+  const assetsWithSpecificRelations = new Set(
+    relations
+      .filter((relation) => relation.relation_type !== "related")
+      .map((relation) => getAssetRelationKey(relation))
+  );
+
+  return relations.filter((relation) => (
+    relation.relation_type !== "related" ||
+    !assetsWithSpecificRelations.has(getAssetRelationKey(relation))
+  ));
+}
+
+function normalizeRelationsByOwnerId(relationsByOwnerId: Map<string, DocumentAssetLinkSummary[]>) {
+  relationsByOwnerId.forEach((relations, ownerId) => {
+    relationsByOwnerId.set(ownerId, normalizeDocumentAssetRelations(relations));
+  });
 }
 
 export function getDocumentAssetDetailHref(assetType: DocumentRelatedType, assetId: string) {
@@ -196,7 +218,7 @@ function appendLegacyRelations(
       note: null
     };
 
-    if (!hasEquivalentRelation(current, legacyRelation)) {
+    if (!hasRelationForAsset(current, legacyRelation)) {
       relationsByOwnerId.set(record.id, [...current, legacyRelation]);
     }
   }
@@ -247,6 +269,7 @@ export async function getDocumentRelationsMap(
       }))
   );
   appendLegacyRelations(documents, relationsByDocumentId, resolveLegacyAsset);
+  normalizeRelationsByOwnerId(relationsByDocumentId);
 
   return relationsByDocumentId;
 }
@@ -296,6 +319,7 @@ export async function getDocumentCollectionRelationsMap(
       }))
   );
   appendLegacyRelations(collections, relationsByCollectionId, resolveLegacyAsset);
+  normalizeRelationsByOwnerId(relationsByCollectionId);
 
   return relationsByCollectionId;
 }
