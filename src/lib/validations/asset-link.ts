@@ -28,3 +28,10 @@ export const assetLinkDeleteSchema = z.object({
   link_id: z.uuid("关系 ID 无效"),
   return_to: optionalText()
 });
+
+export const assetLinkUpdateSchema = z.object({
+  link_id: z.uuid("关系 ID 无效"),
+  relation_type: z.enum(researchAssetRelationTypeValues, { message: "请选择有效关系类型" }),
+  note: optionalText(500),
+  return_to: optionalText()
+});

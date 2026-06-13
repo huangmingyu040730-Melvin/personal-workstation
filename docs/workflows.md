@@ -499,20 +499,24 @@ npm run build
 
 用途：
 
-- 维护 Phase 2Q-B-1 的研究资产显式关系底座，在 Project / Knowledge / Skill / Publication 之间记录管理员手动确认的关系。
+- 维护 Phase 2Q-B-1 / 2Q-B-2 的研究资产显式关系底座，在 Project / Knowledge / Skill / Publication 之间记录管理员手动确认的关系，并通过筛选、编辑和 backlink 视图日常整理关系。
 
 步骤：
 
 1. 进入任意后台资产详情页：`/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]` 或 `/dashboard/publications/[id]`。
 2. 在“显式关联资产”区域选择目标类型和目标资产。
-3. 使用 relation_type 表达关系语义：`related` 表示相关，`supports` 表示支持，`references` 表示引用，`uses` 表示使用，`produces` 表示产出，`derived_from` 表示来源于。
-4. 如有必要填写备注，说明这条关系的上下文。
-5. 保存后，当前资产会在 outbound relationships 中看到该关系。
-6. 打开目标资产详情页，可在 backlinks / 反向关系中看到来源资产。
-7. 需要移除关系时，在任一显示该关系的详情页使用“删除关系”。
-8. Documents 仍通过 RelatedDocumentsPanel、Documents 列表和文档包详情页管理，不通过 `research_asset_links` 管理。
-9. 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
-10. 未确认关系时先用 `/dashboard/search` 查找候选资产，不用 AI 或推断自动建立关系。
+3. 如目标较多，先在“筛选目标资产”输入关键词；筛选只匹配已加载目标资产的标题和 metadata，不读取文件正文或 Storage。
+4. 使用 relation_type 表达关系语义：`related` 表示相关，`supports` 表示支持，`references` 表示引用，`uses` 表示使用，`produces` 表示产出，`derived_from` 表示来源于。
+5. 如有必要填写备注，说明这条关系的具体上下文。
+6. 保存后，当前资产会在“当前资产关联出去”中看到该关系。
+7. 打开目标资产详情页，可在“反向关系”中看到来源资产。
+8. 查看关系较多的资产时，使用方向、对方资产类型和 relation_type 筛选器聚焦 outbound、backlink 或某类关系。
+9. 需要修正关系语义或说明时，展开“编辑关系”，只更新 relation_type 或 note。
+10. 如果 source / target 选错，删除该关系后重新创建；不要通过编辑流程更换关系两端。
+11. 需要移除关系时，在任一显示该关系的详情页使用“删除关系”。
+12. Documents 仍通过 RelatedDocumentsPanel、Documents 列表和文档包详情页管理，不通过 `research_asset_links` 管理。
+13. 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
+14. 未确认关系时先用 `/dashboard/search` 查找候选资产，不用 AI 或推断自动建立关系。
 
 验证要求：
 
@@ -520,6 +524,9 @@ npm run build
 - 确认非管理员无法读取或写入 `research_asset_links`。
 - 确认管理员可以创建 Project -> Knowledge、Skill -> Project、Publication -> Knowledge 等关系。
 - 确认目标页面出现 backlink。
+- 确认目标资产搜索可按中文标题或 metadata 过滤候选项。
+- 确认方向、对方资产类型和 relation_type 筛选不会触发公开页面变化。
+- 确认“编辑关系”只修改 relation_type 和 note，source / target 保持不变。
 - 确认自关联会被拒绝，重复关系会显示友好错误。
 - 确认删除关系后双方详情页都不再显示该关系。
 - 确认公开页面不展示显式关系，不展示 Storage path、signed URL 或 secret。

@@ -1470,3 +1470,32 @@
 - `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 显示显式关联资产区域。
 - 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-13 - Polish Research Asset Links Management Only
+
+类型：decision
+
+决策：
+
+- Phase 2Q-B-2 只增强 `research_asset_links` 的管理员后台管理体验，不扩展数据模型。
+- 关系仍只覆盖 Project / Knowledge / Skill / Publication；Documents 仍不纳入 `research_asset_links`。
+- 新增关系表单只在已加载的目标候选内按标题和 metadata 本地筛选，不做异步搜索、外部搜索、文件内容搜索或向量搜索。
+- 关系列表新增方向、对方资产类型和 relation_type 筛选；筛选只在客户端当前结果中完成，不写入 URL，不触发服务端重新查询。
+- 编辑关系只允许修改 `relation_type` 和 `note`，不允许修改 source / target；如需更换 source / target，应删除后重新创建。
+- 本阶段不新增 schema，不修改 `0019_research_asset_links.sql`，不新增 migration、RPC 或数据库事务。
+- 暂不做 AI 自动关联、关系图谱可视化、拖拽连线、公开展示、复杂权限继承、批量导入或批量删除。
+
+原因：
+
+- 2Q-B-1 已建立显式关系底座，但日常维护还需要更容易筛选、理解和修正关系。
+- source / target 代表关系两端身份，允许编辑会增加审计和语义歧义；删除后重建更清楚，也符合当前轻量后台管理模型。
+- 目标资产候选来自数据库 metadata，足以支持手动选择；本阶段不应为关系管理引入文件读取、搜索索引或 AI 推断。
+- 已执行的 0019 migration 应保持稳定，体验 polish 不应修改已落库 schema。
+
+影响：
+
+- 新增 update Server Action，写入前继续验证管理员身份和关系存在性，Activity Log 只记录 source / target 类型与 ID、relation_type，不记录备注或敏感字段。
+- AssetLinksPanel 增加统计、方向 / 类型筛选、关系句子、编辑关系和更清晰的空状态。
+- CreateAssetLinkForm 增加目标资产本地筛选与筛选数量提示。
+- 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。

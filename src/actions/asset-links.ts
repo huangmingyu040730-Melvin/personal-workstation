@@ -7,7 +7,11 @@ import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { buildAssetDashboardHref } from "@/lib/queries/asset-links";
 import { getOptionalString, getString } from "@/lib/forms";
 import { getSafeDashboardRedirect } from "@/lib/safe-redirect";
-import { assetLinkCreateSchema, assetLinkDeleteSchema } from "@/lib/validations/asset-link";
+import {
+  assetLinkCreateSchema,
+  assetLinkDeleteSchema,
+  assetLinkUpdateSchema
+} from "@/lib/validations/asset-link";
 
 type AdminSupabaseClient = NonNullable<Awaited<ReturnType<typeof getAdminClient>>["supabase"]>;
 
@@ -147,6 +151,95 @@ export async function createAssetLinkAction(formData: FormData) {
   revalidatePath(getDashboardPathname(returnTo));
   revalidatePath(buildAssetDashboardHref(parsed.data.source_type, parsed.data.source_id));
   revalidatePath(buildAssetDashboardHref(parsed.data.target_type, parsed.data.target_id));
+  revalidatePath("/dashboard");
+  redirect(returnTo);
+}
+
+export async function updateAssetLinkAction(formData: FormData) {
+  const returnTo = getSafeDashboardRedirect(getOptionalString(formData, "return_to"));
+  const parsed = assetLinkUpdateSchema.safeParse({
+    link_id: getString(formData, "link_id"),
+    relation_type: getString(formData, "relation_type"),
+    note: getOptionalString(formData, "note"),
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    getReturnPathWithError(returnTo, parsed.error.issues[0]?.message ?? "请检查显式关系表单。");
+  }
+
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    getReturnPathWithError(returnTo, error ?? "当前账号没有管理员权限。");
+  }
+
+  const { data: existing, error: readError } = await supabase
+    .from("research_asset_links")
+    .select("id,source_type,source_id,target_type,target_id,relation_type")
+    .eq("id", parsed.data.link_id)
+    .maybeSingle();
+
+  if (readError) {
+    console.error("updateAssetLinkAction read failed", {
+      linkId: parsed.data.link_id,
+      code: readError.code,
+      message: readError.message
+    });
+    getReturnPathWithError(returnTo, "读取显式关系失败，请稍后重试。");
+  }
+
+  if (!existing) {
+    getReturnPathWithError(returnTo, "这条显式关系不存在或已被删除。");
+  }
+
+  const link = existing as {
+    id: string;
+    source_type: ResearchAssetType;
+    source_id: string;
+    target_type: ResearchAssetType;
+    target_id: string;
+    relation_type: string;
+  };
+
+  const { error: updateError } = await supabase
+    .from("research_asset_links")
+    .update({
+      relation_type: parsed.data.relation_type,
+      note: parsed.data.note
+    })
+    .eq("id", parsed.data.link_id);
+
+  if (updateError) {
+    console.error("updateAssetLinkAction update failed", {
+      linkId: parsed.data.link_id,
+      sourceType: link.source_type,
+      sourceId: link.source_id,
+      targetType: link.target_type,
+      targetId: link.target_id,
+      relationType: parsed.data.relation_type,
+      code: updateError.code,
+      message: updateError.message
+    });
+    getReturnPathWithError(returnTo, assetLinkErrorMessage(updateError));
+  }
+
+  await writeActivityLog({
+    action: "research_asset_link.update",
+    entityType: "research_asset_link",
+    entityId: parsed.data.link_id,
+    metadata: {
+      source_type: link.source_type,
+      source_id: link.source_id,
+      target_type: link.target_type,
+      target_id: link.target_id,
+      relation_type: parsed.data.relation_type
+    }
+  });
+
+  revalidatePath(getDashboardPathname(returnTo));
+  revalidatePath(buildAssetDashboardHref(link.source_type, link.source_id));
+  revalidatePath(buildAssetDashboardHref(link.target_type, link.target_id));
   revalidatePath("/dashboard");
   redirect(returnTo);
 }

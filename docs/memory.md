@@ -46,6 +46,7 @@
 - Phase 2Q-A-3：Skill 后台详情页升级为能力包 / 工作流包，整合用途说明、平台版本、私密资料、版本记录和相关资产搜索入口。
 - Phase 2Q-A-4：Publication 后台详情页升级为成果中枢，整合成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Phase 2Q-B-1：新增研究资产显式关联关系底座，支持 Project / Knowledge / Skill / Publication 之间的管理员手动关系与 backlinks。
+- Phase 2Q-B-2：优化研究资产显式关系管理体验，支持目标资产本地筛选、关系统计 / 筛选和只修改 relation_type / note 的关系编辑。
 
 当前网站包括：
 
@@ -159,11 +160,14 @@ Research Asset Links：
 
 - `research_asset_links` 是 Project / Knowledge / Skill / Publication 之间的显式关系表，只在管理员后台使用。
 - 关系类型为 `related`、`supports`、`references`、`uses`、`produces`、`derived_from`，当前只作为管理员维护标签，不驱动权限继承、公开展示或自动推理。
-- 四类后台详情页均展示显式关联资产区域，支持创建 outbound 关系、查看 inbound backlinks、打开对方后台详情页和删除关系。
+- 四类后台详情页均展示显式关联资产区域，支持创建 outbound 关系、查看 inbound backlinks、打开对方后台详情页、编辑 relation_type / note 和删除关系。
+- 新增关系时可按目标资产标题和 metadata 本地筛选当前已加载候选；不做异步搜索、外部搜索、文件内容搜索或向量搜索。
+- 关系列表可显示总数、outbound、inbound、当前筛选数量和 relation_type 统计，并按方向、对方资产类型和 relation_type 客户端筛选。
 - 创建关系时必须校验管理员身份、source / target 类型、source / target 记录存在性、自关联和重复关系。
+- 编辑关系时必须校验管理员身份和关系存在性；source / target 不允许编辑，如需更换目标需删除后重新创建。
 - Documents 不纳入 `research_asset_links`；Documents 与文档包继续使用 `documents.related_type / related_id` 和 `document_collections.related_type / related_id`。
 - 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
-- 本阶段不新增 RPC，不引入数据库事务，不做 AI 自动关联、图谱可视化、拖拽连线、公开页面展示或复杂权限继承。
+- 2Q-B-2 不新增 schema、不修改 0019 migration、不新增 RPC、不引入数据库事务；本阶段不做 AI 自动关联、图谱可视化、拖拽连线、公开页面展示或复杂权限继承。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 
 ## Recent Decisions
@@ -188,6 +192,7 @@ Research Asset Links：
 - Phase 2Q-A-3 采用 Skill-capability 决策：继 Project、Knowledge 后把 `/dashboard/skills/[id]` 打磨为能力包 / 工作流包，使用既有 Skill 字段、`skill_versions`、RelatedDocumentsPanel 和后台搜索，不新增资产关系表；Skill package 只存储和管理，不安装、不解析、不执行。
 - Phase 2Q-A-4 采用 Publication-output 决策：继 Project、Knowledge、Skill 后把 `/dashboard/publications/[id]` 打磨为成果中枢，使用既有 Publication 字段、`publications.project_id`、`knowledge_notes.project_id`、RelatedDocumentsPanel 和后台搜索，不新增资产关系表；`file_path` 不展示也不作为下载入口。
 - Phase 2Q-B-1 采用 admin-only research asset links 决策：新增 `research_asset_links` 覆盖 Project / Knowledge / Skill / Publication；Documents 暂不纳入；保留既有 `project_id` 关系；只在管理员后台展示 outbound 和 backlinks；不做 AI 自动关联、图谱、公开展示或复杂权限继承。
+- Phase 2Q-B-2 采用 management-polish 决策：只增强显式关系管理体验；关系仍只覆盖 Project / Knowledge / Skill / Publication；Documents 仍不纳入；edit link 只允许修改 relation_type 和 note，不允许修改 source / target；不新增 schema、migration、RPC、数据库事务、AI 自动关联、图谱可视化、公开展示或复杂权限继承。
 - 后续数据库变更必须新增 `0020_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -246,6 +251,7 @@ Research Asset Links：
 - Phase 2N 旧 Market Brief 遗留迁移：`0013_market_briefs.sql` 至 `0017_market_brief_material_packages.sql`
 - Phase 2P-A：`0018_document_collections_and_folder_uploads.sql`
 - Phase 2Q-B-1：`0019_research_asset_links.sql`
+- Phase 2Q-B-2：不新增 migration，继续依赖已执行的 `0019_research_asset_links.sql`
 
 规则：
 
@@ -268,7 +274,7 @@ Research Asset Links：
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
 - Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。
 - Publication 成果中枢维护：进入 `/dashboard/publications/[id]` 先查看 summary、abstract、成果类型、标签、发表日期和关联 Project；整理成果材料时使用页面内上传成果材料 / 文件夹或 Publication Documents 筛选入口；查找相关资产时查看同项目 Knowledge，并用搜索入口查找 Project / Knowledge / Skill；`file_path` 不作为下载入口。
-- 研究资产显式关系维护：进入任意 Project / Knowledge / Skill / Publication 后台详情页，在“显式关联资产”区域选择目标资产、relation_type 和可选备注；保存后当前页显示 outbound，对方详情页显示 backlink；Documents 仍通过文件面板、Documents 列表和文档包详情页管理。
+- 研究资产显式关系维护：进入任意 Project / Knowledge / Skill / Publication 后台详情页，在“显式关联资产”区域选择目标资产、relation_type 和可选备注；目标较多时用“筛选目标资产”按标题或 metadata 本地过滤；保存后当前页显示 outbound，对方详情页显示 backlink；关系较多时按方向、对方资产类型和 relation_type 筛选；如需修正关系语义或说明，展开“编辑关系”只修改 relation_type / note；如需更换 source / target，删除后重新创建；Documents 仍通过文件面板、Documents 列表和文档包详情页管理。
 - 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
 
 详细流程见 `docs/workflows.md`。
@@ -277,7 +283,7 @@ Research Asset Links：
 
 建议顺序：
 
-1. Phase 2P / 2Q 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 和 `0019_research_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系和 backlinks。
+1. Phase 2P / 2Q 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 和 `0019_research_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。

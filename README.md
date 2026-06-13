@@ -35,7 +35,7 @@
 - Documents 批量删除文件与删除整个文档包及文件
 - Documents 多文件与文档包 zip 临时下载
 - 后台全局搜索 `/dashboard/search`，按数据库 metadata 查找研究资产，并支持类型筛选、结果统计和关键词高亮
-- 研究资产显式关联关系，支持在 Project / Knowledge / Skill / Publication 之间维护人工确认的 outbound 与 backlink
+- 研究资产显式关联关系，支持在 Project / Knowledge / Skill / Publication 之间维护人工确认的 outbound 与 backlink，并支持关系编辑、筛选统计和目标资产本地筛选
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示
 - 文档包整体迁移 / 同步关联工具
 - Project 后台详情页研究中枢，整合研究问题、方法、私密附件、相关知识笔记 / 学术成果和快捷操作
@@ -121,7 +121,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。Phase 2Q-B-1 新增 `supabase/migrations/0019_research_asset_links.sql`，用于创建仅管理员后台使用的 `research_asset_links` 显式关系表。Documents 不纳入该表，继续使用既有 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。新建环境仍需按顺序执行 0001 至 0019。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。Phase 2Q-B-1 新增 `supabase/migrations/0019_research_asset_links.sql`，用于创建仅管理员后台使用的 `research_asset_links` 显式关系表。Phase 2Q-B-2 只优化该关系管理体验，不新增 migration。Documents 不纳入该表，继续使用既有 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。新建环境仍需按顺序执行 0001 至 0019。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -204,6 +204,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2Q-A-3 起 Skill 后台详情页作为能力包 / 工作流包，集中展示用途、平台、版本、状态、使用说明、私密资料和相关资产搜索入口。
 - Phase 2Q-A-4 起 Publication 后台详情页作为成果中枢，集中展示成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Phase 2Q-B-1 起 Project / Knowledge / Skill / Publication 后台详情页支持显式资产关系，管理员可手动维护“相关 / 支持 / 引用 / 使用 / 产出 / 来源于”关系并查看 backlinks。
+- Phase 2Q-B-2 起显式资产关系区域支持本地筛选目标资产、关系统计、方向 / 类型筛选，以及只修改关系类型和备注的编辑流程。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。
@@ -222,7 +223,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 当前 Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD，并通过 Supabase RLS 与管理员身份保护写入。
 - Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。Phase 2P-B 将关联文件区域嵌入 Project、Publication、Knowledge 和 Skill 后台详情页，上传入口仍统一跳转到 `/dashboard/documents/upload` 并通过 query params 预填关联对象、分类、上传模式和文档包类型。Phase 2P-C 在四类内容新建表单加入 create-and-upload flow：先保存内容对象，再跳转统一上传页；不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 支持管理员编辑文件显示名、分类、关联对象，编辑文档包名称、描述、类型、关联对象，并在 Documents 列表按 category、related_type、collection 状态筛选。Phase 2P-E-1 支持在 Documents 列表和文档包详情页批量移动文件关联对象、批量解除文件关联；不修改文档包自身关联或文件 `collection_id`。Phase 2P-E-1-B 澄清内容详情页附件分组：当前对象文档包内文件由文档包卡片代表，不在独立文件中重复展示；文件级关联指向当前对象但仍属于其他文档包的文件进入“跨文档包文件”分组并提示。Phase 2P-E-1-C 在文档包详情页新增整体迁移 / 同步关联工具，可把文档包和包内全部文件一起关联到 Project、Publication、Knowledge 或 Skill，也可一起解除关联；该工具不修改 `collection_id`，不移动、不重命名、不删除 Storage object。Phase 2P-E-2 新增批量删除文件和删除整个文档包及文件，删除时先删除 Storage object，再删除数据库记录；批量删除文件不会自动删除空文档包。Phase 2P-E-3 新增按请求临时生成 zip 下载，支持选中文件 zip、文档包 zip 和内容详情页文档包卡片下载 zip；zip 不保存到 Storage。附件仍默认私密，不公开下载，修改 metadata 不会移动或重命名 Storage object。
 - 后台全局搜索 `/dashboard/search` 只查询数据库 metadata，每类最多返回 8 条；支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选、每类数量统计和标题 / 描述关键词高亮；不读取文件正文，不解析 PDF / Office / zip，不做 OCR、AI 摘要或向量搜索，不生成 signed URL，不输出 Storage path。
-- Project / Knowledge / Skill / Publication 后台详情页已支持显式资产关系面板：管理员可在四类研究资产之间手动创建关系，查看 outbound 和 backlink，并删除关系。现有 `project_id` 关系继续保留，不迁移、不删除；搜索入口也继续作为辅助定位能力。
+- Project / Knowledge / Skill / Publication 后台详情页已支持显式资产关系面板：管理员可在四类研究资产之间手动创建关系，查看 outbound 和 backlink，按方向 / 对方资产类型 / 关系类型筛选，编辑 relation_type 与 note，并删除关系；如需更换 source / target，需要删除后重新创建。现有 `project_id` 关系继续保留，不迁移、不删除；搜索入口也继续作为辅助定位能力。
 - Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
 - Publication 的 `file_path` 不展示也不作为下载入口，`cover_url` 仅作为安全 metadata 状态展示。
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
