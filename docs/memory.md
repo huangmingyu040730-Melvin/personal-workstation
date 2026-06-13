@@ -1,6 +1,6 @@
 # Project Memory
 
-日期：2026-06-13
+日期：2026-06-14
 
 ## Current State
 
@@ -52,6 +52,7 @@
 - Phase 2Q-B-2：优化研究资产显式关系管理体验，支持目标资产本地筛选、关系统计 / 筛选和只修改 relation_type / note 的关系编辑。
 - Phase 2Q-B-3：曾新增后台全局研究资产关系视图 MVP；Phase 2Q-B-4 已取消并移除该独立页面，显式关系系统保留在四类资产详情页中。
 - Phase 2Q-B-4：移除后台全局研究资产关系视图模块；保留 `research_asset_links`、0019 migration、AssetLinksPanel、outbound / backlink、relation_type / note 维护能力。
+- Phase 2R-A-1：公开首页与公开导航 polish，站点身份保留“黄铭语研究工作站”，首页 H1 使用“个人研究工作站”，首屏采用左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构；#100 追加 UI polish 后，Knowledge / Skill 首页预览使用紧凑卡片展示最多 4 条 public 内容，公开导航保留轻量“管理员登录”入口。
 
 当前网站包括：
 
@@ -76,8 +77,10 @@
 - 后台写操作必须在 Server Action 中验证登录和管理员身份，并继续依赖 RLS。
 - 公开页面只展示 `visibility = "public"` 的内容。
 - private / restricted / unlisted 内容不得进入公开列表、公开首页或 sitemap。
+- Phase 2R-A 后，公开导航面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”；不得展示后台菜单、文件中心或全局关系图谱入口。
 - Documents 始终保持管理员私密文件，不对外开放。
 - signed URL 只由管理员流程短时生成，不保存到数据库，不输出到公开页面。
+- 公开 Publication 页面和首页不得展示历史 `file_path`、Storage 路径、signed URL、附件下载、Documents 多资产关联或 `research_asset_links` 管理功能。
 - `robots.txt` 和 `sitemap.xml` 不是安全边界；真正安全边界依赖 Supabase Auth、RLS、Storage policy 和后台路由保护。
 - 不提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL、Storage 内部路径或 `service_role`。
 
@@ -209,6 +212,7 @@ Research Asset Links：
 - Phase 2Q-B-2 采用 management-polish 决策：只增强显式关系管理体验；关系仍只覆盖 Project / Knowledge / Skill / Publication；Documents 仍不纳入；edit link 只允许修改 relation_type 和 note，不允许修改 source / target；不新增 schema、migration、RPC、数据库事务、AI 自动关联、图谱可视化、公开展示或复杂权限继承。
 - Phase 2Q-B-3 的 read-only global relation view 决策已被 Phase 2Q-B-4 取代；旧的独立全局关系页面不再是当前能力。
 - Phase 2Q-B-4 采用 remove network view 决策：用户判断全局关系可视化对实际工作效率帮助有限，因此移除独立全局关系页面、侧边栏入口和 AssetLinksPanel 附近的全局入口；保留 `research_asset_links`、0019 migration、Server Action、查询、校验、AssetLinksPanel、outbound / backlink、relation_type / note 和详情页内关系筛选 / 编辑。
+- Phase 2R-A-1 采用 public presentation polish 决策：后台核心能力阶段性完成后转向公开展示质量；公开首页聚合研究方向、公开内容预览和访问申请，hero H1 改为“个人研究工作站”并恢复左侧文案 + 右侧统计卡片结构；Knowledge / Skill 首页预览改为紧凑卡片；公开导航保留轻量“管理员登录”但不展示后台菜单；公开页面继续只展示 public 内容，不公开 Documents、附件、Storage 路径、signed URL、后台文件关联或显式关系管理。
 - 后续数据库变更必须新增 `0021_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues

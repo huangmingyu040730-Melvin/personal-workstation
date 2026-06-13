@@ -1,14 +1,13 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { profile } from "@/lib/mock-data";
 
 const navItems = [
   { label: "首页", href: "/" },
   { label: "研究项目", href: "/projects" },
   { label: "学术成果", href: "/publications" },
+  { label: "知识库", href: "/knowledge" },
   { label: "Skill 库", href: "/skills" },
-  { label: "知识文章", href: "/knowledge" },
-  { label: "关于我", href: "/about" },
   { label: "访问申请", href: "/access-request" }
 ];
 
@@ -32,13 +31,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
                 {item.label}
               </Link>
             ))}
-            <Link href="/login" className="public-cta-motion inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700">
+            <Link href="/login?next=/dashboard" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+              <LogIn size={15} />
               管理员登录
-              <ArrowRight size={15} />
-            </Link>
-            <Link href="/viewer/login" className="public-cta-motion inline-flex items-center gap-2 rounded-full bg-blue-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800">
-              授权登录
-              <ArrowRight size={15} />
             </Link>
           </nav>
         </div>
@@ -46,12 +41,15 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       {children}
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-[1680px] flex-col gap-4 px-5 py-9 text-sm text-slate-500 md:flex-row md:items-center md:justify-between lg:px-12 2xl:px-16">
-          <p>黄铭语公开研究工作站 · 仅展示明确设为 public 的研究内容</p>
+          <p>黄铭语研究工作站 · 仅展示明确设为 public 的研究内容</p>
           <div className="flex flex-wrap gap-3">
+            <Link href="/projects" className="font-medium text-slate-600 hover:text-blue-700">研究项目</Link>
+            <Link href="/publications" className="font-medium text-slate-600 hover:text-blue-700">学术成果</Link>
+            <Link href="/knowledge" className="font-medium text-slate-600 hover:text-blue-700">知识库</Link>
+            <Link href="/skills" className="font-medium text-slate-600 hover:text-blue-700">Skill 库</Link>
             <Link href="/about" className="font-medium text-slate-600 hover:text-blue-700">关于我</Link>
-            <Link href="/access-request" className="font-medium text-slate-600 hover:text-blue-700">申请查看受限内容</Link>
-            <Link href="/viewer/login" className="font-medium text-slate-600 hover:text-blue-700">授权访问登录</Link>
-            <Link href="/login" className="font-medium text-slate-600 hover:text-blue-700">管理员登录</Link>
+            <Link href="/access-request" className="font-medium text-slate-600 hover:text-blue-700">访问申请</Link>
+            <Link href="/login?next=/dashboard" className="font-medium text-slate-600 hover:text-blue-700">管理员登录</Link>
           </div>
         </div>
       </footer>

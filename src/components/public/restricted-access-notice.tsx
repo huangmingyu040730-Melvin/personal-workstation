@@ -26,7 +26,7 @@ export function RestrictedAccessNotice({
             已获授权，邮箱登录
           </Link>
         </div>
-        <p className="mt-5 text-xs leading-5 text-slate-500">授权访问只开放对应内容详情，不开放后台、文件中心或附件下载。</p>
+        <p className="mt-5 text-xs leading-5 text-slate-500">授权访问只开放对应内容详情，不开放后台、内部附件库或附件下载。</p>
       </Card>
     </section>
   );

@@ -171,7 +171,7 @@ export async function getViewableKnowledgeNoteBySlug(slug: string) {
   const { data, error } = await supabase
     .from("knowledge_notes")
     .select("*, projects(id,title,slug)")
-    .in("visibility", ["public", "restricted", "private"] satisfies Visibility[])
+    .in("visibility", ["public", "restricted"] satisfies Visibility[])
     .eq("slug", slug)
     .maybeSingle();
 

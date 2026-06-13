@@ -4,6 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import type { Visibility } from "@/lib/types";
 import { getPublicProjectById } from "./projects";
 
+const publicPublicationSelect = "id,slug,title,publication_type,summary,abstract,published_on,tags,is_featured,project_id,visibility,created_at,updated_at";
+
+type PublicPublicationSafeRecord = Omit<PublicationRecord, "cover_url" | "file_path">;
+
+function applyPublicPublicationBoundary(publication: PublicPublicationSafeRecord): PublicationRecord {
+  return {
+    ...publication,
+    cover_url: null,
+    file_path: null
+  };
+}
+
 function mockPublicationFallback(): PublicationRecord[] {
   return mockPublications.map((publication) => ({
     id: publication.id,
@@ -122,7 +134,7 @@ export async function getPublicPublications(filters?: { publicationType?: string
 
   let query = supabase
     .from("publications")
-    .select("*, projects(id,title,slug)")
+    .select(publicPublicationSelect)
     .eq("visibility", "public" satisfies Visibility)
     .order("is_featured", { ascending: false })
     .order("published_on", { ascending: false, nullsFirst: false })
@@ -139,7 +151,7 @@ export async function getPublicPublications(filters?: { publicationType?: string
     return [];
   }
 
-  const publications = (data ?? []) as PublicationRecord[];
+  const publications = ((data ?? []) as PublicPublicationSafeRecord[]).map(applyPublicPublicationBoundary);
   return filters?.q ? publications.filter((publication) => matchesPublicationSearch(publication, filters.q ?? "")) : publications;
 }
 
@@ -152,7 +164,7 @@ export async function getPublicPublicationBySlug(slug: string) {
 
   const { data, error } = await supabase
     .from("publications")
-    .select("*")
+    .select(publicPublicationSelect)
     .eq("visibility", "public" satisfies Visibility)
     .eq("slug", slug)
     .maybeSingle();
@@ -162,7 +174,7 @@ export async function getPublicPublicationBySlug(slug: string) {
     return null;
   }
 
-  const publication = data as PublicationRecord | null;
+  const publication = data ? applyPublicPublicationBoundary(data as PublicPublicationSafeRecord) : null;
 
   if (!publication) {
     return null;
@@ -181,8 +193,8 @@ export async function getViewablePublicationBySlug(slug: string) {
 
   const { data, error } = await supabase
     .from("publications")
-    .select("*, projects(id,title,slug)")
-    .in("visibility", ["public", "restricted", "private"] satisfies Visibility[])
+    .select(publicPublicationSelect)
+    .in("visibility", ["public", "restricted"] satisfies Visibility[])
     .eq("slug", slug)
     .maybeSingle();
 
@@ -191,7 +203,14 @@ export async function getViewablePublicationBySlug(slug: string) {
     return null;
   }
 
-  return data as PublicationRecord | null;
+  const publication = data ? applyPublicPublicationBoundary(data as PublicPublicationSafeRecord) : null;
+
+  if (!publication) {
+    return null;
+  }
+
+  const project = await getPublicProjectById(publication.project_id);
+  return { ...publication, projects: project ? { id: project.id, title: project.title, slug: project.slug } : null };
 }
 
 export async function getPublicPublicationsByProjectId(projectId: string, limit = 4) {
@@ -205,7 +224,7 @@ export async function getPublicPublicationsByProjectId(projectId: string, limit 
 
   const { data, error } = await supabase
     .from("publications")
-    .select("*")
+    .select(publicPublicationSelect)
     .eq("visibility", "public" satisfies Visibility)
     .eq("project_id", projectId)
     .order("published_on", { ascending: false, nullsFirst: false })
@@ -217,7 +236,7 @@ export async function getPublicPublicationsByProjectId(projectId: string, limit 
     return [];
   }
 
-  return (data ?? []) as PublicationRecord[];
+  return ((data ?? []) as PublicPublicationSafeRecord[]).map(applyPublicPublicationBoundary);
 }
 
 export async function getPublicationsByProjectId(projectId: string, limit = 5) {
@@ -279,7 +298,7 @@ export async function getFeaturedPublicPublications(limit = 3) {
 
   const { data, error } = await supabase
     .from("publications")
-    .select("*, projects(id,title,slug)")
+    .select(publicPublicationSelect)
     .eq("visibility", "public" satisfies Visibility)
     .eq("is_featured", true)
     .order("published_on", { ascending: false, nullsFirst: false })
@@ -291,7 +310,7 @@ export async function getFeaturedPublicPublications(limit = 3) {
     return [];
   }
 
-  return (data ?? []) as PublicationRecord[];
+  return ((data ?? []) as PublicPublicationSafeRecord[]).map(applyPublicPublicationBoundary);
 }
 
 export async function countPublicPublications() {

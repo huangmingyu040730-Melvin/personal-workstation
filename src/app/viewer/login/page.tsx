@@ -38,7 +38,7 @@ export default async function ViewerLoginPage({
           <p className="mt-6 text-sm font-semibold text-blue-700">Restricted Access</p>
           <h1 className="mt-3 text-3xl font-semibold text-slate-950">授权访问登录</h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">
-            这里用于外部访客查看已获授权的 restricted 内容。登录后仍不能进入后台，也不能访问文件中心或私密附件。
+            这里用于外部访客查看已获授权的 restricted 内容。登录后仍不能进入后台，也不能访问内部附件库或私密附件。
           </p>
           {!isSupabaseConfigured ? (
             <p className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">

@@ -35,7 +35,7 @@ export default async function AccessRequestPage({
             </p>
             <p>如果你希望查看某个未公开研究项目、成果、Skill、知识文章或未来受限材料，可以在右侧提交申请。</p>
             <p>请不要在申请理由中填写敏感个人隐私、机密资料、账号信息或不适合公开系统保存的内容。</p>
-            <p className="rounded-2xl bg-slate-50 p-4 text-slate-700">申请通过后，管理员可以为指定邮箱创建单条内容授权；授权不包含后台、文件中心或附件下载。</p>
+            <p className="rounded-2xl bg-slate-50 p-4 text-slate-700">申请通过后，管理员可以为指定邮箱创建单条内容授权；授权不包含后台、内部附件库或附件下载。</p>
           </div>
         </Card>
         <Card>

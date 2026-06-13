@@ -7,8 +7,8 @@ import { getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 import { publicPageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = publicPageMetadata({
-  title: "知识文章 | 黄铭语",
-  description: "浏览黄铭语公开研究工作站中的公开知识文章、研究笔记、工具方法和阅读沉淀。",
+  title: "知识库 | 黄铭语",
+  description: "浏览黄铭语公开研究工作站中的公开知识笔记、研究文章、工具方法和阅读沉淀。",
   path: "/knowledge"
 });
 
@@ -23,8 +23,8 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
     <PublicShell>
       <PublicPageHero
         eyebrow="Knowledge Base"
-        title="公开知识文章"
-        description="浏览已公开的研究笔记、工具方法、阅读沉淀与知识工作流。这里只展示明确公开的文章。"
+        title="公开知识库"
+        description="浏览已公开的研究笔记、工具方法、阅读沉淀与知识工作流。这里只展示明确公开的内容。"
       />
       <section className="mx-auto max-w-[1680px] px-5 py-10 lg:px-12 2xl:px-16">
         <form className="mb-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft md:grid-cols-[1fr_240px_auto]">
