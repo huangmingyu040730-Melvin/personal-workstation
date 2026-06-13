@@ -1357,3 +1357,30 @@
 - 公开 Project 页面、viewer/restricted、Resume、Career、Market Brief、Storage policy、RLS 和 Documents 底层流程不受影响。
 - 不读取文件正文，不解析附件，不做 OCR、AI 摘要、向量搜索或文件内容索引。
 - 不暴露 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
+
+## 2026-06-13 - Use Knowledge Detail As Knowledge Node
+
+类型：decision
+
+决策：
+
+- Phase 2Q-A-2 继 Project 详情页后，第二个 polish 对象选择 `/dashboard/knowledge/[id]`。
+- Knowledge 详情页作为知识节点，连接摘要、正文、分类、标签、关联 Project、私密资料、同项目成果和后台搜索入口。
+- 关联 Project 只使用现有 `knowledge_notes.project_id`，不新增字段或关系表。
+- 相关成果不伪造直接关系；如果 Knowledge 已关联 Project，则展示同项目 `publications.project_id` 成果，最多 5 条。
+- Publication / Skill 与 Knowledge 的直接显式关联留到后续 Phase 2Q-B 再设计。
+- 没有显式关联字段时，先通过 `/dashboard/search?q=...&type=...` 辅助查找相关 Project / Publication / Skill。
+- 本 PR 不引入 AI、OCR、文件内容索引、向量搜索、migration、RPC、索引、关系表或 Storage 行为。
+
+原因：
+
+- Project 研究中枢已经建立后，Knowledge 是研究沉淀中最常用的节点，需要比普通 CRUD 详情页更清楚地承接观点、资料、方法和摘录。
+- 现有 `knowledge_notes.project_id` 和 `publications.project_id` 已能表达“同项目上下文”，可以先改善后台整理体验。
+- 直接的跨资产关系模型需要统一设计，过早给 Knowledge、Publication、Skill 单点加字段容易造成后续关系不一致。
+
+影响：
+
+- `/dashboard/knowledge/[id]` 视觉和信息架构变为知识节点，但保留返回、编辑和删除能力。
+- RelatedDocumentsPanel 继续保持既有私密附件分组和上传入口，不读取附件正文，不生成 signed URL，不显示 Storage path。
+- 公开 Knowledge 页面、Project / Publication / Skill 详情页、viewer/restricted、Resume、Career、Market Brief、Storage policy 和 RLS 不受影响。
+- 不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
