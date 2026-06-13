@@ -118,7 +118,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 不新增数据库步骤，继续依赖既有字段。2P-F-1 和 2P-F-2 只新增并打磨后台 metadata 搜索入口；2Q-A-1 只优化 Project 后台详情页研究中枢；2Q-A-2 只优化 Knowledge 后台详情页知识节点，不需要新的 migration、索引或 RPC。新建环境仍需按顺序执行 0001 至 0018。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 不新增数据库步骤，继续依赖既有字段。2P-F-1 和 2P-F-2 只新增并打磨后台 metadata 搜索入口；2Q-A-1 只优化 Project 后台详情页研究中枢；2Q-A-2 只优化 Knowledge 后台详情页知识节点；2Q-A-3 只优化 Skill 后台详情页能力包 / 工作流包，不需要新的 migration、索引或 RPC。新建环境仍需按顺序执行 0001 至 0018。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -148,6 +148,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/knowledge` 知识库管理
 - `/dashboard/knowledge/[id]` 知识节点详情中枢
 - `/dashboard/skills` Skill 库管理
+- `/dashboard/skills/[id]` Skill 能力包详情中枢
 - `/dashboard/documents` 文件中心管理
 - `/dashboard/documents/upload` 单文件、多文件与文件夹上传
 - `/dashboard/documents/collections/[id]` 文档包详情
@@ -196,6 +197,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2P-F-2 起后台全局搜索支持 `type` 类型筛选、每类数量统计、选中类型空状态和标题 / 描述关键词高亮。
 - Phase 2Q-A-1 起 Project 后台详情页作为研究项目中枢，集中展示研究框架、私密附件、相关知识笔记 / 学术成果和快捷操作。
 - Phase 2Q-A-2 起 Knowledge 后台详情页作为知识节点，集中展示知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口。
+- Phase 2Q-A-3 起 Skill 后台详情页作为能力包 / 工作流包，集中展示用途、平台、版本、状态、使用说明、私密资料和相关资产搜索入口。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。
@@ -216,6 +218,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 后台全局搜索 `/dashboard/search` 只查询数据库 metadata，每类最多返回 8 条；支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选、每类数量统计和标题 / 描述关键词高亮；不读取文件正文，不解析 PDF / Office / zip，不做 OCR、AI 摘要或向量搜索，不生成 signed URL，不输出 Storage path。
 - Project 后台详情页已优化为研究项目中枢，读取现有 Project 字段、RelatedDocumentsPanel、`knowledge_notes.project_id` 和 `publications.project_id`；Skill 当前没有显式项目关联字段，因此只提供后台搜索快捷入口。本阶段不新增关系表、migration、RPC 或 Storage 行为。
 - Knowledge 后台详情页已优化为知识节点，读取现有 Knowledge 字段、关联 Project、RelatedDocumentsPanel 和同项目 Publications；如果没有显式关联字段，则只提供后台搜索入口。本阶段不新增关系表、migration、RPC、AI、OCR、文件内容索引或向量搜索。
+- Skill 后台详情页已优化为能力包 / 工作流包，读取现有 Skill 字段、Skill 版本记录、RelatedDocumentsPanel 和后台搜索入口；当前没有 Skill 到 Project / Knowledge / Publication 的显式关联字段，因此不伪造相关资产，只提供搜索入口。Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。

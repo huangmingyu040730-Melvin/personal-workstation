@@ -58,6 +58,7 @@
 - 后台全局搜索 `/dashboard/search`，按研究资产 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包，并支持类型筛选、统计和关键词高亮。
 - Project 后台详情页研究中枢：集中展示项目概览、研究问题、背景、方法、里程碑、私密附件、相关知识笔记 / 学术成果和快捷操作。
 - Knowledge 后台详情页知识节点：集中展示知识摘要、正文、分类、标签、关联 Project、私密附件、同项目成果和搜索入口。
+- Skill 后台详情页能力包 / 工作流包：集中展示用途、平台、版本、状态、使用说明、私密资料、版本记录和相关资产搜索入口。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
 - 文档包整体迁移 / 同步关联工具。
 - Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
@@ -137,6 +138,26 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
 - 不修改公开 Knowledge 页面、Project / Skill / Publication 详情页、viewer/restricted、Resume、Career 或 Market Brief。
+
+### Skill Detail Capability Hub
+
+已完成：
+
+- `/dashboard/skills/[id]` 详情页从普通 CRUD 展示升级为能力包 / 工作流包。
+- 首屏保留返回、编辑、删除入口，并展示分类、平台、状态、当前版本、可见性和更新时间。
+- 页面集中展示能力包概览、用途说明、输入说明、输出说明、使用指南、`SKILL.md`、平台版本信息、版本记录和 metadata。
+- 继续复用 RelatedDocumentsPanel 展示 Skill 资料与能力包附件，包括文档包、独立文件和跨文档包文件。
+- 快捷操作进入编辑 Skill、上传 Skill 资料、上传 Skill 资料文件夹、该 Skill Documents 筛选页、按 Skill 名称搜索和按 platform 搜索。
+- 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段；页面不伪造相关资产，只提供 `/dashboard/search?q=...&type=...` 搜索入口。
+- Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
+
+边界：
+
+- 不新增 migration、RPC、索引、关系表或字段。
+- 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 逻辑或 `storage_path` 生成规则。
+- 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
+- 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
+- 不修改公开 Skill 页面、Project / Knowledge / Publication 详情页、viewer/restricted、Resume、Career 或 Market Brief。
 
 ### Documents And Storage
 
@@ -265,7 +286,7 @@ Phase 2P-A 新增 Documents 文档包与文件夹上传能力后需要继续执�
 
 `0018` 创建 `document_collections`，为 `documents` 增加 `collection_id`、`original_name`、`relative_path`、`folder_path`，扩展 `workspace-files` bucket 的文件大小上限与 MIME 白名单。该 migration 不公开附件、不修改历史 migration、不放宽 Storage/RLS。
 
-Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 不新增 migration。文件与文档包 metadata 编辑、批量移动关联对象、批量解除关联、内容详情页分组展示、文档包整体迁移 / 同步关联、批量删除文件、删除整个文档包及文件、zip 临时下载、后台 metadata 搜索、搜索体验增强、Project 详情页研究中枢和 Knowledge 详情页知识节点均复用既有字段，不修改 Storage policy。
+Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 不新增 migration。文件与文档包 metadata 编辑、批量移动关联对象、批量解除关联、内容详情页分组展示、文档包整体迁移 / 同步关联、批量删除文件、删除整个文档包及文件、zip 临时下载、后台 metadata 搜索、搜索体验增强、Project 详情页研究中枢、Knowledge 详情页知识节点和 Skill 详情页能力包均复用既有字段，不修改 Storage policy。
 
 规则：
 
@@ -289,7 +310,7 @@ Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行�
 
 Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有工作台”：
 
-- 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系；Project 后台详情页可作为单个研究项目的中枢入口，Knowledge 后台详情页可作为单个知识节点入口，先整理研究框架、正文摘要、私密附件、同项目成果和相关搜索入口。
+- 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系；Project 后台详情页可作为单个研究项目的中枢入口，Knowledge 后台详情页可作为单个知识节点入口，Skill 后台详情页可作为能力包 / 工作流包入口，先整理研究框架、正文摘要、使用说明、平台版本、私密附件和相关搜索入口。
 - 公开展示：保持公开首页、About、Projects、Publications、Knowledge 和 Skills 的只读展示稳定。
 - 文件 / 知识管理：Documents 作为可维护的统一私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；Knowledge Base 继续维护内容本身，不开放公开附件下载。需要调整单个文件时使用文件详情页，需要调整多个文件时使用 Documents 批量移动，需要调整整个资料包关联时使用文档包整体迁移 / 同步关联工具，需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。

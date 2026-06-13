@@ -344,6 +344,27 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
 - 不修改 Resume / Career、viewer/restricted 或 Market Brief。
 
+### Phase 2Q-A-3 - Skill Detail Capability Hub
+
+已完成代码实现。Skill 后台详情页从普通 CRUD 展示升级为单个能力包 / 工作流包：
+
+- `/dashboard/skills/[id]` 集中展示 Skill 名称、分类、平台、状态、当前版本、可见性、更新时间、用途说明、输入输出说明、使用指南、`SKILL.md`、版本记录和 metadata。
+- 保留返回、编辑和删除 Skill 入口。
+- 继续复用 RelatedDocumentsPanel 展示 Skill 资料与能力包附件，包括文档包、独立文件和跨文档包文件。
+- 快捷操作支持编辑 Skill、上传 Skill 资料、上传 Skill 资料文件夹、进入该 Skill Documents 筛选页、按 Skill 名称搜索、搜索相关 Project / Knowledge / Publication，以及按 platform 搜索全局资产。
+- 当前 Skill 没有 Project / Knowledge / Publication 显式关联字段，本阶段不伪造相关资产，只提供搜索入口。
+- Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
+
+边界：
+
+- 不新增 migration、RPC、索引、关系表或字段。
+- 不新增公开页面入口，不修改公开 Skill 详情页。
+- 不修改 Project、Knowledge 或 Publication 详情页逻辑。
+- 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 流程或 `storage_path` 生成规则。
+- 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
+- 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
+- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。

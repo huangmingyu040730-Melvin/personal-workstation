@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点；这些阶段都不新增数据库步骤。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包；这些阶段都不新增数据库步骤。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。附件对外授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -58,7 +58,7 @@ AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODE
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 均不新增 migration，继续依赖既有字段。2P-E-3 仅新增 `jszip` 应用依赖和 Route Handler；2P-F-1 和 2P-F-2 仅新增并打磨应用层 metadata 搜索入口；2Q-A-1 仅使用现有 Project 字段、RelatedDocumentsPanel、`knowledge_notes.project_id`、`publications.project_id` 和后台搜索快捷入口；2Q-A-2 仅使用现有 Knowledge 字段、`knowledge_notes.project_id`、`publications.project_id`、RelatedDocumentsPanel 和后台搜索快捷入口，不需要新的数据库步骤、索引或 RPC。执行 0018 后，后续数据库变更应新增 `0019_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 均不新增 migration，继续依赖既有字段。2P-E-3 仅新增 `jszip` 应用依赖和 Route Handler；2P-F-1 和 2P-F-2 仅新增并打磨应用层 metadata 搜索入口；2Q-A-1 仅使用现有 Project 字段、RelatedDocumentsPanel、`knowledge_notes.project_id`、`publications.project_id` 和后台搜索快捷入口；2Q-A-2 仅使用现有 Knowledge 字段、`knowledge_notes.project_id`、`publications.project_id`、RelatedDocumentsPanel 和后台搜索快捷入口；2Q-A-3 仅使用现有 Skill 字段、`skill_versions`、RelatedDocumentsPanel 和后台搜索快捷入口，不需要新的数据库步骤、索引或 RPC。执行 0018 后，后续数据库变更应新增 `0019_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -380,10 +380,11 @@ Document Collection 权限边界：
 - `/dashboard/search` 只查询数据库 metadata，类型筛选和关键词高亮只发生在应用展示层，不读取 Storage object，不生成 signed URL，不需要数据库迁移、索引或 RPC。
 - `/dashboard/projects/[id]` 研究项目中枢只读取现有 Project、Knowledge Note、Publication metadata 和既有 RelatedDocumentsPanel 数据，不新增数据库结构或公开附件入口。
 - `/dashboard/knowledge/[id]` 知识节点只读取现有 Knowledge、Project、Publication metadata 和既有 RelatedDocumentsPanel 数据，不新增数据库结构或公开附件入口。
+- `/dashboard/skills/[id]` 能力包 / 工作流包只读取现有 Skill、Skill Version metadata 和既有 RelatedDocumentsPanel 数据，不新增数据库结构或公开附件入口；Skill package 不安装、不解析、不执行。
 - 本阶段不做 OCR、文件内容索引或 AI 总结。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
-Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 只使用既有字段增强后台管理能力，不新增 migration。文件 metadata 编辑只更新显示名称、分类和关联对象；文档包 metadata 编辑只更新名称、描述、类型和关联对象；批量移动和批量解除关联只更新 `documents.related_type` / `documents.related_id`；RelatedDocumentsPanel 分组展示只改变后台展示；文档包整体迁移 / 同步关联只同步更新 `document_collections.related_type / related_id` 和包内全部 `documents.related_type / related_id`；批量删除文件会删除所选 `documents` 记录与对应 Storage object，删除整个文档包及文件会删除包内文件和 `document_collections` 记录；zip 下载按请求临时读取 Storage object 并生成响应；全局搜索只查询 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections metadata，类型筛选和关键词高亮只影响展示体验；Project 研究中枢只聚合现有 Project 字段、私密附件面板和相关资产 metadata；Knowledge 知识节点只聚合现有 Knowledge 字段、关联 Project、同项目 Publications、私密附件面板和搜索入口。这些操作不会修改 `storage_path` 生成规则，不会移动或重命名 Supabase Storage object，不会修改 Storage policy，也不会新增数据库事务或 RPC。
+Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 只使用既有字段增强后台管理能力，不新增 migration。文件 metadata 编辑只更新显示名称、分类和关联对象；文档包 metadata 编辑只更新名称、描述、类型和关联对象；批量移动和批量解除关联只更新 `documents.related_type` / `documents.related_id`；RelatedDocumentsPanel 分组展示只改变后台展示；文档包整体迁移 / 同步关联只同步更新 `document_collections.related_type / related_id` 和包内全部 `documents.related_type / related_id`；批量删除文件会删除所选 `documents` 记录与对应 Storage object，删除整个文档包及文件会删除包内文件和 `document_collections` 记录；zip 下载按请求临时读取 Storage object 并生成响应；全局搜索只查询 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections metadata，类型筛选和关键词高亮只影响展示体验；Project 研究中枢只聚合现有 Project 字段、私密附件面板和相关资产 metadata；Knowledge 知识节点只聚合现有 Knowledge 字段、关联 Project、同项目 Publications、私密附件面板和搜索入口；Skill 能力包只聚合现有 Skill 字段、版本记录、私密附件面板和搜索入口。这些操作不会修改 `storage_path` 生成规则，不会移动或重命名 Supabase Storage object，不会修改 Storage policy，也不会新增数据库事务或 RPC。
 
 ## 创建管理员
 
