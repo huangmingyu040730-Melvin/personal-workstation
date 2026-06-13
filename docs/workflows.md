@@ -499,7 +499,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2Q-B-1 / 2Q-B-2 / 2Q-B-3 的研究资产显式关系底座，在 Project / Knowledge / Skill / Publication 之间记录管理员手动确认的关系，并通过筛选、编辑、backlink 和全局网络视图日常整理关系。
+- 维护 Phase 2Q-B-1 / 2Q-B-2 / 2Q-B-3 / 2Q-B-4 的研究资产显式关系底座，在 Project / Knowledge / Skill / Publication 之间记录管理员手动确认的关系，并通过筛选、编辑、backlink 和全局动态关系图谱日常整理关系。
 
 步骤：
 
@@ -514,13 +514,15 @@ npm run build
 9. 需要修正关系语义或说明时，展开“编辑关系”，只更新 relation_type 或 note。
 10. 如果 source / target 选错，删除该关系后重新创建；不要通过编辑流程更换关系两端。
 11. 需要查看全局结构时，进入 `/dashboard/network` 或点击显式关联资产区域的“查看关系图谱”。
-12. 在 `/dashboard/network` 查看节点总数、关系总数、四类资产节点数量、relation_type 数量、节点分组和全部关系列表。
-13. 在 `/dashboard/network` 中用资产类型、relation_type 和关键词筛选；关键词只匹配节点标题和 metadata。
-14. 从网络节点、source 或 target 点击进入对应资产详情页，再维护 create / edit / delete。
-15. 需要移除关系时，在任一显示该关系的详情页使用“删除关系”。
-16. Documents 仍通过 RelatedDocumentsPanel、Documents 列表和文档包详情页管理，不通过 `research_asset_links` 管理，也不出现在关系图谱中。
-17. 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
-18. 未确认关系时先用 `/dashboard/search` 查找候选资产，不用 AI 或推断自动建立关系。
+12. 在 `/dashboard/network` 查看节点总数、关系总数、四类资产节点数量、relation_type 数量、动态 force graph 和辅助全部关系列表。
+13. 在动态图谱中拖动节点、缩放 / 平移画布，使用“适配画布”和“重置视图”理解中心资产、孤立资产和连接密集区域。
+14. 点击节点查看类型、标题、metadata、入度和出度；点击关系线查看 source、relation_type、target、note 和更新时间。
+15. 在 `/dashboard/network` 中用资产类型、relation_type 和关键词筛选；关键词只匹配节点标题和 metadata，筛选会同步影响动态图谱、统计和辅助关系列表。
+16. 从节点详情、关系详情、source 或 target 点击进入对应资产详情页，再维护 create / edit / delete。
+17. 需要移除关系时，在任一显示该关系的详情页使用“删除关系”。
+18. Documents 仍通过 RelatedDocumentsPanel、Documents 列表和文档包详情页管理，不通过 `research_asset_links` 管理，也不出现在关系图谱中。
+19. 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
+20. 未确认关系时先用 `/dashboard/search` 查找候选资产，不用 AI 或推断自动建立关系。
 
 验证要求：
 
@@ -531,8 +533,8 @@ npm run build
 - 确认目标资产搜索可按中文标题或 metadata 过滤候选项。
 - 确认方向、对方资产类型和 relation_type 筛选不会触发公开页面变化。
 - 确认“编辑关系”只修改 relation_type 和 note，source / target 保持不变。
-- 确认 `/dashboard/network` 只读展示全局研究资产网络，可按资产类型、relation_type 和关键词筛选。
-- 确认 `/dashboard/network` 节点、source 和 target 均可跳转到对应后台详情页。
+- 确认 `/dashboard/network` 只读展示全局研究资产动态关系图谱，可拖动节点、缩放 / 平移画布，并可按资产类型、relation_type 和关键词筛选。
+- 确认 `/dashboard/network` 节点详情、关系详情、source 和 target 均可跳转到对应后台详情页。
 - 确认自关联会被拒绝，重复关系会显示友好错误。
 - 确认删除关系后双方详情页都不再显示该关系。
 - 确认公开页面不展示显式关系，不展示 Storage path、signed URL 或 secret。

@@ -1,35 +1,37 @@
 import { researchAssetRelationTypes, researchAssetTypes } from "@/lib/content-options";
-import type { AssetNetworkGraph } from "@/lib/queries/asset-network";
+import type { AssetNetworkEdge, AssetNetworkNode } from "@/lib/queries/asset-network";
 
 type AssetNetworkSummaryProps = {
-  graph: AssetNetworkGraph;
-  visibleNodeCount: number;
-  visibleEdgeCount: number;
+  nodes: AssetNetworkNode[];
+  edges: AssetNetworkEdge[];
+  totalNodeCount: number;
+  totalEdgeCount: number;
 };
 
 export function AssetNetworkSummary({
-  graph,
-  visibleNodeCount,
-  visibleEdgeCount
+  nodes,
+  edges,
+  totalNodeCount,
+  totalEdgeCount
 }: AssetNetworkSummaryProps) {
   const nodeCounts = researchAssetTypes.map((item) => ({
     label: item.label,
-    value: graph.nodes.filter((node) => node.assetType === item.value).length
+    value: nodes.filter((node) => node.assetType === item.value).length
   }));
   const relationCounts = researchAssetRelationTypes
     .map((item) => ({
       label: item.label,
-      value: graph.edges.filter((edge) => edge.relationType === item.value).length
+      value: edges.filter((edge) => edge.relationType === item.value).length
     }))
     .filter((item) => item.value > 0);
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="节点总数" value={graph.nodes.length} />
-        <SummaryMetric label="关系总数" value={graph.edges.length} />
-        <SummaryMetric label="当前节点" value={visibleNodeCount} />
-        <SummaryMetric label="当前关系" value={visibleEdgeCount} />
+        <SummaryMetric label="节点总数" value={nodes.length} />
+        <SummaryMetric label="关系总数" value={edges.length} />
+        <SummaryMetric label="已加载节点" value={totalNodeCount} />
+        <SummaryMetric label="已加载关系" value={totalEdgeCount} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

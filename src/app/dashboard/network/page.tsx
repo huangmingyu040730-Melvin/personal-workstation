@@ -14,8 +14,8 @@ export default async function DashboardNetworkPage() {
       <AdminPageSurface>
         <PageHeader
           eyebrow="Research Network"
-          title="研究资产网络"
-          description="查看 Project、Knowledge、Skill、Publication 之间的显式关系网络。当前页面只读，关系维护仍在各资产详情页完成。"
+          title="研究资产关系图谱"
+          description="以动态网络形式查看 Project、Knowledge、Skill、Publication 之间的显式关系。当前页面只读，关系维护仍在各资产详情页完成。"
           action={
             <Link href="/dashboard/search" className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100">
               <Network size={16} />

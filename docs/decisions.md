@@ -1529,3 +1529,36 @@
 - 后台侧边栏新增“关系图谱”入口，AssetLinksPanel 增加“查看关系图谱”快捷入口。
 - 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-13 - Upgrade Research Asset Network To Interactive Force Graph
+
+类型：decision
+
+决策：
+
+- Phase 2Q-B-4 将 `/dashboard/network` 从 2Q-B-3 的列表式 Network MVP 升级为动态 2D force-directed 关系图谱。
+- 新增 `react-force-graph-2d` 依赖，并通过 client component + dynamic import 加载，避免 Next.js SSR / build 直接执行浏览器依赖。
+- 图谱仍只读取最近更新的 200 条 `research_asset_links` 和 Project / Knowledge / Skill / Publication 基础 metadata。
+- 节点大小按前端派生的 degree 调整，节点颜色按资产类型区分；关系线按 relation_type 使用颜色 / 样式和 hover / detail 信息区分。
+- 图谱支持节点拖动、画布缩放 / 平移、适配画布、重置视图、hover 节点标题、点击节点详情和点击关系详情。
+- `/dashboard/network` 保留统计、筛选和全部关系列表，但动态图谱是页面主视觉；关系列表仅作为辅助核对。
+- 资产类型、relation_type 和关键词筛选只在已加载数据内前端执行，并同步影响动态图谱、统计和辅助关系列表。
+- Network View 继续只读，不提供 create / edit / delete；关系创建、编辑和删除仍在各资产详情页的 AssetLinksPanel 完成。
+- Documents 不纳入图谱；Documents 与文档包继续使用 `documents.related_type / related_id` 与 `document_collections.related_type / related_id`。
+- 本阶段不新增 schema，不修改 `0019_research_asset_links.sql`，不新增 migration、RPC 或数据库事务。
+- 不做 3D 图谱、拖拽创建关系、图谱编辑、批量关系管理、AI 自动关联、公开展示、文件内容索引、OCR、向量搜索、外部搜索服务或复杂权限继承。
+
+原因：
+
+- 2Q-B-3 的全局网络视图能展示关系列表和节点分组，但视觉上仍偏普通后台列表，难以一眼看出中心资产、孤立资产或连接密集区域。
+- force-directed graph 更适合表达研究资产之间的多对多显式关系，同时可以保持只读，避免把图谱变成另一个关系编辑入口。
+- `react-force-graph-2d` 能以较低实现成本提供拖拽、缩放、平移和 canvas 渲染；通过 dynamic import 可以避免 SSR 风险。
+- 已执行的 0019 migration 应保持稳定，动态图谱只使用前端派生字段，不新增数据库字段。
+
+影响：
+
+- 新增 `src/components/asset-network/force-network-graph.tsx` 和 `src/components/asset-network/force-network-graph-panel.tsx`。
+- `/dashboard/network` 页面标题升级为“研究资产关系图谱”，主视觉为动态 canvas graph。
+- `package.json` / `package-lock.json` 新增 `react-force-graph-2d`。
+- 公开页面、viewer/restricted、Documents、Storage policy、Resume、Career、Calendar、Profile 和 Market Brief 不受影响。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path，不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。

@@ -10,7 +10,8 @@ import {
   type AssetNetworkAssetTypeFilter,
   type AssetNetworkRelationTypeFilter
 } from "./asset-network-filters";
-import { AssetNetworkNodeGroups, type AssetNetworkNodeDegree } from "./asset-network-node-groups";
+import { ForceNetworkGraph } from "./force-network-graph";
+import type { AssetNetworkNodeDegree } from "./asset-network-node-groups";
 import { AssetNetworkSummary } from "./asset-network-summary";
 
 type AssetNetworkViewProps = {
@@ -68,9 +69,6 @@ export function AssetNetworkView({ graph, linkLimit }: AssetNetworkViewProps) {
 
   const nodeById = useMemo(() => buildNodeRecord(graph.nodes), [graph.nodes]);
   const degrees = useMemo(() => buildNodeDegreeMap(graph.edges), [graph.edges]);
-  const nodeFilterActive = assetType !== "all" || normalizeFilterText(keyword).length > 0;
-  const relationFilterActive = relationType !== "all";
-
   const matchingNodeIds = useMemo(
     () =>
       new Set(
@@ -84,37 +82,21 @@ export function AssetNetworkView({ graph, linkLimit }: AssetNetworkViewProps) {
   const visibleEdges = useMemo(
     () =>
       graph.edges.filter((edge) => {
-        if (!matchesRelationFilter(edge, relationType)) {
-          return false;
-        }
-
-        if (!nodeFilterActive) {
-          return true;
-        }
-
-        return matchingNodeIds.has(edge.sourceNodeId) || matchingNodeIds.has(edge.targetNodeId);
+        return (
+          matchesRelationFilter(edge, relationType) &&
+          matchingNodeIds.has(edge.sourceNodeId) &&
+          matchingNodeIds.has(edge.targetNodeId)
+        );
       }),
-    [graph.edges, matchingNodeIds, nodeFilterActive, relationType]
+    [graph.edges, matchingNodeIds, relationType]
   );
 
-  const visibleNodes = useMemo(() => {
-    if (nodeFilterActive) {
-      return graph.nodes.filter((node) => matchingNodeIds.has(node.id));
-    }
+  const visibleNodes = useMemo(
+    () => graph.nodes.filter((node) => matchingNodeIds.has(node.id)),
+    [graph.nodes, matchingNodeIds]
+  );
 
-    if (relationFilterActive) {
-      const relatedNodeIds = new Set<string>();
-
-      for (const edge of visibleEdges) {
-        relatedNodeIds.add(edge.sourceNodeId);
-        relatedNodeIds.add(edge.targetNodeId);
-      }
-
-      return graph.nodes.filter((node) => relatedNodeIds.has(node.id));
-    }
-
-    return graph.nodes;
-  }, [graph.nodes, matchingNodeIds, nodeFilterActive, relationFilterActive, visibleEdges]);
+  const visibleNodeById = useMemo(() => buildNodeRecord(visibleNodes), [visibleNodes]);
 
   if (graph.edges.length === 0) {
     return (
@@ -135,9 +117,10 @@ export function AssetNetworkView({ graph, linkLimit }: AssetNetworkViewProps) {
           description={`最多读取最近更新的 ${linkLimit} 条显式关系；当前只展示 Project、Knowledge、Skill、Publication。`}
         />
         <AssetNetworkSummary
-          graph={graph}
-          visibleNodeCount={visibleNodes.length}
-          visibleEdgeCount={visibleEdges.length}
+          nodes={visibleNodes}
+          edges={visibleEdges}
+          totalNodeCount={graph.nodes.length}
+          totalEdgeCount={graph.edges.length}
         />
       </Card>
 
@@ -156,32 +139,33 @@ export function AssetNetworkView({ graph, linkLimit }: AssetNetworkViewProps) {
         />
       </Card>
 
-      {visibleEdges.length === 0 ? (
-        <Card>
+      <Card>
+        <CardHeader
+          title="动态图谱"
+          description="拖动节点、缩放或平移画布，点击节点或关系线查看详情；创建、编辑、删除仍在资产详情页完成。"
+        />
+        <ForceNetworkGraph
+          nodes={visibleNodes}
+          edges={visibleEdges}
+          nodeById={visibleNodeById}
+          degrees={degrees}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="全部关系列表"
+          description="辅助只读列表，用于核对 source、relation_type 和 target；图谱上方筛选会同步影响这里。"
+        />
+        {visibleEdges.length === 0 ? (
           <AdminEmptyState
             title="当前筛选条件下没有关系"
             description="可以放宽资产类型、关系类型或关键词筛选。"
           />
-        </Card>
-      ) : (
-        <>
-          <Card>
-            <CardHeader
-              title="节点分组"
-              description="按资产类型展示当前筛选范围内的节点；出度和入度基于最近读取的显式关系计算。"
-            />
-            <AssetNetworkNodeGroups nodes={visibleNodes} degrees={degrees} />
-          </Card>
-
-          <Card>
-            <CardHeader
-              title="全部关系列表"
-              description="只读列表，用于从全局视角查看 source、relation_type 和 target；创建、编辑、删除仍在资产详情页完成。"
-            />
-            <AssetNetworkEdgeList edges={visibleEdges} nodeById={nodeById} />
-          </Card>
-        </>
-      )}
+        ) : (
+          <AssetNetworkEdgeList edges={visibleEdges} nodeById={nodeById} />
+        )}
+      </Card>
     </div>
   );
 }
