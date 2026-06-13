@@ -10,7 +10,6 @@ import {
   Home,
   KeyRound,
   Library,
-  Network,
   Settings,
   Search,
   UserRound,
@@ -37,8 +36,7 @@ export const sidebarGroups = [
     label: "总览",
     items: [
       { label: "工作台", href: "/dashboard", icon: Home },
-      { label: "全局搜索", href: "/dashboard/search", icon: Search },
-      { label: "关系图谱", href: "/dashboard/network", icon: Network }
+      { label: "全局搜索", href: "/dashboard/search", icon: Search }
     ]
   },
   {

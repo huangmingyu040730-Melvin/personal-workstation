@@ -427,25 +427,46 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 ### Phase 2Q-B-3 - Research Asset Network View MVP
 
-已完成代码实现。基于 2Q-B-1 / 2Q-B-2 的显式关系底座，新增管理员后台只读研究资产网络视图：
+历史状态：曾完成代码实现，但已被 Phase 2Q-B-4 移除。基于 2Q-B-1 / 2Q-B-2 的显式关系底座，当时新增管理员后台只读全局关系页面：
 
-- 新增 `/dashboard/network`，并在后台侧边栏显示“关系图谱”入口。
+- 新增独立后台全局关系页面，并在后台侧边栏显示入口。
 - 最多读取最近更新的 200 条 `research_asset_links`，节点只来自这些关系的 source / target。
 - 页面展示节点总数、关系总数、Project / Knowledge / Skill / Publication 节点数量和 relation_type 数量。
-- 采用轻量分组列表图谱：按资产类型展示节点卡片、出度、入度和详情入口，不引入复杂图谱库。
+- 采用轻量分组列表：按资产类型展示节点卡片、出度、入度和详情入口，不引入复杂可视化库。
 - 页面下方展示只读“全部关系列表”，source / target 均可跳转到对应后台详情页。
 - 支持按资产类型、relation_type 和节点标题 / metadata 关键词进行前端本地筛选。
-- 四类资产详情页的显式关联资产区域增加“查看关系图谱”入口。
+- 四类资产详情页的显式关联资产区域曾增加全局页面入口。
 
 边界：
 
-- `/dashboard/network` 只读，不提供 create / edit / delete；关系维护仍在资产详情页完成。
-- 只展示 Project / Knowledge / Skill / Publication；Documents 仍不纳入图谱。
+- 该全局页面只读，不提供 create / edit / delete；关系维护仍在资产详情页完成。
+- 只展示 Project / Knowledge / Skill / Publication；Documents 仍不纳入显式关系表。
 - 不新增 schema，不修改 `0019_research_asset_links.sql`，不新增 migration、RPC 或数据库事务。
-- 不引入 d3、cytoscape、react-flow 等复杂图谱库，不做拖拽连线、图谱编辑或批量关系管理。
+- 不引入 d3、cytoscape、react-flow 等复杂可视化库，不做拖拽连线、编辑或批量关系管理。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 - 不做 AI 自动关联、公开展示、向量搜索、外部搜索服务或复杂权限继承。
 - 不修改 Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
+
+### Phase 2Q-B-4 - Remove Research Asset Network View
+
+已完成代码实现。用户判断全局关系页面对实际工作效率帮助有限，因此取消该大模块，保留单个资产详情页中的显式关系管理：
+
+- 删除独立后台全局关系页面，不再提供全局关系可视化入口。
+- 删除后台侧边栏中的全局关系入口。
+- 删除四类资产详情页 AssetLinksPanel 附近的全局页面入口。
+- 删除该页面专用查询和组件。
+- 保留 `research_asset_links` 表、`0019_research_asset_links.sql`、Server Actions、校验、查询和 AssetLinksPanel。
+- Project / Knowledge / Skill / Publication 详情页仍可创建、编辑、删除显式关系，查看 outbound 和 backlink。
+
+边界：
+
+- 不删除 `research_asset_links` 表。
+- 不删除或修改 `0019_research_asset_links.sql`。
+- 不新增 migration，不新增 RPC，不修改 RLS 或 Storage policy。
+- 不做新的可视化替代方案，不引入新的可视化库。
+- 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
+- Documents 不纳入 `research_asset_links`，继续使用文件和文档包的既有关联模型。
+- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
 
 ### Phase 2D - Public Research Workstation
 

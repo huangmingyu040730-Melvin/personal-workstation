@@ -47,7 +47,8 @@
 - Phase 2Q-A-4：Publication 后台详情页升级为成果中枢，整合成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Phase 2Q-B-1：新增研究资产显式关联关系底座，支持 Project / Knowledge / Skill / Publication 之间的管理员手动关系与 backlinks。
 - Phase 2Q-B-2：优化研究资产显式关系管理体验，支持目标资产本地筛选、关系统计 / 筛选和只修改 relation_type / note 的关系编辑。
-- Phase 2Q-B-3：新增后台研究资产关系图谱 MVP，通过 `/dashboard/network` 只读展示最近更新的 200 条显式关系、节点分组、统计、筛选和全局关系列表。
+- Phase 2Q-B-3：曾新增后台全局研究资产关系视图 MVP；Phase 2Q-B-4 已取消并移除该独立页面，显式关系系统保留在四类资产详情页中。
+- Phase 2Q-B-4：移除后台全局研究资产关系视图模块；保留 `research_asset_links`、0019 migration、AssetLinksPanel、outbound / backlink、relation_type / note 维护能力。
 
 当前网站包括：
 
@@ -164,13 +165,13 @@ Research Asset Links：
 - 四类后台详情页均展示显式关联资产区域，支持创建 outbound 关系、查看 inbound backlinks、打开对方后台详情页、编辑 relation_type / note 和删除关系。
 - 新增关系时可按目标资产标题和 metadata 本地筛选当前已加载候选；不做异步搜索、外部搜索、文件内容搜索或向量搜索。
 - 关系列表可显示总数、outbound、inbound、当前筛选数量和 relation_type 统计，并按方向、对方资产类型和 relation_type 客户端筛选。
-- 后台 `/dashboard/network` 提供全局只读研究资产网络视图，读取最近更新的 200 条 `research_asset_links`，并聚合 Project / Knowledge / Skill / Publication 的基础 metadata 形成节点和边。
-- `/dashboard/network` 支持资产类型、relation_type 和节点标题 / metadata 关键词本地筛选，展示节点分组、关系统计和全部关系列表，并从节点或 source / target 跳回对应后台详情页。
+- 全局研究资产关系视图页面已在 Phase 2Q-B-4 取消并移除；后台不再提供独立全局关系页面、可视化网络或 force graph。
+- 显式关系维护仍在 Project / Knowledge / Skill / Publication 后台详情页的 AssetLinksPanel 内完成，通过单个资产详情页查看 outbound 和 backlinks。
 - 创建关系时必须校验管理员身份、source / target 类型、source / target 记录存在性、自关联和重复关系。
 - 编辑关系时必须校验管理员身份和关系存在性；source / target 不允许编辑，如需更换目标需删除后重新创建。
 - Documents 不纳入 `research_asset_links`；Documents 与文档包继续使用 `documents.related_type / related_id` 和 `document_collections.related_type / related_id`。
 - 现有 `knowledge_notes.project_id` 与 `publications.project_id` 继续保留，不迁移、不删除、不自动转换。
-- 2Q-B-2 / 2Q-B-3 不新增 schema、不修改 0019 migration、不新增 RPC、不引入数据库事务；本阶段不做 AI 自动关联、复杂图谱库、拖拽连线、公开页面展示或复杂权限继承。
+- 2Q-B-2 / 2Q-B-3 / 2Q-B-4 不新增 schema、不修改 0019 migration、不新增 RPC、不引入数据库事务；本阶段不做 AI 自动关联、复杂关系可视化、拖拽连线、公开页面展示或复杂权限继承。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 
 ## Recent Decisions
@@ -196,7 +197,8 @@ Research Asset Links：
 - Phase 2Q-A-4 采用 Publication-output 决策：继 Project、Knowledge、Skill 后把 `/dashboard/publications/[id]` 打磨为成果中枢，使用既有 Publication 字段、`publications.project_id`、`knowledge_notes.project_id`、RelatedDocumentsPanel 和后台搜索，不新增资产关系表；`file_path` 不展示也不作为下载入口。
 - Phase 2Q-B-1 采用 admin-only research asset links 决策：新增 `research_asset_links` 覆盖 Project / Knowledge / Skill / Publication；Documents 暂不纳入；保留既有 `project_id` 关系；只在管理员后台展示 outbound 和 backlinks；不做 AI 自动关联、图谱、公开展示或复杂权限继承。
 - Phase 2Q-B-2 采用 management-polish 决策：只增强显式关系管理体验；关系仍只覆盖 Project / Knowledge / Skill / Publication；Documents 仍不纳入；edit link 只允许修改 relation_type 和 note，不允许修改 source / target；不新增 schema、migration、RPC、数据库事务、AI 自动关联、图谱可视化、公开展示或复杂权限继承。
-- Phase 2Q-B-3 采用 read-only network view 决策：新增 `/dashboard/network` 作为管理员后台只读全局关系图谱；仅读取最近更新的 200 条 `research_asset_links` 和四类研究资产基础 metadata；使用轻量分组列表图谱、筛选和关系列表，不引入 d3、cytoscape、react-flow 等复杂图谱库；不新增 schema、migration、RPC、数据库事务、AI 自动关联、公开展示或权限继承。
+- Phase 2Q-B-3 的 read-only global relation view 决策已被 Phase 2Q-B-4 取代；旧的独立全局关系页面不再是当前能力。
+- Phase 2Q-B-4 采用 remove network view 决策：用户判断全局关系可视化对实际工作效率帮助有限，因此移除独立全局关系页面、侧边栏入口和 AssetLinksPanel 附近的全局入口；保留 `research_asset_links`、0019 migration、Server Action、查询、校验、AssetLinksPanel、outbound / backlink、relation_type / note 和详情页内关系筛选 / 编辑。
 - 后续数据库变更必须新增 `0020_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -279,7 +281,7 @@ Research Asset Links：
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
 - Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。
 - Publication 成果中枢维护：进入 `/dashboard/publications/[id]` 先查看 summary、abstract、成果类型、标签、发表日期和关联 Project；整理成果材料时使用页面内上传成果材料 / 文件夹或 Publication Documents 筛选入口；查找相关资产时查看同项目 Knowledge，并用搜索入口查找 Project / Knowledge / Skill；`file_path` 不作为下载入口。
-- 研究资产显式关系维护：进入任意 Project / Knowledge / Skill / Publication 后台详情页，在“显式关联资产”区域选择目标资产、relation_type 和可选备注；目标较多时用“筛选目标资产”按标题或 metadata 本地过滤；保存后当前页显示 outbound，对方详情页显示 backlink；关系较多时按方向、对方资产类型和 relation_type 筛选；如需全局理解网络，从详情页点击“查看关系图谱”或进入 `/dashboard/network`，按资产类型、relation_type 和关键词筛选最近 200 条关系，并从节点或关系列表跳回详情页维护；如需修正关系语义或说明，展开“编辑关系”只修改 relation_type / note；如需更换 source / target，删除后重新创建；Documents 仍通过文件面板、Documents 列表和文档包详情页管理。
+- 研究资产显式关系维护：进入任意 Project / Knowledge / Skill / Publication 后台详情页，在“显式关联资产”区域选择目标资产、relation_type 和可选备注；目标较多时用“筛选目标资产”按标题或 metadata 本地过滤；保存后当前页显示 outbound，对方详情页显示 backlink；关系较多时按方向、对方资产类型和 relation_type 筛选；如需理解某个资产的关系上下文，从该资产详情页查看 outbound 和 backlinks，并通过对方资产链接继续跳转；如需修正关系语义或说明，展开“编辑关系”只修改 relation_type / note；如需更换 source / target，删除后重新创建；Documents 仍通过文件面板、Documents 列表和文档包详情页管理。
 - 项目记忆更新：先读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`，再按 SOP 同步 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`、`docs/workflows.md`，并标记 stale / superseded。
 
 详细流程见 `docs/workflows.md`。
@@ -288,7 +290,7 @@ Research Asset Links：
 
 建议顺序：
 
-1. Phase 2P / 2Q 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 和 `0019_research_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选、关系编辑和 `/dashboard/network` 全局只读关系图谱。
+1. Phase 2P / 2Q 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql` 和 `0019_research_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、批量关联整理、RelatedDocumentsPanel 分组展示、文档包整体迁移 / 同步关联工具、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
@@ -314,3 +316,4 @@ Research Asset Links：
 - “后续数据库变更应新增 `0019_*`”已过时。`0019_research_asset_links.sql` 已存在，后续应使用 `0020_*` 或更高编号。
 - “Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计”已过时。Phase 2Q-B-1 已新增 `research_asset_links` 管理员后台显式关系底座，但 Documents 仍保持独立附件关系模型。
 - “Skill 当前没有 Project / Knowledge / Publication 显式关联字段，只能搜索相关资产”已过时。Skill 仍不新增单独外键字段，但可通过 `research_asset_links` 建立显式关系。
+- “后台存在独立全局研究资产关系视图页面”已过时。Phase 2Q-B-4 已移除该模块；显式关系仍在四类资产详情页维护。
