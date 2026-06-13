@@ -215,6 +215,28 @@ export async function getPublicKnowledgeNotesByProjectId(projectId: string, opti
   return (data ?? []) as KnowledgeNoteRecord[];
 }
 
+export async function getKnowledgeNotesByProjectId(projectId: string, limit = 5) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockKnowledgeFallback().filter((note) => note.project_id === projectId).slice(0, limit);
+  }
+
+  const { data, error } = await supabase
+    .from("knowledge_notes")
+    .select("id,slug,title,category,excerpt,content,tags,is_featured,project_id,visibility,created_at,updated_at")
+    .eq("project_id", projectId)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("getKnowledgeNotesByProjectId failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  return (data ?? []) as KnowledgeNoteRecord[];
+}
+
 export async function getRelatedPublicKnowledgeNotes(note: KnowledgeNoteRecord, limit = 3) {
   if (note.project_id) {
     const relatedByProject = await getPublicKnowledgeNotesByProjectId(note.project_id, { limit, excludeSlug: note.slug });

@@ -1411,3 +1411,32 @@
 - RelatedDocumentsPanel 继续保持既有私密附件分组和上传入口，不读取附件正文，不生成 signed URL，不显示 Storage path。
 - 公开 Skill 页面、Project / Knowledge / Publication 详情页、viewer/restricted、Resume、Career、Market Brief、Storage policy 和 RLS 不受影响。
 - 不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
+
+## 2026-06-13 - Use Publication Detail As Output Hub
+
+类型：decision
+
+决策：
+
+- Phase 2Q-A-4 继 Project、Knowledge、Skill 之后，第四个 polish 对象选择 `/dashboard/publications/[id]`。
+- Publication 详情页作为研究成果中枢，连接 summary、abstract、关联 Project、私密成果材料、同项目 Knowledge 和后台搜索入口。
+- 关联 Project 只使用现有 `publications.project_id`，不新增字段或关系表。
+- 同项目 Knowledge 只使用现有 `knowledge_notes.project_id`；如果 Publication 未关联 Project，则不展示推断关系，只提供搜索入口。
+- 当前不新增 Publication 到 Knowledge / Skill 的显式关系，不伪造相关资产。
+- 资产之间的显式跨关系留到后续 Phase 2Q-B 统一设计。
+- `file_path` 不在后台详情页展示，也不作为下载入口；`cover_url` 仅作为安全 metadata 状态展示。
+- 本 PR 不引入 AI、OCR、文件内容索引、向量搜索、migration、RPC、索引、关系表或 Storage 行为。
+
+原因：
+
+- Project、Knowledge、Skill 详情页已经建立后，Publication 是研究输出的核心节点，需要一个能承接成果摘要、附件、项目上下文和相关知识的后台入口。
+- 现有 `publications.project_id` 与 `knowledge_notes.project_id` 已能表达“同项目上下文”，可以先改善成果整理体验。
+- 直接跨资产关系模型需要统一设计，过早给 Publication 单点加关系字段容易和后续 Project / Knowledge / Skill 关系模型冲突。
+- Publication 表历史上存在 `file_path` 字段，但当前附件系统已经由 Documents 私密底座承接；继续避免把历史文件路径误当作下载能力。
+
+影响：
+
+- `/dashboard/publications/[id]` 视觉和信息架构变为成果中枢，但保留返回、编辑和删除能力。
+- RelatedDocumentsPanel 继续保持既有私密附件分组和上传入口，不读取附件正文，不生成 signed URL，不显示 Storage path。
+- 公开 Publication 页面、Project / Knowledge / Skill 详情页、viewer/restricted、Resume、Career、Market Brief、Storage policy 和 RLS 不受影响。
+- 不记录或输出 API key、Supabase key、Authorization header、cookie、token、signed URL 或 secret。
