@@ -156,15 +156,24 @@ select {
 
 .public-hero-research-backdrop::before {
   position: absolute;
-  inset: 8% 4% auto auto;
-  width: min(46vw, 720px);
-  height: min(42vw, 620px);
+  inset: 6% auto auto 3%;
+  width: min(58vw, 820px);
+  height: min(46vw, 640px);
   content: "";
   background:
-    radial-gradient(circle at 34% 34%, rgba(37, 99, 235, 0.12), transparent 28%),
-    radial-gradient(circle at 70% 64%, rgba(82, 101, 66, 0.12), transparent 31%);
+    radial-gradient(circle at 34% 34%, rgba(37, 99, 235, 0.13), transparent 29%),
+    radial-gradient(circle at 68% 58%, rgba(82, 101, 66, 0.10), transparent 34%);
   filter: blur(2px);
   transition: opacity 420ms ease, transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.public-hero-research-backdrop::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(circle at 18% 48%, rgba(255, 255, 255, 0.76), transparent 28%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.42) 34%, rgba(255, 255, 255, 0.08) 62%, transparent 82%);
 }
 
 .public-hero-shell:hover > .public-hero-research-backdrop::before {
@@ -188,14 +197,14 @@ select {
 }
 
 .public-hero-formula-top {
-  right: 9%;
-  top: 15%;
+  left: 8%;
+  top: 13%;
   transform: rotate(-3deg);
 }
 
 .public-hero-formula-bottom {
-  bottom: 16%;
-  left: 45%;
+  bottom: 11%;
+  left: 10%;
   color: rgba(82, 101, 66, 0.18);
   transform: rotate(2deg);
 }
@@ -234,25 +243,27 @@ select {
 }
 
 .public-hero-paper-primary {
-  right: 26%;
-  top: 10%;
-  width: 220px;
-  height: 130px;
+  left: 4%;
+  top: 23%;
+  width: 260px;
+  height: 150px;
+  opacity: 0.42;
   transform: rotate(-5deg);
 }
 
 .public-hero-paper-secondary {
-  right: 4%;
-  bottom: 14%;
+  left: 34%;
+  bottom: 13%;
   width: 178px;
   height: 106px;
+  opacity: 0.32;
   transform: rotate(7deg);
 }
 
 .public-hero-candles {
   position: absolute;
-  right: 8%;
-  top: 24%;
+  left: 7%;
+  bottom: 9%;
   display: flex;
   align-items: flex-end;
   gap: 12px;
@@ -267,6 +278,7 @@ select {
     rgba(255, 255, 255, 0.36);
   background-size: 28px 28px;
   box-shadow: 0 28px 80px rgba(15, 42, 88, 0.07);
+  opacity: 0.72;
   transform: rotate(3deg);
 }
 
@@ -302,9 +314,9 @@ select {
 
 .public-hero-scatter {
   position: absolute;
-  right: 17%;
-  bottom: 8%;
-  width: 260px;
+  left: 29%;
+  top: 32%;
+  width: 280px;
   height: 150px;
   border-radius: 28px;
   background:
@@ -316,18 +328,19 @@ select {
     linear-gradient(rgba(15, 42, 88, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(15, 42, 88, 0.035) 1px, transparent 1px);
   background-size: auto, auto, auto, auto, auto, 32px 32px, 32px 32px;
-  opacity: 0.55;
+  opacity: 0.48;
 }
 
 .public-hero-frontier {
   position: absolute;
-  right: 12%;
-  bottom: 18%;
-  width: 250px;
+  left: 31%;
+  bottom: 23%;
+  width: 270px;
   height: 120px;
   border-top: 2px solid rgba(37, 99, 235, 0.22);
   border-right: 2px solid rgba(37, 99, 235, 0.12);
   border-radius: 58% 42% 0 0;
+  opacity: 0.74;
   transform: rotate(-8deg);
 }
 
@@ -474,11 +487,11 @@ select {
   }
 
   .public-hero-paper-primary {
-    right: -68px;
-    top: 18%;
+    left: -72px;
+    top: 21%;
     width: 150px;
     height: 96px;
-    opacity: 0.42;
+    opacity: 0.24;
   }
 
   .public-hero-paper-secondary {
@@ -486,28 +499,28 @@ select {
   }
 
   .public-hero-candles {
-    right: -72px;
-    top: 43%;
+    left: -86px;
+    top: 48%;
     width: 164px;
     height: 118px;
     gap: 8px;
-    opacity: 0.34;
+    opacity: 0.18;
   }
 
   .public-hero-scatter {
-    right: -70px;
+    right: -82px;
     bottom: 7%;
     width: 190px;
     height: 112px;
-    opacity: 0.34;
+    opacity: 0.24;
   }
 
   .public-hero-frontier {
-    right: -54px;
-    bottom: 17%;
+    left: -74px;
+    bottom: 18%;
     width: 166px;
     height: 82px;
-    opacity: 0.46;
+    opacity: 0.22;
   }
 }
 

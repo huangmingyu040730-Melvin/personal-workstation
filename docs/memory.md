@@ -53,7 +53,7 @@
 - Phase 2Q-B-3：曾新增后台全局研究资产关系视图 MVP；Phase 2Q-B-4 已取消并移除该独立页面，显式关系系统保留在四类资产详情页中。
 - Phase 2Q-B-4：移除后台全局研究资产关系视图模块；保留 `research_asset_links`、0019 migration、AssetLinksPanel、outbound / backlink、relation_type / note 维护能力。
 - Phase 2R-A-1：公开首页与公开导航 polish，站点身份保留“黄铭语研究工作站”，首页 H1 使用“个人研究工作站”，首屏采用左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构；#100 追加 UI polish 后，Knowledge / Skill 首页预览使用紧凑卡片展示最多 4 条 public 内容，公开导航保留轻量“管理员登录”入口。
-- Phase 2R-A-2：公开首页 hero 视觉识别 polish，保留左文案 + 右统计卡片结构和 H1“个人研究工作站”，用自绘 CSS 金融 / 量化 / 研究背景元素与系统中文 serif 字体栈增强专业感；不新增 migration，不引入字体文件、外部字体服务、图表库或动画库。
+- Phase 2R-A-2：公开首页 hero 视觉识别 polish，保留左文案 + 右统计卡片结构和 H1“个人研究工作站”，用自绘 CSS 金融 / 量化 / 研究背景元素与系统中文 serif 字体栈增强专业感；#101 预览反馈后将背景装饰重心移到左侧 / 中间偏左，右侧统计卡片区保持干净；不新增 migration，不引入字体文件、外部字体服务、图表库或动画库。
 
 当前网站包括：
 
