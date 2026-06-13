@@ -453,3 +453,43 @@ npm run build
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
 - 确认相关 Project / Knowledge / Publication 只提供搜索快捷入口，不伪造关联数据。
 - 确认公开 Skill 页面不展示后台能力包、附件下载、Storage 路径或 signed URL。
+
+## Publication Output Hub Workflow
+
+日期：2026-06-13
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2Q-A-4 的 Publication 后台详情页成果中枢，围绕单个成果整理 summary、abstract、关联 Project、私密材料、同项目 Knowledge 和相关资产搜索入口。
+
+步骤：
+
+1. 在 `/dashboard/publications/new` 创建 Publication，必要时选择关联 Project。
+2. 进入 `/dashboard/publications/[id]` 查看单个成果中枢。
+3. 先核对成果标题、类型、可见性、标签、发表日期和更新时间。
+4. 在“成果概览”中确认 summary、成果类型、关联 Project、可见性、标签和更新时间是否完整。
+5. 在“成果摘要 / Summary”和“Abstract”中查看成果说明；空字段显示友好空状态。
+6. 需要修改成果本身时使用“编辑成果”入口，不在详情页新增富文本编辑能力。
+7. 需要管理成果材料时使用页面内 RelatedDocumentsPanel，继续按文档包、独立文件和跨文档包文件理解附件关系。
+8. 需要上传单个成果材料时使用“上传成果材料”，由统一 `/dashboard/documents/upload` 通过 query params 预填 `related_type=publication` 和当前 `related_id`。
+9. 需要上传成果材料文件夹时使用“上传成果材料文件夹”，继续复用 Documents 文件夹上传和文档包流程。
+10. 需要查看该成果全部附件时使用“查看相关 Documents”，进入带当前 Publication 关联筛选的 Documents 列表。
+11. 关联 Project 只读取 `publications.project_id`；没有关联时不推断 Project，改用 Project 搜索入口。
+12. 同项目 Knowledge 只读取关联 Project 下的 `knowledge_notes.project_id`；没有关联 Project 时不伪造 Knowledge 关系。
+13. Skill 当前没有显式 Publication 关系；需要查找相关 Skill 时使用成果标题或标签进入 `/dashboard/search`。
+14. Publication / Knowledge / Skill 的直接显式关联关系留到后续 Phase 2Q-B 统一设计。
+15. `file_path` 不展示、不作为下载入口；`cover_url` 仅作为后台 metadata 状态展示。
+16. 本阶段不新增资产关系表、数据库字段、migration、RPC、索引、AI、OCR、文件内容索引或向量搜索。
+17. Publication 成果中枢不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 确认 `/dashboard/publications/[id]` 保留返回、编辑和删除入口。
+- 确认 summary、abstract、成果类型、标签、可见性、关联 Project 和 metadata 展示正常，空字段有友好空状态。
+- 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
+- 确认同项目 Knowledge 只通过现有 `project_id` 展示，Skill 只提供搜索快捷入口。
+- 确认公开 Publication 页面不展示后台成果中枢、附件下载、Storage 路径、signed URL 或 `file_path`。

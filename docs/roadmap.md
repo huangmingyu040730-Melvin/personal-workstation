@@ -365,6 +365,29 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
 - 不修改 Resume / Career、viewer/restricted 或 Market Brief。
 
+### Phase 2Q-A-4 - Publication Detail Output Hub
+
+已完成代码实现。Publication 后台详情页从普通 CRUD 展示升级为单个研究成果中枢：
+
+- `/dashboard/publications/[id]` 集中展示成果标题、类型、可见性、标签、发表日期、更新时间、summary、abstract、关联 Project、成果 metadata 和私密材料。
+- 保留返回、编辑和删除成果入口。
+- 继续复用 RelatedDocumentsPanel 展示成果材料与附件，包括文档包、独立文件和跨文档包文件。
+- 快捷操作支持编辑成果、上传成果材料、上传成果材料文件夹、进入该成果 Documents 筛选页、按成果标题搜索、搜索相关 Project / Knowledge / Skill，以及打开关联 Project。
+- 关联 Project 使用现有 `publications.project_id`，没有关联时显示空状态和 Project 搜索入口。
+- 同项目 Knowledge 使用现有 `knowledge_notes.project_id`，最多展示 5 条。
+- Skill 当前没有 Publication 显式关联字段，本阶段只提供按成果标题或标签搜索 Skill 的入口。
+- `file_path` 不展示、不作为下载入口；`cover_url` 仅作为后台 metadata 状态展示。
+
+边界：
+
+- 不新增 migration、RPC、索引、关系表或字段。
+- 不新增公开页面入口，不修改公开 Publication 详情页。
+- 不修改 Project、Knowledge 或 Skill 详情页逻辑。
+- 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 流程或 `storage_path` 生成规则。
+- 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
+- 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
+- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
