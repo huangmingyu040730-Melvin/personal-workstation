@@ -1702,3 +1702,30 @@
 - 不使用真实市场数据、具体股票代码、外部图片、字体文件、外部字体服务、图表库或动画库。
 - 不新增 migration，不新增 RPC，不修改 RLS、Storage policy、Supabase schema、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career 或 Market Brief。
 - 公开页面仍只展示 public 内容，不公开 Documents、附件下载、Storage path、signed URL、`file_path`、`document_asset_links`、`research_asset_links` 管理功能或任何 secret。
+
+## 2026-06-14 - Polish Public Research Listing Pages
+
+类型：decision
+
+决策：
+
+- Phase 2R-A-3 将 `/projects`、`/publications`、`/knowledge`、`/skills` 从基础内容列表 polish 为统一公开研究内容索引页。
+- 四页复用统一 listing header、公开统计、轻量筛选面板、filter chips、公开内容卡片和空状态。
+- 筛选只基于已有 public 字段和 URL query params，例如 status、type、category、tag、platform、featured 和轻量关键词过滤。
+- Publications 公开列表继续只使用安全公开字段；公开查询仍不返回或展示 `file_path`、Storage path、signed URL 或附件下载入口。
+- Skills 公开列表只展示说明性 metadata，不展示 Skill 私密附件、Skill package 文件，不执行、不安装、不解析 Skill。
+
+原因：
+
+- 首页已经具备“公开研究工作站”入口感，但访客从首页进入四类列表页后仍需要更正式、清晰、专业的索引体验。
+- 现有数据库字段已能支撑轻量浏览；当前阶段不需要新增搜索服务、全文索引、向量库或复杂筛选模型。
+- 统一列表页结构可以让公开 Projects / Publications / Knowledge / Skills 保持一致的研究站气质，同时继续和后台管理页面区分。
+
+影响：
+
+- 新增公开 listing 组件，四个列表页改用统一 header、controls、filter chips 和 empty state。
+- 更新公开内容卡片视觉，增强 hover、标签、CTA、metadata 和 line-clamp 处理。
+- 更新四个列表页 SEO metadata，站点身份统一为“黄铭语研究工作站”。
+- 不新增 migration，不新增字段，不新增 RPC、索引、外部搜索服务、OCR、AI 摘要或向量搜索。
+- 不修改 RLS、Storage policy、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career、Market Brief 或后台页面。
+- 公开页面仍只展示 public 内容，不展示 Documents、Storage path、signed URL、`file_path`、`document_asset_links`、`research_asset_links` 管理功能或任何 secret。
