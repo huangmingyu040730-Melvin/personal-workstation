@@ -374,3 +374,42 @@ npm run build
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
 - 确认相关资产只展示通过 `project_id` 显式关联的知识笔记和学术成果，Skill 只提供搜索快捷入口。
 - 确认公开 Project 页面不展示后台研究中枢、附件下载、Storage 路径或 signed URL。
+
+## Knowledge Node Workflow
+
+日期：2026-06-13
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2Q-A-2 的 Knowledge 后台详情页知识节点，围绕单个知识笔记整理摘要、正文、关联 Project、私密资料、同项目成果和搜索入口。
+
+步骤：
+
+1. 在 `/dashboard/knowledge/new` 创建 Knowledge Note，必要时选择关联 Project。
+2. 进入 `/dashboard/knowledge/[id]` 查看单个知识节点。
+3. 先核对知识标题、分类、可见性、标签、创建时间和更新时间。
+4. 在“知识概览”中确认摘要、分类、关联 Project 和更新时间是否完整。
+5. 在“知识正文”中查看正文内容；空正文显示友好空状态。
+6. 需要修改知识本身时使用“编辑知识节点”入口，不在详情页新增富文本编辑能力。
+7. 需要管理知识资料时使用页面内 RelatedDocumentsPanel，继续按文档包、独立文件和跨文档包文件理解附件关系。
+8. 需要上传单个知识资料时使用“上传知识资料”，由统一 `/dashboard/documents/upload` 通过 query params 预填 `related_type=knowledge` 和当前 `related_id`。
+9. 需要上传知识资料文件夹时使用“上传知识资料文件夹”，继续复用 Documents 文件夹上传和文档包流程。
+10. 需要查看该知识节点全部附件时使用“查看相关 Documents”，进入带当前 Knowledge 关联筛选的 Documents 列表。
+11. 关联 Project 只读取 `knowledge_notes.project_id`；没有关联时不推断 Project，改用 Project 搜索入口。
+12. 相关成果优先使用关联 Project 下的 `publications.project_id` 同项目成果；没有关联 Project 时不伪造成果关系。
+13. Skill 当前没有显式 Knowledge 关系；需要查找相关 Skill 时使用知识标题或标签进入 `/dashboard/search`。
+14. Publication / Skill 与 Knowledge 的直接显式关联关系留到后续 Phase 2Q-B 统一设计。
+15. 本阶段不新增资产关系表、数据库字段、migration、RPC、索引、AI、OCR、文件内容索引或向量搜索。
+16. Knowledge 节点不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 确认 `/dashboard/knowledge/[id]` 保留返回、编辑和删除入口。
+- 确认摘要、正文、分类、标签、可见性、关联 Project 和 metadata 展示正常，空字段有友好空状态。
+- 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
+- 确认相关成果只展示同项目 Publications，Skill 只提供搜索快捷入口。
+- 确认公开 Knowledge 页面不展示后台知识节点、附件下载、Storage 路径或 signed URL。

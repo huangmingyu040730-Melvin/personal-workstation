@@ -38,6 +38,7 @@
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示
 - 文档包整体迁移 / 同步关联工具
 - Project 后台详情页研究中枢，整合研究问题、方法、私密附件、相关知识笔记 / 学术成果和快捷操作
+- Knowledge 后台详情页知识节点，整合知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口
 
 ## 本地启动
 
@@ -117,7 +118,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 不新增数据库步骤，继续依赖既有字段。2P-F-1 和 2P-F-2 只新增并打磨后台 metadata 搜索入口；2Q-A-1 只优化 Project 后台详情页研究中枢，不需要新的 migration、索引或 RPC。新建环境仍需按顺序执行 0001 至 0018。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 不新增数据库步骤，继续依赖既有字段。2P-F-1 和 2P-F-2 只新增并打磨后台 metadata 搜索入口；2Q-A-1 只优化 Project 后台详情页研究中枢；2Q-A-2 只优化 Knowledge 后台详情页知识节点，不需要新的 migration、索引或 RPC。新建环境仍需按顺序执行 0001 至 0018。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -145,6 +146,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/projects/[id]` 研究项目详情中枢
 - `/dashboard/publications` 学术成果管理
 - `/dashboard/knowledge` 知识库管理
+- `/dashboard/knowledge/[id]` 知识节点详情中枢
 - `/dashboard/skills` Skill 库管理
 - `/dashboard/documents` 文件中心管理
 - `/dashboard/documents/upload` 单文件、多文件与文件夹上传
@@ -193,6 +195,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2P-F-1 起后台新增 `/dashboard/search` 全局搜索入口，用于按 Projects、Publications、Knowledge、Skills、Documents 和文档包 metadata 快速查找研究资产。
 - Phase 2P-F-2 起后台全局搜索支持 `type` 类型筛选、每类数量统计、选中类型空状态和标题 / 描述关键词高亮。
 - Phase 2Q-A-1 起 Project 后台详情页作为研究项目中枢，集中展示研究框架、私密附件、相关知识笔记 / 学术成果和快捷操作。
+- Phase 2Q-A-2 起 Knowledge 后台详情页作为知识节点，集中展示知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。
@@ -212,6 +215,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Documents 已接入真实文件记录、私密 Storage 上传、短时 signed URL 下载和删除流程；Phase 2P-A 新增 `document_collections` 文档包、多文件 / 文件夹上传、relative_path / folder_path 保存、Knowledge 关联和更完整的研究文件格式白名单。Phase 2P-B 将关联文件区域嵌入 Project、Publication、Knowledge 和 Skill 后台详情页，上传入口仍统一跳转到 `/dashboard/documents/upload` 并通过 query params 预填关联对象、分类、上传模式和文档包类型。Phase 2P-C 在四类内容新建表单加入 create-and-upload flow：先保存内容对象，再跳转统一上传页；不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 支持管理员编辑文件显示名、分类、关联对象，编辑文档包名称、描述、类型、关联对象，并在 Documents 列表按 category、related_type、collection 状态筛选。Phase 2P-E-1 支持在 Documents 列表和文档包详情页批量移动文件关联对象、批量解除文件关联；不修改文档包自身关联或文件 `collection_id`。Phase 2P-E-1-B 澄清内容详情页附件分组：当前对象文档包内文件由文档包卡片代表，不在独立文件中重复展示；文件级关联指向当前对象但仍属于其他文档包的文件进入“跨文档包文件”分组并提示。Phase 2P-E-1-C 在文档包详情页新增整体迁移 / 同步关联工具，可把文档包和包内全部文件一起关联到 Project、Publication、Knowledge 或 Skill，也可一起解除关联；该工具不修改 `collection_id`，不移动、不重命名、不删除 Storage object。Phase 2P-E-2 新增批量删除文件和删除整个文档包及文件，删除时先删除 Storage object，再删除数据库记录；批量删除文件不会自动删除空文档包。Phase 2P-E-3 新增按请求临时生成 zip 下载，支持选中文件 zip、文档包 zip 和内容详情页文档包卡片下载 zip；zip 不保存到 Storage。附件仍默认私密，不公开下载，修改 metadata 不会移动或重命名 Storage object。
 - 后台全局搜索 `/dashboard/search` 只查询数据库 metadata，每类最多返回 8 条；支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选、每类数量统计和标题 / 描述关键词高亮；不读取文件正文，不解析 PDF / Office / zip，不做 OCR、AI 摘要或向量搜索，不生成 signed URL，不输出 Storage path。
 - Project 后台详情页已优化为研究项目中枢，读取现有 Project 字段、RelatedDocumentsPanel、`knowledge_notes.project_id` 和 `publications.project_id`；Skill 当前没有显式项目关联字段，因此只提供后台搜索快捷入口。本阶段不新增关系表、migration、RPC 或 Storage 行为。
+- Knowledge 后台详情页已优化为知识节点，读取现有 Knowledge 字段、关联 Project、RelatedDocumentsPanel 和同项目 Publications；如果没有显式关联字段，则只提供后台搜索入口。本阶段不新增关系表、migration、RPC、AI、OCR、文件内容索引或向量搜索。
 - Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。

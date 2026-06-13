@@ -322,6 +322,28 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
 - 不修改 Resume / Career、viewer/restricted 或 Market Brief。
 
+### Phase 2Q-A-2 - Knowledge Detail Node Hub
+
+已完成代码实现。Knowledge 后台详情页从普通 CRUD 笔记详情升级为单个知识节点：
+
+- `/dashboard/knowledge/[id]` 集中展示知识标题、分类、可见性、标签、更新时间、摘要、正文、关联 Project 和知识 metadata。
+- 保留返回、编辑和删除知识节点入口。
+- 继续复用 RelatedDocumentsPanel 展示知识资料与附件，包括文档包、独立文件和跨文档包文件。
+- 快捷操作支持编辑知识节点、上传知识资料、上传知识资料文件夹、进入该知识节点 Documents 筛选页、按知识标题搜索、搜索相关 Project / Publication / Skill，以及打开关联 Project。
+- 关联 Project 使用现有 `knowledge_notes.project_id`，没有关联时显示空状态和 Project 搜索入口。
+- 相关成果不新增直接关系；如果 Knowledge 关联 Project，则展示同项目 `publications.project_id` 成果，最多 5 条。
+- Skill 当前没有显式 Knowledge 关联字段，本阶段只提供按知识标题或标签搜索 Skill 的入口。
+
+边界：
+
+- 不新增 migration、RPC、索引、关系表或字段。
+- 不新增公开页面入口，不修改公开 Knowledge 详情页。
+- 不修改 Project、Publication 或 Skill 详情页逻辑。
+- 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 流程或 `storage_path` 生成规则。
+- 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
+- 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
+- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -373,7 +395,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - Projects：补齐研究背景、问题、方法和进度；用 Project 后台详情页作为单项目研究资产中枢，继续整理私密附件、相关知识笔记和学术成果。
 - Publications：沉淀报告、论文草稿、策略分析和阅读综述。
-- Knowledge：维护研究方法、工具笔记和知识文章。
+- Knowledge：维护研究方法、工具笔记和知识文章；用 Knowledge 后台详情页作为单知识节点中枢，继续整理摘要、正文、关联 Project、私密资料和相关资产搜索。
 - Skills：整理可公开复用的 AI / Codex 工作流说明。
 
 ### Public Display And Private Asset Management
