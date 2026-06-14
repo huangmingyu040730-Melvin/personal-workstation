@@ -56,6 +56,7 @@
 - Phase 2R-A-2：公开首页 hero 视觉识别 polish，保留左文案 + 右统计卡片结构和 H1“个人研究工作站”，用自绘 CSS 金融 / 量化 / 研究背景元素与系统中文 serif 字体栈增强专业感；#101 预览反馈后将背景装饰重心移到左侧 / 中间偏左，右侧统计卡片区保持干净；不新增 migration，不引入字体文件、外部字体服务、图表库或动画库。
 - Phase 2R-A-3：公开 Projects / Publications / Knowledge / Skills 列表页 polish 为正式研究内容索引，统一 listing header、公开统计、轻量 URL 筛选、公开卡片和空状态；只展示 public 内容，不新增 migration，不读取或公开 Documents、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理能力。
 - Phase 2R-A-4A：新增公开文件附件基础能力，Documents 仍上传默认 private，但管理员可显式设置单个文件 public；公开 Project / Publication 详情页可展示当前 public 资产关联的 public 文件附件，下载经 `/public-files/[id]/download` 服务端校验后短时签名，不把 signed URL、Storage path、Storage bucket、owner_id 或 raw link rows 写入页面。
+- Phase 2R-A-4B：公开 Project / Publication / Knowledge / Skill 详情页统一为正式研究详情体验，使用 detail hero、主内容 section、侧栏 metadata、related public content、访问申请 CTA 和安全 metadata；Project / Publication 继续整合 public attachments，Knowledge / Skill 不展示 Documents 或 Skill package。
 
 当前网站包括：
 
@@ -128,6 +129,7 @@ Documents / Storage：
 - Documents 删除流程采用先 Storage object、后数据库记录的保守顺序；当前不新增数据库事务或 RPC。
 - public 附件组件只接收安全字段：id、文件名、分类、大小、MIME type、更新时间、关系标签和 `/public-files/[id]/download`；不得接收或输出 Storage path、Storage bucket、owner_id、signed URL、raw `document_asset_links` 或 relation note。
 - public 下载 route 必须复核文件 public、bucket 为 `workspace-files`、当前资产 public 且文件关联该资产；通过后才生成 60 秒短时 signed URL。
+- 公开详情页只读取 public 详情查询；private / restricted / unlisted slug 不输出正文或附件。Related public content 只能来自 public 记录或公开字段推导，不展示显式关系管理数据、后台关系备注或 raw 文件关联。
 - zip 下载按请求临时生成，不保存到 Storage；仅管理员后台可用，不公开 signed URL、Storage 路径或持久 zip 链接。
 - zip 下载限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限或任一 Storage object 下载失败时不部分打包。
 - 后台全局搜索 `/dashboard/search` 只查数据库 metadata；支持 `type=all|projects|publications|knowledge|skills|documents|collections` 类型筛选、每类数量统计和标题 / 描述关键词高亮；不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要或向量搜索，不读取 Storage object，不生成 signed URL，不输出 Storage path。
@@ -224,6 +226,7 @@ Research Asset Links：
 - Phase 2R-A-2 采用 hero visual identity polish 决策：用户认可 2R-A-1 信息架构，但希望首页首屏更有金融、量化、研究和学术气质；本阶段只用自绘 CSS 装饰和系统字体栈增强 hero 背景与标题，不改变公开查询、后台能力、Supabase schema、RLS、Storage、Documents 或显式关系。
 - Phase 2R-A-3 采用 public listing polish 决策：公开首页完成后继续把 `/projects`、`/publications`、`/knowledge`、`/skills` 打磨为正式研究内容索引；筛选只在应用展示层基于已加载 public 记录、既有字段和 URL query params 完成，不新增 migration、搜索服务、AI 摘要、向量搜索、Documents 读取或内部关系展示。
 - Phase 2R-A-4A 采用 public document attachments foundation 决策：显式 public 文件可在 public Project / Publication 详情页展示和下载，但不开放公开文件中心、不改 Storage policy、不新增 migration、不公开 raw link rows、Storage path 或 signed URL；旧的“公开页面完全不提供附件下载”边界被此更精确规则取代。
+- Phase 2R-A-4B 采用 public detail polish 决策：四类公开详情页统一为正式研究详情体验；Project / Publication 整合 4A 的公开附件，Knowledge / Skill 暂不展示 Documents；所有 related content 只展示 public 记录，不读取后台显式关系管理或私密文件。
 - 后续数据库变更必须新增 `0021_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -287,6 +290,7 @@ Research Asset Links：
 - Phase 2P-G-1：`0020_document_asset_links.sql`
 - Phase 2R-A-1 / 2R-A-2 / 2R-A-3：不新增 migration；公开首页结构、视觉识别、系统字体栈、micro-interactions、公开列表页 listing header、轻量筛选、卡片和 metadata polish 只发生在应用展示层。
 - Phase 2R-A-4A：不新增 migration；沿用既有 `documents.visibility`、`document_collections.visibility` 和 `0020_document_asset_links.sql`，只新增 public 附件查询、组件、下载 route 和后台 visibility 操作。
+- Phase 2R-A-4B：不新增 migration；只新增 / 调整公开详情组件、四类详情页组合、public related content 和 metadata，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或多关联核心逻辑。
 
 规则：
 
@@ -305,7 +309,7 @@ Research Asset Links：
 - Documents 上传：prepare metadata -> 浏览器直传 private `workspace-files` -> finalize 写库 -> 必要时清理失败对象。
 - 新建内容并上传附件：先创建 Project / Publication / Knowledge / Skill，成功后跳转 `/dashboard/documents/upload` 并通过 query params 预填关联对象、上传模式、分类和文档包类型。
 - Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类、visibility 和 legacy primary relation，并在关联区域用 checkbox / chips 添加或移除多资产关联；文档包详情页修正文档包名称、描述、类型和 legacy primary relation，并在关联区域添加 / 移除文档包关联，可选择同步到包内文件；列表页用 category、related_type、collection 筛选整理，其中 related_type / related_id 表示包含该资产关联；Documents 列表或文档包详情页用紧凑批量工具栏批量添加、移除或清空关联、批量设置 public/private、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件和关联 chips 理解附件关系，chips 已对同一资产的 legacy `related` 做展示降噪；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
-- 公开附件维护：管理员先在文件详情页或文件中心批量工具将文件显式设为 public；确认该文件通过专用 link row 或 legacy primary relation 关联到对应 public Project / Publication；公开详情页只显示安全附件摘要，下载点击 `/public-files/[id]/download`，服务端再校验 public 文件、public 资产和关联存在后短时签名。
+- 公开详情与附件维护：四类公开详情页只展示 public 记录；Project / Publication 可显示 public related content 与显式 public 文件附件，管理员先在文件详情页或文件中心批量工具将文件显式设为 public，并确认该文件通过专用 link row 或 legacy primary relation 关联到对应 public Project / Publication；公开详情页只显示安全附件摘要，下载点击 `/public-files/[id]/download`，服务端再校验 public 文件、public 资产和关联存在后短时签名；Knowledge / Skill 公开详情不展示 Documents。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
 - Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。
@@ -319,7 +323,7 @@ Research Asset Links：
 
 建议顺序：
 
-1. Phase 2P / 2Q / 2R-A-4A 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql` 和 `0020_document_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
+1. Phase 2P / 2Q / 2R-A-4A / 2R-A-4B 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql` 和 `0020_document_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、公开四类详情页统一布局与 390px 移动端堆叠、Knowledge / Skill 不展示 Documents、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。

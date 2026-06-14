@@ -197,6 +197,26 @@ export async function getFeaturedPublicSkills(limit = 3) {
   return (data ?? []) as SkillRecord[];
 }
 
+export async function getRelatedPublicSkills(skill: SkillRecord, limit = 3) {
+  const skills = await getPublicSkills();
+  const relatedSkills = skills
+    .filter((item) => item.slug !== skill.slug)
+    .map((item) => {
+      const sharedPlatforms = item.platforms.filter((platform) => skill.platforms.includes(platform)).length;
+      const categoryScore = item.category === skill.category ? 4 : 0;
+      const statusScore = item.status === skill.status ? 1 : 0;
+
+      return {
+        item,
+        score: categoryScore + sharedPlatforms + statusScore
+      };
+    })
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score || Number(b.item.is_featured) - Number(a.item.is_featured) || b.item.updated_at.localeCompare(a.item.updated_at));
+
+  return relatedSkills.slice(0, limit).map(({ item }) => item);
+}
+
 export async function countPublicSkills() {
   const supabase = await createClient();
 

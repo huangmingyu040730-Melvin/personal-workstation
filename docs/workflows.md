@@ -224,14 +224,17 @@ npm run build
 5. 首页 hero 可使用轻量 CSS 背景表达金融 / 量化 / 研究 / 学术氛围，并通过系统中文 serif 字体栈增强 H1；不得引入字体文件、外部字体服务、真实行情数据、图表库或动画库。
 6. 首页下方继续分区展示研究方向、公开 Project / Publication、Knowledge 预览、Skill 预览和访问申请入口；Knowledge / Skill 首页预览使用紧凑卡片，最多展示 4 条 public 内容。
 7. 四个公开列表页 `/projects`、`/publications`、`/knowledge`、`/skills` 使用统一 listing header、公开统计、轻量筛选、公开卡片和友好空状态；筛选只基于已有 public 字段和 URL query params。
-8. 公开导航只面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”，不放后台菜单、文件中心或全局关系图谱入口。
-9. “管理员登录”只链接到登录流程；未登录访客不能直接进入后台，已登录管理员沿用现有 `/login?next=/dashboard` / dashboard 逻辑。
-10. 公开列表和详情页只展示 public 内容；restricted 内容通过访问申请和授权流程处理，private 内容不进入公开展示。
-11. 需要公开少量附件时，管理员先在文件详情页或文件中心批量工具把文件显式设为 public，并确认文件关联到当前 public Project / Publication；未显式 public 的文件仍只在后台 Documents、RelatedDocumentsPanel 或文档包详情页处理。
-12. 公开 Project / Publication 详情页只展示安全附件摘要和 `/public-files/[id]/download` 入口；下载 route 服务端复核文件 public、当前资产 public 和关联存在后，才生成 60 秒短时 signed URL。
-13. Documents raw 多资产关联、relation note、Storage path、Storage bucket、owner_id、显式资产关系和后台搜索只用于管理员整理，不在公开页面展示。
-14. 如需要外部访客申请未公开内容，引导其访问 `/access-request`；申请通过不自动开放 private Documents、Storage、私密附件下载或后台入口。
-15. Publication 公开页面不得展示历史 `file_path`、Storage 路径、Storage bucket、signed URL 或 raw 附件关系。
+8. 四个公开详情页 `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 使用统一 detail hero、主内容 section、侧栏 metadata、标签、访问申请 CTA 和 related public content。
+9. 公开详情页只读取 public 详情查询；private / restricted / unlisted 内容不输出正文或附件，只引导访问申请 / viewer 登录。
+10. 公开导航只面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”，不放后台菜单、文件中心或全局关系图谱入口。
+11. “管理员登录”只链接到登录流程；未登录访客不能直接进入后台，已登录管理员沿用现有 `/login?next=/dashboard` / dashboard 逻辑。
+12. 公开列表和详情页只展示 public 内容；restricted 内容通过访问申请和授权流程处理，private 内容不进入公开展示。
+13. 需要公开少量附件时，管理员先在文件详情页或文件中心批量工具把文件显式设为 public，并确认文件关联到当前 public Project / Publication；未显式 public 的文件仍只在后台 Documents、RelatedDocumentsPanel 或文档包详情页处理。
+14. 公开 Project / Publication 详情页只展示安全附件摘要和 `/public-files/[id]/download` 入口；下载 route 服务端复核文件 public、当前资产 public 和关联存在后，才生成 60 秒短时 signed URL。
+15. Knowledge / Skill 公开详情页不展示 Documents；Skill 页面只是公开说明页，不展示 Skill package、私密附件，不执行、不安装、不解析 Skill 文件。
+16. Documents raw 多资产关联、relation note、Storage path、Storage bucket、owner_id、显式资产关系和后台搜索只用于管理员整理，不在公开页面展示。
+17. 如需要外部访客申请未公开内容，引导其访问 `/access-request`；申请通过不自动开放 private Documents、Storage、私密附件下载或后台入口。
+18. Publication 公开页面不得展示历史 `file_path`、Storage 路径、Storage bucket、signed URL 或 raw 附件关系。
 
 验证要求：
 
@@ -241,9 +244,10 @@ npm run build
 - 确认 hero 背景有克制的金融 / 量化 / 研究抽象元素，H1 字体更专业，并且 390px 宽度下不遮挡文字、不横向溢出。
 - 确认 Knowledge / Skill 首页预览更紧凑，并且只展示 public 查询返回的内容。
 - 确认 `/projects`、`/publications`、`/knowledge`、`/skills` 是统一公开内容索引体验，筛选可用、空状态友好、移动端不横向溢出。
+- 确认 `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 是统一公开详情体验，主内容和侧栏在 390px 宽度下正确堆叠。
 - 确认公开导航显示“管理员登录”，但不显示后台菜单、文件中心、关系图谱或 Documents 入口。
 - 确认 private / restricted / unlisted 内容不会出现在公开列表、公开首页或 sitemap。
-- 确认公开 Project / Publication 页面只展示符合条件的 public 附件；公开 Knowledge / Skill 当前不强制展示附件。
+- 确认公开 Project / Publication 页面只展示符合条件的 public 附件；公开 Knowledge / Skill 不展示 Documents 或 Skill 私密包。
 - 确认公开页面不展示 private / unlisted 文件、Storage path、Storage bucket、signed URL、`file_path`、raw `document_asset_links`、relation note 或 `research_asset_links` 管理功能。
 - 本流程不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或后台显式关系管理，不引入字体文件、外部字体服务、图表库、动画库、外部搜索服务或向量库。
 
@@ -411,7 +415,7 @@ npm run build
 11. 相关学术成果继续读取 `publications.project_id` 显式关系；没有关联时不推断内容关系。
 12. 需要维护 Project 与 Knowledge / Skill / Publication / Project 的直接关系时，使用“显式关联资产”区域。
 13. 需要查找尚未确认的相关资产时，仍可使用项目标题或标签进入 `/dashboard/search`。
-14. Project 研究中枢不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+14. Project 研究中枢不得读取附件正文、解析文件、生成 signed URL 或显示 Storage path；公开附件只通过 public Project 详情页的安全 route 展示显式 public 文件。
 
 验证要求：
 
@@ -420,7 +424,7 @@ npm run build
 - 确认 `/dashboard/projects/[id]` 保留返回、编辑和删除入口。
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
 - 确认相关资产继续展示通过 `project_id` 显式关联的知识笔记和学术成果，显式关联资产区域可展示 outbound 与 backlink，搜索入口仍可用。
-- 确认公开 Project 页面不展示后台研究中枢、附件下载、Storage 路径或 signed URL。
+- 确认公开 Project 页面不展示后台研究中枢、private 附件、Storage 路径或 signed URL；如有 public 附件，只显示安全摘要和 `/public-files/[id]/download`。
 
 ## Knowledge Node Workflow
 
@@ -526,7 +530,7 @@ npm run build
 13. 需要维护 Publication 与 Project / Knowledge / Skill / Publication 的直接关系时，使用“显式关联资产”区域。
 14. 需要查找尚未确认的相关资产时，仍可使用成果标题或标签进入 `/dashboard/search`。
 15. `file_path` 不展示、不作为下载入口；`cover_url` 仅作为后台 metadata 状态展示。
-16. Publication 成果中枢不得读取附件正文、解析文件、生成 signed URL、显示 Storage path 或开放公开附件入口。
+16. Publication 成果中枢不得读取附件正文、解析文件、生成 signed URL 或显示 Storage path；公开附件只通过 public Publication 详情页的安全 route 展示显式 public 文件。
 
 验证要求：
 
@@ -536,7 +540,7 @@ npm run build
 - 确认 summary、abstract、成果类型、标签、可见性、关联 Project 和 metadata 展示正常，空字段有友好空状态。
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
 - 确认同项目 Knowledge 继续通过现有 `project_id` 展示，显式关联资产区域可展示 outbound 与 backlink，搜索入口仍可用。
-- 确认公开 Publication 页面不展示后台成果中枢、附件下载、Storage 路径、signed URL 或 `file_path`。
+- 确认公开 Publication 页面不展示后台成果中枢、private 附件、Storage 路径、signed URL 或 `file_path`；如有 public 附件，只显示安全摘要和 `/public-files/[id]/download`。
 
 ## Research Asset Links Workflow
 

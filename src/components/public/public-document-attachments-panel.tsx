@@ -35,6 +35,7 @@ export function PublicDocumentAttachmentsPanel({
                   <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-500">
                     <span>{attachment.category_label}</span>
                     {attachment.relation_label ? <span>{attachment.relation_label}</span> : null}
+                    <span>{attachment.mime_type}</span>
                     <span>{formatFileSize(attachment.file_size)}</span>
                     <span>{formatDateTime(attachment.updated_at)}</span>
                   </div>

@@ -15,6 +15,7 @@
 - Phase 2R-A-2 起公开首页 hero 可使用轻量 CSS 背景装饰表达金融、量化、研究和学术氛围；H1 文案仍为“个人研究工作站”，只使用系统字体栈，不提交字体文件或外部字体服务。
 - Phase 2R-A-3 起公开 Projects / Publications / Knowledge / Skills 列表页作为正式研究内容索引维护，使用统一 listing header、轻量筛选、公开卡片和空状态；仍只展示 public 内容。
 - Phase 2R-A-4A 起公开 Project / Publication 详情页可展示显式公开文件附件；文件必须 `documents.visibility = 'public'` 且关联到当前 public 资产，下载经 `/public-files/[id]/download` 短时签名路由校验，不把 signed URL 写入页面 HTML。
+- Phase 2R-A-4B 起公开 Project / Publication / Knowledge / Skill 详情页统一为正式公开研究详情体验；详情页只读取 public 详情查询，Project / Publication 可展示 2R-A-4A 的公开附件，Knowledge / Skill 不展示 Documents。
 
 ## Tech Stack
 
@@ -53,6 +54,7 @@ npm run build
 - 公开首页 hero 采用左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构；Knowledge / Skill 首页预览使用紧凑卡片展示更多 public 条目，公开列表页卡片设计不必随首页联动。
 - 公开首页 hero 视觉 polish 应保持浅色、克制和专业；可使用抽象网格、图表面板、散点、曲线或公式片段等自绘 CSS / 轻量 SVG 元素，但不得使用真实行情、具体股票代码、外部图片、图表库、动画库或字体文件。
 - 公开列表页筛选只能基于已有公开字段和 URL query params，不新增数据库字段、全文搜索、外部搜索服务、Documents 读取、文件内容读取或内部关系读取。
+- 公开详情页应使用统一公开阅读骨架、SEO metadata 和 related public content；相关内容只可来自 public 记录或公开字段推导，不展示 private / restricted / unlisted 内容，不把后台字段表样式搬到公开页面。
 - `workspace-files` bucket 始终保持 private；Documents 上传默认写入 `visibility = 'private'`。只有管理员显式设为 `public`，且文件关联到 public Project / Publication / Knowledge / Skill 时，公开页面才可展示安全附件摘要和 `/public-files/[id]/download` 入口。
 - 公开 Project / Publication / Knowledge / Skill 页面不得展示 Documents 原始多资产 link rows、relation notes、`research_asset_links` 管理能力、`file_path`、Storage path、Storage bucket、owner_id 或 signed URL；Publication 公开查询应避免把历史附件字段作为展示数据使用。
 - public 文件下载路由必须在服务端重新校验：文件为 public、Storage bucket 为 `workspace-files`、当前资产为 public 且文件确实关联该资产；路由只能按需生成 60 秒短时 signed URL 或重定向，不得把 signed URL 写入页面 HTML。
