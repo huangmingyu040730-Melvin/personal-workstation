@@ -324,6 +324,40 @@ npm run build
 - 确认 approved 申请进入 Access Grant 创建页时不自动选择具体内容。
 - 确认没有新增 migration、数据库字段、RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限、邮件服务或自动授权。
 
+## Access Grants Admin Management Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2R-E-2 的 Access Grants 后台授权管理流程，让管理员可以手动创建、筛选、复核和撤销 restricted 内容授权，同时保持 Access Request、Documents、public 附件和权限模型边界分离。
+
+步骤：
+
+1. 进入 `/dashboard/access-grants`。
+2. 先查看状态统计，确认全部、有效、已过期、已撤销授权数量。
+3. 使用状态筛选查看 `all`、`active`、`expired` 或 `revoked` 授权。
+4. 使用内容类型筛选查看 Project、Publication、Knowledge 或 Skill 授权。
+5. 在授权卡片中核对邮箱、内容类型、目标标题、slug、visibility、创建时间、过期时间、撤销时间线索和备注状态。
+6. 进入详情页 `/dashboard/access-grants/[id]`，复核授权对象、目标内容、有效状态、内部备注和安全边界。
+7. 如需新建授权，进入 `/dashboard/access-grants/new`，手动选择具体 restricted 内容；不要把申请 slug、申请目标或 private id 自动当作授权对象。
+8. 如从 approved Access Request 跳转创建页，只把邮箱、申请 id 和内容类型作为人工上下文，仍需手动选择具体 restricted 内容。
+9. 如需撤销授权，在列表或详情页执行撤销；撤销只更新授权状态，不删除申请、内容或 Documents。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 运行 `git diff --check`。
+- 如本地服务可用，运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 确认列表筛选不会改变授权数据，只改变展示结果。
+- 确认 expired 状态由 `expires_at` 应用层计算，不新增数据库枚举。
+- 确认创建页不会自动选择具体内容，不自动创建 viewer 账号，不自动发送邮件。
+- 确认撤销授权不会删除 Access Request、内容、Documents，不改变内容 visibility 或 public attachments 规则。
+- 确认没有新增 migration、数据库字段、RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限、邮件服务或自动授权。
+
 ## Public SEO And Sharing Workflow
 
 日期：2026-06-14

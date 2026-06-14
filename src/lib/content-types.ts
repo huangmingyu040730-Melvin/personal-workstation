@@ -331,8 +331,12 @@ export type ContentAccessGrantRecord = {
 
 export type ContentAccessGrantWithTarget = ContentAccessGrantRecord & {
   target?: {
+    id: string;
+    type: AccessGrantContentType;
     title: string;
+    slug: string;
     href: string;
+    adminHref: string;
     visibility: Visibility;
   } | null;
 };

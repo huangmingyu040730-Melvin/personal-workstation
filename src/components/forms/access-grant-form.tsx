@@ -30,7 +30,7 @@ export function AccessGrantForm({
       {requestId ? <input type="hidden" name="request_id" value={requestId} /> : null}
       {requestId ? (
         <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
-          当前授权从访问申请进入。创建授权仍需要手动选择具体 restricted 内容；系统不会自动发送邮件，也不会开放 Documents 或附件下载。
+          当前授权从访问申请进入。邮箱、申请 ID 和内容类型只是上下文预填；仍需要手动选择具体 restricted 内容，系统不会自动选择 private id、发送邮件或开放 Documents。
         </div>
       ) : null}
       <AdminFormSection title="授权对象" description="授权以邮箱为粒度，外部用户需使用同一邮箱登录。">
@@ -38,7 +38,7 @@ export function AccessGrantForm({
         <TextInput name="grantee_email" type="email" defaultValue={initialEmail ?? ""} placeholder="name@example.com" required maxLength={160} />
       </Field>
       </AdminFormSection>
-      <AdminFormSection title="授权内容" description="只允许选择已设置为 restricted 的内容。">
+      <AdminFormSection title="授权内容" description="必须手动选择一条已设置为 restricted 的内容；授权不会改变内容 visibility。">
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="内容类型">
           <Select name="content_type" defaultValue={defaultType} required>
@@ -54,7 +54,7 @@ export function AccessGrantForm({
               <optgroup key={group.value} label={group.label}>
                 {options[group.value].map((item) => (
                   <option key={`${group.value}-${item.id}`} value={item.id}>
-                    {item.title} · {visibilityLabel(item.visibility)}
+                    {item.title} · {item.slug} · {visibilityLabel(item.visibility)}
                   </option>
                 ))}
               </optgroup>
@@ -62,6 +62,9 @@ export function AccessGrantForm({
           </Select>
         </Field>
       </div>
+      <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+        内容类型必须与所选内容分组一致；如果从访问申请进入，申请目标也只是人工核对线索，不会自动选中这里的具体内容。
+      </p>
       </AdminFormSection>
       <AdminFormSection title="有效期与备注" description="备注仅后台可见，不会发送给外部用户。">
       <Field label="有效期" hint="可选。不填则长期有效；填写后超过该时间自动失效。">
@@ -71,7 +74,7 @@ export function AccessGrantForm({
         <Textarea name="admin_note" className="min-h-32" maxLength={1200} />
       </Field>
       </AdminFormSection>
-      <AdminSecurityNote>授权只开放对应内容详情页的只读访问，不开放后台 Documents、私密附件下载、Storage 路径或 signed URL。Viewer 登录仍有已知问题，后续将单独 Hotfix 验证。</AdminSecurityNote>
+      <AdminSecurityNote>授权只开放对应内容详情页的只读访问，不开放后台 Documents、private attachments、zip、Storage path、Storage bucket 或 signed URL，也不影响 public attachments 下载规则。Viewer 登录仍有已知问题，后续将单独 Hotfix 验证。</AdminSecurityNote>
       <SubmitButton>创建授权</SubmitButton>
     </form>
   );

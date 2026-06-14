@@ -150,6 +150,7 @@ export async function revokeAccessGrantAction(id: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/access-grants");
+  revalidatePath(`/dashboard/access-grants/${id}`);
   if (target?.href) {
     revalidatePath(target.href);
   }
