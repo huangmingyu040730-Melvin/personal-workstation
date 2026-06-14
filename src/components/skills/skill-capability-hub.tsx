@@ -16,6 +16,11 @@ import { AdminEmptyState, AdminFormSection, AdminSecurityNote } from "@/componen
 import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import {
+  buildSkillReadinessItems,
+  PublicReadinessCard,
+  skillPublicHref
+} from "@/components/dashboard/public-readiness-card";
 import { Field, Textarea, TextInput } from "@/components/forms/form-fields";
 import { DeleteButton, SubmitButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
@@ -83,6 +88,7 @@ export function SkillCapabilityHub({
   });
   const documentsHref = buildDocumentsHref(skill.id);
   const skillSearchHref = buildSearchHref(skill.name, "all");
+  const readinessItems = buildSkillReadinessItems({ skill });
 
   return (
     <>
@@ -174,6 +180,7 @@ export function SkillCapabilityHub({
             documentsHref={documentsHref}
             searchHref={skillSearchHref}
           />
+          <PublicReadinessCard items={readinessItems} publicHref={skillPublicHref(skill)} />
           <SkillPlatformVersionCard skill={skill} />
           <SkillVersionsCard versions={versions} createVersionAction={createVersionAction} />
           <SkillMetadataCard skill={skill} />

@@ -643,6 +643,21 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不恢复 Market Brief，不修改 Resume / Career，不恢复 `/dashboard/network`。
 - `npm run smoke:public` 只用于发布前公开路由巡检，不作为权限边界；真实安全仍依赖 Auth、RLS、Storage policy 和服务端下载 route 校验。
 
+### Phase 2R-D-1 - Public Content Operations Foundation
+
+已完成代码实现。公开站点主链路完成后，后台新增轻量公开内容运营辅助：
+
+- Project / Publication / Knowledge / Skill 后台详情页新增 public readiness checklist。
+- checklist 基于已有字段与现有关系判断：visibility、slug、标题 / 名称、摘要 / description / excerpt、标签 / 分类、正文 / 使用说明、Project 关联、显式资产关系和 Project / Publication public 附件计数。
+- 新增 `docs/public-content-operations.md`，说明什么内容适合 public、什么内容应保持 private / restricted、四类资产发布检查清单、公开附件边界、访问申请边界和发布前 QA。
+- checklist 只是管理员后台提示，不阻止保存，不自动修改 visibility，不自动公开内容或附件。
+
+边界：
+
+- 不新增 migration、数据库字段、RPC、索引、AI、OCR、向量搜索、全文搜索、邮件服务、审批流、支付或会员能力。
+- 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+- 不改变公开页面安全边界；Knowledge / Skill 公开详情页仍不展示 Documents，Skill 仍不展示 package、不下载、不执行、不安装、不解析文件。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -701,7 +716,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示，2R-C-1 只 polish 公开 SEO、分享卡片、sitemap 和 robots，2R-C-2 只做公开发布前 smoke、移动端溢出防护和敏感字段文案 hardening。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示，2R-C-1 只 polish 公开 SEO、分享卡片、sitemap 和 robots，2R-C-2 只做公开发布前 smoke、移动端溢出防护和敏感字段文案 hardening，2R-D-1 只做后台公开内容 readiness 提示和运营文档。
 - Documents 上传默认 private；只有管理员显式设为 public 且关联 public 资产的文件，才可在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。
 - Documents 作为可维护的统一默认私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页继续嵌入后台附件视图；公开 Project / Publication 详情页只展示经 public 附件查询归一化后的安全字段，不展示 raw link rows、Storage 路径、Storage bucket、owner_id 或 signed URL；公开 Knowledge / Skill 详情页不展示 Documents。

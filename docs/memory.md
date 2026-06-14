@@ -61,6 +61,7 @@
 - Phase 2R-B-1：访问申请与受限内容体验 polish，公开详情页申请 CTA 带 `content_type`、slug、公开标题和来源 query；`/access-request` 显示申请上下文并预填表单；未公开 fallback 不确认内容是否存在，只引导申请访问、viewer 登录或返回列表；后台申请列表 / 详情页展示来源、目标、理由摘要和处理边界。
 - Phase 2R-C-1：公开 SEO 与分享体验 polish，统一 metadata、canonical、Open Graph / Twitter card、sitemap 和 robots；sitemap 只收录 public 内容和公开静态入口，robots 阻止 dashboard、API、viewer、public-files 和后台下载入口。
 - Phase 2R-C-2：公开发布前 QA / hardening，新增 `npm run smoke:public` 巡检公开路由、未公开 fallback、access-request query、metadata、sitemap、robots 和敏感字段边界；公开文案避免访客页面暴露内部文件实现词，公开附件 metadata 增加移动端换行保护。
+- Phase 2R-D-1：公开内容运营基础，Project / Publication / Knowledge / Skill 后台详情页新增 public readiness checklist，基于既有字段和 public 附件计数提示发布准备度；新增 `docs/public-content-operations.md`，不新增 migration、不改权限或公开下载边界。
 
 当前网站包括：
 
@@ -91,6 +92,7 @@
 - Phase 2R-B-1 后，访问申请上下文只使用公开页面已展示标题和 slug；不得使用 private id 作为公开申请依据，未公开 fallback 不得确认 private / restricted 内容是否真实存在。
 - Phase 2R-C-1 后，公开 metadata 使用“黄铭语研究工作站”模板；详情页 description 只使用 public summary / excerpt / description 截断；`/access-request` metadata 不读取 query title / slug；未公开 fallback metadata 保持 noindex。
 - Phase 2R-C-2 后，发布前公开 QA 可使用 `npm run smoke:public` 巡检运行中的站点；该脚本只访问公开路由、fallback、sitemap 和 robots，不读取 private data，也不作为真实权限边界。
+- Phase 2R-D-1 后，后台四类资产详情页的公开发布准备度只是运营提示：基于已有字段、关系和 Project / Publication public 附件计数判断，不阻止保存、不自动设为 public、不自动公开附件。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、restricted / unlisted / private 内容或后台关系页面。
 - robots 允许公开页面和访问申请入口索引，阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
 - 访问申请不等于授权；申请提交和 approved 状态不会自动开放 restricted/private 正文、Documents、private attachments、public attachments、zip、Storage path、Storage bucket 或 signed URL。
@@ -242,6 +244,7 @@ Research Asset Links：
 - Phase 2R-B-1 采用 access request context polish 决策：用现有 `access_requests` 字段承载申请目标上下文，公开详情页 CTA 带内容类型、slug、公开标题和来源，申请页显示上下文并预填表单，后台显示来源和目标；不新增 migration、不修改 RLS 或 Storage policy、不新增邮件服务、不自动授权、不开放 Documents。
 - Phase 2R-C-1 采用 public SEO and sharing polish 决策：只在应用层统一公开 metadata、OG/Twitter card、sitemap 和 robots；复用公开安全图片，不生成动态私密 OG；sitemap 只收 public 内容并在查询失败时降级；不新增 migration、不修改 RLS、Storage policy、Access Grants、Documents 或 public 文件下载 route。
 - Phase 2R-C-2 采用 public launch QA and hardening 决策：只新增公开 smoke 脚本、访客文案 hardening 和附件 metadata 移动端换行保护；不新增公开能力、不新增 migration、不修改 RLS、Storage policy、Documents、public 文件下载 route 或 Access Grants 核心权限。
+- Phase 2R-D-1 采用 public content operations foundation 决策：公开主链路完成后先补后台内容运营辅助，四类详情页 checklist 只读提示字段缺口、关联状态、公开附件边界和人工复核项；不做强校验、不新增 schema、不自动公开内容或附件。
 - 后续数据库变更必须新增 `0022_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -310,6 +313,7 @@ Research Asset Links：
 - Phase 2R-B-1：不新增 migration；只复用既有 `access_requests` 字段做上下文预填、申请页 polish、未公开 fallback 文案和后台申请展示，不修改 RLS、Storage policy、Access Grants schema、public 文件下载 route 或邮件服务。
 - Phase 2R-C-1：不新增 migration；只调整公开 metadata、canonical、OG/Twitter card、sitemap 和 robots，不修改 RLS、Storage policy、Documents、Access Grants、public 文件下载 route 或任何 Supabase schema。
 - Phase 2R-C-2：不新增 migration；只新增公开 smoke 巡检脚本、访客文案 hardening 和公开附件 metadata 移动端换行保护，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或任何 Supabase schema。
+- Phase 2R-D-1：不新增 migration；只新增后台 public readiness checklist、只读 public 附件计数 helper 和公开内容运营文档，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或任何 Supabase schema。
 
 规则：
 

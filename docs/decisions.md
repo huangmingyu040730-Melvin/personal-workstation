@@ -1887,3 +1887,27 @@
 - 不修改 public 附件服务端校验条件：文件仍需 public、当前资产仍需 public、文件仍需关联当前资产，下载仍由服务端按需短时签名。
 - 不恢复 Market Brief，不修改 Resume / Career，不恢复 `/dashboard/network` 或后台全局关系图谱。
 - 后续公开发布前可先启动本地服务，再运行 `npm run smoke:public`，并结合 `npm run lint`、`npm run build`、`git diff --check` 和浏览器 390px 冒烟完成验收。
+
+## 2026-06-14 - Add Public Content Operations Checklist Without Changing Publishing Rules
+
+类型：decision
+
+决策：
+
+- Phase 2R-D-1 在 Project / Publication / Knowledge / Skill 后台详情页新增 public readiness checklist。
+- checklist 只基于已有字段、现有关系和 Project / Publication public 附件计数生成提示。
+- 新增 `docs/public-content-operations.md` 作为公开内容运营指南。
+- checklist 只是后台运营辅助，不阻止保存，不自动修改 `visibility`，不自动公开内容或附件。
+
+原因：
+
+- 公开首页、列表、详情、访问申请、SEO、sitemap、robots 和发布前 smoke 已经完成，下一步更需要持续整理 public 内容质量，而不是继续扩展复杂功能。
+- 管理员需要在后台快速看见 slug、摘要、标签、正文、关系、公开附件和人工安全复核等发布准备状态。
+- 发布准备度不应成为新的权限系统或审批流；公开安全仍由 public 查询、RLS、Storage policy 和服务端下载 route 保证。
+
+影响：
+
+- 本阶段不新增 migration、数据库字段、RPC、索引、AI、OCR、向量搜索、全文搜索、邮件服务、自动审批、支付或会员能力。
+- 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+- Knowledge / Skill 公开详情页仍不展示 Documents；Skill 仍不展示 package、不下载、不执行、不安装、不解析文件。
+- 后续运营 public 内容时，先看后台详情页 readiness checklist，再按 `docs/public-content-operations.md` 做人工判断和 QA。
