@@ -1,4 +1,4 @@
-import type { AccessGrantContentType, AccessGrantStatus, AccessRequestContentType, AccessRequestStatus, CalendarEventType, DocumentAssetRelationType, DocumentCategory, DocumentCollectionType, DocumentRelatedType, ProjectStatus, PublicationType, ResearchAssetRelationType, ResearchAssetType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
+import type { CalendarEventType, DocumentAssetRelationType, DocumentCategory, DocumentCollectionType, DocumentRelatedType, ProjectStatus, PublicationType, ResearchAssetRelationType, ResearchAssetType, ResumeItemType, ResumeSectionKey, ResumeTemplateKey, ResumeVersionLanguage, SkillStatus } from "./content-types";
 import type { Visibility } from "./types";
 
 export const projectStatuses: Array<{ value: ProjectStatus; label: string }> = [
@@ -18,7 +18,6 @@ export const skillStatuses: Array<{ value: SkillStatus; label: string }> = [
 
 export const visibilityOptions: Array<{ value: Visibility; label: string }> = [
   { value: "private", label: "私密" },
-  { value: "restricted", label: "授权可见" },
   { value: "public", label: "公开" },
   { value: "unlisted", label: "链接可见" }
 ];
@@ -97,32 +96,6 @@ export const researchAssetRelationTypes: Array<{ value: ResearchAssetRelationTyp
   { value: "derived_from", label: "来源于" }
 ];
 
-export const accessRequestContentTypes: Array<{ value: AccessRequestContentType; label: string }> = [
-  { value: "project", label: "研究项目" },
-  { value: "publication", label: "学术成果" },
-  { value: "skill", label: "Skill" },
-  { value: "knowledge", label: "知识文章" },
-  { value: "other", label: "其他" }
-];
-
-export const accessRequestStatuses: Array<{ value: AccessRequestStatus; label: string }> = [
-  { value: "pending", label: "待处理" },
-  { value: "approved", label: "已同意" },
-  { value: "rejected", label: "已拒绝" }
-];
-
-export const accessGrantContentTypes: Array<{ value: AccessGrantContentType; label: string }> = [
-  { value: "project", label: "研究项目" },
-  { value: "publication", label: "学术成果" },
-  { value: "skill", label: "Skill" },
-  { value: "knowledge", label: "知识文章" }
-];
-
-export const accessGrantStatuses: Array<{ value: AccessGrantStatus; label: string }> = [
-  { value: "active", label: "有效" },
-  { value: "revoked", label: "已撤销" }
-];
-
 export const calendarEventTypes: Array<{ value: CalendarEventType; label: string }> = [
   { value: "general", label: "普通事项" },
   { value: "meeting", label: "会议" },
@@ -194,22 +167,6 @@ export function getResearchAssetTypeLabel(value: string | null | undefined) {
 
 export function getResearchAssetRelationTypeLabel(value: string | null | undefined) {
   return researchAssetRelationTypes.find((item) => item.value === value)?.label ?? "相关";
-}
-
-export function getAccessRequestContentTypeLabel(value: string | null | undefined) {
-  return accessRequestContentTypes.find((item) => item.value === value)?.label ?? "未指定";
-}
-
-export function getAccessRequestStatusLabel(value: string | null | undefined) {
-  return accessRequestStatuses.find((item) => item.value === value)?.label ?? "待处理";
-}
-
-export function getAccessGrantContentTypeLabel(value: string | null | undefined) {
-  return accessGrantContentTypes.find((item) => item.value === value)?.label ?? "未知内容";
-}
-
-export function getAccessGrantStatusLabel(value: string | null | undefined) {
-  return accessGrantStatuses.find((item) => item.value === value)?.label ?? "未知状态";
 }
 
 export function getCalendarEventTypeLabel(value: string | null | undefined) {

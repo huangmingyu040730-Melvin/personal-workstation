@@ -32,8 +32,7 @@ function getBasePublicEntries(): MetadataRoute.Sitemap {
     staticEntry("/projects", 0.8),
     staticEntry("/publications", 0.8),
     staticEntry("/knowledge", 0.8),
-    staticEntry("/skills", 0.8),
-    staticEntry("/access-request", 0.5)
+    staticEntry("/skills", 0.8)
   ];
 }
 

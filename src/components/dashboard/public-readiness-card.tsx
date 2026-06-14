@@ -92,7 +92,7 @@ export function buildProjectReadinessItems({
     {
       label: "公开 URL slug",
       status: checked(hasText(project.slug)),
-      detail: hasText(project.slug) ? `公开路径为 /projects/${project.slug}。` : "补齐 slug 后才有稳定公开详情页和访问申请上下文。"
+      detail: hasText(project.slug) ? `公开路径为 /projects/${project.slug}。` : "补齐 slug 后才有稳定公开详情页。"
     },
     {
       label: "标题与公开摘要",
@@ -127,14 +127,9 @@ export function buildProjectReadinessItems({
         : "如需公开附件，请确认文件 visibility 为 public 且关联到当前 public Project；不需要附件时可保持为空。"
     },
     {
-      label: "访问申请入口",
-      status: checked(hasText(project.slug)),
-      detail: "访问申请只携带当前公开页上下文，不会自动授权或开放 Documents。"
-    },
-    {
       label: "public 字段人工复核",
       status: "review",
-      detail: "发布前检查标题、摘要、正文、标签中没有 private、restricted、Storage 路径、owner_id 或内部备注。"
+      detail: "发布前检查标题、摘要、正文、标签中没有未公开内容、Storage 路径、owner_id 或内部备注。"
     }
   ];
 }
@@ -159,7 +154,7 @@ export function buildPublicationReadinessItems({
     {
       label: "公开 URL slug",
       status: checked(hasText(publication.slug)),
-      detail: hasText(publication.slug) ? `公开路径为 /publications/${publication.slug}。` : "补齐 slug 后才有稳定公开详情页和访问申请上下文。"
+      detail: hasText(publication.slug) ? `公开路径为 /publications/${publication.slug}。` : "补齐 slug 后才有稳定公开详情页。"
     },
     {
       label: "标题、类型与摘要",
@@ -194,14 +189,9 @@ export function buildPublicationReadinessItems({
         : "如需公开论文、报告或补充材料，请确认文件 visibility 为 public 且关联到当前 public Publication。"
     },
     {
-      label: "访问申请入口",
-      status: checked(hasText(publication.slug)),
-      detail: "访问申请只携带当前公开页上下文，不会自动授权或开放 Documents。"
-    },
-    {
       label: "public 字段人工复核",
       status: "review",
-      detail: "发布前检查标题、摘要、abstract、标签中没有 private、restricted、Storage 路径、owner_id 或内部备注。"
+      detail: "发布前检查标题、摘要、abstract、标签中没有未公开内容、Storage 路径、owner_id 或内部备注。"
     }
   ];
 }
@@ -224,7 +214,7 @@ export function buildKnowledgeReadinessItems({
     {
       label: "公开 URL slug",
       status: checked(hasText(note.slug)),
-      detail: hasText(note.slug) ? `公开路径为 /knowledge/${note.slug}。` : "补齐 slug 后才有稳定公开详情页和访问申请上下文。"
+      detail: hasText(note.slug) ? `公开路径为 /knowledge/${note.slug}。` : "补齐 slug 后才有稳定公开详情页。"
     },
     {
       label: "标题、分类与摘要",
@@ -247,11 +237,6 @@ export function buildKnowledgeReadinessItems({
       detail: relatedProject ? `已关联项目：${relatedProject.title}。` : "建议关联来源 Project，让知识节点回到研究脉络中。"
     },
     {
-      label: "访问申请入口",
-      status: checked(hasText(note.slug)),
-      detail: "访问申请只携带当前公开页上下文，不会自动授权或开放 Documents。"
-    },
-    {
       label: "Documents 展示边界",
       status: "review",
       detail: "Knowledge 公开详情页不展示 Documents；资料只在管理员后台作为私密附件管理。"
@@ -259,7 +244,7 @@ export function buildKnowledgeReadinessItems({
     {
       label: "public 字段人工复核",
       status: "review",
-      detail: "发布前检查摘要、正文、标签中没有 private、restricted、Storage 路径、owner_id 或内部备注。"
+      detail: "发布前检查摘要、正文、标签中没有未公开内容、Storage 路径、owner_id 或内部备注。"
     }
   ];
 }
@@ -278,7 +263,7 @@ export function buildSkillReadinessItems({
     {
       label: "公开 URL slug",
       status: checked(hasText(skill.slug)),
-      detail: hasText(skill.slug) ? `公开路径为 /skills/${skill.slug}。` : "补齐 slug 后才有稳定公开详情页和访问申请上下文。"
+      detail: hasText(skill.slug) ? `公开路径为 /skills/${skill.slug}。` : "补齐 slug 后才有稳定公开详情页。"
     },
     {
       label: "名称、分类与公开说明",
@@ -296,11 +281,6 @@ export function buildSkillReadinessItems({
       detail: "可通过平台、输入说明、输出说明描述这个 Skill 适合什么工作流。"
     },
     {
-      label: "访问申请入口",
-      status: checked(hasText(skill.slug)),
-      detail: "访问申请只携带当前公开页上下文，不会自动授权或开放 Documents。"
-    },
-    {
       label: "公开说明页边界",
       status: "review",
       detail: "Skill 公开页是说明页，不是 Skill 包下载页；不展示 package 或内部文件。"
@@ -313,7 +293,7 @@ export function buildSkillReadinessItems({
     {
       label: "public 字段人工复核",
       status: "review",
-      detail: "发布前检查说明、usage guide、输入输出描述中没有 private、restricted、Storage 路径、owner_id 或内部备注。"
+      detail: "发布前检查说明、usage guide、输入输出描述中没有未公开内容、Storage 路径、owner_id 或内部备注。"
     }
   ];
 }
@@ -374,7 +354,7 @@ export function PublicReadinessCard({ items, publicHref }: PublicReadinessCardPr
       </ul>
 
       <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">
-        这是运营 checklist：不强校验、不自动修改 visibility、不自动公开附件，也不改变访问申请或下载权限。
+        这是运营 checklist：不强校验、不自动修改 visibility、不自动公开附件，也不改变保存流程或下载权限。
         {reviewCount > 0 ? ` 另有 ${reviewCount} 项需要人工复核。` : null}
       </div>
 

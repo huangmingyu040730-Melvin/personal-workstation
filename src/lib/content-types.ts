@@ -9,10 +9,6 @@ export type DocumentAssetRelationType = "related" | "source_material" | "support
 export type DocumentCollectionType = "folder_upload" | "attachment_bundle" | "skill_package" | "general_batch";
 export type ResearchAssetType = "project" | "knowledge" | "skill" | "publication";
 export type ResearchAssetRelationType = "related" | "supports" | "references" | "uses" | "produces" | "derived_from";
-export type AccessRequestStatus = "pending" | "approved" | "rejected";
-export type AccessRequestContentType = "project" | "publication" | "skill" | "knowledge" | "other";
-export type AccessGrantStatus = "active" | "revoked";
-export type AccessGrantContentType = "project" | "publication" | "skill" | "knowledge";
 export type CalendarEventType = "general" | "meeting" | "research" | "deadline" | "review" | "reminder";
 export type ResumeItemType = "basic" | "education" | "experience" | "project" | "research" | "skill" | "certification" | "award" | "language" | "other";
 export type ResumeVersionLanguage = "zh" | "en";
@@ -299,46 +295,6 @@ export type ResumeJdReviewRecord = {
   created_at: string;
   updated_at: string;
   resume_versions?: Pick<ResumeVersionRecord, "id" | "title" | "target_role"> | null;
-};
-
-export type AccessRequestRecord = {
-  id: string;
-  requester_name: string;
-  requester_email: string;
-  organization: string | null;
-  requested_content_type: AccessRequestContentType | null;
-  requested_content_title: string | null;
-  requested_content_url: string | null;
-  reason: string;
-  status: AccessRequestStatus;
-  admin_note: string | null;
-  reviewed_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ContentAccessGrantRecord = {
-  id: string;
-  grantee_email: string;
-  content_type: AccessGrantContentType;
-  content_id: string;
-  status: AccessGrantStatus;
-  expires_at: string | null;
-  admin_note: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ContentAccessGrantWithTarget = ContentAccessGrantRecord & {
-  target?: {
-    id: string;
-    type: AccessGrantContentType;
-    title: string;
-    slug: string;
-    href: string;
-    adminHref: string;
-    visibility: Visibility;
-  } | null;
 };
 
 export type ProfileRecord = {

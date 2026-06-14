@@ -116,7 +116,7 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
         </PublicListingControls>
 
         {publications.length === 0 ? (
-          <PublicListingEmptyState title="暂无符合条件的公开成果" description="当前筛选没有匹配的 public 成果。可以清空筛选，或通过访问申请说明你希望了解的报告和研究方向。" actionHref="/publications" actionLabel="清空筛选" />
+          <PublicListingEmptyState title="暂无符合条件的公开成果" description="当前筛选没有匹配的 public 成果。可以清空筛选，或返回列表查看全部公开成果。" actionHref="/publications" actionLabel="清空筛选" />
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {publications.map((publication) => <PublicPublicationCard key={publication.id} publication={publication} />)}

@@ -56,7 +56,7 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
       <PublicListingHero
         eyebrow="Knowledge Base"
         title="公开知识库"
-        description="把研究方法、阅读笔记和工具经验整理成可浏览的公开知识索引。这里只展示 public 内容，不泄露 restricted 正文或私密附件。"
+        description="把研究方法、阅读笔记和工具经验整理成可浏览的公开知识索引。这里只展示 public 内容，不泄露未公开正文或私密附件。"
         stats={[
           { label: "公开文章", value: allNotes.length },
           { label: "知识分类", value: categories.length },
@@ -95,7 +95,7 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
         </PublicListingControls>
 
         {notes.length === 0 ? (
-          <PublicListingEmptyState title="暂无符合条件的公开知识笔记" description="当前筛选没有匹配的 public 知识笔记。可以清空筛选，或通过访问申请说明你希望了解的主题。" actionHref="/knowledge" actionLabel="清空筛选" />
+          <PublicListingEmptyState title="暂无符合条件的公开知识笔记" description="当前筛选没有匹配的 public 知识笔记。可以清空筛选，或返回列表查看全部公开知识。" actionHref="/knowledge" actionLabel="清空筛选" />
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {notes.map((note) => <PublicKnowledgeCard key={note.id} note={note} />)}

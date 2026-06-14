@@ -23,7 +23,7 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
               <AdminFormHelpCard
                 title="安全边界"
                 tone="slate"
-                items={["不要录入客户真实信息或内部敏感数据。", "private 内容仅管理员后台可见。", "restricted 内容授权功能后续单独验收。"]}
+                items={["不要录入客户真实信息或内部敏感数据。", "private 内容仅管理员后台可见。", "适合展示的内容再设为 public。"]}
               />
             </>
           }

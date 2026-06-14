@@ -8,10 +8,14 @@ const publicRoutes = [
   "/projects",
   "/publications",
   "/knowledge",
-  "/skills",
-  "/access-request"
+  "/skills"
 ];
 const forbiddenPublicHtmlFragments = [
+  "/access-request",
+  "/viewer/login",
+  "access_requests",
+  "content_access_grants",
+  "申请访问",
   "storage_path",
   "storage_bucket",
   "Storage path",
@@ -28,6 +32,7 @@ const forbiddenPublicHtmlFragments = [
 const forbiddenSitemapFragments = [
   "/dashboard",
   "/api",
+  "/access-request",
   "/public-files",
   "/login",
   "/viewer",
@@ -52,18 +57,13 @@ for (const route of publicRoutes) {
   assertMetadata(response.body, route);
 }
 
-const accessRequest = await fetchText("/access-request?content_type=project&slug=private-query-slug&title=SensitiveQueryTitle&from=project_detail");
-assertStatus(accessRequest, 200, "access-request query context");
-const accessRequestHead = getHead(accessRequest.body);
-assertDoesNotInclude(accessRequestHead, "SensitiveQueryTitle", "access-request metadata excludes query title");
-assertDoesNotInclude(accessRequestHead, "private-query-slug", "access-request metadata excludes query slug");
-
 for (const route of fallbackRoutes) {
   const response = await fetchText(route);
   assertStatus(response, 200, route);
   assertNoForbiddenFragments(response.body, route);
   assertIncludes(getHead(response.body), "noindex, nofollow", `${route} fallback is noindex`);
-  assertIncludes(response.body, "/access-request", `${route} fallback includes access request CTA`);
+  assertDoesNotInclude(response.body, "/access-request", `${route} fallback excludes access request CTA`);
+  assertDoesNotInclude(response.body, "/viewer/login", `${route} fallback excludes viewer login`);
 }
 
 const sitemap = await fetchText("/sitemap.xml");
@@ -77,10 +77,10 @@ for (const fragment of forbiddenSitemapFragments) {
 
 const robots = await fetchText("/robots.txt");
 assertStatus(robots, 200, "robots");
-for (const route of ["/", "/projects", "/publications", "/knowledge", "/skills", "/access-request"]) {
+for (const route of ["/", "/projects", "/publications", "/knowledge", "/skills"]) {
   assertMatches(robots.body, new RegExp(`Allow:\\s*${escapeRegExp(route)}(?:\\n|$)`), `robots allows ${route}`);
 }
-for (const route of ["/dashboard", "/api", "/viewer", "/login", "/public-files"]) {
+for (const route of ["/dashboard", "/api", "/viewer", "/login", "/access-request", "/public-files"]) {
   assertMatches(robots.body, new RegExp(`Disallow:\\s*${escapeRegExp(route)}(?:\\n|$)`), `robots disallows ${route}`);
 }
 assertIncludes(robots.body, `${siteUrl}/sitemap.xml`, "robots includes sitemap URL");

@@ -1,7 +1,6 @@
 import type { ActivityLogRecord } from "@/lib/content-types";
 import { activityFeed } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import { countPendingAccessRequests } from "./access-requests";
 import { getUpcomingCalendarEvents } from "./calendar";
 import { countDocuments } from "./documents";
 import { countPublicKnowledgeNotes, getRecentKnowledgeNotes } from "./knowledge";
@@ -33,7 +32,6 @@ export async function getDashboardData() {
     publicProjectCount,
     publicSkillCount,
     publicKnowledgeCount,
-    pendingAccessRequestCount,
     documentCount,
     upcomingCalendarEvents,
     resumeStats,
@@ -51,7 +49,6 @@ export async function getDashboardData() {
     countPublicProjects(),
     countPublicSkills(),
     countPublicKnowledgeNotes(),
-    countPendingAccessRequests(),
     countDocuments(),
     getUpcomingCalendarEvents(5),
     getResumeStats(),
@@ -76,7 +73,6 @@ export async function getDashboardData() {
       skills: publicSkillCount,
       knowledge: publicKnowledgeCount
     },
-    pendingAccessRequestCount,
     documentCount,
     upcomingCalendarEvents,
     resumeStats,

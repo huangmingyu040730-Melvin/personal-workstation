@@ -58,7 +58,7 @@ export default async function ResumeVersionJdReviewPage({ params }: { params: Pr
         />
 
         <AdminSecurityNote>
-          AI 输入只包含当前简历版本中已选择展示的素材、目标岗位设置和你粘贴的 JD；不会发送 Documents、Storage 路径、signed URL、Access Requests、Access Grants、管理员邮箱、Auth UUID 或任何密钥。
+          AI 输入只包含当前简历版本中已选择展示的素材、目标岗位设置和你粘贴的 JD；不会发送 Documents、Storage 路径、signed URL、管理员邮箱、Auth UUID 或任何密钥。
         </AdminSecurityNote>
 
         <ResumeJdReviewWorkspace

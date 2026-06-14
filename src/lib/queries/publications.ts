@@ -184,35 +184,6 @@ export async function getPublicPublicationBySlug(slug: string) {
   return { ...publication, projects: project ? { id: project.id, title: project.title, slug: project.slug } : null };
 }
 
-export async function getViewablePublicationBySlug(slug: string) {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    return mockPublicationFallback().find((publication) => publication.visibility === "public" && publication.slug === slug) ?? null;
-  }
-
-  const { data, error } = await supabase
-    .from("publications")
-    .select(publicPublicationSelect)
-    .in("visibility", ["public", "restricted"] satisfies Visibility[])
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (error) {
-    console.error("getViewablePublicationBySlug failed", { code: error.code, message: error.message });
-    return null;
-  }
-
-  const publication = data ? applyPublicPublicationBoundary(data as PublicPublicationSafeRecord) : null;
-
-  if (!publication) {
-    return null;
-  }
-
-  const project = await getPublicProjectById(publication.project_id);
-  return { ...publication, projects: project ? { id: project.id, title: project.title, slug: project.slug } : null };
-}
-
 export async function getPublicPublicationsByProjectId(projectId: string, limit = 4) {
   const supabase = await createClient();
 

@@ -147,63 +147,32 @@ npm run build
 - 新建环境或 Preview 环境执行 0003 前，不对对应 Supabase 项目做 Storage 写入测试。
 - 管理员真实上传、下载、关联和删除验收需要用户本人登录完成。
 
-## Access Request Workflow Update
+## Retired External Access Workflow
 
-日期：2026-06-06
-
-类型：workflow
-
-用途：
-
-- 维护 Phase 2E-A 的访问申请提交与后台处理状态。
-
-步骤：
-
-1. 数据库变更必须新增增量 migration，不修改已在生产执行过的 0001/0002/0003。
-2. `access_requests` 表的公开写入只允许匿名访客 insert，不允许 anon select/update/delete。
-3. 后台读取和更新必须由管理员登录后通过 `public.is_admin()` 保护。
-4. Server Action 需要使用 Zod 校验姓名、邮箱、机构、申请内容和理由，并显示中文错误提示。
-5. 管理员处理状态仅包含 `pending`、`approved`、`rejected`，并可填写管理员备注。
-6. approved/rejected 当前只代表处理状态，不自动创建外部账号、不开放 restricted 内容、不生成邀请链接。
-7. 日志或后台展示不得记录密码、密钥、Auth UUID、Supabase URL/key 或其他敏感凭据。
-
-验证要求：
-
-- 运行 `npm run lint`。
-- 运行 `npm run build`。
-- 未登录可打开 `/access-request`，后台 `/dashboard/access-requests` 未登录应跳转 `/login`。
-- 执行 0004 migration 后，验证公开表单可提交、后台可查看详情并更新状态。
-- 不执行生产 migration，除非用户明确批准。
-
-## Restricted Content Grant Workflow
-
-日期：2026-06-06
+日期：2026-06-15
 
 类型：workflow
 
 用途：
 
-- 维护 Phase 2E-B 的 restricted 内容与邮箱授权基础能力。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。
+- 记录 Phase 2R-Z 对旧访问申请、Access Grants、Viewer magic link 和 restricted 外部授权流程的退役规则。
 
-步骤：
+规则：
 
-1. 数据库变更必须新增增量 migration，不修改已在生产执行过的 0001/0002/0003/0004。
-2. `restricted` visibility 只用于 Projects、Publications、Knowledge、Skills 的详情页授权访问。
-3. 管理员在后台创建授权前，应先将内容设置为 `restricted`。
-4. 授权记录写入 `content_access_grants`，包括邮箱、内容类型、内容 ID、状态、可选有效期和备注。
-5. 外部用户通过 `/viewer/login` 使用邮箱魔法链接登录，不使用明文密码，不进入后台；当前该链路仍不稳定，修复工作不得混入其他阶段。
-6. 公开详情页读取受 RLS 保护的数据；未授权时只显示申请入口和授权登录入口，不展示正文。
-7. 撤销授权只更新授权状态为 `revoked`，RLS 会阻止后续读取。
-8. private Documents、Storage、附件下载和 signed URL 不随 restricted 内容授权开放；显式 public 文件仍只按 public 下载 route 规则访问。
-9. Viewer 登录前授权检查依赖 `0006_viewer_login_grant_check.sql`，但 0006 只提供 RPC，不代表 viewer 登录链路已稳定。
+1. 不再新增、修复或恢复 `/access-request`、`/viewer/login`、`/viewer/callback`、`/dashboard/access-requests` 或 `/dashboard/access-grants`。
+2. 不再创建访问申请、访问授权、viewer session、邮件邀请或自动审批流程。
+3. 不再把 `restricted` 作为后台 visibility 选项；历史 `restricted` 内容由 0022 迁移回写为 `private`。
+4. 公开详情页和 fallback 不显示申请访问或 viewer 登录入口，不确认未公开内容是否存在。
+5. 0022 迁移用于收紧四类内容表 visibility / public read policy，并删除旧 `access_requests`、`content_access_grants`、`has_content_access()` 和 `can_request_viewer_login()`。
+6. Documents、Storage policy、public file download route、管理员后台核心 CRUD 和 `research_asset_links` 不随本退役流程改变。
 
 验证要求：
 
 - 运行 `npm run lint`。
 - 运行 `npm run build`。
-- 合并后在生产 Supabase 手动执行 `0005_restricted_content_access.sql`。
-- 验证 public 内容仍所有访客可看，restricted 内容只有管理员或匹配邮箱授权用户可看，private 内容仅管理员可看。
-- 验证非管理员登录用户不能进入 `/dashboard`，不能访问 `/dashboard/access-grants` 或 Documents。
+- 本地服务启动后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 确认 sitemap 不包含 `/access-request`、`/viewer` 或 `/public-files`。
+- 确认 robots 阻止 `/dashboard`、`/api`、`/viewer`、`/login`、`/access-request` 和 `/public-files`。
 
 ## Public Research Workstation Publishing Workflow
 
@@ -222,141 +191,34 @@ npm run build
 3. 确认内容适合对外展示后，把对应记录的 `visibility` 设置为 `public`。
 4. 公开首页 `/` 会展示“黄铭语研究工作站”站点身份，首屏 H1 为“个人研究工作站”，采用左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构。
 5. 首页 hero 可使用轻量 CSS 背景表达金融 / 量化 / 研究 / 学术氛围，并通过系统中文 serif 字体栈增强 H1；不得引入字体文件、外部字体服务、真实行情数据、图表库或动画库。
-6. 首页下方继续分区展示研究方向、公开 Project / Publication、Knowledge 预览、Skill 预览和访问申请入口；Knowledge / Skill 首页预览使用紧凑卡片，最多展示 4 条 public 内容。
+6. 首页下方继续分区展示研究方向、公开 Project / Publication、Knowledge 预览和 Skill 预览；Knowledge / Skill 首页预览使用紧凑卡片，最多展示 4 条 public 内容。
 7. 四个公开列表页 `/projects`、`/publications`、`/knowledge`、`/skills` 使用统一 listing header、公开统计、轻量筛选、公开卡片和友好空状态；筛选只基于已有 public 字段和 URL query params。
-8. 四个公开详情页 `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 使用统一 detail hero、主内容 section、侧栏 metadata、标签、访问申请 CTA 和 related public content。
-9. 公开详情页只读取 public 详情查询；private / restricted / unlisted 内容不输出正文或附件，只引导访问申请 / viewer 登录。
-10. 公开导航只面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”，不放后台菜单、文件中心或全局关系图谱入口。
+8. 四个公开详情页 `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 使用统一 detail hero、主内容 section、侧栏 metadata、标签和 related public content。
+9. 公开详情页只读取 public 详情查询；private / unlisted / 历史 restricted 内容不输出正文或附件，只显示“内容不存在或未公开”的安全 fallback。
+10. 公开导航只面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库和轻量“管理员登录”，不放后台菜单、文件中心、访问申请或全局关系图谱入口。
 11. “管理员登录”只链接到登录流程；未登录访客不能直接进入后台，已登录管理员沿用现有 `/login?next=/dashboard` / dashboard 逻辑。
-12. 公开列表和详情页只展示 public 内容；restricted 内容通过访问申请和授权流程处理，private 内容不进入公开展示。
+12. 公开列表和详情页只展示 public 内容；private、unlisted 和历史 restricted 内容不进入公开展示。
 13. 需要公开少量附件时，管理员先在文件详情页或文件中心批量工具把文件显式设为 public，并确认文件关联到当前 public Project / Publication；未显式 public 的文件仍只在后台 Documents、RelatedDocumentsPanel 或文档包详情页处理。
 14. 公开 Project / Publication 详情页只展示安全附件摘要和 `/public-files/[id]/download` 入口；下载 route 服务端复核文件 public、当前资产 public 和关联存在后，才生成 60 秒短时 signed URL。
 15. Knowledge / Skill 公开详情页不展示 Documents；Skill 页面只是公开说明页，不展示 Skill package、私密附件，不执行、不安装、不解析 Skill 文件。
 16. Documents raw 多资产关联、relation note、Storage path、Storage bucket、owner_id、显式资产关系和后台搜索只用于管理员整理，不在公开页面展示。
-17. 如需要外部访客申请未公开内容，引导其访问 `/access-request`；申请通过不自动开放 private Documents、Storage、私密附件下载或后台入口。
+17. 外部访问申请、Viewer magic link、Access Grants 和 restricted 外部授权已退役，不再通过公开页面处理未公开材料请求。
 18. Publication 公开页面不得展示历史 `file_path`、Storage 路径、Storage bucket、signed URL 或 raw 附件关系。
 
 验证要求：
 
 - 运行 `npm run lint`。
 - 运行 `npm run build`。
-- 确认首页首屏 H1 为“个人研究工作站”，左侧定位 / 标签 / CTA 与右侧统计卡片清晰，CTA 能进入研究项目、学术成果、Skill 库和访问申请。
+- 确认首页首屏 H1 为“个人研究工作站”，左侧定位 / 标签 / CTA 与右侧统计卡片清晰，CTA 能进入研究项目、学术成果、Skill 库和公开 About。
 - 确认 hero 背景有克制的金融 / 量化 / 研究抽象元素，H1 字体更专业，并且 390px 宽度下不遮挡文字、不横向溢出。
 - 确认 Knowledge / Skill 首页预览更紧凑，并且只展示 public 查询返回的内容。
 - 确认 `/projects`、`/publications`、`/knowledge`、`/skills` 是统一公开内容索引体验，筛选可用、空状态友好、移动端不横向溢出。
 - 确认 `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 是统一公开详情体验，主内容和侧栏在 390px 宽度下正确堆叠。
 - 确认公开导航显示“管理员登录”，但不显示后台菜单、文件中心、关系图谱或 Documents 入口。
-- 确认 private / restricted / unlisted 内容不会出现在公开列表、公开首页或 sitemap。
+- 确认 private / unlisted / 历史 restricted 内容不会出现在公开列表、公开首页或 sitemap。
 - 确认公开 Project / Publication 页面只展示符合条件的 public 附件；公开 Knowledge / Skill 不展示 Documents 或 Skill 私密包。
 - 确认公开页面不展示 private / unlisted 文件、Storage path、Storage bucket、signed URL、`file_path`、raw `document_asset_links`、relation note 或 `research_asset_links` 管理功能。
 - 本流程不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或后台显式关系管理，不引入字体文件、外部字体服务、图表库、动画库、外部搜索服务或向量库。
-
-## Access Request And Restricted Content Experience Workflow
-
-日期：2026-06-14
-
-类型：workflow
-
-用途：
-
-- 维护 Phase 2R-B-1 的访问申请与未公开内容体验，让公开访客可以从公开内容详情页清楚申请更多研究资料，同时保持申请、授权、Documents 和公开附件下载边界分离。
-
-步骤：
-
-1. `/access-request` 是正式申请入口，标题使用“申请访问研究资料”，metadata 使用“申请访问 | 黄铭语研究工作站”，不把 query 里的 title 或 slug 写入 metadata。
-2. Project / Publication / Knowledge / Skill 公开详情页的申请 CTA 使用 `content_type`、slug、当前 public 页面已显示标题和来源 `from` 生成 query。
-3. 申请 CTA 不使用 private id；未公开 fallback 只能携带访客正在访问的 slug 和内容类型，不确认 private / restricted 内容是否真实存在。
-4. 申请页读取 query 后展示“你正在申请访问”的上下文，并预填既有 `requested_content_type`、`requested_content_title` 和 `requested_content_url` 字段。
-5. 若没有 query 上下文，申请页仍可独立填写内容类型、标题、链接和申请理由。
-6. 申请理由字段用于填写用途说明；页面必须提示不要填写密码、API key、授权码、私密通信原文或其他敏感信息。
-7. 提交访问申请只写入 `access_requests`，状态为 `pending`；提交成功不自动创建 Access Grant，不开放 restricted/private 正文，不开放 Documents，不生成 signed URL。
-8. 未公开或需要授权的详情页 fallback 使用专业文案，例如“该内容暂未公开或需要授权访问”，并提供申请访问、viewer 邮箱登录和返回公开列表。
-9. fallback 不展示正文、摘要、附件、Storage path、Storage bucket、signed URL、`file_path`、raw `document_asset_links` 或 `research_asset_links` 管理信息。
-10. 后台 `/dashboard/access-requests` 列表应展示申请人、邮箱、申请目标、来源、理由摘要、状态和提交时间。
-11. 后台详情页应展示内容类型、目标标题、来源、公开路径、原始申请链接、申请理由、状态、处理时间和内部备注。
-12. 审批表单只更新 `pending` / `approved` / `rejected` 与内部备注；同意申请后仍需管理员手动创建 Access Grant，并选择具体 restricted 内容。
-13. Access Grant 创建页可从申请带入邮箱和内容类型，但仍不自动选择内容、不自动发送邮件、不开放 Documents 或附件下载。
-14. 本流程不新增 Supabase migration，不修改 RLS、Storage policy、public 文件下载 route、Documents 上传 / 删除 / zip 下载或邮件服务。
-
-验证要求：
-
-- 运行 `npm run lint`。
-- 运行 `npm run build`。
-- 运行 `git diff --check`。
-- 打开 `/access-request`，确认页面像正式研究资料访问申请入口，表单字段清楚，文案说明申请不会自动授权。
-- 从 public Project / Publication / Knowledge / Skill 详情页点击申请访问，确认 query context 正确，申请页显示申请目标并可提交。
-- 打开不存在或未公开 slug，确认页面不泄露内容是否真实存在，提供申请访问 CTA、viewer 登录和返回列表。
-- 在后台提交或查看一条访问申请，确认能看到来源、目标内容、申请理由和状态，且 approve / reject / pending 可操作。
-- 确认申请不会自动开放 Documents、private attachments、Storage path、bucket、signed URL、raw link rows 或 restricted/private 正文。
-- 在 390px 宽度下确认 `/access-request` 和 fallback 页面无横向溢出，表单字段可输入，CTA 可点击。
-
-## Access Request Admin Review Workflow
-
-日期：2026-06-15
-
-类型：workflow
-
-用途：
-
-- 维护 Phase 2R-E-1 的后台访问申请人工审核流程，让管理员可以按状态和目标类型处理申请，同时保持申请状态、Access Grants 和 Documents 权限边界分离。
-
-步骤：
-
-1. 进入 `/dashboard/access-requests`。
-2. 先查看状态统计，优先处理 `pending`。
-3. 使用状态筛选查看全部、待处理、已同意或已拒绝申请。
-4. 使用目标类型筛选查看 Project、Publication、Knowledge、Skill 或未知 / 通用申请。
-5. 在申请卡片中核对申请人、邮箱、目标标题、内容类型、slug、来源页面、公开路径、提交时间、处理时间、备注状态和理由摘要。
-6. 进入详情页 `/dashboard/access-requests/[id]`。
-7. 核对申请人信息、目标上下文、公开路径、原始申请链接和完整申请理由。
-8. 在人工处理区更新 `pending` / `approved` / `rejected` 与内部备注。
-9. 如状态为 approved 且确实需要授权，使用页面上的 Access Grant 引导进入创建页；创建页最多预填邮箱、申请 id 和内容类型。
-10. 在 Access Grant 创建页继续手动选择具体 restricted 内容；不要把 slug 或申请目标直接当作 private id 使用。
-
-验证要求：
-
-- 运行 `npm run lint`。
-- 运行 `npm run build`。
-- 运行 `git diff --check`。
-- 如本地服务可用，运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
-- 确认列表筛选不会改变申请数据，只改变展示结果。
-- 确认详情页保存状态和内部备注后不会自动创建 Access Grant。
-- 确认 approved 申请进入 Access Grant 创建页时不自动选择具体内容。
-- 确认没有新增 migration、数据库字段、RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限、邮件服务或自动授权。
-
-## Access Grants Admin Management Workflow
-
-日期：2026-06-15
-
-类型：workflow
-
-用途：
-
-- 维护 Phase 2R-E-2 的 Access Grants 后台授权管理流程，让管理员可以手动创建、筛选、复核和撤销 restricted 内容授权，同时保持 Access Request、Documents、public 附件和权限模型边界分离。
-
-步骤：
-
-1. 进入 `/dashboard/access-grants`。
-2. 先查看状态统计，确认全部、有效、已过期、已撤销授权数量。
-3. 使用状态筛选查看 `all`、`active`、`expired` 或 `revoked` 授权。
-4. 使用内容类型筛选查看 Project、Publication、Knowledge 或 Skill 授权。
-5. 在授权卡片中核对邮箱、内容类型、目标标题、slug、visibility、创建时间、过期时间、撤销时间线索和备注状态。
-6. 进入详情页 `/dashboard/access-grants/[id]`，复核授权对象、目标内容、有效状态、内部备注和安全边界。
-7. 如需新建授权，进入 `/dashboard/access-grants/new`，手动选择具体 restricted 内容；不要把申请 slug、申请目标或 private id 自动当作授权对象。
-8. 如从 approved Access Request 跳转创建页，只把邮箱、申请 id 和内容类型作为人工上下文，仍需手动选择具体 restricted 内容。
-9. 如需撤销授权，在列表或详情页执行撤销；撤销只更新授权状态，不删除申请、内容或 Documents。
-
-验证要求：
-
-- 运行 `npm run lint`。
-- 运行 `npm run build`。
-- 运行 `git diff --check`。
-- 如本地服务可用，运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
-- 确认列表筛选不会改变授权数据，只改变展示结果。
-- 确认 expired 状态由 `expires_at` 应用层计算，不新增数据库枚举。
-- 确认创建页不会自动选择具体内容，不自动创建 viewer 账号，不自动发送邮件。
-- 确认撤销授权不会删除 Access Request、内容、Documents，不改变内容 visibility 或 public attachments 规则。
-- 确认没有新增 migration、数据库字段、RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限、邮件服务或自动授权。
 
 ## Public SEO And Sharing Workflow
 
@@ -374,13 +236,12 @@ npm run build
 2. 页面 `title` 只写页面自身标题，由全局 metadata template 拼接“黄铭语研究工作站”；不要在页面 title 中重复站点名。
 3. 首页分享标题使用“个人研究工作站 | 黄铭语研究工作站”，公开列表页分享标题使用“研究项目 / 学术成果 / 知识库 / Skill 库 | 黄铭语研究工作站”。
 4. 公开详情页分享标题使用内容标题，description 只使用 public summary、excerpt、description、abstract 等公开字段截断。
-5. `/access-request` metadata 固定为申请入口说明，不读取 query 中的 title、slug 或 from。
-6. 未公开或不存在 slug 的详情页 metadata 保持 noindex，不确认 private / restricted 内容是否真实存在。
+5. 未公开或不存在 slug 的详情页 metadata 保持 noindex，不确认 private、unlisted 或历史 restricted 内容是否真实存在。
 7. OG / Twitter 图片复用公开安全图片，不生成包含私密字段、文件路径或后台数据的动态图片。
-8. sitemap 只包含 `/`、`/about`、`/projects`、`/publications`、`/knowledge`、`/skills`、`/access-request` 和 public Project / Publication / Knowledge / Skill 详情。
+8. sitemap 只包含 `/`、`/about`、`/projects`、`/publications`、`/knowledge`、`/skills` 和 public Project / Publication / Knowledge / Skill 详情。
 9. sitemap 查询 public 内容失败时安全降级为基础公开静态页面，不返回 500。
-10. sitemap 不包含 dashboard、login、viewer、public file download route、signed URL、Storage path、private Documents、restricted / unlisted / private 内容或后台关系页面。
-11. robots 允许公开页面和访问申请入口；阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等路径。
+10. sitemap 不包含 dashboard、login、access-request、viewer、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
+11. robots 允许公开页面；阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径。
 12. robots 和 sitemap 不作为安全边界；公开权限仍由 public 查询、Supabase RLS、Storage policy 和 server-side download route 校验。
 
 验证要求：
@@ -390,8 +251,8 @@ npm run build
 - 运行 `git diff --check`。
 - 打开 `/sitemap.xml`，确认包含基础公开入口和 public 详情链接，不包含 `/dashboard`、`/login`、`/viewer`、`/public-files`、signed URL 或 Storage path。
 - 打开 `/robots.txt`，确认公开页面可索引，dashboard / API / viewer / public-files 等路径被 disallow。
-- 检查首页、四个列表页、四类详情页和 `/access-request` 的 `<title>`、canonical、OG/Twitter metadata；确认不重复站点名、不包含 query 上下文或私密字段。
-- 在 390px 宽度下抽查首页、一个列表页、一个详情页和 `/access-request` 无横向溢出。
+- 检查首页、四个列表页和四类详情页的 `<title>`、canonical、OG/Twitter metadata；确认不重复站点名、不包含 query 上下文或私密字段。
+- 在 390px 宽度下抽查首页、一个列表页和一个详情页无横向溢出。
 
 ## Public Launch QA And Hardening Workflow
 
@@ -401,19 +262,18 @@ npm run build
 
 用途：
 
-- 维护 Phase 2R-C-2 的公开发布前 QA，确认公开主链路、SEO、访问申请、公开附件边界和移动端展示可以安全发布。
+- 维护 Phase 2R-C-2 / 2R-Z 后的公开发布前 QA，确认公开主链路、SEO、fallback、公开附件边界和移动端展示可以安全发布。
 
 步骤：
 
-1. 从最新 `main` 开始，确认本轮不新增 migration、不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+1. 从最新 `main` 开始，确认本轮不修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 2. 启动本地服务；如只做 mock fallback 巡检，可使用占位 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 让公开页安全降级。
 3. 运行 `npm run smoke:public`；如服务不在默认端口，设置 `PUBLIC_SMOKE_BASE_URL`。
-4. 确认 smoke 覆盖 `/`、四类公开列表页、`/access-request`、四类 fallback、`/sitemap.xml` 和 `/robots.txt`。
-5. 确认 `/access-request` query 中的 title / slug 不进入 metadata。
-6. 确认未公开 fallback 保持 noindex，并只提供访问申请 / viewer 登录 / 返回列表，不确认内容是否真实存在。
-7. 确认 sitemap 只包含公开静态入口和 public 详情，不包含 `/dashboard`、`/api`、`/viewer`、`/login`、`/public-files`、signed URL、Storage path 或非 public 内容。
-8. 确认 robots 允许公开页面和访问申请入口，并 disallow `/dashboard`、`/api`、`/viewer`、`/login`、`/public-files`。
-9. 用浏览器在 390px 宽度抽查首页、四类列表页、四类详情或 fallback、`/access-request`，确认无横向溢出，长标题、长文件 metadata 和 CTA 不挤出屏幕。
+4. 确认 smoke 覆盖 `/`、四类公开列表页、四类 fallback、`/sitemap.xml` 和 `/robots.txt`。
+5. 确认未公开 fallback 保持 noindex，不提供访问申请或 viewer 登录入口，不确认内容是否真实存在。
+6. 确认 sitemap 只包含公开静态入口和 public 详情，不包含 `/dashboard`、`/api`、`/viewer`、`/login`、`/access-request`、`/public-files`、signed URL、Storage path 或非 public 内容。
+7. 确认 robots 允许公开页面，并 disallow `/dashboard`、`/api`、`/viewer`、`/login`、`/access-request`、`/public-files`。
+8. 用浏览器在 390px 宽度抽查首页、四类列表页、四类详情或 fallback，确认无横向溢出，长标题和长文件 metadata 不挤出屏幕。
 10. 如果公开文案出现面向内部实现的 Storage / signed URL 术语，应改为访客可理解的边界说明；安全规则仍保留在代码和文档中。
 
 验证要求：
@@ -423,7 +283,7 @@ npm run build
 - 运行 `git diff --check`。
 - 运行 `npm run smoke:public`。
 - 浏览器 390px 冒烟确认公开主链路无横向溢出。
-- 确认没有新增 migration，没有修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+- 确认没有修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 
 ## Public Content Operations Workflow
 
@@ -438,13 +298,13 @@ npm run build
 步骤：
 
 1. 进入对应后台详情页：Project `/dashboard/projects/[id]`、Publication `/dashboard/publications/[id]`、Knowledge `/dashboard/knowledge/[id]`、Skill `/dashboard/skills/[id]`。
-2. 查看右侧“公开发布准备度” checklist，确认 visibility、slug、标题 / 名称、摘要 / description / excerpt、标签 / 分类、正文 / 说明和访问申请上下文。
+2. 查看右侧“公开发布准备度” checklist，确认 visibility、slug、标题 / 名称、摘要 / description / excerpt、标签 / 分类和正文 / 说明。
 3. Project 重点复核研究问题、背景、方法、进度、相关 Publication / Knowledge / Skill，以及是否需要公开附件。
 4. Publication 重点复核成果类型、摘要、abstract、日期、关联 Project，以及是否需要公开论文、报告或补充材料。
 5. Knowledge 重点复核分类、摘要、正文和关联 Project；公开页不展示 Documents。
 6. Skill 重点复核使用说明、适用场景和公开说明页边界；Skill package 不展示、不下载、不执行、不安装、不解析。
 7. 如 Project / Publication 需要公开附件，先确认文件 `visibility = public` 且关联到当前 public 资产；公开下载仍只走 `/public-files/[id]/download`。
-8. 人工复核 public 字段，不写入 private / restricted 内容、Storage path、signed URL、`file_path`、owner_id、raw link rows、内部备注或 secret。
+8. 人工复核 public 字段，不写入 private / unlisted / 历史 restricted 内容、Storage path、signed URL、`file_path`、owner_id、raw link rows、内部备注或 secret。
 9. readiness checklist 只作为运营提示；不得把它改成保存阻塞、自动公开、自动审批或权限授予流程。
 10. 需要发布前回归时，继续运行 `npm run lint`、`npm run build`、`git diff --check` 和运行中站点的 `npm run smoke:public`。
 
@@ -452,7 +312,7 @@ npm run build
 
 - 确认四类后台详情页能显示 public readiness checklist。
 - 确认 checklist 不阻止保存，不自动修改 visibility，不自动公开附件。
-- 确认没有新增 migration、数据库字段、RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限变化。
+- 确认没有新增数据库字段，没有修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 - 确认公开页面仍只展示 public 内容；Knowledge / Skill 公开详情仍不展示 Documents。
 
 ## Project Documentation Wrap-up

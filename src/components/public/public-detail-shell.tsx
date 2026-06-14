@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, LockKeyhole } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ChipTone = "blue" | "slate" | "green" | "amber" | "violet";
@@ -36,9 +36,7 @@ export function PublicDetailHero({
   description,
   chips = [],
   backHref,
-  backLabel,
-  accessHref = "/access-request",
-  accessLabel = "申请访问"
+  backLabel
 }: {
   eyebrow: string;
   title: string;
@@ -46,8 +44,6 @@ export function PublicDetailHero({
   chips?: PublicDetailChip[];
   backHref: string;
   backLabel: string;
-  accessHref?: string;
-  accessLabel?: string;
 }) {
   return (
     <section className="relative isolate overflow-hidden border-b border-slate-200 bg-white">
@@ -75,11 +71,6 @@ export function PublicDetailHero({
           </div>
         ) : null}
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href={accessHref} className="group inline-flex items-center justify-center gap-2 rounded-lg bg-navy-950 px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-100">
-            <LockKeyhole size={16} />
-            {accessLabel}
-            <ArrowRight className="transition group-hover:translate-x-1" size={16} />
-          </Link>
           <Link href={backHref} className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
             浏览列表
           </Link>

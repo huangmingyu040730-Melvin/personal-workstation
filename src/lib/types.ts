@@ -1,4 +1,4 @@
-export type Visibility = "public" | "private" | "unlisted" | "restricted";
+export type Visibility = "public" | "private" | "unlisted";
 
 export type Status =
   | "进行中"

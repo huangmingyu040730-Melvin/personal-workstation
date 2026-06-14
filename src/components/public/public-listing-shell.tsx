@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Inbox, KeyRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ListingStat = {
@@ -53,11 +53,6 @@ export function PublicListingHero({
             <Link href="/" className="public-cta-motion inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
               <ArrowLeft size={16} />
               返回首页
-            </Link>
-            <Link href="/access-request" className="public-cta-motion group inline-flex items-center gap-2 rounded-2xl bg-navy-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-              <KeyRound size={16} />
-              申请访问
-              <ArrowRight className="transition group-hover:translate-x-1" size={16} />
             </Link>
           </div>
         </div>

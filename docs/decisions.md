@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-06-15 - Retire External Access Requests And Viewer Authorization
+
+类型：decision
+
+决策：
+
+- Phase 2R-Z 移除外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权链路。
+- 公开站点只展示 `visibility = 'public'` 的内容；未公开 slug fallback 只说明“内容不存在或未公开”，不确认 private、unlisted 或历史 restricted 内容是否存在。
+- 删除 `/access-request`、`/viewer/login`、`/viewer/callback`、`/dashboard/access-requests` 和 `/dashboard/access-grants` 产品入口及其 actions、queries、forms 和 docs。
+- 新增 0022 migration：历史 `restricted` 内容回写为 `private`，四类内容表 visibility 约束收紧为 `public/private/unlisted`，public read policy 只允许 public 或管理员读取，并删除旧 `access_requests`、`content_access_grants`、`has_content_access()` 和 `can_request_viewer_login()`。
+- 不修改 Documents、Storage policy、public file download route、research asset links、后台核心内容管理或管理员权限模型。
+
+原因：
+
+- 当前产品主线是公开研究工作站 + 私密数字资产后台，不再扩展外部授权访问复杂度。
+- 旧 viewer magic link / restricted 授权链路长期未稳定验收，继续维护会混淆公开展示和私密后台边界。
+- 对外展示能力已经由 public 内容、SEO、公开附件安全下载和后台 public readiness checklist 覆盖。
+
+影响：
+
+- 后续不要恢复访问申请、Access Grants、Viewer 登录、restricted 外部授权、邮件邀请或自动审批。
+- 公开导航、详情页 CTA、fallback、sitemap、robots 和 smoke script 均以 public-only 为准。
+- 旧 Phase 2E-B、Phase 2R-E-1、Phase 2R-E-2 关于外部申请 / 授权的历史记录仅作历史背景，被本决策取代。
+
 ## 2026-05-31 - Use Chinese As Default Website Language
 
 类型：decision

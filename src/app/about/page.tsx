@@ -51,7 +51,7 @@ export default async function AboutPage() {
             ) : null}
             {profile.education ? <p>{profile.education}</p> : null}
             <p>
-              如果希望沟通某条研究内容、申请查看受限材料，或了解工作站后续开放计划，可以通过访问申请表单留下必要信息。当前页面不编造或硬编码额外联系方式。
+              公开站点只展示已经整理并明确设为 public 的内容。未公开材料继续留在管理员后台，不通过公开页面确认是否存在。
             </p>
           </div>
         </Card>
@@ -63,7 +63,7 @@ export default async function AboutPage() {
               { icon: GraduationCap, title: "公开研究工作站", description: "对外展示公开项目、成果、知识文章和 Skill。", tone: "bg-blue-50 text-blue-700" },
               { icon: Database, title: "私密数字资产后台", description: "管理员后台管理全部内容、文件和后续自动化。", tone: "bg-violet-50 text-violet-700" },
               { icon: ShieldCheck, title: "清晰权限边界", description: "私密内容、文件入口与短时下载链接不进入公开页面。", tone: "bg-slate-100 text-slate-700" },
-              { icon: BrainCircuit, title: "受限访问规划", description: "部分内容会以申请和授权方式逐步开放，但不会开放私密文件和后台能力。", tone: "bg-blue-100 text-blue-800" }
+              { icon: BrainCircuit, title: "公开内容运营", description: "只把适合展示的研究项目、成果、知识文章和 Skill 设为 public。", tone: "bg-blue-100 text-blue-800" }
             ].map((item) => (
               <div key={item.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-1 hover:border-blue-200 hover:bg-white">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${item.tone}`}>
@@ -113,7 +113,7 @@ export default async function AboutPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm leading-7 text-slate-600">当前未公开展示联系方式。需要沟通时，可以通过访问申请表单留下必要信息。</p>
+            <p className="text-sm leading-7 text-slate-600">当前未公开展示联系方式。公开页面不会提供外部授权入口。</p>
           )}
         </Card>
       </section>

@@ -9,17 +9,17 @@
 - 面向个人展示、学术研究项目管理、知识积累和 AI Skill 工作流管理的网站。
 - 网站默认语言为中文。
 - 当前产品定位为“公开研究工作站 + 私密数字资产后台”。
-- Phase 2B 起接入 Projects、Knowledge Base、Skills Library 的真实 Supabase CRUD；Phase 2C 接入 Publications、Documents 与 private Storage；Phase 2E-B 建立 restricted 内容授权基础；Phase 2P 起 Documents 成为 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；Phase 2R-A-4A 起支持管理员显式公开单个文件，并通过安全下载路由在相关公开内容页展示公开附件。
+- Phase 2B 起接入 Projects、Knowledge Base、Skills Library 的真实 Supabase CRUD；Phase 2C 接入 Publications、Documents 与 private Storage；Phase 2P 起 Documents 成为 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；Phase 2R-A-4A 起支持管理员显式公开单个文件，并通过安全下载路由在相关公开内容页展示公开附件。
 - Phase 2O-A 后主线收口为研究资产沉淀、公开展示、文件 / 知识管理和求职闭环维护；Market Brief / 市场简报模块已弃用，不恢复产品入口、API、runner、素材包、数据探针或推荐环境变量。
-- Phase 2R-A 起公开首页与公开导航进入“黄铭语研究工作站”展示 polish；首页 H1 使用“个人研究工作站”，站点身份仍可在品牌、metadata、footer 或 eyebrow 中保留“黄铭语研究工作站”。公开页面只展示 public 内容，访问申请用于处理未公开或受限材料请求。
+- Phase 2R-A 起公开首页与公开导航进入“黄铭语研究工作站”展示 polish；首页 H1 使用“个人研究工作站”，站点身份仍可在品牌、metadata、footer 或 eyebrow 中保留“黄铭语研究工作站”。公开页面只展示 public 内容。
 - Phase 2R-A-2 起公开首页 hero 可使用轻量 CSS 背景装饰表达金融、量化、研究和学术氛围；H1 文案仍为“个人研究工作站”，只使用系统字体栈，不提交字体文件或外部字体服务。
 - Phase 2R-A-3 起公开 Projects / Publications / Knowledge / Skills 列表页作为正式研究内容索引维护，使用统一 listing header、轻量筛选、公开卡片和空状态；仍只展示 public 内容。
 - Phase 2R-A-4A 起公开 Project / Publication 详情页可展示显式公开文件附件；文件必须 `documents.visibility = 'public'` 且关联到当前 public 资产，下载经 `/public-files/[id]/download` 短时签名路由校验，不把 signed URL 写入页面 HTML。
 - `0021_public_attachment_service_role_grants.sql` 是 2R-A-4A 的权限 hotfix：只给 server-side `service_role` 补公开附件查询 / 下载校验所需表的 `select` 权限，不修改 RLS、Storage policy、bucket public 状态或文件数据。
 - Phase 2R-A-4B 起公开 Project / Publication / Knowledge / Skill 详情页统一为正式公开研究详情体验；详情页只读取 public 详情查询，Project / Publication 可展示 2R-A-4A 的公开附件，Knowledge / Skill 不展示 Documents。
-- Phase 2R-B-1 起访问申请与未公开内容 fallback 进入正式访客闭环：公开详情页“申请访问”按钮带 `content_type`、`slug`、公开标题和来源 query，上下文只来自当前公开页面已展示字段；访问申请不等于授权，不自动开放 Documents、private attachments、signed URL 或 restricted/private 正文，不新增邮件服务或 migration。
 - Phase 2R-C-1 起公开 SEO、分享卡片、sitemap 和 robots 作为正式公开研究工作站体验维护；metadata 使用“黄铭语研究工作站”站点模板，sitemap 只收录 public 内容和公开静态入口，robots 允许公开页面并阻止 dashboard、API、viewer、public-files 和后台下载入口。
-- Phase 2R-C-2 起公开站点进入发布前 QA / hardening；只做公开路由、公开附件边界、访问申请、SEO / sitemap / robots、390px 移动端和敏感字段巡检及轻量修补，不新增业务功能、migration、RLS、Storage policy、Documents 或 Access Grants 权限变化。
+- Phase 2R-C-2 起公开站点进入发布前 QA / hardening；只做公开路由、公开附件边界、SEO / sitemap / robots、390px 移动端和敏感字段巡检及轻量修补，不新增业务功能、migration、RLS、Storage policy 或 Documents 权限变化。
+- Phase 2R-Z 起外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权链路已退役；不要恢复 `/access-request`、`/viewer/*`、`/dashboard/access-requests`、`/dashboard/access-grants`、访问申请 / 授权 actions、queries、forms、validations 或流程文档。
 
 ## Tech Stack
 
@@ -58,15 +58,15 @@ npm run smoke:public
 
 - 保持组件可复用，页面优先组合基础组件，不在页面中堆重复样式。
 - 示例数据集中维护在 `src/lib/mock-data.ts`，仅用于尚未接入真实数据的页面或未配置 Supabase 时的开发预览。
-- Projects、Knowledge Base、Skills Library、Publications、Documents、Access Requests 与 Access Grants 的查询逻辑集中在 `src/lib/queries/`，校验逻辑集中在 `src/lib/validations/`，写入逻辑集中在 `src/actions/`。
+- Projects、Knowledge Base、Skills Library、Publications 与 Documents 的查询逻辑集中在 `src/lib/queries/`，校验逻辑集中在 `src/lib/validations/`，写入逻辑集中在 `src/actions/`。
 - Supabase 写操作必须在 Server Action 中验证当前用户为管理员，并继续依赖 RLS 作为数据库权限边界。
-- 公开首页和公开导航面向普通访客，主入口应保持为首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”；不要在公开导航中加入后台菜单、文件中心或全局关系图谱入口。
+- 公开首页和公开导航面向普通访客，主入口应保持为首页、研究项目、学术成果、知识库、Skill 库和轻量“管理员登录”；不要在公开导航中加入后台菜单、文件中心、访问申请或全局关系图谱入口。
 - 公开首页 hero 采用左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构；Knowledge / Skill 首页预览使用紧凑卡片展示更多 public 条目，公开列表页卡片设计不必随首页联动。
 - 公开首页 hero 视觉 polish 应保持浅色、克制和专业；可使用抽象网格、图表面板、散点、曲线或公式片段等自绘 CSS / 轻量 SVG 元素，但不得使用真实行情、具体股票代码、外部图片、图表库、动画库或字体文件。
 - 公开列表页筛选只能基于已有公开字段和 URL query params，不新增数据库字段、全文搜索、外部搜索服务、Documents 读取、文件内容读取或内部关系读取。
-- 公开详情页应使用统一公开阅读骨架、SEO metadata 和 related public content；相关内容只可来自 public 记录或公开字段推导，不展示 private / restricted / unlisted 内容，不把后台字段表样式搬到公开页面。
-- 公开详情页和未公开内容 fallback 的访问申请 CTA 应使用 slug 与公开标题带上下文；不得使用 private id 作为公开申请依据，不得在 fallback 中确认 private / restricted 内容是否真实存在。
-- 公开页面 metadata、Open Graph、Twitter card、sitemap 和 robots 不得读取或输出 private / restricted / unlisted 内容、Storage path、signed URL、`file_path`、raw Documents link rows、`research_asset_links` 管理数据或 owner_id；`/public-files/[id]/download` 不进入 sitemap。
+- 公开详情页应使用统一公开阅读骨架、SEO metadata 和 related public content；相关内容只可来自 public 记录或公开字段推导，不展示 private / unlisted / 历史 restricted 内容，不把后台字段表样式搬到公开页面。
+- 公开详情页和未公开内容 fallback 不得显示访问申请或 viewer 登录入口；不得使用 private id 作为公开依据，不得在 fallback 中确认 private / unlisted / 历史 restricted 内容是否真实存在。
+- 公开页面 metadata、Open Graph、Twitter card、sitemap 和 robots 不得读取或输出 private / unlisted / 历史 restricted 内容、Storage path、signed URL、`file_path`、raw Documents link rows、`research_asset_links` 管理数据或 owner_id；`/public-files/[id]/download` 不进入 sitemap。
 - 公开站点发布前可使用 `npm run smoke:public` 巡检本地运行中的站点；该脚本只访问公开路由、fallback、sitemap 和 robots，不需要 secrets，不得读取 private data。
 - `workspace-files` bucket 始终保持 private；Documents 上传默认写入 `visibility = 'private'`。只有管理员显式设为 `public`，且文件关联到 public Project / Publication / Knowledge / Skill 时，公开页面才可展示安全附件摘要和 `/public-files/[id]/download` 入口。
 - 公开 Project / Publication / Knowledge / Skill 页面不得展示 Documents 原始多资产 link rows、relation notes、`research_asset_links` 管理能力、`file_path`、Storage path、Storage bucket、owner_id 或 signed URL；Publication 公开查询应避免把历史附件字段作为展示数据使用。

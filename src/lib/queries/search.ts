@@ -230,7 +230,6 @@ function getVisibilityLabel(visibility: Visibility | string | null | undefined) 
   const labels: Record<string, string> = {
     public: "公开",
     private: "私密",
-    restricted: "授权可见",
     unlisted: "链接可见"
   };
 
