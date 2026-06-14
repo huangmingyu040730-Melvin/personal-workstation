@@ -290,6 +290,40 @@ npm run build
 - 确认申请不会自动开放 Documents、private attachments、Storage path、bucket、signed URL、raw link rows 或 restricted/private 正文。
 - 在 390px 宽度下确认 `/access-request` 和 fallback 页面无横向溢出，表单字段可输入，CTA 可点击。
 
+## Access Request Admin Review Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2R-E-1 的后台访问申请人工审核流程，让管理员可以按状态和目标类型处理申请，同时保持申请状态、Access Grants 和 Documents 权限边界分离。
+
+步骤：
+
+1. 进入 `/dashboard/access-requests`。
+2. 先查看状态统计，优先处理 `pending`。
+3. 使用状态筛选查看全部、待处理、已同意或已拒绝申请。
+4. 使用目标类型筛选查看 Project、Publication、Knowledge、Skill 或未知 / 通用申请。
+5. 在申请卡片中核对申请人、邮箱、目标标题、内容类型、slug、来源页面、公开路径、提交时间、处理时间、备注状态和理由摘要。
+6. 进入详情页 `/dashboard/access-requests/[id]`。
+7. 核对申请人信息、目标上下文、公开路径、原始申请链接和完整申请理由。
+8. 在人工处理区更新 `pending` / `approved` / `rejected` 与内部备注。
+9. 如状态为 approved 且确实需要授权，使用页面上的 Access Grant 引导进入创建页；创建页最多预填邮箱、申请 id 和内容类型。
+10. 在 Access Grant 创建页继续手动选择具体 restricted 内容；不要把 slug 或申请目标直接当作 private id 使用。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 运行 `git diff --check`。
+- 如本地服务可用，运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 确认列表筛选不会改变申请数据，只改变展示结果。
+- 确认详情页保存状态和内部备注后不会自动创建 Access Grant。
+- 确认 approved 申请进入 Access Grant 创建页时不自动选择具体内容。
+- 确认没有新增 migration、数据库字段、RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限、邮件服务或自动授权。
+
 ## Public SEO And Sharing Workflow
 
 日期：2026-06-14
