@@ -8,6 +8,16 @@ export function absoluteUrl(path = "/") {
   return new URL(path, siteUrl).toString();
 }
 
+export function publicMetadataDescription(value: string | null | undefined, fallback = siteDescription, maxLength = 150) {
+  const normalized = (value?.trim() || fallback).replace(/\s+/g, " ");
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength - 1)}…`;
+}
+
 export function publicPageMetadata({
   title,
   description,

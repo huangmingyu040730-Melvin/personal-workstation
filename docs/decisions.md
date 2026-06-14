@@ -1759,3 +1759,32 @@
 - 文件详情页支持编辑 visibility；文件中心批量工具支持把选中文件设为 public 或 private，并显示公开风险提示。
 - 本阶段不新增 migration，不新增 RPC，不修改 RLS、Storage policy、bucket、`storage_path`、上传、删除、zip 下载、文件多关联数据模型或 `research_asset_links`。
 - 不公开 private / unlisted / restricted 文件，不公开文档包 zip 下载，不公开 raw link rows、relation note、owner_id、Storage path、Storage bucket、signed URL、service role key、API key、Supabase key、Authorization header、cookie、token 或 secret。
+
+## 2026-06-14 - Polish Public Research Detail Pages
+
+类型：decision
+
+决策：
+
+- Phase 2R-A-4B 将 `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 统一为正式公开研究详情页。
+- 四类详情页共享 detail hero、主内容 section、侧栏 metadata、标签、访问申请 CTA、related public content 和安全 SEO metadata。
+- 详情页只使用 public 详情查询；private / restricted / unlisted 内容不输出正文或附件，只引导访问申请 / viewer 登录。
+- Project / Publication 详情页继续整合 2R-A-4A 的公开附件面板；文件仍必须显式 public，且关联到当前 public 资产才展示。
+- Knowledge / Skill 详情页本阶段不展示 Documents；Skill 页面只作为公开说明页，不展示 Skill package、私密附件，不执行、不安装、不解析 Skill 文件。
+- Related public content 只基于 public 记录、同 project_id、同 category / platform / tag 等公开字段推导，不展示 `research_asset_links` 管理数据、后台关系备注或 raw `document_asset_links`。
+
+原因：
+
+- 公开列表页已经具备正式索引体验，访客进入详情页后也需要延续同一套专业、清晰和安全的公开研究工作站体验。
+- Project / Publication 的公开附件底座已经完成，但详情页需要更合理地把附件、正文、metadata 和相关公开内容组织起来。
+- Knowledge / Skill 公开详情页应优先保持阅读与说明边界，避免过早扩展公开附件或包下载能力。
+
+影响：
+
+- 新增统一公开详情组件，四类详情页改为组合式公开阅读布局。
+- Project 详情展示研究问题、背景、方法、状态、进度、标签、相关公开成果 / 知识和公开附件。
+- Publication 详情展示成果摘要、类型、日期、公开关联项目、相关公开知识和公开附件。
+- Knowledge 详情展示公开正文、分类、公开关联项目、相关公开知识 / 成果。
+- Skill 详情展示公开说明、输入 / 输出 / 使用指南、平台、状态、版本和相关公开 Skill。
+- 本阶段不新增 migration，不新增字段，不新增 RPC，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、文件多关联核心逻辑、AssetLinksPanel、Resume / Career、Market Brief 或后台页面。
+- 不公开 private Documents、Storage path、Storage bucket、signed URL、`file_path`、owner_id、raw link rows、relation note、`research_asset_links` 管理功能、service role key、API key、Supabase key、Authorization header、cookie、token 或 secret。
