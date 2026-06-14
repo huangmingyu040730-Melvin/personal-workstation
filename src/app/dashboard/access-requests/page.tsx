@@ -4,6 +4,7 @@ import { AdminEmptyState, AdminPageSurface, AdminSection } from "@/components/ad
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/card";
 import { PageHeader } from "@/components/page-header";
+import { getAccessRequestContextFromStoredUrl } from "@/lib/access-request-context";
 import { accessRequestStatuses, getAccessRequestContentTypeLabel, getAccessRequestStatusLabel } from "@/lib/content-options";
 import type { AccessRequestStatus } from "@/lib/content-types";
 import { formatDateTime } from "@/lib/format";
@@ -51,36 +52,47 @@ export default async function AccessRequestsPage({
       </form>
       </AdminSection>
       <Card className="overflow-x-auto p-0">
-        <div className="min-w-[980px]">
-          <div className="grid grid-cols-[0.65fr_0.9fr_0.75fr_0.55fr_1fr_0.5fr_0.7fr_0.7fr_0.35fr] gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-500">
-            <span>姓名</span>
+        <div className="min-w-[1180px]">
+          <div className="grid grid-cols-[0.8fr_1fr_1.35fr_0.85fr_1.3fr_0.6fr_0.75fr_0.4fr] gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-500">
+            <span>申请人</span>
             <span>邮箱</span>
-            <span>机构 / 身份</span>
-            <span>类型</span>
-            <span>内容标题</span>
+            <span>申请目标</span>
+            <span>来源</span>
+            <span>申请理由</span>
             <span>状态</span>
             <span>创建时间</span>
-            <span>处理时间</span>
             <span>操作</span>
           </div>
           {requests.length === 0 ? (
             <div className="p-5"><AdminEmptyState title="暂无访问申请" description="外部访客提交申请后会显示在这里。" /></div>
-          ) : requests.map((request) => (
-            <div key={request.id} className="grid grid-cols-[0.65fr_0.9fr_0.75fr_0.55fr_1fr_0.5fr_0.7fr_0.7fr_0.35fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50/60 last:border-0">
-              <span className="font-medium text-slate-900">{request.requester_name}</span>
-              <span className="truncate text-slate-600">{request.requester_email}</span>
-              <span className="truncate text-slate-500">{request.organization ?? "未填写"}</span>
-              <span className="text-slate-500">{getAccessRequestContentTypeLabel(request.requested_content_type)}</span>
-              <span className="truncate text-slate-600">{request.requested_content_title ?? "未指定"}</span>
-              <span><span className={statusClass(request.status)}>{getAccessRequestStatusLabel(request.status)}</span></span>
-              <span className="text-slate-500">{formatDateTime(request.created_at)}</span>
-              <span className="text-slate-500">{request.reviewed_at ? formatDateTime(request.reviewed_at) : "未处理"}</span>
-              <Link href={`/dashboard/access-requests/${request.id}`} className="inline-flex items-center gap-1 font-medium text-blue-700">
-                <Eye size={14} />
-                查看
-              </Link>
-            </div>
-          ))}
+          ) : requests.map((request) => {
+            const context = getAccessRequestContextFromStoredUrl(request.requested_content_url);
+
+            return (
+              <div key={request.id} className="grid grid-cols-[0.8fr_1fr_1.35fr_0.85fr_1.3fr_0.6fr_0.75fr_0.4fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50/60 last:border-0">
+                <span>
+                  <span className="block font-medium text-slate-900">{request.requester_name}</span>
+                  <span className="mt-1 block truncate text-xs text-slate-500">{request.organization ?? "未填写机构"}</span>
+                </span>
+                <span className="truncate text-slate-600">{request.requester_email}</span>
+                <span className="min-w-0">
+                  <span className="block truncate font-medium text-slate-800">{request.requested_content_title ?? "未指定标题"}</span>
+                  <span className="mt-1 block truncate text-xs text-slate-500">
+                    {getAccessRequestContentTypeLabel(request.requested_content_type)}
+                    {context.slug ? ` · ${context.slug}` : ""}
+                  </span>
+                </span>
+                <span className="truncate text-slate-500">{context.sourceLabel}</span>
+                <span className="line-clamp-2 text-slate-600">{request.reason}</span>
+                <span><span className={statusClass(request.status)}>{getAccessRequestStatusLabel(request.status)}</span></span>
+                <span className="text-slate-500">{formatDateTime(request.created_at)}</span>
+                <Link href={`/dashboard/access-requests/${request.id}`} className="inline-flex items-center gap-1 font-medium text-blue-700">
+                  <Eye size={14} />
+                  查看
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </Card>
       </AdminPageSurface>

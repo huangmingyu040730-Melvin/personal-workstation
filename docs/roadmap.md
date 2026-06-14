@@ -590,6 +590,24 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - Related public content 只来自 public 记录或公开字段推导，不展示 `research_asset_links` 管理数据、后台关系备注、raw `document_asset_links` 或 private Documents。
 - Project / Publication 公开附件仍必须满足文件 public、当前资产 public、文件关联当前资产；Knowledge / Skill 本阶段不开放公开附件展示。
 
+### Phase 2R-B-1 - Access Request And Restricted Content Experience Polish
+
+已完成代码实现。公开展示主链路完成后，访问申请与未公开内容提示被 polish 为更完整的访客闭环：
+
+- `/access-request` 页面改为正式“申请访问研究资料”入口，展示申请目标上下文、审核边界和敏感信息提醒。
+- Project / Publication / Knowledge / Skill 公开详情页的“申请访问”CTA 带 `content_type`、slug、公开标题和来源 query。
+- 未公开或需要授权的 slug fallback 不确认内容是否真实存在，只提示“该内容暂未公开或需要授权访问”，并提供申请访问、viewer 邮箱登录和返回公开列表。
+- 访问申请表单复用既有 `access_requests` 字段预填内容类型、标题和站内路径。
+- 后台 access requests 列表 / 详情页展示申请来源、目标标题 / slug、理由摘要、状态和处理边界。
+- 已同意申请仍需管理员手动创建 Access Grant 并选择具体 restricted 内容。
+
+边界：
+
+- 不新增 Supabase migration，不新增字段，不修改 RLS、Storage policy、Access Grants schema 或 public 文件下载 route。
+- 访问申请不等于授权，不自动开放 restricted/private 正文、Documents、private attachments、public attachments、zip、Storage path、Storage bucket 或 signed URL。
+- 不新增邮件服务，不自动发送通知，不做 CRM、支付、会员、AI 自动审批、OCR、AI 摘要、向量搜索或关系图谱恢复。
+- 申请上下文只使用公开页面已展示标题和 slug；不得使用 private id 作为公开申请依据。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -648,7 +666,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示。
 - Documents 上传默认 private；只有管理员显式设为 public 且关联 public 资产的文件，才可在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。
 - Documents 作为可维护的统一默认私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页继续嵌入后台附件视图；公开 Project / Publication 详情页只展示经 public 附件查询归一化后的安全字段，不展示 raw link rows、Storage 路径、Storage bucket、owner_id 或 signed URL；公开 Knowledge / Skill 详情页不展示 Documents。

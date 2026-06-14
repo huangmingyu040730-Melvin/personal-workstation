@@ -28,6 +28,11 @@ export function AccessGrantForm({
     <form action={createAccessGrantAction} className="space-y-5">
       <ErrorNotice message={error} />
       {requestId ? <input type="hidden" name="request_id" value={requestId} /> : null}
+      {requestId ? (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
+          当前授权从访问申请进入。创建授权仍需要手动选择具体 restricted 内容；系统不会自动发送邮件，也不会开放 Documents 或附件下载。
+        </div>
+      ) : null}
       <AdminFormSection title="授权对象" description="授权以邮箱为粒度，外部用户需使用同一邮箱登录。">
       <Field label="被授权邮箱" hint="被授权用户需使用这个邮箱通过外部授权登录入口登录。">
         <TextInput name="grantee_email" type="email" defaultValue={initialEmail ?? ""} placeholder="name@example.com" required maxLength={160} />

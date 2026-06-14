@@ -3,12 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
-import { encodeFormError, getOptionalString, getString } from "@/lib/forms";
+import { getOptionalString, getString } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { reviewAccessRequestSchema, submitAccessRequestSchema } from "@/lib/validations/access-request";
 
+function appendActionState(path: string, key: "error" | "success", value: string) {
+  const url = new URL(path, "https://local.invalid");
+  url.searchParams.delete("error");
+  url.searchParams.delete("success");
+  url.searchParams.set(key, value);
+  return `${url.pathname}${url.search}`;
+}
+
 function accessRequestErrorRedirect(path: string, message: string): never {
-  redirect(`${path}?error=${encodeFormError(message)}`);
+  redirect(appendActionState(path, "error", message));
+}
+
+function getSafeAccessRequestReturnTo(formData: FormData) {
+  const value = getString(formData, "return_to");
+
+  if ((value === "/access-request" || value.startsWith("/access-request?")) && value.length <= 700) {
+    return value;
+  }
+
+  return "/access-request";
 }
 
 function submitPayloadFromForm(formData: FormData) {
@@ -32,15 +50,16 @@ function reviewPayloadFromForm(formData: FormData) {
 
 export async function submitAccessRequestAction(formData: FormData) {
   const parsed = submitPayloadFromForm(formData);
+  const returnTo = getSafeAccessRequestReturnTo(formData);
 
   if (!parsed.success) {
-    accessRequestErrorRedirect("/access-request", parsed.error.issues[0]?.message ?? "请检查访问申请表单。");
+    accessRequestErrorRedirect(returnTo, parsed.error.issues[0]?.message ?? "请检查访问申请表单。");
   }
 
   const supabase = await createClient();
 
   if (!supabase) {
-    accessRequestErrorRedirect("/access-request", "当前暂时无法提交申请，请稍后再试。");
+    accessRequestErrorRedirect(returnTo, "当前暂时无法提交申请，请稍后再试。");
   }
 
   const { error } = await supabase.from("access_requests").insert({
@@ -52,12 +71,12 @@ export async function submitAccessRequestAction(formData: FormData) {
 
   if (error) {
     console.error("submitAccessRequestAction failed", { code: error.code, message: error.message });
-    accessRequestErrorRedirect("/access-request", "申请提交失败，请稍后重试。");
+    accessRequestErrorRedirect(returnTo, "申请提交失败，请稍后重试。");
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/access-requests");
-  redirect("/access-request?success=1");
+  redirect(appendActionState(returnTo, "success", "1"));
 }
 
 export async function reviewAccessRequestAction(id: string, formData: FormData) {

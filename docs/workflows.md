@@ -251,6 +251,45 @@ npm run build
 - 确认公开页面不展示 private / unlisted 文件、Storage path、Storage bucket、signed URL、`file_path`、raw `document_asset_links`、relation note 或 `research_asset_links` 管理功能。
 - 本流程不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或后台显式关系管理，不引入字体文件、外部字体服务、图表库、动画库、外部搜索服务或向量库。
 
+## Access Request And Restricted Content Experience Workflow
+
+日期：2026-06-14
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2R-B-1 的访问申请与未公开内容体验，让公开访客可以从公开内容详情页清楚申请更多研究资料，同时保持申请、授权、Documents 和公开附件下载边界分离。
+
+步骤：
+
+1. `/access-request` 是正式申请入口，标题使用“申请访问研究资料”，metadata 使用“申请访问 | 黄铭语研究工作站”，不把 query 里的 title 或 slug 写入 metadata。
+2. Project / Publication / Knowledge / Skill 公开详情页的申请 CTA 使用 `content_type`、slug、当前 public 页面已显示标题和来源 `from` 生成 query。
+3. 申请 CTA 不使用 private id；未公开 fallback 只能携带访客正在访问的 slug 和内容类型，不确认 private / restricted 内容是否真实存在。
+4. 申请页读取 query 后展示“你正在申请访问”的上下文，并预填既有 `requested_content_type`、`requested_content_title` 和 `requested_content_url` 字段。
+5. 若没有 query 上下文，申请页仍可独立填写内容类型、标题、链接和申请理由。
+6. 申请理由字段用于填写用途说明；页面必须提示不要填写密码、API key、授权码、私密通信原文或其他敏感信息。
+7. 提交访问申请只写入 `access_requests`，状态为 `pending`；提交成功不自动创建 Access Grant，不开放 restricted/private 正文，不开放 Documents，不生成 signed URL。
+8. 未公开或需要授权的详情页 fallback 使用专业文案，例如“该内容暂未公开或需要授权访问”，并提供申请访问、viewer 邮箱登录和返回公开列表。
+9. fallback 不展示正文、摘要、附件、Storage path、Storage bucket、signed URL、`file_path`、raw `document_asset_links` 或 `research_asset_links` 管理信息。
+10. 后台 `/dashboard/access-requests` 列表应展示申请人、邮箱、申请目标、来源、理由摘要、状态和提交时间。
+11. 后台详情页应展示内容类型、目标标题、来源、公开路径、原始申请链接、申请理由、状态、处理时间和内部备注。
+12. 审批表单只更新 `pending` / `approved` / `rejected` 与内部备注；同意申请后仍需管理员手动创建 Access Grant，并选择具体 restricted 内容。
+13. Access Grant 创建页可从申请带入邮箱和内容类型，但仍不自动选择内容、不自动发送邮件、不开放 Documents 或附件下载。
+14. 本流程不新增 Supabase migration，不修改 RLS、Storage policy、public 文件下载 route、Documents 上传 / 删除 / zip 下载或邮件服务。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 运行 `git diff --check`。
+- 打开 `/access-request`，确认页面像正式研究资料访问申请入口，表单字段清楚，文案说明申请不会自动授权。
+- 从 public Project / Publication / Knowledge / Skill 详情页点击申请访问，确认 query context 正确，申请页显示申请目标并可提交。
+- 打开不存在或未公开 slug，确认页面不泄露内容是否真实存在，提供申请访问 CTA、viewer 登录和返回列表。
+- 在后台提交或查看一条访问申请，确认能看到来源、目标内容、申请理由和状态，且 approve / reject / pending 可操作。
+- 确认申请不会自动开放 Documents、private attachments、Storage path、bucket、signed URL、raw link rows 或 restricted/private 正文。
+- 在 390px 宽度下确认 `/access-request` 和 fallback 页面无横向溢出，表单字段可输入，CTA 可点击。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09

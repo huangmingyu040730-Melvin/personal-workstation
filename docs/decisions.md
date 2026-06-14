@@ -1812,3 +1812,28 @@
 - Skill 详情展示公开说明、输入 / 输出 / 使用指南、平台、状态、版本和相关公开 Skill。
 - 本阶段不新增 migration，不新增字段，不新增 RPC，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、文件多关联核心逻辑、AssetLinksPanel、Resume / Career、Market Brief 或后台页面。
 - 不公开 private Documents、Storage path、Storage bucket、signed URL、`file_path`、owner_id、raw link rows、relation note、`research_asset_links` 管理功能、service role key、API key、Supabase key、Authorization header、cookie、token 或 secret。
+
+## 2026-06-14 - Polish Access Request Context Without Expanding Authorization
+
+类型：decision
+
+决策：
+
+- Phase 2R-B-1 polish `/access-request`、公开详情页申请 CTA、未公开内容 fallback 和后台 access requests 审核展示。
+- Project / Publication / Knowledge / Skill 公开详情页申请按钮带 `content_type`、slug、公开标题和来源 query。
+- `/access-request` 根据 query 展示申请上下文，并预填既有 `requested_content_type`、`requested_content_title` 和 `requested_content_url` 字段。
+- 后台 access requests 列表 / 详情页展示申请来源、目标标题 / slug、理由摘要和处理边界。
+- 访问申请仍只是申请；管理员同意后如需开放 restricted 内容，仍要通过 Access Grants 手动选择具体内容。
+
+原因：
+
+- 公开浏览、公开附件和公开详情页主链路已完成，访客需要一个清晰可信的“申请更多材料”路径。
+- 现有 `access_requests` 表已经具备内容类型、标题、URL、理由、状态和备注字段，足以承载申请上下文；新增 schema 会扩大不必要的维护面。
+- 申请与授权必须继续分离，避免访客提交表单后自动获得 restricted 内容、Documents 或下载权限。
+
+影响：
+
+- 本阶段不新增 Supabase migration，不修改 RLS、Storage policy、Access Grants schema 或 public 附件下载 route。
+- 不新增邮件服务，不自动发送通知，不做 CRM、支付、会员、AI 自动审批、OCR、AI 摘要或向量搜索。
+- 不公开 private / restricted 正文，不公开 Documents、private attachments、Storage path、Storage bucket、signed URL、`file_path`、raw `document_asset_links` 或 `research_asset_links` 管理能力。
+- 申请上下文只使用当前公开页面已展示的标题和 slug；未公开 fallback 不确认 private / restricted 内容是否真实存在，也不使用 private id 作为公开申请依据。

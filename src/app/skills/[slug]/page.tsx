@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/badge";
 import { PublicDetailBody, PublicDetailGrid, PublicDetailHero, PublicDetailMetaList, PublicDetailSection, PublicDetailTags, PublicRelatedContent, type PublicDetailChip, type PublicRelatedItem } from "@/components/public/public-detail-shell";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
+import { buildAccessRequestHref } from "@/lib/access-request-context";
 import { skillStatuses } from "@/lib/content-options";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
@@ -42,10 +43,17 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
   const skill = await getPublicSkillBySlug(slug);
 
   if (!skill) {
+    const requestHref = buildAccessRequestHref({ contentType: "skill", slug, from: "skill_restricted" });
+
     return (
       <PublicShell>
-        <PublicPageHero eyebrow="Access Request" title="Skill 暂未公开" description="这条 Skill 可能尚未公开，或需要管理员按邮箱授权后才能查看。公开页面不会泄露私密包、附件或内部版本记录。" />
-        <RestrictedAccessNotice loginHref={`/viewer/login?next=${encodeURIComponent(`/skills/${slug}`)}`} />
+        <PublicPageHero eyebrow="Access Request" title="该内容暂未公开或需要授权访问" description="当前公开页面无法显示这项研究内容。公开站点不会泄露私密包、附件、内部版本记录或 Storage 信息。" />
+        <RestrictedAccessNotice
+          requestHref={requestHref}
+          loginHref={`/viewer/login?next=${encodeURIComponent(`/skills/${slug}`)}`}
+          backHref="/skills"
+          backLabel="返回 Skill 库"
+        />
       </PublicShell>
     );
   }
@@ -65,6 +73,12 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
     description: item.description,
     ctaLabel: "查看 Skill"
   }));
+  const accessRequestHref = buildAccessRequestHref({
+    contentType: "skill",
+    slug: skill.slug,
+    title: skill.name,
+    from: "skill_detail"
+  });
   const hasAnyGuide = Boolean(
     skill.content?.trim() ||
     skill.input_description?.trim() ||
@@ -81,6 +95,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
         chips={heroChips}
         backHref="/skills"
         backLabel="返回 Skill 库"
+        accessHref={accessRequestHref}
       />
       <PublicDetailBody>
         <PublicDetailGrid
@@ -142,7 +157,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
                 <p className="text-sm leading-7 text-slate-600">
                   本页是公开说明页，不是 Skill 包下载入口。页面不展示私密附件、文件中心资料、内部文件地址、临时下载地址、后台版本记录，也不会执行、安装或解析 Skill 文件。
                 </p>
-                <Link href="/access-request" className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
+                <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
                   申请查看未公开材料
                 </Link>
               </PublicDetailSection>

@@ -6,6 +6,7 @@ import { PublicDetailBody, PublicDetailGrid, PublicDetailHero, PublicDetailMetaL
 import { PublicDocumentAttachmentsPanel } from "@/components/public/public-document-attachments-panel";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
+import { buildAccessRequestHref } from "@/lib/access-request-context";
 import { getPublicationTypeLabel, projectStatuses } from "@/lib/content-options";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
@@ -47,10 +48,17 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
   const project = await getPublicProjectBySlug(slug);
 
   if (!project) {
+    const requestHref = buildAccessRequestHref({ contentType: "project", slug, from: "project_restricted" });
+
     return (
       <PublicShell>
-        <PublicPageHero eyebrow="Access Request" title="研究项目暂未公开" description="这条研究项目可能尚未公开，或需要管理员按邮箱授权后才能查看。公开页面不会泄露受限项目正文或附件。" />
-        <RestrictedAccessNotice loginHref={`/viewer/login?next=${encodeURIComponent(`/projects/${slug}`)}`} />
+        <PublicPageHero eyebrow="Access Request" title="该内容暂未公开或需要授权访问" description="当前公开页面无法显示这项研究内容。公开站点不会泄露未公开正文、附件、内部关系或 Storage 信息。" />
+        <RestrictedAccessNotice
+          requestHref={requestHref}
+          loginHref={`/viewer/login?next=${encodeURIComponent(`/projects/${slug}`)}`}
+          backHref="/projects"
+          backLabel="返回公开项目"
+        />
       </PublicShell>
     );
   }
@@ -81,6 +89,12 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
     description: note.excerpt,
     ctaLabel: "阅读"
   }));
+  const accessRequestHref = buildAccessRequestHref({
+    contentType: "project",
+    slug: project.slug,
+    title: project.title,
+    from: "project_detail"
+  });
 
   return (
     <PublicShell>
@@ -91,6 +105,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
         chips={heroChips}
         backHref="/projects"
         backLabel="返回公开项目"
+        accessHref={accessRequestHref}
       />
       <PublicDetailBody>
         <PublicDetailGrid
@@ -139,7 +154,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
                 <p className="text-sm leading-7 text-slate-600">
                   本页只展示已公开的项目字段。公开附件必须同时满足文件公开、当前项目公开、文件关联当前项目三个条件；私密文件、内部文件地址、内部关系记录和临时下载地址不会写入页面。
                 </p>
-                <Link href="/access-request" className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
+                <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
                   申请查看未公开材料
                 </Link>
               </PublicDetailSection>

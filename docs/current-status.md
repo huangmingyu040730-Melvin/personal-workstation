@@ -31,6 +31,7 @@
 - Phase 2R-A-4A 后，公开 Project / Publication 详情页可展示显式 public 文件附件；附件下载通过 `/public-files/[id]/download` 服务端校验后按需生成 60 秒短时 signed URL，页面 HTML 不输出 signed URL、Storage 路径或 raw link rows。
 - 2R-A-4A public 附件线上排查确认：Vercel Production / Preview 已配置 `SUPABASE_SERVICE_ROLE_KEY`，但 server-side service-role 查询曾因缺少表级 `select` grant 在 `publications` 校验处返回 permission denied。`0021_public_attachment_service_role_grants.sql` 已作为 hotfix 补齐公开附件查询 / 下载校验所需的 service-role 只读权限，不修改 RLS、Storage policy、bucket 或文件数据。
 - Phase 2R-A-4B 后，公开 Project / Publication / Knowledge / Skill 详情页统一为正式研究详情体验：detail hero、主内容 section、侧栏 metadata、related public content、访问申请 CTA 和安全 SEO metadata；Project / Publication 详情继续整合公开附件，Knowledge / Skill 不展示 Documents。
+- Phase 2R-B-1 后，访问申请与未公开内容 fallback 成为更完整的访客闭环：四类公开详情页“申请访问”会带 `content_type`、slug、公开标题和来源 query；`/access-request` 展示申请上下文、预填表单并说明审核边界；未公开 slug fallback 不确认内容是否存在，只引导申请访问、授权登录或返回公开列表；后台 access requests 列表 / 详情展示申请来源、目标标题 / slug、理由摘要和处理边界。
 - 首页区块之间使用清晰 section wrapper、边框和交替背景分隔，并补充克制的 hover / focus micro-interactions。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”；不显示后台菜单、文件中心或全局关系图谱入口。
 - About 页面 `/about`。
@@ -272,14 +273,19 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 
 已完成：
 
-- 公开 `/access-request`。
+- 公开 `/access-request`，作为正式“申请访问研究资料”入口。
 - 访客提交申请。
+- 从公开 Project / Publication / Knowledge / Skill 详情页进入时，申请链接带 `content_type`、slug、公开标题和来源，申请页展示“你正在申请访问”的上下文并预填内容类型、标题和站内路径。
+- 独立访问 `/access-request` 时仍可手动填写申请目标。
 - 后台查看申请。
+- 后台列表展示申请人、邮箱、申请目标、来源、申请理由摘要、状态和提交时间。
+- 后台详情展示申请内容、来源、公开路径、原始申请链接、理由和处理边界。
 - `pending` / `approved` / `rejected` 状态。
 - 管理员备注。
 - Dashboard 待处理申请提示。
+- 已同意申请可继续跳转创建 Access Grant，但仍需管理员手动选择具体 restricted 内容。
 
-申请审批状态不等同于内容授权。访问授权通过 Access Grants 单独创建和撤销。
+申请审批状态不等同于内容授权。访问授权通过 Access Grants 单独创建和撤销。2R-B-1 不新增 migration、不新增邮件服务、不自动开放 Documents、private attachments、signed URL、public attachments 安全规则或 Storage 路径。
 
 ### Restricted Access Foundation
 
@@ -384,6 +390,8 @@ Phase 2R-A-4A public 附件功能本身不新增业务 schema，但生产排查�
 
 `0021` 只给 `service_role` 补公开附件查询和 `/public-files/[id]/download` 校验链路需要的只读表权限；不新增表、字段、RPC，不修改 RLS、Storage policy、bucket public 状态、`storage_path` 或文件多关联数据。
 
+Phase 2R-B-1 访问申请与受限内容体验 polish 不需要新增 migration；它只复用既有 `access_requests.requested_content_type`、`requested_content_title`、`requested_content_url`、`reason`、`status` 和 `admin_note` 字段，新增应用层上下文 query、申请页预填、未公开 fallback 文案和后台展示，不修改 RLS、Storage policy、Access Grants schema、public 文件下载 route 或邮件能力。
+
 规则：
 
 - 已执行过的 migration 不应修改。
@@ -407,7 +415,7 @@ Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行�
 Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有工作台”：
 
 - 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系；Project 后台详情页可作为单个研究项目的中枢入口，Knowledge 后台详情页可作为单个知识节点入口，Skill 后台详情页可作为能力包 / 工作流包入口，Publication 后台详情页可作为成果中枢入口，先整理研究框架、成果摘要、正文摘要、使用说明、平台版本、私密附件、显式资产关系和相关搜索入口。
-- 公开展示：Phase 2R-A-1 起把公开首页作为“黄铭语研究工作站”入口维护，首屏 H1 为“个人研究工作站”，清晰展示研究方向、公开 Projects、Publications、Knowledge、Skills 和访问申请；Phase 2R-A-2 只强化 hero 的金融 / 量化 / 研究视觉氛围和标题字体质感；Phase 2R-A-3 只把四个公开列表页打磨为正式内容索引并增加轻量筛选，不改变公开内容查询或权限边界；公开导航保留轻量“管理员登录”入口但不显示后台菜单、文件中心或全局关系图谱入口，公开页面继续只读展示 public 内容。
+- 公开展示：Phase 2R-A-1 起把公开首页作为“黄铭语研究工作站”入口维护，首屏 H1 为“个人研究工作站”，清晰展示研究方向、公开 Projects、Publications、Knowledge、Skills 和访问申请；Phase 2R-A-2 只强化 hero 的金融 / 量化 / 研究视觉氛围和标题字体质感；Phase 2R-A-3 只把四个公开列表页打磨为正式内容索引并增加轻量筛选，不改变公开内容查询或权限边界；Phase 2R-B-1 起访问申请页和未公开内容 fallback 提供更清晰的申请路径，详情页 CTA 带公开上下文，后台申请管理能看到来源和目标；公开导航保留轻量“管理员登录”入口但不显示后台菜单、文件中心或全局关系图谱入口，公开页面继续只读展示 public 内容。
 - 文件 / 知识管理：Documents 作为可维护的统一默认私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；公开站点只在 Project / Publication 详情页展示显式 public 且关联当前 public 资产的安全附件摘要，Knowledge / Skill 公开详情不展示 Documents。需要调整单个文件时使用文件详情页添加 / 移除多资产关联；需要整理多个文件时使用 Documents 紧凑批量工具栏添加、移除或清空关联；需要调整整个资料包时使用文档包详情页的关联管理和可选同步到包内文件；legacy primary relation 仅作为兼容字段处理。需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 受限访问：Viewer magic link 和 restricted 访问可作为独立 bugfix 专项处理，但不得开放 Documents 或 signed URL。
