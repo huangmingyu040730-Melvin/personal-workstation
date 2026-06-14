@@ -648,6 +648,22 @@ Phase 2R-Z 已退役：
 - 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 - 不改变公开页面安全边界；Knowledge / Skill 公开详情页仍不展示 Documents，Skill 仍不展示 package、不下载、不执行、不安装、不解析文件。
 
+### Phase 2R-F-1 - Public About Profile Polish
+
+已完成代码实现。`/about` 升级为正式公开个人简介页：
+
+- Hero 展示姓名 / 站点身份、简短定位、公开简介和 Projects / Publications / 首页 CTA。
+- Research Focus 展示金融研究、量化分析、AI 工具、研究资产管理和公开研究工作站建设等方向。
+- Workstation Explanation 说明公开研究工作站用于展示 public 项目、成果、知识笔记和 Skill / 工作流，私密文件和后台资料不会公开。
+- Skills / Tools 展示金融研究、数据分析、Next.js / Supabase / GitHub / Vercel、Codex / ChatGPT / 自动化工作流等公开能力方向。
+- Public Content Navigation 连接 Projects、Publications、Knowledge 和 Skills。
+- Contact / Links 只展示公开 Profile 字段，缺失时保守提示后续补充。
+
+边界：
+
+- 不新增 migration，不修改 RLS、Storage policy、Documents、public file download route 或公开内容核心查询。
+- 不恢复访问申请、Viewer login、Access Grants 或 restricted 外部授权。
+
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
 历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。

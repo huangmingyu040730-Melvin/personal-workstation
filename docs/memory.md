@@ -65,6 +65,7 @@
 - Phase 2R-E-1：访问申请后台流程 polish，后台申请列表新增状态 / 目标类型筛选和更完整的申请卡片，详情页升级为人工审核工作台；只复用既有 `status` / `admin_note`，不自动创建 Access Grant、不发邮件、不开放 Documents 或 signed URL。
 - Phase 2R-E-2：Access Grants 后台管理 polish，授权列表新增有效 / 过期 / 撤销状态筛选和内容类型筛选，创建页强化手动选择 restricted 内容，新增授权详情页和 `docs/access-grants-workflow.md`；不新增 migration、不改权限模型、不自动授权或开放 Documents。
 - Phase 2R-Z：移除外部访问申请、Viewer magic link、Access Grants 和 restricted 外部授权链路；删除公开 / 后台相关页面、actions、queries、forms 和 docs，0022 迁移将历史 restricted 内容回写 private、收紧四类内容表 visibility / public read policy，并删除旧 `access_requests`、`content_access_grants` 与授权函数。不修改 Documents、Storage policy、public 文件下载 route 或后台核心内容管理。
+- Phase 2R-F-1：公开 About / Resume Profile polish，`/about` 升级为正式公开个人简介页，展示个人定位、研究方向、公开研究工作站说明、技能 / 工具方向、公开内容导航和保守 Contact / Links；只读取公开 Profile 字段或静态公开文案，不新增 migration、不改权限、不恢复外部访问链路。
 
 当前网站包括：
 
@@ -95,6 +96,7 @@
 - Phase 2R-C-1 后，公开 metadata 使用“黄铭语研究工作站”模板；详情页 description 只使用 public summary / excerpt / description 截断；未公开 fallback metadata 保持 noindex。
 - Phase 2R-C-2 后，发布前公开 QA 可使用 `npm run smoke:public` 巡检运行中的站点；该脚本只访问公开路由、fallback、sitemap 和 robots，不读取 private data，也不作为真实权限边界。
 - Phase 2R-D-1 后，后台四类资产详情页的公开发布准备度只是运营提示：基于已有字段、关系和 Project / Publication public 附件计数判断，不阻止保存、不自动设为 public、不自动公开附件。
+- Phase 2R-F-1 后，`/about` 是公开个人简介与公开研究工作站说明页；只能展示 public Profile 字段或静态公开文案，不展示 Documents、Storage path、signed URL、owner_id、raw link rows、访问申请、Viewer 登录或 Access Grants。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
 - robots 阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
 - Documents 上传默认保持 private；只有管理员显式设置 `documents.visibility = 'public'`，且文件关联到 public 资产时，公开页面才可展示安全附件摘要。
@@ -241,6 +243,7 @@ Research Asset Links：
 - Phase 2R-C-1 采用 public SEO and sharing polish 决策：只在应用层统一公开 metadata、OG/Twitter card、sitemap 和 robots；复用公开安全图片，不生成动态私密 OG；sitemap 只收 public 内容并在查询失败时降级；不新增 migration、不修改 RLS、Storage policy、Documents 或 public 文件下载 route。
 - Phase 2R-C-2 采用 public launch QA and hardening 决策：只新增公开 smoke 脚本、访客文案 hardening 和附件 metadata 移动端换行保护；不新增公开能力、不新增 migration、不修改 RLS、Storage policy、Documents 或 public 文件下载 route。
 - Phase 2R-D-1 采用 public content operations foundation 决策：公开主链路完成后先补后台内容运营辅助，四类详情页 checklist 只读提示字段缺口、关联状态、公开附件边界和人工复核项；不做强校验、不新增 schema、不自动公开内容或附件。
+- Phase 2R-F-1 采用 public about profile polish 决策：公开个人简介页承担作品集 / 研究主页入口，复用 public Profile 和静态公开说明，不新增 schema、不修改 RLS/Storage/Documents/public download route，不恢复访问申请或外部授权。
 - Phase 2R-E-1 / 2R-E-2 的访问申请后台与 Access Grants polish 已被 Phase 2R-Z 取代；不要恢复相关页面、actions、queries、forms 或流程文档。
 - Phase 2R-Z 采用 remove external access 决策：新增 0022 migration，将历史 restricted 回写 private，收紧 public read policy，删除旧 `access_requests`、`content_access_grants`、`has_content_access()` 和 `can_request_viewer_login()`；不修改 Documents、Storage policy 或 public 下载 route。
 - 后续数据库变更必须新增 `0023_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
@@ -296,6 +299,7 @@ Research Asset Links：
 - Phase 2R-C-1：不新增 migration；只调整公开 metadata、canonical、OG/Twitter card、sitemap 和 robots，不修改 RLS、Storage policy、Documents、public 文件下载 route 或任何 Supabase schema。
 - Phase 2R-C-2：不新增 migration；只新增公开 smoke 巡检脚本、访客文案 hardening 和公开附件 metadata 移动端换行保护，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或任何 Supabase schema。
 - Phase 2R-D-1：不新增 migration；只新增后台 public readiness checklist、只读 public 附件计数 helper 和公开内容运营文档，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或任何 Supabase schema。
+- Phase 2R-F-1：不新增 migration；只 polish `/about`、首页 About CTA、robots allow 和 smoke 覆盖，不修改 RLS、Storage policy、Documents、public 下载 route 或四类公开内容核心查询。
 - Phase 2R-Z：新增 `0022_remove_external_access_and_restricted_viewer.sql`，只退役外部访问链路、回写历史 restricted 为 private、收紧 visibility / public read policy 并删除旧访问申请 / 授权表和函数；不修改 Storage policy、Documents 或 public 下载 route。
 
 规则：
