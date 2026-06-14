@@ -17,6 +17,8 @@
 
 Phase 2R-Z 已移除外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权链路。公开站点只展示 `public` 内容；未公开 slug 只显示安全 fallback，不确认 private、unlisted 或历史 restricted 内容是否存在。
 
+Phase 2R-G-1 将当前稳定版本收口为 v1.0 final QA / release notes。PR #115 已关闭且不合并，后续不继续推进 Phase 2R-F-2 homepage featured content polish，首页保持当前 `main` 的主结构。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -36,6 +38,7 @@ Phase 2R-Z 已移除外部访问申请、Access Grants、Viewer magic link 和 r
 - Phase 2R-D-1 后，公开内容运营基础建立：四类后台详情页新增 public readiness checklist，帮助管理员用既有字段判断内容是否适合公开；该提示只读、不阻止保存、不自动公开内容或附件。
 - Phase 2R-Z 后，访问申请、Viewer 登录、Access Grants 和 restricted 外部授权代码已移除；0022 迁移将历史 restricted 内容回写 private，收紧可见性约束和 public read policy，并删除旧访问申请 / 授权表与授权函数。
 - Phase 2R-F-1 后，`/about` 成为正式公开个人简介页，集中展示个人定位、研究方向、公开研究工作站说明、技能 / 工具方向、公开内容导航和保守 Contact / Links；不新增 migration，不恢复外部访问申请或授权。
+- Phase 2R-G-1 后，新增 `docs/v1-release-notes.md`，集中记录 v1.0 版本定位、公开站点能力、后台能力、安全边界、退役功能、当前不做事项和可复制验收清单。
 - 首页区块之间使用清晰 section wrapper、边框和交替背景分隔，并补充克制的 hover / focus micro-interactions。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库和轻量“管理员登录”；不显示后台菜单、文件中心、访问申请或全局关系图谱入口。
 - About 页面 `/about`，用于公开个人简介、研究方向、工作站说明和公开内容导航。
@@ -49,6 +52,7 @@ Phase 2R-Z 已移除外部访问申请、Access Grants、Viewer magic link 和 r
 - `robots.txt` 允许公开内容索引，并阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等敏感路径。
 - SEO metadata、canonical、Open Graph 与 Twitter card。
 - 首页 metadata 调整为“个人研究工作站 | 黄铭语研究工作站”，描述聚焦公开研究项目、学术成果、知识笔记与 AI 工作流。
+- #115 的首页精选内容改版不进入 v1.0；当前首页保持 `main` 既有 hero、研究方向、公开入口、公开项目 / 成果、Knowledge / Skill 预览和 public boundary 结构。
 - 公共页 UI 已完成蓝白清爽研究工作站风格优化。
 - 大屏左右留白已改善。
 - 卡片和按钮动效已增强。

@@ -343,6 +343,68 @@ npm run build
 - 在本地运行中站点执行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
 - 确认公开页面 HTML 不出现 signed URL、Storage path、`file_path`、owner_id、raw document links 或后台关系管理数据。
 
+## v1.0 Final QA Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 在 v1.0 发布前执行最终 QA、release notes 复核和安全边界确认。
+
+前提：
+
+1. PR #115 已关闭且不合并。
+2. 首页保持当前 `main` 主结构。
+3. 不继续推进 Phase 2R-F-2 homepage featured content polish。
+
+公开页面检查：
+
+1. 打开 `/`、`/about`、`/projects`、`/publications`、`/knowledge` 和 `/skills`。
+2. 从 sitemap 或公开列表中抽查一个 public Project、Publication、Knowledge 和 Skill 详情页。
+3. 打开一个不存在或非 public slug fallback。
+4. 确认公开页没有访问申请入口、viewer login、Access Grants、restricted 授权文案、Documents 私密信息、signed URL、Storage path、`storage_path`、`file_path`、`owner_id` 或 raw document links。
+5. 确认 Knowledge / Skill 公开详情页不展示 Documents；Skill package 不展示、不下载、不执行、不安装、不解析。
+
+后台页面检查：
+
+1. 登录管理员后台后打开 `/dashboard`、`/dashboard/projects`、`/dashboard/publications`、`/dashboard/knowledge`、`/dashboard/skills`、`/dashboard/documents`、`/dashboard/profile`、`/dashboard/calendar` 和 `/dashboard/career`。
+2. 确认无 Access Requests、Access Grants 或 Viewer 管理入口。
+3. 确认 Documents 文件中心正常。
+4. 确认 Project / Publication / Knowledge / Skill 后台列表与详情正常。
+5. 确认四类后台详情页 public readiness checklist 正常显示，且只提示、不阻止保存、不自动公开内容或附件。
+
+退役路由检查：
+
+- `/access-request`
+- `/viewer/login`
+- `/viewer/callback`
+- `/dashboard/access-requests`
+- `/dashboard/access-grants`
+
+以上路由应不存在、404、重定向登录或以其他安全方式不可用；不得恢复为产品入口。
+
+sitemap / robots 检查：
+
+1. sitemap 应包含 `/`、`/about`、`/projects`、`/publications`、`/knowledge`、`/skills` 和 public 详情页。
+2. sitemap 不得包含 `/access-request`、`/viewer`、`/dashboard`、`/api`、`/public-files`、private / unlisted 内容、signed URL 或 Storage path。
+3. robots 应阻止 `/dashboard`、`/api`、`/viewer`、`/access-request`、`/public-files`、`/login`、`/storage` 和 `/signed`。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 运行 `git diff --check`。
+- 暂存后运行 `git diff --cached --check`。
+- 如果项目未来新增 `typecheck` script，也运行 `npm run typecheck`。
+
+边界：
+
+- 本流程不新增功能、不新增 migration、不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
+- 本流程不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09
