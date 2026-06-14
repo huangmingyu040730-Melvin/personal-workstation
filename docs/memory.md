@@ -56,6 +56,7 @@
 - Phase 2R-A-2：公开首页 hero 视觉识别 polish，保留左文案 + 右统计卡片结构和 H1“个人研究工作站”，用自绘 CSS 金融 / 量化 / 研究背景元素与系统中文 serif 字体栈增强专业感；#101 预览反馈后将背景装饰重心移到左侧 / 中间偏左，右侧统计卡片区保持干净；不新增 migration，不引入字体文件、外部字体服务、图表库或动画库。
 - Phase 2R-A-3：公开 Projects / Publications / Knowledge / Skills 列表页 polish 为正式研究内容索引，统一 listing header、公开统计、轻量 URL 筛选、公开卡片和空状态；只展示 public 内容，不新增 migration，不读取或公开 Documents、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理能力。
 - Phase 2R-A-4A：新增公开文件附件基础能力，Documents 仍上传默认 private，但管理员可显式设置单个文件 public；公开 Project / Publication 详情页可展示当前 public 资产关联的 public 文件附件，下载经 `/public-files/[id]/download` 服务端校验后短时签名，不把 signed URL、Storage path、Storage bucket、owner_id 或 raw link rows 写入页面。
+- 2R-A-4A public 附件生产 hotfix：Vercel Production / Preview 已有 `SUPABASE_SERVICE_ROLE_KEY`，但 runtime log 显示 `isPublicAsset` 查询 `publications` 时 `permission denied for table publications`；新增 `0021_public_attachment_service_role_grants.sql` 只给 `service_role` 补 public 附件查询 / 下载校验需要的 `select` grant。
 - Phase 2R-A-4B：公开 Project / Publication / Knowledge / Skill 详情页统一为正式研究详情体验，使用 detail hero、主内容 section、侧栏 metadata、related public content、访问申请 CTA 和安全 metadata；Project / Publication 继续整合 public attachments，Knowledge / Skill 不展示 Documents 或 Skill package。
 
 当前网站包括：
@@ -225,9 +226,10 @@ Research Asset Links：
 - Phase 2R-A-1 采用 public presentation polish 决策：后台核心能力阶段性完成后转向公开展示质量；公开首页聚合研究方向、公开内容预览和访问申请，hero H1 改为“个人研究工作站”并恢复左侧文案 + 右侧统计卡片结构；Knowledge / Skill 首页预览改为紧凑卡片；公开导航保留轻量“管理员登录”但不展示后台菜单；公开页面继续只展示 public 内容。当时“不公开 Documents / 附件”的边界已由 Phase 2R-A-4A 精确化为显式 public 文件安全下载；仍不公开 private Documents、Storage 路径、signed URL、后台文件关联或显式关系管理。
 - Phase 2R-A-2 采用 hero visual identity polish 决策：用户认可 2R-A-1 信息架构，但希望首页首屏更有金融、量化、研究和学术气质；本阶段只用自绘 CSS 装饰和系统字体栈增强 hero 背景与标题，不改变公开查询、后台能力、Supabase schema、RLS、Storage、Documents 或显式关系。
 - Phase 2R-A-3 采用 public listing polish 决策：公开首页完成后继续把 `/projects`、`/publications`、`/knowledge`、`/skills` 打磨为正式研究内容索引；筛选只在应用展示层基于已加载 public 记录、既有字段和 URL query params 完成，不新增 migration、搜索服务、AI 摘要、向量搜索、Documents 读取或内部关系展示。
-- Phase 2R-A-4A 采用 public document attachments foundation 决策：显式 public 文件可在 public Project / Publication 详情页展示和下载，但不开放公开文件中心、不改 Storage policy、不新增 migration、不公开 raw link rows、Storage path 或 signed URL；旧的“公开页面完全不提供附件下载”边界被此更精确规则取代。
+- Phase 2R-A-4A 采用 public document attachments foundation 决策：显式 public 文件可在 public Project / Publication 详情页展示和下载，但不开放公开文件中心、不改 Storage policy、不公开 raw link rows、Storage path 或 signed URL；旧的“公开页面完全不提供附件下载”边界被此更精确规则取代。后续 0021 只作为 service-role grant hotfix，不新增业务 schema 或公开能力。
+- 0021 采用 public attachment service-role grant 决策：公开附件查询与下载 route 仍由服务端复核 public 文件、public 资产和关联存在；补 `service_role` 对 `projects`、`publications`、`knowledge_notes`、`skills`、`documents`、`document_asset_links` 的 `select`，不开放 anon / viewer 读取 Documents，不修改 RLS 或 Storage policy。
 - Phase 2R-A-4B 采用 public detail polish 决策：四类公开详情页统一为正式研究详情体验；Project / Publication 整合 4A 的公开附件，Knowledge / Skill 暂不展示 Documents；所有 related content 只展示 public 记录，不读取后台显式关系管理或私密文件。
-- 后续数据库变更必须新增 `0021_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
+- 后续数据库变更必须新增 `0022_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
 
@@ -289,14 +291,15 @@ Research Asset Links：
 - Phase 2Q-B-3：不新增 migration，继续依赖已执行的 `0019_research_asset_links.sql`
 - Phase 2P-G-1：`0020_document_asset_links.sql`
 - Phase 2R-A-1 / 2R-A-2 / 2R-A-3：不新增 migration；公开首页结构、视觉识别、系统字体栈、micro-interactions、公开列表页 listing header、轻量筛选、卡片和 metadata polish 只发生在应用展示层。
-- Phase 2R-A-4A：不新增 migration；沿用既有 `documents.visibility`、`document_collections.visibility` 和 `0020_document_asset_links.sql`，只新增 public 附件查询、组件、下载 route 和后台 visibility 操作。
+- Phase 2R-A-4A：不新增业务 schema；沿用既有 `documents.visibility`、`document_collections.visibility` 和 `0020_document_asset_links.sql`，只新增 public 附件查询、组件、下载 route 和后台 visibility 操作。
+- 2R-A-4A hotfix：`0021_public_attachment_service_role_grants.sql`
 - Phase 2R-A-4B：不新增 migration；只新增 / 调整公开详情组件、四类详情页组合、public related content 和 metadata，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或多关联核心逻辑。
 
 规则：
 
 - 已执行 migration 不应修改或重跑。
 - 0013 至 0017 是 Market Brief unused legacy data 对应迁移；当前产品代码不再依赖这些旧表，本轮不 drop。
-- 执行 0020 后，后续数据库变更应新增 `0021_*` 或更高编号。
+- 执行 0021 后，后续数据库变更应新增 `0022_*` 或更高编号。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Workflows
@@ -323,7 +326,7 @@ Research Asset Links：
 
 建议顺序：
 
-1. Phase 2P / 2Q / 2R-A-4A / 2R-A-4B 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql` 和 `0020_document_asset_links.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、公开四类详情页统一布局与 390px 移动端堆叠、Knowledge / Skill 不展示 Documents、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
+1. Phase 2P / 2Q / 2R-A-4A / 2R-A-4B 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql`、`0020_document_asset_links.sql` 和 `0021_public_attachment_service_role_grants.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、公开四类详情页统一布局与 390px 移动端堆叠、Knowledge / Skill 不展示 Documents、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
@@ -347,7 +350,8 @@ Research Asset Links：
 - “Documents 只服务 Publication 附件”已过时。Documents 已升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
 - “后续数据库变更应新增 `0018_*`”已过时。`0018_document_collections_and_folder_uploads.sql` 已存在；该过渡备注也已被 2Q-B-1 的 `0019` 取代。
 - “后续数据库变更应新增 `0019_*`”已过时。`0019_research_asset_links.sql` 已存在，且已被 2P-G-1 的 `0020_document_asset_links.sql` 继续推进。
-- “后续数据库变更应新增 `0020_*`”已过时。`0020_document_asset_links.sql` 已存在，后续应使用 `0021_*` 或更高编号。
+- “后续数据库变更应新增 `0020_*`”已过时。`0020_document_asset_links.sql` 已存在。
+- “后续数据库变更应新增 `0021_*`”已过时。`0021_public_attachment_service_role_grants.sql` 已存在，后续应使用 `0022_*` 或更高编号。
 - “Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计”已过时。Phase 2Q-B-1 已新增 `research_asset_links` 管理员后台显式关系底座，但 Documents 仍保持独立附件关系模型。
 - “Skill 当前没有 Project / Knowledge / Publication 显式关联字段，只能搜索相关资产”已过时。Skill 仍不新增单独外键字段，但可通过 `research_asset_links` 建立显式关系。
 - “后台存在独立全局研究资产关系视图页面”已过时。Phase 2Q-B-4 已移除该模块；显式关系仍在四类资产详情页维护。

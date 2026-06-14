@@ -15,6 +15,7 @@
 - Phase 2R-A-2 起公开首页 hero 可使用轻量 CSS 背景装饰表达金融、量化、研究和学术氛围；H1 文案仍为“个人研究工作站”，只使用系统字体栈，不提交字体文件或外部字体服务。
 - Phase 2R-A-3 起公开 Projects / Publications / Knowledge / Skills 列表页作为正式研究内容索引维护，使用统一 listing header、轻量筛选、公开卡片和空状态；仍只展示 public 内容。
 - Phase 2R-A-4A 起公开 Project / Publication 详情页可展示显式公开文件附件；文件必须 `documents.visibility = 'public'` 且关联到当前 public 资产，下载经 `/public-files/[id]/download` 短时签名路由校验，不把 signed URL 写入页面 HTML。
+- `0021_public_attachment_service_role_grants.sql` 是 2R-A-4A 的权限 hotfix：只给 server-side `service_role` 补公开附件查询 / 下载校验所需表的 `select` 权限，不修改 RLS、Storage policy、bucket public 状态或文件数据。
 - Phase 2R-A-4B 起公开 Project / Publication / Knowledge / Skill 详情页统一为正式公开研究详情体验；详情页只读取 public 详情查询，Project / Publication 可展示 2R-A-4A 的公开附件，Knowledge / Skill 不展示 Documents。
 
 ## Tech Stack
@@ -58,6 +59,7 @@ npm run build
 - `workspace-files` bucket 始终保持 private；Documents 上传默认写入 `visibility = 'private'`。只有管理员显式设为 `public`，且文件关联到 public Project / Publication / Knowledge / Skill 时，公开页面才可展示安全附件摘要和 `/public-files/[id]/download` 入口。
 - 公开 Project / Publication / Knowledge / Skill 页面不得展示 Documents 原始多资产 link rows、relation notes、`research_asset_links` 管理能力、`file_path`、Storage path、Storage bucket、owner_id 或 signed URL；Publication 公开查询应避免把历史附件字段作为展示数据使用。
 - public 文件下载路由必须在服务端重新校验：文件为 public、Storage bucket 为 `workspace-files`、当前资产为 public 且文件确实关联该资产；路由只能按需生成 60 秒短时 signed URL 或重定向，不得把 signed URL 写入页面 HTML。
+- public 附件查询与下载 route 的 server-side service-role client 只用于重新校验 public 文件、public 资产和文件关联；不得把 service role key 暴露到客户端、日志、文档或公开页面。
 - Documents 上传继续使用两阶段浏览器直传 Supabase Storage；Server Action 只处理管理员验证、metadata 校验、安全路径生成和 finalize 写库，不接收文件二进制。
 - Documents 的 `storage_path` 必须保持 ASCII-safe object key；中文文件名和文件夹名只保存在显示字段中。
 - `research_asset_links` 只用于 Project / Knowledge / Skill / Publication 之间的管理员后台显式关系；Documents 与文档包不得混入该表。

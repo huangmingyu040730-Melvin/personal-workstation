@@ -563,10 +563,11 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 公开附件组件只展示安全摘要字段：文件名、分类、文件大小、MIME type、更新时间、关系标签和下载入口。
 - 下载入口使用 `/public-files/[id]/download`，服务端复核文件 public、当前资产 public、文件确实关联该资产后，才按需生成 60 秒短时 signed URL。
 - 同一文件对同一资产已有具体关系时，公开附件关系标签同样隐藏低价值 legacy `related` fallback。
+- `0021_public_attachment_service_role_grants.sql` 作为生产 hotfix 补齐 server-side public 附件查询 / 下载校验所需的 `service_role` 只读 grant，避免 Vercel 已配置 service-role key 但 Supabase 表级权限返回 permission denied。
 
 边界：
 
-- 不新增 migration；沿用既有 `documents.visibility`、`document_collections.visibility` 和 `0020_document_asset_links.sql`。
+- 不新增业务 schema；沿用既有 `documents.visibility`、`document_collections.visibility` 和 `0020_document_asset_links.sql`。0021 只补 `service_role` 的 `select` grant。
 - 不修改 RLS、Storage policy、bucket、`storage_path`、上传、删除、zip 下载或文件多关联数据模型。
 - 不公开 private / unlisted / restricted 文件，不公开文档包 zip 下载，不公开 raw `document_asset_links`、relation note、owner_id、Storage path、Storage bucket、signed URL 或 `file_path`。
 - Knowledge / Skill 公开附件展示可作为后续独立 polish；本阶段只把基础能力接入 Project / Publication 详情页。
