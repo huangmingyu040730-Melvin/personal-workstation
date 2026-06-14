@@ -23,7 +23,7 @@
 - Phase 2C：Publications / Documents / private Storage。
 - Phase 2D：公开研究工作站、公开内容路由、公开内容填充。
 - Phase 2E-A：访问申请表单与后台审批。
-- Phase 2E-B：restricted 授权基础能力已实现，但 viewer magic link 登录仍未稳定。
+- Phase 2E-B：restricted 授权基础能力已实现；Phase 2I / Hotfix 已补 viewer magic link、callback 和 viewable 查询代码层闭环，真实邮箱端到端仍需 Preview / 生产人工验收。
 - Phase 2F：SEO 基础、sitemap、robots、metadata。
 - Phase 2G-A / 2G-B：公开站点与管理后台 UI 优化。
 - Phase 2J-A / 2J-B / 2J-C：Profile 真实编辑、Calendar CRUD 与月视图。
@@ -64,6 +64,7 @@
 - Phase 2R-D-1：公开内容运营基础，Project / Publication / Knowledge / Skill 后台详情页新增 public readiness checklist，基于既有字段和 public 附件计数提示发布准备度；新增 `docs/public-content-operations.md`，不新增 migration、不改权限或公开下载边界。
 - Phase 2R-E-1：访问申请后台流程 polish，后台申请列表新增状态 / 目标类型筛选和更完整的申请卡片，详情页升级为人工审核工作台；只复用既有 `status` / `admin_note`，不自动创建 Access Grant、不发邮件、不开放 Documents 或 signed URL。
 - Phase 2R-E-2：Access Grants 后台管理 polish，授权列表新增有效 / 过期 / 撤销状态筛选和内容类型筛选，创建页强化手动选择 restricted 内容，新增授权详情页和 `docs/access-grants-workflow.md`；不新增 migration、不改权限模型、不自动授权或开放 Documents。
+- Phase 2I / Hotfix：viewer restricted access and public request submission，公开访问申请提交优先使用服务端安全写入；viewer login 始终生成 `/viewer/callback?next=...`，callback 交换 code、验证 session user 并跳回安全 `next`；四类详情页改用 RLS 保护的 viewable 查询读取 public 或已授权 restricted 内容；不新增 migration、不改 RLS、Storage policy、Documents、public 下载 route 或 Access Grants 核心权限。
 
 当前网站包括：
 
@@ -97,6 +98,8 @@
 - Phase 2R-D-1 后，后台四类资产详情页的公开发布准备度只是运营提示：基于已有字段、关系和 Project / Publication public 附件计数判断，不阻止保存、不自动设为 public、不自动公开附件。
 - Phase 2R-E-1 后，访问申请后台详情页只是人工审核工作台：approved 仍是处理状态；如需授权，管理员必须另行创建 Access Grant 并手动选择具体 restricted 内容。
 - Phase 2R-E-2 后，Access Grants 后台页面只是手动授权管理工作台：Access Request 仍是申请记录，Access Grant 才是真正 restricted 授权记录；创建授权仍必须手动选择具体 restricted 内容。
+- Phase 2I / Hotfix 后，`/access-request` 提交优先使用服务端 `SUPABASE_SERVICE_ROLE_KEY` 写入经过 schema 校验的申请字段，并强制 `status = pending`、`admin_note = null`、`reviewed_at = null`；如果环境变量不存在则回退到 anon client 与既有 RLS policy。
+- Phase 2I / Hotfix 后，viewer 只能通过 magic link + active Access Grant 读取被授权的具体 restricted 正文；四类详情页使用 viewable 查询并依赖 Supabase RLS / `has_content_access()`，metadata、sitemap 和公开列表仍只基于 public 内容。
 - `content_access_grants` 当前 schema 不记录 `request_id` 或独立 `revoked_at`；申请 id 只作为创建页人工上下文，revoked 状态下只能把 `updated_at` 作为撤销时间线索。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、restricted / unlisted / private 内容或后台关系页面。
 - robots 允许公开页面和访问申请入口索引，阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
@@ -114,7 +117,7 @@
 | --- | --- |
 | public 内容 | 所有人 |
 | unlisted 内容 | 不出现在公开列表，当前能力保持保守 |
-| restricted 内容 | 管理员可见，viewer 授权基础已实现但登录链路待修 |
+| restricted 内容 | 管理员可见；viewer 仅可通过 magic link + Access Grant 读取被授权的具体内容 |
 | private 内容 | 仅管理员 |
 | dashboard | 仅管理员 |
 | documents 管理 | 仅管理员 |
@@ -218,7 +221,7 @@ Research Asset Links：
 - 文件附件默认比正文更严格。即使内容 public，关联 Documents 也默认 private；只有管理员显式 public 且关联 public 资产的文件才可作为公开附件展示。
 - Publication 有关联 `documents` 或 `document_collections` 时禁止直接删除，要求先处理附件。
 - Documents 上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。
-- Phase 2E-B 的 restricted 基础代码保留，但 Viewer 登录问题仍未稳定，后续单独做 Phase 2I / hotfix。
+- Phase 2E-B 的 restricted 基础代码保留；Phase 2I / Hotfix 已修复 viewer login / callback 与四类详情页 viewable 查询的代码层断点，真实邮箱端到端仍需 Preview / 生产人工验收。
 - Phase 2F / 2G 只优化公开站点运营体验、SEO 和 UI，不扩展权限系统。
 - Resume 模块采用统一素材库、版本组合、浏览器预览 / 打印、Word 即时导出、AI JD 建议和 JD 分析历史；AI 输出只作为建议，不自动写回素材或版本。
 - Career Center 已进入稳定维护状态；后续只做 bugfix、文案修正和 broken link 修复，不主动扩展面试记录、提醒、邮件、Notion 同步或自动投递。
@@ -252,33 +255,34 @@ Research Asset Links：
 - Phase 2R-D-1 采用 public content operations foundation 决策：公开主链路完成后先补后台内容运营辅助，四类详情页 checklist 只读提示字段缺口、关联状态、公开附件边界和人工复核项；不做强校验、不新增 schema、不自动公开内容或附件。
 - Phase 2R-E-1 采用 access request admin workflow polish 决策：公开内容运营基础完成后补后台审核效率，访问申请列表和详情页只增强筛选、上下文展示、内部备注和手动授权引导；不把申请状态升级为自动授权、邮件或 Documents 开放流程。
 - Phase 2R-E-2 采用 access grants admin management polish 决策：在不改权限模型和 schema 的前提下增强 Access Grants 列表、新建、详情和撤销体验；active / expired / revoked 中 expired 只由 `expires_at` 应用层计算。
+- Phase 2I / Hotfix 采用 viewer restricted access stabilization 决策：公开申请提交从只依赖 anon insert 改为优先服务端安全写入，四类详情页从 public-only 查询切换到 RLS 保护的 viewable 查询，viewer callback 成功后验证 session user 再跳回安全 `next`；不新增 migration、不改 RLS、Storage policy、Documents、public 下载 route 或 Access Grants 核心权限。
 - 后续数据库变更必须新增 `0022_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
 
 ### Viewer magic link 登录问题
 
-状态：未稳定；后续单独做 Phase 2I / hotfix，当前不视为已验收能力。
+状态：Phase 2I / Hotfix 已完成代码层面修复；真实 Supabase magic link 邮件、callback 和四类 restricted 内容访问仍需在 Vercel Preview / 生产用测试邮箱人工验收。
 
 现象：
 
-- 已授权邮箱仍可能无法发送 magic link。
-- magic link 成功后 viewer session 可能未稳定建立。
-- 已授权用户仍可能无法查看 restricted 内容。
+- 公开详情页已从 public-only 查询切换到 RLS 保护的 viewable 查询。
+- viewer login 会通过 `can_request_viewer_login(email)` 检查 active grant 并发送 magic link。
+- viewer callback 会交换 code、写入 session cookie、验证 session user 并跳回安全 `next`。
+- `/access-request` 提交优先使用服务端安全写入，避免生产 anon insert grant / policy 漂移导致访客提交失败。
 
 影响：
 
 - 不影响 public 内容浏览。
 - 不影响管理员后台。
 - 不影响 Documents 私密文件。
-- 不影响访问申请提交与审批。
 - 不影响公开站点 SEO 和 UI。
 
 边界：
 
-- Phase 2I 只能修复 viewer login、viewer callback、viewer session 与 restricted 只读访问闭环。
-- 不得扩大 restricted grants、RLS、Supabase Auth 或 Storage 权限边界。
+- Phase 2I 不扩大 restricted grants、RLS、Supabase Auth 或 Storage 权限边界。
 - private Documents、raw signed URL 和 Storage 路径仍不得对 Viewer 或公开访客开放；显式 public 文件仍只走 public 下载 route 的服务端校验。
+- Access Grant 只开放被授权的单条 restricted 正文，不开放 Documents、private attachments、zip、Storage path、Storage bucket 或 signed URL。
 
 ### Resume 预览 bullet-like 文本拆行遗留问题
 
@@ -323,6 +327,7 @@ Research Asset Links：
 - Phase 2R-D-1：不新增 migration；只新增后台 public readiness checklist、只读 public 附件计数 helper 和公开内容运营文档，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或任何 Supabase schema。
 - Phase 2R-E-1：不新增 migration；只 polish 后台 access requests 列表 / 详情页和访问申请流程文档，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或任何 Supabase schema。
 - Phase 2R-E-2：不新增 migration；只 polish 后台 access grants 列表 / 新建 / 详情 / 撤销体验和授权管理流程文档，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或任何 Supabase schema。
+- Phase 2I / Hotfix：不新增 migration；只修复公开申请服务端写入、viewer login / callback 和四类详情页 viewable 查询，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或任何 Supabase schema。
 
 规则：
 
@@ -347,6 +352,7 @@ Research Asset Links：
 - 访问申请与受限内容体验维护：公开详情页申请 CTA 使用 `content_type`、slug、公开标题和 `from` 生成 `/access-request` query；申请页展示上下文并预填内容类型、标题和站内路径；未公开 fallback 用专业授权提示，不确认内容是否存在；后台 access requests 列表 / 详情页查看来源、目标和理由；审批状态不自动授权，approved 后仍需手动创建 Access Grant；本流程不新增邮件服务、不开放 Documents、不生成 signed URL。
 - 访问申请后台处理：在 `/dashboard/access-requests` 先用状态和目标类型筛选申请，再进入详情页核对申请人、目标、来源、公开路径和完整理由；只更新 `pending` / `approved` / `rejected` 和内部备注。approved 后如需授权，使用手动 Access Grant 引导，并继续手动选择具体 restricted 内容。
 - Access Grants 后台管理：在 `/dashboard/access-grants` 按有效 / 过期 / 撤销和内容类型筛选授权；进入 `/dashboard/access-grants/[id]` 复核邮箱、目标内容、有效期、备注和撤销边界；新建授权时只手动选择具体 restricted 内容，撤销只更新授权状态，不删除申请、内容或 Documents。
+- Viewer restricted access 验收：管理员先创建 `visibility = restricted` 的 Project / Publication / Knowledge / Skill，再为测试邮箱手动创建 Access Grant；访客从 `/viewer/login?next=/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]` 或 `/skills/[slug]` 发送 magic link，callback 后应回到目标页并只能看到被授权 restricted 正文；未授权邮箱、撤销后授权和 viewer 访问 `/dashboard` 均应失败；全程不开放 Documents、private attachments、zip、Storage path、Storage bucket 或 signed URL。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
 - Skill 能力包维护：进入 `/dashboard/skills/[id]` 先查看用途说明、平台、状态、版本和使用内容；整理 Skill 资料时使用页面内上传 Skill 资料 / 文件夹或 Skill Documents 筛选入口；查找相关资产时使用 Skill 名称或 platform 搜索 Project / Knowledge / Publication；Skill package 只作为私密资料管理，不在站内执行。
@@ -360,10 +366,9 @@ Research Asset Links：
 
 建议顺序：
 
-1. Phase 2P / 2Q / 2R-A-4A / 2R-A-4B / 2R-B-1 / 2R-C-1 / 2R-C-2 / 2R-D-1 / 2R-E-1 / 2R-E-2 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql`、`0020_document_asset_links.sql` 和 `0021_public_attachment_service_role_grants.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、公开四类详情页统一布局与 390px 移动端堆叠、四类详情页申请 CTA 上下文、`/access-request` 预填和独立提交、未公开 fallback、后台 access requests 状态 / 类型筛选、来源 / 目标 / 理由 / 内部备注展示、approved 后手动 Access Grant 引导、后台 access grants 有效 / 过期 / 撤销筛选、内容类型筛选、详情页和手动撤销边界、公开 metadata / OG / Twitter card、`/sitemap.xml` 只收 public 内容、`/robots.txt` 阻止 dashboard / API / viewer / public-files、`npm run smoke:public` 发布前巡检、Knowledge / Skill 不展示 Documents、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选、关系编辑和 public readiness checklist。
-2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
-3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
-4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
+1. Phase 2P / 2Q / 2R-A-4A / 2R-A-4B / 2R-B-1 / 2R-C-1 / 2R-C-2 / 2R-D-1 / 2R-E-1 / 2R-E-2 / 2I 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql`、`0020_document_asset_links.sql` 和 `0021_public_attachment_service_role_grants.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、公开四类详情页统一布局与 390px 移动端堆叠、四类详情页申请 CTA 上下文、`/access-request` 预填和独立提交、未公开 fallback、后台 access requests 状态 / 类型筛选、来源 / 目标 / 理由 / 内部备注展示、approved 后手动 Access Grant 引导、后台 access grants 有效 / 过期 / 撤销筛选、内容类型筛选、详情页和手动撤销边界、viewer magic link callback、四类 restricted 内容授权访问、撤销后访问失效、viewer 无法进入后台、公开 metadata / OG / Twitter card、`/sitemap.xml` 只收 public 内容、`/robots.txt` 阻止 dashboard / API / viewer / public-files、`npm run smoke:public` 发布前巡检、Knowledge / Skill 不展示 Documents、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选、关系编辑和 public readiness checklist。
+2. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
+3. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
 
 暂不主动推进：
 
@@ -377,7 +382,7 @@ Research Asset Links：
 ## Stale Or Superseded Notes
 
 - “页面数据仍保持 mock data 预览”已过时。Projects、Knowledge、Skills、Publications、Documents、Access Requests、Access Grants、Profile、Calendar、Resume 与 Career 已使用真实 Supabase 数据或真实表结构；公开 `/calendar` 仍保留占位展示，真实管理入口为 `/dashboard/calendar`。
-- “restricted 属于后续规划，尚未进入 schema / RLS / UI”已过时。restricted 基础代码和 migration 已完成，但 viewer 登录链路仍待修。
+- “restricted 属于后续规划，尚未进入 schema / RLS / UI”已过时。restricted 基础代码和 migration 已完成；“viewer 登录链路仍待修”也已被 Phase 2I 代码层面 hotfix 取代，但真实邮箱端到端仍需 Preview / 生产人工验收。
 - “后台页面仍位于公开候选路径”已过时。主要后台管理页面已迁移到 `/dashboard/...`。
 - “Phase 2K-D 才做 AI JD 优化”已过时。Resume 已完成规则化质量检查、AI JD 建议、JD 分析历史、投递看板和 Career Center；后续默认稳定维护。
 - “Market Brief 是可继续扩展模块”已废弃。Market Brief 已在 Phase 2N-Z 移除产品入口和代码主路径，后续不维护相关 runner、素材包、探针或环境变量。

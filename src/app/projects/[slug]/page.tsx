@@ -12,7 +12,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
 import { getPublicDocumentsForAsset } from "@/lib/queries/public-document-attachments";
-import { getPublicProjectBySlug } from "@/lib/queries/projects";
+import { getPublicProjectBySlug, getViewableProjectBySlug } from "@/lib/queries/projects";
 import { getPublicPublicationsByProjectId } from "@/lib/queries/publications";
 import { publicMetadataDescription, publicNoindexMetadata, publicPageMetadata } from "@/lib/site";
 
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PublicProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const project = await getPublicProjectBySlug(slug);
+  const project = await getViewableProjectBySlug(slug);
 
   if (!project) {
     const requestHref = buildAccessRequestHref({ contentType: "project", slug, from: "project_restricted" });
@@ -63,13 +63,14 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
   const [relatedPublications, relatedKnowledge, publicDocuments] = await Promise.all([
     getPublicPublicationsByProjectId(project.id, 4),
     getPublicKnowledgeNotesByProjectId(project.id, { limit: 4 }),
-    getPublicDocumentsForAsset("project", project.id)
+    project.visibility === "public" ? getPublicDocumentsForAsset("project", project.id) : Promise.resolve([])
   ]);
   const statusLabel = getProjectStatusLabel(project.status);
+  const isRestrictedView = project.visibility === "restricted";
   const heroChips: PublicDetailChip[] = [
     { label: statusLabel, tone: "blue" },
-    { label: `公开进度 ${project.progress}%`, tone: "green" },
-    { label: project.is_featured ? "精选项目" : "公开项目", tone: project.is_featured ? "violet" : "slate" },
+    { label: `${isRestrictedView ? "授权进度" : "公开进度"} ${project.progress}%`, tone: "green" },
+    { label: isRestrictedView ? "授权项目" : project.is_featured ? "精选项目" : "公开项目", tone: isRestrictedView ? "slate" : project.is_featured ? "violet" : "slate" },
     ...project.tags.slice(0, 3).map((tag) => ({ label: tag, tone: "slate" as const }))
   ];
   const publicationItems: PublicRelatedItem[] = relatedPublications.map((publication) => ({
@@ -120,7 +121,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
               <PublicDocumentAttachmentsPanel
                 attachments={publicDocuments}
                 title="公开项目附件"
-                description="仅展示已显式设为公开、且关联到当前公开项目的文件。"
+                description={isRestrictedView ? "restricted 授权只开放正文内容；附件不会随授权开放。" : "仅展示已显式设为公开、且关联到当前公开项目的文件。"}
               />
             </>
           )}
@@ -147,9 +148,11 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
               <PublicDetailSection title="标签">
                 <PublicDetailTags tags={project.tags} />
               </PublicDetailSection>
-              <PublicDetailSection title="公开可见性">
+              <PublicDetailSection title="访问边界">
                 <p className="text-sm leading-7 text-slate-600">
-                  本页只展示已公开的项目字段。公开附件必须同时满足文件公开、当前项目公开、文件关联当前项目三个条件；私密文件、内部文件地址、内部关系记录和临时下载地址不会写入页面。
+                  {isRestrictedView
+                    ? "本页对当前已授权邮箱展示 restricted 项目正文。授权不开放 Documents、私密附件、内部文件地址、内部关系记录或临时下载地址。"
+                    : "本页只展示已公开的项目字段。公开附件必须同时满足文件公开、当前项目公开、文件关联当前项目三个条件；私密文件、内部文件地址、内部关系记录和临时下载地址不会写入页面。"}
                 </p>
                 <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
                   申请查看未公开材料

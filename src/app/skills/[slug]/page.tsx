@@ -8,7 +8,7 @@ import { buildAccessRequestHref } from "@/lib/access-request-context";
 import { skillStatuses } from "@/lib/content-options";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getPublicSkillBySlug, getRelatedPublicSkills } from "@/lib/queries/skills";
+import { getPublicSkillBySlug, getRelatedPublicSkills, getViewableSkillBySlug } from "@/lib/queries/skills";
 import { publicMetadataDescription, publicNoindexMetadata, publicPageMetadata } from "@/lib/site";
 
 function getSkillStatusLabel(value: string) {
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PublicSkillDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const skill = await getPublicSkillBySlug(slug);
+  const skill = await getViewableSkillBySlug(slug);
 
   if (!skill) {
     const requestHref = buildAccessRequestHref({ contentType: "skill", slug, from: "skill_restricted" });
@@ -60,6 +60,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
   const heroChips: PublicDetailChip[] = [
     { label: skill.category, tone: "blue" },
     { label: statusLabel, tone: "green" },
+    ...(skill.visibility === "restricted" ? [{ label: "授权 Skill", tone: "slate" as const }] : []),
     { label: skill.current_version ?? "未设版本", tone: "slate" },
     ...skill.platforms.slice(0, 3).map((platform) => ({ label: platform, tone: "slate" as const }))
   ];
@@ -150,9 +151,11 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
               <PublicDetailSection title="使用平台">
                 <PublicDetailTags tags={skill.platforms} emptyLabel="暂无平台信息" />
               </PublicDetailSection>
-              <PublicDetailSection title="公开边界">
+              <PublicDetailSection title="访问边界">
                 <p className="text-sm leading-7 text-slate-600">
-                  本页是公开说明页，不是 Skill 包下载入口。页面不展示私密附件、文件中心资料、内部文件地址、临时访问地址、后台版本记录，也不会执行、安装或解析 Skill 文件。
+                  {skill.visibility === "restricted"
+                    ? "本页对当前已授权邮箱展示 restricted Skill 说明。授权不开放 Skill 包、Documents、私密附件、文件中心资料、内部文件地址、临时访问地址或后台版本记录，也不会执行、安装或解析 Skill 文件。"
+                    : "本页是公开说明页，不是 Skill 包下载入口。页面不展示私密附件、文件中心资料、内部文件地址、临时访问地址、后台版本记录，也不会执行、安装或解析 Skill 文件。"}
                 </p>
                 <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
                   申请查看未公开材料

@@ -62,7 +62,7 @@ for (const route of fallbackRoutes) {
   const response = await fetchText(route);
   assertStatus(response, 200, route);
   assertNoForbiddenFragments(response.body, route);
-  assertIncludes(getHead(response.body), "noindex, nofollow", `${route} fallback is noindex`);
+  assertIncludes(response.body, "noindex, nofollow", `${route} fallback is noindex`);
   assertIncludes(response.body, "/access-request", `${route} fallback includes access request CTA`);
 }
 

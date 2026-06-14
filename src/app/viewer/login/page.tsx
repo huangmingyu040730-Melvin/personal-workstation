@@ -14,7 +14,8 @@ const callbackErrorMessages: Record<string, string> = {
   expired: "登录链接无效或已过期，请重新发送。",
   missing_code: "登录链接缺少必要校验信息，请重新发送。",
   not_configured: "当前尚未配置 Supabase 登录环境。",
-  exchange_failed: "登录链接验证失败，请重新发送。"
+  exchange_failed: "登录链接验证失败，请重新发送。",
+  session_failed: "登录会话建立失败，请重新发送登录链接。"
 };
 
 export default async function ViewerLoginPage({
