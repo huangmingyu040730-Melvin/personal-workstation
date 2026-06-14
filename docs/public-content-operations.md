@@ -117,6 +117,7 @@ Phase 2R-Z 后，公开研究工作站不再提供外部访问申请或 viewer �
 6. 打开对应公开详情页，确认展示内容正常，且没有访问申请或 viewer 登录入口。
 7. 运行 `npm run lint`、`npm run build`、`git diff --check`。
 8. 发布前启动本地服务并运行 `npm run smoke:public`，确认公开主链路、fallback、sitemap 和 robots 仍通过。
+9. v1.0 发布前同时参考 `docs/v1-release-notes.md` 的验收清单，确认退役路由、公开附件、Knowledge / Skill Documents 边界和 public readiness checklist 均符合当前产品定位。
 
 ## 本阶段没有改变的安全边界
 

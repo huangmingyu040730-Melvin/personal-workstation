@@ -664,6 +664,22 @@ Phase 2R-Z 已退役：
 - 不新增 migration，不修改 RLS、Storage policy、Documents、public file download route 或公开内容核心查询。
 - 不恢复访问申请、Viewer login、Access Grants 或 restricted 外部授权。
 
+### Phase 2R-G-1 - v1.0 Final QA And Release Notes
+
+已完成文档收口与 QA 辅助。当前稳定版本进入 v1.0 final QA：
+
+- PR #115 已关闭且不合并，首页保持当前 `main` 主结构。
+- 不继续推进 Phase 2R-F-2 homepage featured content polish，不重做首页精选区。
+- 新增 `docs/v1-release-notes.md`，记录 v1.0 版本定位、公开站点能力、后台能力、安全边界、退役功能、当前不做事项和可复制验收清单。
+- `npm run smoke:public` 补充退役路由不可用性检查，并继续检查公开路由、fallback、sitemap、robots、metadata 和敏感字段边界。
+- 现有文档记录 v1.0 发布前只做检查、文档收口和小 bug 修复。
+
+边界：
+
+- 不新增功能、不新增 migration、不新增数据库字段、RPC、索引、AI、OCR、向量搜索、全文搜索、PDF 预览、public zip 下载、支付或会员能力。
+- 不修改首页主结构、About 主结构、公开列表 / 详情主结构、后台主结构、Documents、RLS、Storage policy 或 public file download route。
+- 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
+
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
 历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。

@@ -48,6 +48,13 @@ const fallbackRoutes = [
   "/knowledge/codex-public-smoke-missing",
   "/skills/codex-public-smoke-missing"
 ];
+const retiredRoutes = [
+  "/access-request",
+  "/viewer/login",
+  "/viewer/callback",
+  "/dashboard/access-requests",
+  "/dashboard/access-grants"
+];
 
 const results = [];
 
@@ -67,6 +74,12 @@ for (const route of fallbackRoutes) {
   assertDoesNotInclude(response.body, "/viewer/login", `${route} fallback excludes viewer login`);
 }
 
+for (const route of retiredRoutes) {
+  const response = await fetchText(route);
+  assertRetiredRouteUnavailable(response, route);
+  assertNoForbiddenFragments(response.body, route);
+}
+
 const sitemap = await fetchText("/sitemap.xml");
 assertStatus(sitemap, 200, "sitemap");
 for (const route of publicRoutes) {
@@ -81,7 +94,7 @@ assertStatus(robots, 200, "robots");
 for (const route of ["/", "/about", "/projects", "/publications", "/knowledge", "/skills"]) {
   assertMatches(robots.body, new RegExp(`Allow:\\s*${escapeRegExp(route)}(?:\\n|$)`), `robots allows ${route}`);
 }
-for (const route of ["/dashboard", "/api", "/viewer", "/login", "/access-request", "/public-files"]) {
+for (const route of ["/dashboard", "/api", "/viewer", "/login", "/access-request", "/public-files", "/storage", "/signed"]) {
   assertMatches(robots.body, new RegExp(`Disallow:\\s*${escapeRegExp(route)}(?:\\n|$)`), `robots disallows ${route}`);
 }
 assertIncludes(robots.body, `${siteUrl}/sitemap.xml`, "robots includes sitemap URL");
@@ -122,6 +135,11 @@ function getHead(html) {
 
 function assertStatus(response, expectedStatus, label) {
   record(response.status === expectedStatus, label, `status ${response.status}`);
+}
+
+function assertRetiredRouteUnavailable(response, label) {
+  const unavailableStatuses = [302, 303, 307, 308, 401, 403, 404, 405];
+  record(unavailableStatuses.includes(response.status), `${label} retired route is unavailable`, `status ${response.status}`);
 }
 
 function assertNoForbiddenFragments(value, label) {

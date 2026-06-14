@@ -1,5 +1,28 @@
 # Decisions
 
+## 2026-06-15 - Close 2R-F-2 And Ship v1 Final QA Notes
+
+类型：decision
+
+决策：
+
+- PR #115 已关闭且不合并。
+- 不继续推进 Phase 2R-F-2 public homepage featured content polish。
+- 后续不重做首页精选区，不大改首页主结构。
+- Phase 2R-G-1 将当前稳定 `main` 收口为 v1.0 final QA / release notes。
+- 本阶段只允许检查、文档收口、release notes、smoke QA 文案或检查补充，以及明确发现的小 bug 修复。
+- 不新增功能，不新增 migration，不修改 RLS、Storage policy、Documents、`/public-files/[id]/download` 或后台主流程。
+
+原因：
+
+- #115 的首页精选内容改版不符合当前预期，v1.0 应以已验收的首页结构和公开主链路为准。
+- 当前产品已经完成公开研究工作站、About、公开列表 / 详情、public attachments、私密后台、Documents、SEO、robots、sitemap 和外部访问链路退役，适合进入最终 QA 与发布说明阶段。
+
+影响：
+
+- `docs/v1-release-notes.md` 成为 v1.0 发布说明、能力边界和验收清单入口。
+- 后续关于首页精选区的工作不从 #115 或 Phase 2R-F-2 继续推进；如未来重新设计，应作为独立新阶段重新提出。
+
 ## 2026-06-15 - Polish Public About Profile Without Expanding Access
 
 类型：decision
