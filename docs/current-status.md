@@ -37,6 +37,7 @@
 - Phase 2R-D-1 后，公开内容运营基础建立：四类后台详情页新增 public readiness checklist，帮助管理员用既有字段判断内容是否适合公开；该提示只读、不阻止保存、不自动公开内容或附件。
 - Phase 2R-E-1 后，后台访问申请处理体验 polish：列表页提供状态 / 目标类型筛选和更完整申请卡片，详情页作为人工审核工作台展示来源、理由、内部备注、处理状态和手动 Access Grant 引导。
 - Phase 2R-E-2 后，Access Grants 后台管理体验 polish：授权列表提供有效 / 过期 / 撤销和内容类型筛选，新增单条授权详情页，创建页和撤销区明确手动选择 restricted 内容与权限边界。
+- Phase 2I / Hotfix 后，公开访问申请提交优先使用服务端安全写入，viewer magic link callback 成功后验证 session 并跳回安全 `next`，四类公开详情页使用 RLS 保护的 viewable 查询读取 public 或已授权 restricted 内容；真实邮箱 magic link 仍需在 Vercel Preview / 生产人工验收。
 - 首页区块之间使用清晰 section wrapper、边框和交替背景分隔，并补充克制的 hover / focus micro-interactions。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”；不显示后台菜单、文件中心或全局关系图谱入口。
 - About 页面 `/about`。
@@ -54,7 +55,7 @@
 - 大屏左右留白已改善。
 - 卡片和按钮动效已增强。
 
-公开页面只展示 public 内容和显式 public 文件附件。公开详情页使用 public-only 查询；private / restricted / unlisted slug 只进入申请 / 授权提示，不输出正文或附件。公开页面不得展示 private Documents、Storage 路径、Storage bucket、owner_id、signed URL、`file_path`、raw `document_asset_links`、后台操作入口、Activity Logs、后台关系管理或非 public 内容。Publication 公开查询会对历史 `file_path` / `cover_url` 做公开边界处理，避免公开组件误用。
+公开首页、列表、sitemap 和 metadata 只展示 / 收录 public 内容。四类详情页使用 viewable 查询：未登录访客只能看到 public，未授权 restricted / private / unlisted slug 只进入申请 / 授权提示，不输出正文或附件；已登录且拥有对应 Access Grant 的 viewer 只能看到被授权的 restricted 正文。公开页面不得展示 private Documents、Storage 路径、Storage bucket、owner_id、signed URL、`file_path`、raw `document_asset_links`、后台操作入口、Activity Logs、后台关系管理或非 public / 未授权内容。Publication 公开查询会对历史 `file_path` / `cover_url` 做公开边界处理，避免公开组件误用。
 
 ### Admin Backend
 
@@ -308,7 +309,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - viewer callback。
 - 未授权 restricted 内容不展示正文。
 
-真实 viewer magic link 登录体验仍存在已知问题，详见 `docs/known-issues.md`。
+Phase 2I / Hotfix 已完成代码层面修复：viewer login 通过 `can_request_viewer_login(email)` 检查 active grant 后发送 magic link，callback 交换 code、验证 session user 并跳回安全 `next`，四类详情页通过 RLS 保护的 viewable 查询读取已授权 restricted 内容。真实邮箱 magic link 端到端仍需在 Vercel Preview / 生产人工验收，详见 `docs/viewer-restricted-access.md` 和 `docs/known-issues.md`。
 
 ## Permission Boundary
 
@@ -316,7 +317,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 | --- | --- |
 | public 内容 | 所有人 |
 | unlisted 内容 | 不出现在公开列表，当前能力保持保守 |
-| restricted 内容 | 管理员可见，viewer 授权基础已实现但登录链路待修 |
+| restricted 内容 | 管理员可见；viewer 仅可通过 magic link + Access Grant 读取被授权的具体内容 |
 | private 内容 | 仅管理员 |
 | dashboard | 仅管理员 |
 | documents | 仅管理员 |
@@ -410,6 +411,8 @@ Phase 2R-E-1 访问申请后台流程 polish 不需要新增 migration；它只�
 
 Phase 2R-E-2 Access Grants 后台管理 polish 不需要新增 migration；它只复用既有 `content_access_grants.status`、`expires_at`、`updated_at` 和目标内容字段，在应用层计算 active / expired / revoked 状态并新增授权详情页和流程文档。不新增字段、RLS、Storage policy、邮件、自动授权、自动内容选择、Documents 或 public 下载 route 变化。
 
+Phase 2I / Hotfix viewer restricted access 不需要新增 migration；它只修复公开访问申请提交、viewer login / callback 和四类详情页 viewable 查询接入。不新增字段、RLS、Storage policy、邮件、自动授权、Documents、public 下载 route 或 Access Grants 核心权限变化。
+
 规则：
 
 - 已执行过的 migration 不应修改。
@@ -420,13 +423,13 @@ Phase 2R-E-2 Access Grants 后台管理 polish 不需要新增 migration；它�
 
 ## Known Issue
 
-Viewer magic link 登录仍未稳定。Phase 2E-B restricted 授权基础代码保留，但当前不继续排查，不影响 public 内容浏览、管理员后台、Documents 私密文件、访问申请提交与审批、公开站点 SEO 和 UI。
+Phase 2I / Hotfix 已完成 viewer restricted access 代码层面修复，但真实 Supabase magic link 邮件收取、callback 和四类 restricted 内容访问仍需在 Vercel Preview / 生产环境用测试邮箱人工验收。该剩余验收不开放 Documents、private attachments、zip、Storage path、Storage bucket 或 signed URL。
 
 Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行仍有生产验收遗留问题。该问题当前冻结，不纳入 Phase 2K-D 的质量检查开发范围；后续如继续处理，应单独开 hotfix。
 
-建议后续单独开启：
+建议后续优先完成：
 
-- Phase 2I: Viewer login and restricted access stabilization
+- Phase 2I 真实环境验收：用测试邮箱验证 access request 提交、viewer magic link callback、四类 restricted 内容读取、撤销后失效和 viewer 无法进入后台。
 
 ## Stabilization Direction
 
@@ -436,7 +439,7 @@ Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有
 - 公开展示：Phase 2R-A-1 起把公开首页作为“黄铭语研究工作站”入口维护，首屏 H1 为“个人研究工作站”，清晰展示研究方向、公开 Projects、Publications、Knowledge、Skills 和访问申请；Phase 2R-A-2 只强化 hero 的金融 / 量化 / 研究视觉氛围和标题字体质感；Phase 2R-A-3 只把四个公开列表页打磨为正式内容索引并增加轻量筛选，不改变公开内容查询或权限边界；Phase 2R-B-1 起访问申请页和未公开内容 fallback 提供更清晰的申请路径，详情页 CTA 带公开上下文，后台申请管理能看到来源和目标；Phase 2R-C-1 起统一公开 SEO、分享卡片、sitemap 和 robots，让公开站点可被安全索引和分享；Phase 2R-C-2 起用 `npm run smoke:public` 和浏览器冒烟作为公开发布前 QA，复查公开路由、fallback、sitemap、robots、metadata、访问申请 query 和移动端边界；Phase 2R-D-1 起后台详情页提供 public readiness checklist 和公开内容运营文档，帮助管理员持续整理可公开内容；Phase 2R-E-1 起后台访问申请列表和详情页作为人工审核工作台维护，帮助管理员处理申请但不自动授权；Phase 2R-E-2 起 Access Grants 列表 / 新建 / 详情 / 撤销作为手动授权工作台维护，帮助管理员管理 restricted 内容授权但不开放 Documents 或自动选择内容；公开导航保留轻量“管理员登录”入口但不显示后台菜单、文件中心或全局关系图谱入口，公开页面继续只读展示 public 内容。
 - 文件 / 知识管理：Documents 作为可维护的统一默认私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；公开站点只在 Project / Publication 详情页展示显式 public 且关联当前 public 资产的安全附件摘要，Knowledge / Skill 公开详情不展示 Documents。需要调整单个文件时使用文件详情页添加 / 移除多资产关联；需要整理多个文件时使用 Documents 紧凑批量工具栏添加、移除或清空关联；需要调整整个资料包时使用文档包详情页的关联管理和可选同步到包内文件；legacy primary relation 仅作为兼容字段处理。需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
-- 受限访问：Viewer magic link 和 restricted 访问可作为独立 bugfix 专项处理，但不得开放 Documents 或 signed URL。
+- 受限访问：Phase 2I 已把 viewer magic link、callback 和四类 restricted viewable 查询作为独立 hotfix 收口；后续只做真实邮箱验收和必要 bugfix，不开放 Documents 或 signed URL。
 
 不主动推进：
 

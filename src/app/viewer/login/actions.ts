@@ -3,6 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { getSafeViewerRedirect } from "@/lib/safe-viewer-redirect";
+import { siteUrl } from "@/lib/site";
 import { isSupabaseConfigured, missingSupabaseConfigMessage } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,7 +40,7 @@ export async function viewerLoginAction(_previousState: ViewerLoginState, formDa
   const headerStore = await headers();
   const origin = getRequestOrigin(headerStore);
   const nextPath = getSafeViewerRedirect(parsed.data.next);
-  const emailRedirectTo = origin ? buildViewerCallbackUrl(origin, nextPath) : undefined;
+  const emailRedirectTo = buildViewerCallbackUrl(origin, nextPath);
   const normalizedEmail = parsed.data.email.trim().toLowerCase();
 
   console.info("viewer login next path", { nextPath, hasRedirectOrigin: Boolean(origin) });
@@ -98,7 +99,7 @@ function getRequestOrigin(headerStore: Headers) {
   const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
 
   if (!host) {
-    return "";
+    return siteUrl;
   }
 
   const protocol = headerStore.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");

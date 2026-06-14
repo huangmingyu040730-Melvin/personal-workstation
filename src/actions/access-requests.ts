@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { getOptionalString, getString } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { reviewAccessRequestSchema, submitAccessRequestSchema } from "@/lib/validations/access-request";
+import type { SubmitAccessRequestInput } from "@/lib/validations/access-request";
 
 function appendActionState(path: string, key: "error" | "success", value: string) {
   const url = new URL(path, "https://local.invalid");
@@ -48,29 +50,46 @@ function reviewPayloadFromForm(formData: FormData) {
   });
 }
 
+function buildAccessRequestInsertPayload(data: SubmitAccessRequestInput) {
+  return {
+    requester_name: data.requester_name,
+    requester_email: data.requester_email,
+    organization: data.organization,
+    requested_content_type: data.requested_content_type,
+    requested_content_title: data.requested_content_title,
+    requested_content_url: data.requested_content_url,
+    reason: data.reason,
+    status: "pending" as const,
+    admin_note: null,
+    reviewed_at: null
+  };
+}
+
 export async function submitAccessRequestAction(formData: FormData) {
   const parsed = submitPayloadFromForm(formData);
   const returnTo = getSafeAccessRequestReturnTo(formData);
 
   if (!parsed.success) {
+    console.info("submitAccessRequestAction validation failed", {
+      field: parsed.error.issues[0]?.path.join(".") ?? "unknown",
+      message: parsed.error.issues[0]?.message ?? "unknown"
+    });
     accessRequestErrorRedirect(returnTo, parsed.error.issues[0]?.message ?? "请检查访问申请表单。");
   }
 
-  const supabase = await createClient();
+  const payload = buildAccessRequestInsertPayload(parsed.data);
+  const serviceRoleClient = createServiceRoleClient();
+  const supabase = serviceRoleClient ?? await createClient();
+  const insertMode = serviceRoleClient ? "service_role" : "anon";
 
   if (!supabase) {
     accessRequestErrorRedirect(returnTo, "当前暂时无法提交申请，请稍后再试。");
   }
 
-  const { error } = await supabase.from("access_requests").insert({
-    ...parsed.data,
-    status: "pending",
-    admin_note: null,
-    reviewed_at: null
-  });
+  const { error } = await supabase.from("access_requests").insert(payload);
 
   if (error) {
-    console.error("submitAccessRequestAction failed", { code: error.code, message: error.message });
+    console.error("submitAccessRequestAction failed", { mode: insertMode, code: error.code, message: error.message });
     accessRequestErrorRedirect(returnTo, "申请提交失败，请稍后重试。");
   }
 

@@ -10,7 +10,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
 import { getPublicDocumentsForAsset } from "@/lib/queries/public-document-attachments";
-import { getPublicPublicationBySlug } from "@/lib/queries/publications";
+import { getPublicPublicationBySlug, getViewablePublicationBySlug } from "@/lib/queries/publications";
 import { publicMetadataDescription, publicNoindexMetadata, publicPageMetadata } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PublicPublicationDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const publication = await getPublicPublicationBySlug(slug);
+  const publication = await getViewablePublicationBySlug(slug);
 
   if (!publication) {
     const requestHref = buildAccessRequestHref({ contentType: "publication", slug, from: "publication_restricted" });
@@ -57,13 +57,14 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
     publication.project_id
       ? getPublicKnowledgeNotesByProjectId(publication.project_id, { limit: 4 })
       : Promise.resolve([]),
-    getPublicDocumentsForAsset("publication", publication.id)
+    publication.visibility === "public" ? getPublicDocumentsForAsset("publication", publication.id) : Promise.resolve([])
   ]);
   const publicationTypeLabel = getPublicationTypeLabel(publication.publication_type);
+  const isRestrictedView = publication.visibility === "restricted";
   const heroChips: PublicDetailChip[] = [
     { label: publicationTypeLabel, tone: "blue" },
     { label: publication.published_on ? `发布于 ${formatDate(publication.published_on)}` : "发布日期未设置", tone: "slate" },
-    { label: publication.is_featured ? "精选成果" : "公开成果", tone: publication.is_featured ? "violet" : "slate" },
+    { label: isRestrictedView ? "授权成果" : publication.is_featured ? "精选成果" : "公开成果", tone: isRestrictedView ? "slate" : publication.is_featured ? "violet" : "slate" },
     ...publication.tags.slice(0, 3).map((tag) => ({ label: tag, tone: "slate" as const }))
   ];
   const relatedKnowledgeItems: PublicRelatedItem[] = relatedKnowledge.map((note) => ({
@@ -106,7 +107,7 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
               <PublicDocumentAttachmentsPanel
                 attachments={publicDocuments}
                 title="公开成果附件"
-                description="仅展示已显式设为公开、且关联到当前公开成果的文件。"
+                description={isRestrictedView ? "restricted 授权只开放正文内容；附件不会随授权开放。" : "仅展示已显式设为公开、且关联到当前公开成果的文件。"}
               />
             </>
           )}
@@ -133,9 +134,11 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
               <PublicDetailSection title="标签">
                 <PublicDetailTags tags={publication.tags} />
               </PublicDetailSection>
-              <PublicDetailSection title="公开可见性">
+              <PublicDetailSection title="访问边界">
                 <p className="text-sm leading-7 text-slate-600">
-                  本页不展示历史附件字段、内部文件地址、内部附件关系或临时访问地址。公开附件下载只通过安全路由按需生成。
+                  {isRestrictedView
+                    ? "本页对当前已授权邮箱展示 restricted 成果正文。授权不开放 Documents、私密附件、历史附件字段、内部文件地址、内部附件关系或临时访问地址。"
+                    : "本页不展示历史附件字段、内部文件地址、内部附件关系或临时访问地址。公开附件下载只通过安全路由按需生成。"}
                 </p>
                 <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
                   申请查看未公开材料

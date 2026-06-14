@@ -7,7 +7,7 @@ import { buildAccessRequestHref } from "@/lib/access-request-context";
 import { getPublicationTypeLabel } from "@/lib/content-options";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
-import { getPublicKnowledgeNoteBySlug, getRelatedPublicKnowledgeNotes } from "@/lib/queries/knowledge";
+import { getPublicKnowledgeNoteBySlug, getRelatedPublicKnowledgeNotes, getViewableKnowledgeNoteBySlug } from "@/lib/queries/knowledge";
 import { getPublicPublicationsByProjectId } from "@/lib/queries/publications";
 import { publicMetadataDescription, publicNoindexMetadata, publicPageMetadata } from "@/lib/site";
 
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PublicKnowledgeDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const note = await getPublicKnowledgeNoteBySlug(slug);
+  const note = await getViewableKnowledgeNoteBySlug(slug);
 
   if (!note) {
     const requestHref = buildAccessRequestHref({ contentType: "knowledge", slug, from: "knowledge_restricted" });
@@ -57,7 +57,7 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
   ]);
   const heroChips: PublicDetailChip[] = [
     { label: note.category, tone: "blue" },
-    { label: note.is_featured ? "精选知识" : "公开知识", tone: note.is_featured ? "violet" : "slate" },
+    { label: note.visibility === "restricted" ? "授权知识" : note.is_featured ? "精选知识" : "公开知识", tone: note.visibility === "restricted" ? "slate" : note.is_featured ? "violet" : "slate" },
     ...note.tags.slice(0, 3).map((tag) => ({ label: tag, tone: "slate" as const }))
   ];
   const relatedNoteItems: PublicRelatedItem[] = relatedNotes.map((item) => ({
@@ -96,7 +96,7 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
         <PublicDetailGrid
           main={(
             <>
-              <PublicDetailSection title="正文" description="公开可阅读的知识笔记内容。">
+              <PublicDetailSection title="正文" description={note.visibility === "restricted" ? "当前已授权邮箱可阅读的 restricted 知识内容。" : "公开可阅读的知识笔记内容。"}>
                 {note.content?.trim() ? <MarkdownPreview content={note.content} /> : note.excerpt?.trim() ? <p className="text-sm leading-7 text-slate-600">{note.excerpt}</p> : <p className="text-sm leading-7 text-slate-600">该知识文章的公开正文仍在整理中。</p>}
               </PublicDetailSection>
             </>
@@ -123,9 +123,11 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
               <PublicDetailSection title="标签">
                 <PublicDetailTags tags={note.tags} />
               </PublicDetailSection>
-              <PublicDetailSection title="公开可见性">
+              <PublicDetailSection title="访问边界">
                 <p className="text-sm leading-7 text-slate-600">
-                  本页只展示已公开的知识字段，不展示文件附件、内部文件地址、临时访问地址、后台关系管理或内部附件信息。
+                  {note.visibility === "restricted"
+                    ? "本页对当前已授权邮箱展示 restricted 知识正文。Knowledge 授权不开放 Documents、文件附件、内部文件地址、临时访问地址、后台关系管理或内部附件信息。"
+                    : "本页只展示已公开的知识字段，不展示文件附件、内部文件地址、临时访问地址、后台关系管理或内部附件信息。"}
                 </p>
                 <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
                   申请查看未公开材料

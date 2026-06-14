@@ -68,12 +68,23 @@ export async function GET(request: NextRequest) {
     return redirectToViewerLogin(request, next, "exchange_failed", sessionCookieResponse);
   }
 
-  const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = next;
-  redirectUrl.search = "";
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !userData.user?.email) {
+    console.error("viewer callback session verification failed", {
+      code: userError?.code,
+      message: userError?.message
+    });
+    return redirectToViewerLogin(request, next, "session_failed", sessionCookieResponse);
+  }
+
+  const redirectUrl = new URL(next, request.nextUrl.origin);
   const response = NextResponse.redirect(redirectUrl);
   copyResponseCookies(sessionCookieResponse, response);
-  response.cookies.delete("viewer-next");
+  response.cookies.set("viewer-next", "", {
+    maxAge: 0,
+    path: "/"
+  });
 
   return response;
 }

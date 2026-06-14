@@ -1959,3 +1959,29 @@
 - 不新增 migration、数据库字段、RLS、Storage policy、邮件服务、自动授权、自动内容选择、AI 判断、OCR、向量搜索、支付或会员能力。
 - 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
 - 当前 `content_access_grants` schema 不记录 `request_id` 或独立 `revoked_at`；后台只把申请 id 作为创建页上下文，并在 revoked 状态下用 `updated_at` 作为撤销时间线索。
+
+## 2026-06-15 - Stabilize Viewer Restricted Access Without Expanding File Permissions
+
+类型：decision
+
+决策：
+
+- Phase 2I / Hotfix 修复 `/access-request` 公开提交和 viewer restricted 只读访问闭环。
+- `/access-request` 提交优先使用服务端 `SUPABASE_SERVICE_ROLE_KEY` 写入 `access_requests`，只写入经过 schema 校验的字段，并强制 `status = pending`、`admin_note = null`、`reviewed_at = null`；没有 service role 环境变量时回退到既有 anon client 与 RLS policy。
+- 四类详情页 `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 从 public-only 查询切换到 RLS 保护的 viewable 查询，允许已登录且拥有对应 Access Grant 的 viewer 读取被授权 restricted 正文。
+- viewer login 始终生成 `/viewer/callback?next=...` redirect URL，callback 交换 code 后验证 session user，再跳回安全 `next` 路径。
+- `next` 只允许公开内容路径，不允许外部 URL、dashboard、api、documents、public-files 或后台下载路径。
+
+原因：
+
+- 公开申请提交原先完全依赖生产环境 anon insert grant / policy；一旦目标 Supabase 环境存在 grant / policy 漂移，访客就只能看到通用失败文案。
+- Access Grants 后台管理已经完成，但公开详情页仍使用 public-only 查询会导致授权 viewer 登录后仍无法读取 restricted 内容。
+- viewer restricted access 应继续依赖 Supabase Auth session、RLS 和 `has_content_access()`，不应通过 service role 读取 restricted 正文。
+
+影响：
+
+- 不新增 migration、数据库字段、RLS、Storage policy、邮件服务、自动审批、自动授权、AI、OCR、向量搜索、全文搜索、支付或会员能力。
+- 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
+- Access Grant 只开放被授权的单条 restricted 正文，不开放 Documents、private attachments、public zip、Storage path、Storage bucket 或 signed URL。
+- Project / Publication 的公开附件仍只在资产本身为 public 且文件为 public 并关联当前 public 资产时展示；restricted 资产即使 viewer 已授权，也不自动展示附件。
+- 真实 Supabase magic link 邮件收取、callback 和四类 restricted 内容访问仍需在 Vercel Preview / 生产环境用测试邮箱人工验收。

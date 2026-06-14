@@ -183,7 +183,7 @@ npm run build
 
 用途：
 
-- 维护 Phase 2E-B 的 restricted 内容与邮箱授权基础能力。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。
+- 维护 Phase 2E-B 的 restricted 内容与邮箱授权基础能力。Phase 2I / Hotfix 已补 viewer magic link、callback 和 viewable 查询代码层闭环，真实邮箱端到端仍需 Preview / 生产人工验收。
 
 步骤：
 
@@ -191,19 +191,56 @@ npm run build
 2. `restricted` visibility 只用于 Projects、Publications、Knowledge、Skills 的详情页授权访问。
 3. 管理员在后台创建授权前，应先将内容设置为 `restricted`。
 4. 授权记录写入 `content_access_grants`，包括邮箱、内容类型、内容 ID、状态、可选有效期和备注。
-5. 外部用户通过 `/viewer/login` 使用邮箱魔法链接登录，不使用明文密码，不进入后台；当前该链路仍不稳定，修复工作不得混入其他阶段。
+5. 外部用户通过 `/viewer/login?next=/projects/[slug]`、`/viewer/login?next=/publications/[slug]`、`/viewer/login?next=/knowledge/[slug]` 或 `/viewer/login?next=/skills/[slug]` 使用邮箱魔法链接登录，不使用明文密码，不进入后台。
 6. 公开详情页读取受 RLS 保护的数据；未授权时只显示申请入口和授权登录入口，不展示正文。
 7. 撤销授权只更新授权状态为 `revoked`，RLS 会阻止后续读取。
 8. private Documents、Storage、附件下载和 signed URL 不随 restricted 内容授权开放；显式 public 文件仍只按 public 下载 route 规则访问。
-9. Viewer 登录前授权检查依赖 `0006_viewer_login_grant_check.sql`，但 0006 只提供 RPC，不代表 viewer 登录链路已稳定。
+9. Viewer 登录前授权检查依赖 `0006_viewer_login_grant_check.sql`；Phase 2I 后，login / callback 代码会生成安全 callback URL、验证 session user 并跳回安全 `next`。
 
 验证要求：
 
 - 运行 `npm run lint`。
 - 运行 `npm run build`。
+- 如本地服务可用，运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
 - 合并后在生产 Supabase 手动执行 `0005_restricted_content_access.sql`。
 - 验证 public 内容仍所有访客可看，restricted 内容只有管理员或匹配邮箱授权用户可看，private 内容仅管理员可看。
 - 验证非管理员登录用户不能进入 `/dashboard`，不能访问 `/dashboard/access-grants` 或 Documents。
+
+## Viewer Restricted Access Hotfix Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2I / Hotfix 的 viewer restricted access 验收流程，确认访问申请提交、viewer magic link、callback、四类详情页 viewable 查询和权限边界稳定。
+
+步骤：
+
+1. 打开 `/access-request`，匿名提交一条申请。
+2. 确认页面显示提交成功；后台 `/dashboard/access-requests` 能看到 `pending` 申请。
+3. 在后台创建或选择一条 `visibility = restricted` 的 Project / Publication / Knowledge / Skill。
+4. 进入 `/dashboard/access-grants/new`，为测试邮箱手动创建对应内容的 active Access Grant。
+5. 退出管理员或使用无痕窗口访问对应详情页，例如 `/projects/[restricted-slug]`。
+6. 未登录时应显示安全 fallback，不展示正文，不确认 private / restricted / unlisted 内容是否真实存在。
+7. 打开 `/viewer/login?next=...`，输入被授权邮箱并发送 magic link。
+8. 点击 Supabase magic link 后应进入 `/viewer/callback`，再跳回原 `next` 内容页。
+9. 已授权邮箱应能看到被授权的 restricted 正文。
+10. 换未授权邮箱访问同一内容，应继续显示安全 fallback。
+11. 撤销 Access Grant 后再次访问，应失去 restricted 正文读取权限。
+12. 使用 viewer session 访问 `/dashboard`、`/documents`、`/api` 或 `/public-files`，应无法获得后台、文件或 signed URL 能力。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 运行 `git diff --check`。
+- 运行 `git diff --cached --check`。
+- 如项目存在 `typecheck` script，运行 `npm run typecheck`；当前没有该 script 时在 PR 中说明。
+- 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 确认本阶段不新增 migration、不新增数据库字段、不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+- 确认 Access Grant 只开放被授权的 restricted 正文，不开放 Documents、private attachments、zip、Storage path、Storage bucket 或 signed URL。
 
 ## Public Research Workstation Publishing Workflow
 
