@@ -9,21 +9,18 @@ import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicKnowledgeNoteBySlug, getRelatedPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 import { getPublicPublicationsByProjectId } from "@/lib/queries/publications";
-import { publicMetadataDescription, publicPageMetadata } from "@/lib/site";
+import { publicMetadataDescription, publicNoindexMetadata, publicPageMetadata } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const note = await getPublicKnowledgeNoteBySlug(slug);
 
   if (!note) {
-    return {
+    return publicNoindexMetadata({
       title: "知识文章",
       description: "公开知识文章不存在或未公开。",
-      robots: {
-        index: false,
-        follow: false
-      }
-    };
+      path: `/knowledge/${slug}`
+    });
   }
 
   return publicPageMetadata({

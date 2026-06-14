@@ -13,13 +13,20 @@ import { countPublicKnowledgeNotes, getPublicKnowledgeNotes } from "@/lib/querie
 import { countPublicProjects, getPublicProjects } from "@/lib/queries/projects";
 import { countPublicPublications, getPublicPublications } from "@/lib/queries/publications";
 import { countPublicSkills, getPublicSkills } from "@/lib/queries/skills";
-import { publicPageMetadata } from "@/lib/site";
+import { publicPageMetadata, siteName } from "@/lib/site";
 
-export const metadata: Metadata = publicPageMetadata({
-  title: "黄铭语研究工作站 | Public Research Workstation",
-  description: "沉淀研究项目、学术成果、知识笔记和 AI 工作流的个人研究空间。",
+const homeMetadata = publicPageMetadata({
+  title: "个人研究工作站",
+  description: "公开研究项目、学术成果、知识笔记与 AI 工作流。",
   path: "/"
 });
+
+export const metadata: Metadata = {
+  ...homeMetadata,
+  title: {
+    absolute: `个人研究工作站 | ${siteName}`
+  }
+};
 
 function EmptyPublicState({ label }: { label: string }) {
   return (

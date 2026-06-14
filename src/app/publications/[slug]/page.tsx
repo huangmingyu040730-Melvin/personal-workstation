@@ -11,21 +11,18 @@ import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
 import { getPublicDocumentsForAsset } from "@/lib/queries/public-document-attachments";
 import { getPublicPublicationBySlug } from "@/lib/queries/publications";
-import { publicMetadataDescription, publicPageMetadata } from "@/lib/site";
+import { publicMetadataDescription, publicNoindexMetadata, publicPageMetadata } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const publication = await getPublicPublicationBySlug(slug);
 
   if (!publication) {
-    return {
+    return publicNoindexMetadata({
       title: "学术成果",
       description: "公开学术成果不存在或未公开。",
-      robots: {
-        index: false,
-        follow: false
-      }
-    };
+      path: `/publications/${slug}`
+    });
   }
 
   return publicPageMetadata({

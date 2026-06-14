@@ -6,11 +6,13 @@ import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { getAccessRequestContentTypeLabel } from "@/lib/content-options";
 import { buildAccessRequestHref, getAccessRequestContextFromSearchParams } from "@/lib/access-request-context";
 import { getFormError } from "@/lib/forms";
+import { publicPageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "申请访问 | 黄铭语研究工作站",
-  description: "申请查看未公开研究资料、受限内容或进一步材料。"
-};
+export const metadata: Metadata = publicPageMetadata({
+  title: "申请访问",
+  description: "申请查看未公开研究资料、受限内容或进一步材料。",
+  path: "/access-request"
+});
 
 export default async function AccessRequestPage({
   searchParams

@@ -608,6 +608,25 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不新增邮件服务，不自动发送通知，不做 CRM、支付、会员、AI 自动审批、OCR、AI 摘要、向量搜索或关系图谱恢复。
 - 申请上下文只使用公开页面已展示标题和 slug；不得使用 private id 作为公开申请依据。
 
+### Phase 2R-C-1 - Public SEO And Sharing Polish
+
+已完成代码实现。公开站点具备更正式的 SEO、分享卡片、sitemap 和 robots 体验：
+
+- 公开页面 metadata 使用统一站点模板“黄铭语研究工作站”，避免 title 重复站点名。
+- 首页分享标题为“个人研究工作站 | 黄铭语研究工作站”，描述聚焦公开研究项目、学术成果、知识笔记与 AI 工作流。
+- 公开列表页 Open Graph / Twitter card 标题使用“研究项目 / 学术成果 / 知识库 / Skill 库 | 黄铭语研究工作站”。
+- 公开详情页分享标题使用内容标题，description 使用 public summary / excerpt / description 截断。
+- 统一复用 `public/research-workstation-hero.png` 作为公开安全分享图片，不生成包含私密信息的动态 OG 图片。
+- sitemap 包含公开静态入口、`/access-request` 和所有 public Project / Publication / Knowledge / Skill 详情；Supabase 查询失败时安全降级为基础公开静态页面。
+- robots 允许公开页面和访问申请被索引，阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等路径。
+
+边界：
+
+- 不新增 migration，不修改 RLS、Storage policy、Access Grants、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
+- sitemap 不包含 private / restricted / unlisted 内容，不包含 `/public-files/[id]/download`、signed URL、Storage path、dashboard、viewer 或 admin login。
+- metadata 不读取或输出 private / restricted / unlisted 正文、private Documents、`file_path`、raw `document_asset_links`、`research_asset_links` 管理数据、Storage bucket、Storage path、signed URL 或 owner_id。
+- robots 和 sitemap 不是安全边界；真实边界仍依赖 Supabase Auth、RLS、Storage policy 和服务端下载 route 校验。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -666,7 +685,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示，2R-C-1 只 polish 公开 SEO、分享卡片、sitemap 和 robots。
 - Documents 上传默认 private；只有管理员显式设为 public 且关联 public 资产的文件，才可在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。
 - Documents 作为可维护的统一默认私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页继续嵌入后台附件视图；公开 Project / Publication 详情页只展示经 public 附件查询归一化后的安全字段，不展示 raw link rows、Storage 路径、Storage bucket、owner_id 或 signed URL；公开 Knowledge / Skill 详情页不展示 Documents。

@@ -290,6 +290,41 @@ npm run build
 - 确认申请不会自动开放 Documents、private attachments、Storage path、bucket、signed URL、raw link rows 或 restricted/private 正文。
 - 在 390px 宽度下确认 `/access-request` 和 fallback 页面无横向溢出，表单字段可输入，CTA 可点击。
 
+## Public SEO And Sharing Workflow
+
+日期：2026-06-14
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2R-C-1 的公开站点 SEO、分享卡片、sitemap 和 robots，让公开研究工作站可被安全索引和分享。
+
+步骤：
+
+1. 公开页面 metadata 统一通过 `src/lib/site.ts` 维护站点名、站点描述、canonical、Open Graph 和 Twitter card。
+2. 页面 `title` 只写页面自身标题，由全局 metadata template 拼接“黄铭语研究工作站”；不要在页面 title 中重复站点名。
+3. 首页分享标题使用“个人研究工作站 | 黄铭语研究工作站”，公开列表页分享标题使用“研究项目 / 学术成果 / 知识库 / Skill 库 | 黄铭语研究工作站”。
+4. 公开详情页分享标题使用内容标题，description 只使用 public summary、excerpt、description、abstract 等公开字段截断。
+5. `/access-request` metadata 固定为申请入口说明，不读取 query 中的 title、slug 或 from。
+6. 未公开或不存在 slug 的详情页 metadata 保持 noindex，不确认 private / restricted 内容是否真实存在。
+7. OG / Twitter 图片复用公开安全图片，不生成包含私密字段、文件路径或后台数据的动态图片。
+8. sitemap 只包含 `/`、`/about`、`/projects`、`/publications`、`/knowledge`、`/skills`、`/access-request` 和 public Project / Publication / Knowledge / Skill 详情。
+9. sitemap 查询 public 内容失败时安全降级为基础公开静态页面，不返回 500。
+10. sitemap 不包含 dashboard、login、viewer、public file download route、signed URL、Storage path、private Documents、restricted / unlisted / private 内容或后台关系页面。
+11. robots 允许公开页面和访问申请入口；阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等路径。
+12. robots 和 sitemap 不作为安全边界；公开权限仍由 public 查询、Supabase RLS、Storage policy 和 server-side download route 校验。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 运行 `git diff --check`。
+- 打开 `/sitemap.xml`，确认包含基础公开入口和 public 详情链接，不包含 `/dashboard`、`/login`、`/viewer`、`/public-files`、signed URL 或 Storage path。
+- 打开 `/robots.txt`，确认公开页面可索引，dashboard / API / viewer / public-files 等路径被 disallow。
+- 检查首页、四个列表页、四类详情页和 `/access-request` 的 `<title>`、canonical、OG/Twitter metadata；确认不重复站点名、不包含 query 上下文或私密字段。
+- 在 390px 宽度下抽查首页、一个列表页、一个详情页和 `/access-request` 无横向溢出。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09
