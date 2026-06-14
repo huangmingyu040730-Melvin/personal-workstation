@@ -16,6 +16,11 @@ import { AdminEmptyState, AdminSecurityNote } from "@/components/admin-ui";
 import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import {
+  buildPublicationReadinessItems,
+  publicationPublicHref,
+  PublicReadinessCard
+} from "@/components/dashboard/public-readiness-card";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { RelatedDocumentsPanel } from "@/components/related-documents-panel";
@@ -33,6 +38,7 @@ type PublicationOutputHubProps = {
   relatedKnowledge: KnowledgeNoteRecord[];
   assetLinks: AssetLinksForAsset;
   assetLinkOptions: AssetLinkTargetOptions;
+  publicAttachmentCount: number;
   deleteAction: (formData: FormData) => void | Promise<void>;
   error?: string;
   notice?: boolean;
@@ -60,6 +66,7 @@ export function PublicationOutputHub({
   relatedKnowledge,
   assetLinks,
   assetLinkOptions,
+  publicAttachmentCount,
   deleteAction,
   error,
   notice
@@ -79,6 +86,12 @@ export function PublicationOutputHub({
   });
   const documentsHref = buildDocumentsHref(publication.id);
   const searchHref = buildSearchHref(publication.title, "all");
+  const readinessItems = buildPublicationReadinessItems({
+    publication,
+    relatedProject,
+    assetLinks,
+    publicAttachmentCount
+  });
 
   return (
     <>
@@ -173,6 +186,7 @@ export function PublicationOutputHub({
             documentsHref={documentsHref}
             searchHref={searchHref}
           />
+          <PublicReadinessCard items={readinessItems} publicHref={publicationPublicHref(publication)} />
           <PublicationProjectCard publication={publication} project={relatedProject} />
           <PublicationMetadataCard publication={publication} />
           <PublicationAssetSearchCard publication={publication} relatedProject={relatedProject} />

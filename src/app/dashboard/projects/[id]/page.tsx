@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface } from "@/components/admin-ui";
 import { ProjectResearchHub } from "@/components/projects/project-research-hub";
 import { getFormError } from "@/lib/forms";
+import { getPublicDocumentCountByRelated } from "@/lib/queries/documents";
 import { getAssetLinksForAsset, getAssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import { getProjectById, getProjectRelatedAssets } from "@/lib/queries/projects";
 
@@ -21,10 +22,11 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
-  const [relatedAssets, assetLinks, assetLinkOptions] = await Promise.all([
+  const [relatedAssets, assetLinks, assetLinkOptions, publicAttachmentCount] = await Promise.all([
     getProjectRelatedAssets(project.id),
     getAssetLinksForAsset("project", project.id),
-    getAssetLinkTargetOptions()
+    getAssetLinkTargetOptions(),
+    getPublicDocumentCountByRelated("project", project.id)
   ]);
   const deleteAction = deleteProjectAction.bind(null, project.id);
   const error = getFormError(query);
@@ -38,6 +40,7 @@ export default async function ProjectDetailPage({
           relatedAssets={relatedAssets}
           assetLinks={assetLinks}
           assetLinkOptions={assetLinkOptions}
+          publicAttachmentCount={publicAttachmentCount}
           deleteAction={deleteAction}
           error={error}
           notice={notice}

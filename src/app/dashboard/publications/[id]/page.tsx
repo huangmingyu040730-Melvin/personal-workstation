@@ -5,6 +5,7 @@ import { AdminPageSurface } from "@/components/admin-ui";
 import { PublicationOutputHub } from "@/components/publications/publication-output-hub";
 import { getFormError } from "@/lib/forms";
 import { getAssetLinksForAsset, getAssetLinkTargetOptions } from "@/lib/queries/asset-links";
+import { getPublicDocumentCountByRelated } from "@/lib/queries/documents";
 import { getKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
 import { getProjectById } from "@/lib/queries/projects";
 import { getPublicationById } from "@/lib/queries/publications";
@@ -23,11 +24,12 @@ export default async function PublicationDetailPage({
     notFound();
   }
 
-  const [relatedProject, relatedKnowledge, assetLinks, assetLinkOptions] = await Promise.all([
+  const [relatedProject, relatedKnowledge, assetLinks, assetLinkOptions, publicAttachmentCount] = await Promise.all([
     publication.project_id ? getProjectById(publication.project_id) : Promise.resolve(null),
     publication.project_id ? getKnowledgeNotesByProjectId(publication.project_id, 5) : Promise.resolve([]),
     getAssetLinksForAsset("publication", publication.id),
-    getAssetLinkTargetOptions()
+    getAssetLinkTargetOptions(),
+    getPublicDocumentCountByRelated("publication", publication.id)
   ]);
 
   return (
@@ -39,6 +41,7 @@ export default async function PublicationDetailPage({
           relatedKnowledge={relatedKnowledge}
           assetLinks={assetLinks}
           assetLinkOptions={assetLinkOptions}
+          publicAttachmentCount={publicAttachmentCount}
           deleteAction={deletePublicationAction.bind(null, publication.id)}
           error={getFormError(query)}
           notice={query.notice === "collection_deleted"}

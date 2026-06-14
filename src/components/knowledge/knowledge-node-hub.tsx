@@ -15,6 +15,11 @@ import { AdminEmptyState } from "@/components/admin-ui";
 import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import {
+  buildKnowledgeReadinessItems,
+  knowledgePublicHref,
+  PublicReadinessCard
+} from "@/components/dashboard/public-readiness-card";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { RelatedDocumentsPanel } from "@/components/related-documents-panel";
@@ -78,6 +83,11 @@ export function KnowledgeNodeHub({
   });
   const documentsHref = buildDocumentsHref(note.id);
   const searchHref = buildSearchHref(note.title, "all");
+  const readinessItems = buildKnowledgeReadinessItems({
+    note,
+    relatedProject,
+    assetLinks
+  });
 
   return (
     <>
@@ -172,6 +182,7 @@ export function KnowledgeNodeHub({
             documentsHref={documentsHref}
             searchHref={searchHref}
           />
+          <PublicReadinessCard items={readinessItems} publicHref={knowledgePublicHref(note)} />
           <KnowledgeProjectCard note={note} project={relatedProject} />
           <KnowledgeMetadataCard note={note} />
           <KnowledgeAssetSearchCard note={note} />

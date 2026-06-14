@@ -264,6 +264,11 @@ export async function getDocumentsByRelated(relatedType: DocumentRelatedType, re
   return getDocuments({ relatedType, relatedId });
 }
 
+export async function getPublicDocumentCountByRelated(relatedType: DocumentRelatedType, relatedId: string) {
+  const documents = await getDocumentsByRelated(relatedType, relatedId);
+  return new Set(documents.filter((document) => document.visibility === "public").map((document) => document.id)).size;
+}
+
 export async function getDocumentCollectionById(id: string) {
   const supabase = await createClient();
 

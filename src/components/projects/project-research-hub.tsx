@@ -15,6 +15,11 @@ import { AdminEmptyState } from "@/components/admin-ui";
 import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import {
+  buildProjectReadinessItems,
+  projectPublicHref,
+  PublicReadinessCard
+} from "@/components/dashboard/public-readiness-card";
 import { DeleteButton } from "@/components/forms/submit-button";
 import { PageHeader } from "@/components/page-header";
 import { Progress } from "@/components/progress";
@@ -33,6 +38,7 @@ type ProjectResearchHubProps = {
   relatedAssets: ProjectRelatedAssets;
   assetLinks: AssetLinksForAsset;
   assetLinkOptions: AssetLinkTargetOptions;
+  publicAttachmentCount: number;
   deleteAction: (formData: FormData) => void | Promise<void>;
   error?: string;
   notice?: boolean;
@@ -59,6 +65,7 @@ export function ProjectResearchHub({
   relatedAssets,
   assetLinks,
   assetLinkOptions,
+  publicAttachmentCount,
   deleteAction,
   error,
   notice
@@ -78,6 +85,12 @@ export function ProjectResearchHub({
   });
   const documentsHref = buildDocumentsHref(project.id);
   const projectSearchHref = buildSearchHref(project.title, "all");
+  const readinessItems = buildProjectReadinessItems({
+    project,
+    relatedAssets,
+    assetLinks,
+    publicAttachmentCount
+  });
 
   return (
     <>
@@ -167,6 +180,7 @@ export function ProjectResearchHub({
             knowledgeNewHref="/dashboard/knowledge/new"
             documentsHref={documentsHref}
           />
+          <PublicReadinessCard items={readinessItems} publicHref={projectPublicHref(project)} />
           <ProjectMetadataCard project={project} />
           <ProjectMilestonesCard milestones={project.milestones} />
         </aside>

@@ -357,6 +357,36 @@ npm run build
 - 浏览器 390px 冒烟确认公开主链路无横向溢出。
 - 确认没有新增 migration，没有修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
 
+## Public Content Operations Workflow
+
+日期：2026-06-14
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2R-D-1 的公开内容运营基础，用后台 public readiness checklist 判断 Project / Publication / Knowledge / Skill 是否适合设为 public。
+
+步骤：
+
+1. 进入对应后台详情页：Project `/dashboard/projects/[id]`、Publication `/dashboard/publications/[id]`、Knowledge `/dashboard/knowledge/[id]`、Skill `/dashboard/skills/[id]`。
+2. 查看右侧“公开发布准备度” checklist，确认 visibility、slug、标题 / 名称、摘要 / description / excerpt、标签 / 分类、正文 / 说明和访问申请上下文。
+3. Project 重点复核研究问题、背景、方法、进度、相关 Publication / Knowledge / Skill，以及是否需要公开附件。
+4. Publication 重点复核成果类型、摘要、abstract、日期、关联 Project，以及是否需要公开论文、报告或补充材料。
+5. Knowledge 重点复核分类、摘要、正文和关联 Project；公开页不展示 Documents。
+6. Skill 重点复核使用说明、适用场景和公开说明页边界；Skill package 不展示、不下载、不执行、不安装、不解析。
+7. 如 Project / Publication 需要公开附件，先确认文件 `visibility = public` 且关联到当前 public 资产；公开下载仍只走 `/public-files/[id]/download`。
+8. 人工复核 public 字段，不写入 private / restricted 内容、Storage path、signed URL、`file_path`、owner_id、raw link rows、内部备注或 secret。
+9. readiness checklist 只作为运营提示；不得把它改成保存阻塞、自动公开、自动审批或权限授予流程。
+10. 需要发布前回归时，继续运行 `npm run lint`、`npm run build`、`git diff --check` 和运行中站点的 `npm run smoke:public`。
+
+验证要求：
+
+- 确认四类后台详情页能显示 public readiness checklist。
+- 确认 checklist 不阻止保存，不自动修改 visibility，不自动公开附件。
+- 确认没有新增 migration、数据库字段、RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限变化。
+- 确认公开页面仍只展示 public 内容；Knowledge / Skill 公开详情仍不展示 Documents。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09
