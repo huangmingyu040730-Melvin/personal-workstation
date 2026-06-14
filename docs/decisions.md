@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-06-15 - Polish Public Homepage Featured Content Without Expanding Access
+
+类型：decision
+
+决策：
+
+- Phase 2R-F-2 将公开首页精选内容区整理为 featured 优先、最近更新补足的 public 内容入口。
+- 首页按栏目展示精选研究项目、精选学术成果、最新知识笔记和公开 Skill / 工作流。
+- 精选逻辑只基于既有 `is_featured`、`updated_at` 和公开字段，不新增数据库字段或 migration。
+- 首页新增轻量“关于这个工作站”section，解释公开站点是 public showcase + admin-only private workspace。
+- 空状态只提示公开内容正在整理中，并链接到对应公开列表页。
+- 不恢复访问申请、Viewer login、Access Grants 或 restricted 外部授权。
+- 不修改 Documents、Storage policy、RLS、public file download route 或后台核心管理流程。
+
+原因：
+
+- 公开首页已经具备 hero、About 和四类公开内容主链路，需要让访客更快理解“先看什么、从哪里继续浏览”。
+- 首页精选应服务内容运营和浏览路径，不应引入新的权限模型、授权入口或数据库复杂度。
+
+影响：
+
+- 管理员可以继续通过后台 `is_featured` 控制首页优先展示；没有足够 featured 内容时，首页仍会用最近更新 public 内容保持完整入口。
+- 公开首页继续只展示 public 内容和静态公开说明，不展示私密文件、后台字段或外部授权入口。
+
 ## 2026-06-15 - Polish Public About Profile Without Expanding Access
 
 类型：decision

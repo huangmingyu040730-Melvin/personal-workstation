@@ -56,6 +56,9 @@ for (const route of publicRoutes) {
   assertStatus(response, 200, route);
   assertNoForbiddenFragments(response.body, route);
   assertMetadata(response.body, route);
+  if (route === "/") {
+    assertHomepage(response.body);
+  }
 }
 
 for (const route of fallbackRoutes) {
@@ -137,6 +140,20 @@ function assertMetadata(html, label) {
   record(Boolean(title), `${label} has title`, title ?? "missing");
   assertDoesNotInclude(title ?? "", `${siteName} | ${siteName}`, `${label} title avoids duplicate site name`);
   assertIncludes(head, "research-workstation-hero.png", `${label} uses public OG image`);
+}
+
+function assertHomepage(html) {
+  for (const text of ["个人研究工作站", "查看研究项目", "查看学术成果", "进入 Skill 库", "关于我"]) {
+    assertIncludes(html, text, `home includes ${text}`);
+  }
+
+  for (const text of ["关于这个工作站", "精选研究项目", "精选学术成果", "最新知识笔记", "公开 Skill / 工作流"]) {
+    assertIncludes(html, text, `home includes ${text}`);
+  }
+
+  for (const href of ['href="/projects"', 'href="/publications"', 'href="/knowledge"', 'href="/skills"', 'href="/about"']) {
+    assertIncludes(html, href, `home links ${href}`);
+  }
 }
 
 function getTitle(head) {

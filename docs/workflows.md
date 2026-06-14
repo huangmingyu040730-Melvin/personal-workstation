@@ -343,6 +343,37 @@ npm run build
 - 在本地运行中站点执行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
 - 确认公开页面 HTML 不出现 signed URL、Storage path、`file_path`、owner_id、raw document links 或后台关系管理数据。
 
+## Public Homepage Featured Content Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2R-F-2 的公开首页精选内容和访客浏览路径，让 `/` 作为正式公开研究主页入口。
+
+步骤：
+
+1. 打开 `/`，确认 Hero H1 仍为“个人研究工作站”，主 CTA 可进入 `/projects`、`/publications`、`/skills` 和 `/about`。
+2. 确认首页没有访问申请、Viewer login、Access Grants 或 restricted 外部授权入口。
+3. 确认“关于这个工作站”section 只说明 public showcase + admin-only private workspace，不展示后台菜单、文件中心下载入口或私密资料。
+4. 确认精选内容区包含精选研究项目、精选学术成果、最新知识笔记和公开 Skill / 工作流。
+5. 精选内容选择规则为：同一栏目先展示 `is_featured = true` 的 public 记录；不足时用最近更新的 public 记录补足。
+6. 某类 public 内容为空时，应显示“正在整理中”的温和空状态，并链接到对应公开列表页。
+7. 确认首页 CTA 能进入 `/projects`、`/publications`、`/knowledge`、`/skills` 和 `/about`。
+8. 确认 390px 移动端无横向溢出，卡片标题、摘要、metadata 和 CTA 不互相遮挡。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 在本地运行中站点执行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 运行 `git diff --check`。
+- 确认 sitemap / robots 仍符合 public-only 安全边界。
+- 确认首页 HTML 不出现 signed URL、Storage path、`file_path`、owner_id、raw document links 或后台关系管理数据。
+- 本流程不新增 migration，不修改 RLS、Storage policy、Documents、public file download route 或后台核心 CRUD。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09

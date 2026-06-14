@@ -1,13 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ArrowRight, BarChart3, BookOpen, Bot, BrainCircuit, FileText, FolderKanban, ShieldCheck, Sparkles } from "lucide-react";
-import { Card, CardHeader } from "@/components/card";
+import { Card } from "@/components/card";
 import { HomeSection } from "@/components/home/home-section";
-import { PublicProjectCard, PublicPublicationCard } from "@/components/public/public-content-cards";
 import { PublicShell } from "@/components/public/public-shell";
-import type { KnowledgeNoteRecord, SkillRecord } from "@/lib/content-types";
+import type { KnowledgeNoteRecord, ProjectRecord, PublicationRecord, SkillRecord } from "@/lib/content-types";
+import { getPublicationTypeLabel } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
 import { countPublicKnowledgeNotes, getPublicKnowledgeNotes } from "@/lib/queries/knowledge";
 import { countPublicProjects, getPublicProjects } from "@/lib/queries/projects";
@@ -28,11 +28,23 @@ export const metadata: Metadata = {
   }
 };
 
-function EmptyPublicState({ label }: { label: string }) {
+function EmptyPublicState({
+  label,
+  description,
+  href
+}: {
+  label: string;
+  description: string;
+  href: string;
+}) {
   return (
-    <p className="rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-slate-500">
-      暂无{label}，后续会逐步开放已整理完成的公开内容。
-    </p>
+    <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-4 text-sm leading-6 text-slate-600">
+      <p className="font-semibold text-navy-950">{label}正在整理中</p>
+      <p className="mt-1">{description}</p>
+      <Link href={href} className="mt-3 inline-flex items-center gap-1 font-semibold text-blue-700">
+        进入栏目 <ArrowRight size={14} />
+      </Link>
+    </div>
   );
 }
 
@@ -106,49 +118,197 @@ function HeroStatCard({
   );
 }
 
-function CompactKnowledgePreviewCard({ note }: { note: KnowledgeNoteRecord }) {
+type FeaturedReason = "featured" | "recent";
+type FeatureSelection<T> = {
+  item: T;
+  reason: FeaturedReason;
+};
+
+const projectStatusLabels: Record<ProjectRecord["status"], string> = {
+  planning: "规划中",
+  in_progress: "进行中",
+  completed: "已完成",
+  archived: "已归档"
+};
+
+function selectFeaturedThenRecent<T extends { is_featured: boolean; updated_at: string }>(items: T[], limit: number): FeatureSelection<T>[] {
+  return [...items]
+    .sort((a, b) => Number(b.is_featured) - Number(a.is_featured) || b.updated_at.localeCompare(a.updated_at))
+    .slice(0, limit)
+    .map((item) => ({
+      item,
+      reason: item.is_featured ? "featured" : "recent"
+    }));
+}
+
+function FeatureReasonPill({ reason }: { reason: FeaturedReason }) {
+  const label = reason === "featured" ? "精选" : "最近更新";
+  const tone = reason === "featured" ? "bg-violet-50 text-violet-700 ring-violet-100" : "bg-slate-100 text-slate-600 ring-slate-200";
+
+  return <span className={`rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${tone}`}>{label}</span>;
+}
+
+function HomeFeatureCard({
+  href,
+  title,
+  summary,
+  meta,
+  tags,
+  reason,
+  icon: Icon,
+  actionLabel
+}: {
+  href: string;
+  title: string;
+  summary: string | null;
+  meta: string;
+  tags: string[];
+  reason: FeaturedReason;
+  icon: typeof FolderKanban;
+  actionLabel: string;
+}) {
   return (
-    <Link href={`/knowledge/${note.slug}`} className="public-compact-card group block h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-      <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 transition duration-300 group-hover:rotate-3 group-hover:scale-105">
-          <BookOpen size={17} />
+    <Link href={href} className="group block h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition hover:border-blue-200 hover:shadow-[0_16px_42px_rgba(15,42,88,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+      <div className="flex items-start justify-between gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 transition duration-300 group-hover:rotate-3 group-hover:scale-105">
+          <Icon size={18} />
         </span>
-        <div className="min-w-0">
-          <h2 className="line-clamp-2 text-base font-semibold leading-6 text-navy-950">{note.title}</h2>
-          <p className="mt-1 truncate text-xs font-medium text-slate-500">{note.category} · 更新于 {formatRelative(note.updated_at)}</p>
+        <FeatureReasonPill reason={reason} />
+      </div>
+      <h3 className="mt-4 line-clamp-2 text-base font-semibold leading-6 text-navy-950">{title}</h3>
+      <p className="mt-2 line-clamp-1 text-xs font-medium text-slate-500">{meta}</p>
+      {summary ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{summary}</p> : null}
+      {tags.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {tags.slice(0, 3).map((tag) => (
+            <span key={tag} className="max-w-full truncate rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+              {tag}
+            </span>
+          ))}
         </div>
-      </div>
-      {note.excerpt ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-        <span className="truncate text-xs text-slate-500">{note.tags.slice(0, 2).join(" / ") || "公开知识笔记"}</span>
-        <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-blue-700">
-          阅读 <ArrowRight className="transition duration-300 group-hover:translate-x-1" size={14} />
-        </span>
-      </div>
+      ) : null}
+      <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
+        {actionLabel} <ArrowRight className="transition duration-300 group-hover:translate-x-1" size={14} />
+      </span>
     </Link>
   );
 }
 
-function CompactSkillPreviewCard({ skill }: { skill: SkillRecord }) {
+function FeaturedContentColumn({
+  eyebrow,
+  title,
+  description,
+  href,
+  actionLabel,
+  children,
+  empty
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  href: string;
+  actionLabel: string;
+  children: ReactNode;
+  empty: ReactNode;
+}) {
+  const hasItems = Boolean(children);
+
   return (
-    <Link href={`/skills/${skill.slug}`} className="public-compact-card group block h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-      <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-950 text-white transition duration-300 group-hover:-rotate-3 group-hover:scale-105">
-          <Bot size={17} />
-        </span>
-        <div className="min-w-0">
-          <h2 className="line-clamp-2 text-base font-semibold leading-6 text-navy-950">{skill.name}</h2>
-          <p className="mt-1 truncate text-xs font-medium text-slate-500">{skill.category} · {skill.current_version ?? "未设版本"}</p>
+    <div className="min-w-0">
+      <div className="mb-4 flex min-h-[124px] flex-col justify-between border-b border-slate-200 pb-4">
+        <div>
+          <p className="text-sm font-semibold text-blue-700">{eyebrow}</p>
+          <h2 className="mt-1 text-xl font-semibold text-navy-950">{title}</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
         </div>
+        <Link href={href} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
+          {actionLabel} <ArrowRight size={15} />
+        </Link>
       </div>
-      <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{skill.description}</p>
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-        <span className="truncate text-xs text-slate-500">{skill.platforms.slice(0, 2).join(" / ") || "公开 Skill"}</span>
-        <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-blue-700">
-          详情 <ArrowRight className="transition duration-300 group-hover:translate-x-1" size={14} />
-        </span>
+      <div className="grid gap-4">
+        {hasItems ? children : empty}
       </div>
-    </Link>
+    </div>
+  );
+}
+
+function ProjectFeatureCards({ items }: { items: FeatureSelection<ProjectRecord>[] }) {
+  return (
+    <>
+      {items.map(({ item, reason }) => (
+        <HomeFeatureCard
+          key={item.id}
+          href={`/projects/${item.slug}`}
+          title={item.title}
+          summary={item.summary}
+          meta={`${projectStatusLabels[item.status]} · 更新于 ${formatRelative(item.updated_at)}`}
+          tags={item.tags}
+          reason={reason}
+          icon={FolderKanban}
+          actionLabel="查看项目"
+        />
+      ))}
+    </>
+  );
+}
+
+function PublicationFeatureCards({ items }: { items: FeatureSelection<PublicationRecord>[] }) {
+  return (
+    <>
+      {items.map(({ item, reason }) => (
+        <HomeFeatureCard
+          key={item.id}
+          href={`/publications/${item.slug}`}
+          title={item.title}
+          summary={item.summary}
+          meta={`${getPublicationTypeLabel(item.publication_type)} · 更新于 ${formatRelative(item.updated_at)}`}
+          tags={item.tags}
+          reason={reason}
+          icon={FileText}
+          actionLabel="查看成果"
+        />
+      ))}
+    </>
+  );
+}
+
+function KnowledgeFeatureCards({ items }: { items: FeatureSelection<KnowledgeNoteRecord>[] }) {
+  return (
+    <>
+      {items.map(({ item, reason }) => (
+        <HomeFeatureCard
+          key={item.id}
+          href={`/knowledge/${item.slug}`}
+          title={item.title}
+          summary={item.excerpt}
+          meta={`${item.category} · 更新于 ${formatRelative(item.updated_at)}`}
+          tags={item.tags}
+          reason={reason}
+          icon={BookOpen}
+          actionLabel="阅读笔记"
+        />
+      ))}
+    </>
+  );
+}
+
+function SkillFeatureCards({ items }: { items: FeatureSelection<SkillRecord>[] }) {
+  return (
+    <>
+      {items.map(({ item, reason }) => (
+        <HomeFeatureCard
+          key={item.id}
+          href={`/skills/${item.slug}`}
+          title={item.name}
+          summary={item.description}
+          meta={`${item.category} · ${item.current_version ?? "公开说明"}`}
+          tags={item.platforms}
+          reason={reason}
+          icon={Bot}
+          actionLabel="查看 Skill"
+        />
+      ))}
+    </>
   );
 }
 
@@ -210,12 +370,12 @@ export default async function HomePage() {
     getPublicProjects(),
     getPublicPublications(),
     getPublicSkills(),
-    getPublicKnowledgeNotes({ limit: 4 })
+    getPublicKnowledgeNotes()
   ]);
-  const projectPreviews = publicProjects.slice(0, 2);
-  const publicationPreviews = publicPublications.slice(0, 2);
-  const knowledgePreviews = publicKnowledge.slice(0, 4);
-  const skillPreviews = publicSkills.slice(0, 4);
+  const projectPreviews = selectFeaturedThenRecent(publicProjects, 2);
+  const publicationPreviews = selectFeaturedThenRecent(publicPublications, 2);
+  const knowledgePreviews = selectFeaturedThenRecent(publicKnowledge, 4);
+  const skillPreviews = selectFeaturedThenRecent(publicSkills, 4);
   const heroStats = [
     { label: "公开项目", value: publicProjectCount, href: "/projects", icon: FolderKanban, tone: "bg-blue-50 text-blue-700" },
     { label: "公开成果", value: publicPublicationCount, href: "/publications", icon: FileText, tone: "bg-earth-50 text-earth-700" },
@@ -329,78 +489,86 @@ export default async function HomePage() {
 
       <HomeSection
         surface="white"
-        eyebrow="Selected Work"
-        title="公开项目与学术成果"
-        description="优先展示精选或最近更新的 public 记录；不展示附件下载或内部文件路径。"
+        eyebrow="About"
+        title="关于这个工作站"
+        description="这里是公开研究主页和作品集入口，面向访客展示已整理完成的 public 内容；私密文件、后台资料和内部管理信息继续留在管理员工作区。"
+        action={<Link href="/about" className="text-sm font-semibold text-blue-700">关于我</Link>}
       >
-        <div className="grid gap-10 xl:grid-cols-2 xl:divide-x xl:divide-slate-200">
-          <div className="xl:pr-10">
-            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-blue-700">Projects</p>
-                <h2 className="mt-1 text-xl font-semibold text-navy-950">研究项目</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">从研究问题、方法框架和阶段进度进入公开研究脉络。</p>
-              </div>
-              <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
-                全部项目 <ArrowRight size={15} />
-              </Link>
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-stretch">
+          <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-6">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy-950 text-white">
+              <ShieldCheck size={22} />
             </div>
-            {projectPreviews.length > 0 ? (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                {projectPreviews.map((project) => <PublicProjectCard key={project.id} project={project} />)}
-              </div>
-            ) : (
-              <Card><CardHeader title="公开项目" /><EmptyPublicState label="公开项目" /></Card>
-            )}
+            <h2 className="mt-5 text-xl font-semibold text-navy-950">Public showcase + admin-only private workspace</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              首页负责把公开项目、成果、知识笔记和 Skill / 工作流组织成清晰浏览路径；未公开内容不会进入首页、列表页或 sitemap。
+            </p>
+            <Link href="/about" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
+              了解公开边界 <ArrowRight size={15} />
+            </Link>
           </div>
-          <div className="xl:pl-10">
-            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-blue-700">Publications</p>
-                <h2 className="mt-1 text-xl font-semibold text-navy-950">学术成果</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">浏览公开报告、论文草稿、策略分析和阅读综述。</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              { title: "只展示 public 内容", description: "首页精选区只来自公开查询返回的记录，并优先使用后台标记的精选内容。" },
+              { title: "私密资料留在后台", description: "文件中心、内部备注、后台关系管理和未公开素材不会作为访客入口出现。" },
+              { title: "公开附件保持克制", description: "只有 public Project / Publication 的显式公开附件，才会在对应详情页展示安全下载入口。" }
+            ].map((item) => (
+              <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="font-semibold leading-6 text-navy-950">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
               </div>
-              <Link href="/publications" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
-                全部成果 <ArrowRight size={15} />
-              </Link>
-            </div>
-            {publicationPreviews.length > 0 ? (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                {publicationPreviews.map((publication) => <PublicPublicationCard key={publication.id} publication={publication} />)}
-              </div>
-            ) : (
-              <Card><CardHeader title="公开成果" /><EmptyPublicState label="公开成果" /></Card>
-            )}
+            ))}
           </div>
         </div>
       </HomeSection>
 
       <HomeSection
         surface="muted"
-        eyebrow="Knowledge"
-        title="知识笔记预览"
-        description="公开知识库沉淀研究框架、工具方法、阅读笔记和实践反思。"
-        action={<Link href="/knowledge" className="text-sm font-semibold text-blue-700">进入知识库</Link>}
+        eyebrow="Featured"
+        title="精选内容与最新公开记录"
+        description="首页优先展示后台标记为 featured 的 public 内容；当精选不足时，用最近更新的 public 记录补足，保持访客浏览路径完整。"
       >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {knowledgePreviews.length > 0 ? knowledgePreviews.map((note) => (
-            <CompactKnowledgePreviewCard key={note.id} note={note} />
-          )) : <EmptyPublicState label="公开知识笔记" />}
-        </div>
-      </HomeSection>
-
-      <HomeSection
-        surface="white"
-        eyebrow="Skills"
-        title="Skill / 工作流预览"
-        description="公开 Skill 只展示用途、平台和工作流说明，不开放后台资料包或私密文件。"
-        action={<Link href="/skills" className="text-sm font-semibold text-blue-700">进入 Skill 库</Link>}
-        innerClassName="pb-16"
-      >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {skillPreviews.length > 0 ? skillPreviews.map((skill) => (
-            <CompactSkillPreviewCard key={skill.id} skill={skill} />
-          )) : <EmptyPublicState label="公开 Skill" />}
+        <div className="grid gap-8 lg:grid-cols-2 2xl:grid-cols-4">
+          <FeaturedContentColumn
+            eyebrow="Projects"
+            title="精选研究项目"
+            description="从研究问题、方法框架和阶段进度进入公开研究脉络。"
+            href="/projects"
+            actionLabel="全部项目"
+            empty={<EmptyPublicState label="公开项目" description="公开内容正在整理中，后续会逐步开放适合展示的研究项目。" href="/projects" />}
+          >
+            {projectPreviews.length > 0 ? <ProjectFeatureCards items={projectPreviews} /> : null}
+          </FeaturedContentColumn>
+          <FeaturedContentColumn
+            eyebrow="Publications"
+            title="精选学术成果"
+            description="浏览公开报告、论文草稿、策略分析和阅读综述。"
+            href="/publications"
+            actionLabel="全部成果"
+            empty={<EmptyPublicState label="公开成果" description="公开成果正在整理中，后续会补充适合外部阅读的摘要与材料说明。" href="/publications" />}
+          >
+            {publicationPreviews.length > 0 ? <PublicationFeatureCards items={publicationPreviews} /> : null}
+          </FeaturedContentColumn>
+          <FeaturedContentColumn
+            eyebrow="Knowledge"
+            title="最新知识笔记"
+            description="沉淀研究框架、工具方法、阅读笔记和实践反思。"
+            href="/knowledge"
+            actionLabel="进入知识库"
+            empty={<EmptyPublicState label="公开知识笔记" description="知识笔记正在整理中，后续会开放完成脱敏和摘要化的公开内容。" href="/knowledge" />}
+          >
+            {knowledgePreviews.length > 0 ? <KnowledgeFeatureCards items={knowledgePreviews} /> : null}
+          </FeaturedContentColumn>
+          <FeaturedContentColumn
+            eyebrow="Skills"
+            title="公开 Skill / 工作流"
+            description="展示 AI Skill、工具链和研究工作流的公开说明。"
+            href="/skills"
+            actionLabel="进入 Skill 库"
+            empty={<EmptyPublicState label="公开 Skill" description="Skill 与工作流说明正在整理中，后续会补充可公开复用的方法卡片。" href="/skills" />}
+          >
+            {skillPreviews.length > 0 ? <SkillFeatureCards items={skillPreviews} /> : null}
+          </FeaturedContentColumn>
         </div>
       </HomeSection>
 

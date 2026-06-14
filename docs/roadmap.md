@@ -664,6 +664,24 @@ Phase 2R-Z 已退役：
 - 不新增 migration，不修改 RLS、Storage policy、Documents、public file download route 或公开内容核心查询。
 - 不恢复访问申请、Viewer login、Access Grants 或 restricted 外部授权。
 
+### Phase 2R-F-2 - Public Homepage Featured Content Polish
+
+已完成代码实现。公开首页精选内容和访客浏览路径进一步打磨：
+
+- Hero 保持“个人研究工作站”定位，主 CTA 继续指向 Projects、Publications、Skills 和 About。
+- 新增轻量“关于这个工作站”section，说明公开站点只展示 public 内容，私密资料和后台信息留在管理员工作区。
+- 精选内容区统一展示精选研究项目、精选学术成果、最新知识笔记和公开 Skill / 工作流。
+- 展示逻辑优先使用 `is_featured = true` 的 public 内容；当 featured 不足时，用最近更新的 public 内容补足。
+- 四类首页卡片使用统一标题、摘要、metadata、精选 / 最近更新标记和明确 CTA。
+- 空状态只提示公开内容正在整理中，并链接到对应公开列表页。
+
+边界：
+
+- 不新增 migration、数据库字段、RPC、搜索服务或 AI 功能。
+- 不修改 RLS、Storage policy、Documents、public file download route、后台核心 CRUD 或四类内容 schema。
+- 不恢复访问申请、Viewer login、Access Grants 或 restricted 外部授权。
+- 首页仍只展示 public 查询结果和静态公开说明，不展示 private / unlisted 内容、Storage path、signed URL、`file_path`、owner_id、raw link rows 或后台关系管理数据。
+
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
 历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。
