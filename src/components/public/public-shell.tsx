@@ -7,8 +7,7 @@ const navItems = [
   { label: "研究项目", href: "/projects" },
   { label: "学术成果", href: "/publications" },
   { label: "知识库", href: "/knowledge" },
-  { label: "Skill 库", href: "/skills" },
-  { label: "访问申请", href: "/access-request" }
+  { label: "Skill 库", href: "/skills" }
 ];
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
@@ -48,7 +47,6 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             <Link href="/knowledge" className="font-medium text-slate-600 hover:text-blue-700">知识库</Link>
             <Link href="/skills" className="font-medium text-slate-600 hover:text-blue-700">Skill 库</Link>
             <Link href="/about" className="font-medium text-slate-600 hover:text-blue-700">关于我</Link>
-            <Link href="/access-request" className="font-medium text-slate-600 hover:text-blue-700">访问申请</Link>
             <Link href="/login?next=/dashboard" className="font-medium text-slate-600 hover:text-blue-700">管理员登录</Link>
           </div>
         </div>

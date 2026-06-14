@@ -1,9 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PublicDetailBody, PublicDetailGrid, PublicDetailHero, PublicDetailMetaList, PublicDetailSection, PublicDetailTags, PublicRelatedContent, type PublicDetailChip, type PublicRelatedItem } from "@/components/public/public-detail-shell";
+import { PublicUnavailableNotice } from "@/components/public/public-unavailable-notice";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
-import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
-import { buildAccessRequestHref } from "@/lib/access-request-context";
 import { getPublicationTypeLabel } from "@/lib/content-options";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
@@ -36,17 +35,10 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
   const note = await getPublicKnowledgeNoteBySlug(slug);
 
   if (!note) {
-    const requestHref = buildAccessRequestHref({ contentType: "knowledge", slug, from: "knowledge_restricted" });
-
     return (
       <PublicShell>
-        <PublicPageHero eyebrow="Access Request" title="该内容暂未公开或需要授权访问" description="当前公开页面无法显示这项研究内容。公开站点不会泄露未公开正文、附件、内部关系或文件内部信息。" />
-        <RestrictedAccessNotice
-          requestHref={requestHref}
-          loginHref={`/viewer/login?next=${encodeURIComponent(`/knowledge/${slug}`)}`}
-          backHref="/knowledge"
-          backLabel="返回知识库"
-        />
+        <PublicPageHero eyebrow="Public Content" title="内容不存在或未公开" description="当前公开页面无法显示这项研究内容。公开站点不会泄露未公开正文、附件、内部关系或文件内部信息。" />
+        <PublicUnavailableNotice backHref="/knowledge" backLabel="返回知识库" />
       </PublicShell>
     );
   }
@@ -74,12 +66,6 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
     description: publication.summary,
     ctaLabel: "查看成果"
   }));
-  const accessRequestHref = buildAccessRequestHref({
-    contentType: "knowledge",
-    slug: note.slug,
-    title: note.title,
-    from: "knowledge_detail"
-  });
 
   return (
     <PublicShell>
@@ -90,7 +76,6 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
         chips={heroChips}
         backHref="/knowledge"
         backLabel="返回公开知识库"
-        accessHref={accessRequestHref}
       />
       <PublicDetailBody>
         <PublicDetailGrid
@@ -127,9 +112,6 @@ export default async function PublicKnowledgeDetailPage({ params }: { params: Pr
                 <p className="text-sm leading-7 text-slate-600">
                   本页只展示已公开的知识字段，不展示文件附件、内部文件地址、临时访问地址、后台关系管理或内部附件信息。
                 </p>
-                <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
-                  申请查看未公开材料
-                </Link>
               </PublicDetailSection>
             </>
           )}

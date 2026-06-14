@@ -1,4 +1,4 @@
-import { Archive, BookOpen, BriefcaseBusiness, CalendarCheck, ClipboardCheck, FileText, FolderKanban, Sparkles } from "lucide-react";
+import { Archive, BookOpen, BriefcaseBusiness, CalendarCheck, FileText, FolderKanban, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
@@ -62,21 +62,6 @@ export default async function DashboardPage() {
           ))}
         </div>
         <p className="mt-4 text-sm leading-7 text-slate-600">建议优先补齐标题、简介、标签、正文摘要，并将适合展示的内容设为 public；精选内容会优先出现在公开首页。</p>
-      </AdminSection>
-
-      <AdminSection title="访问申请" description="外部访客可以提交查看受限内容的申请；管理员审批后可为指定邮箱创建访问授权。">
-        <Link href="/dashboard/access-requests" className="admin-card-motion flex items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm hover:bg-white">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-700">
-              <ClipboardCheck size={20} />
-            </span>
-            <div>
-              <p className="font-semibold text-slate-950">待处理申请</p>
-              <p className="mt-1 text-slate-600">查看申请理由、更新处理状态，并为 approved 申请创建访问授权。</p>
-            </div>
-          </div>
-          <span className="text-2xl font-semibold text-blue-800">{data.pendingAccessRequestCount}</span>
-        </Link>
       </AdminSection>
 
       <AdminSection

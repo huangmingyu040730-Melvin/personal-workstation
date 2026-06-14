@@ -95,7 +95,7 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
         </PublicListingControls>
 
         {projects.length === 0 ? (
-          <PublicListingEmptyState title="暂无符合条件的公开研究项目" description="当前筛选没有匹配的 public 项目。可以清空筛选，或通过访问申请说明你希望查看的研究方向。" actionHref="/projects" actionLabel="清空筛选" />
+          <PublicListingEmptyState title="暂无符合条件的公开研究项目" description="当前筛选没有匹配的 public 项目。可以清空筛选，或返回列表查看全部公开项目。" actionHref="/projects" actionLabel="清空筛选" />
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {projects.map((project) => (

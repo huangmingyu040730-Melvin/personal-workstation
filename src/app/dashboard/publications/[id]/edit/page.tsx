@@ -32,7 +32,7 @@ export default async function EditPublicationPage({
               <AdminFormHelpCard
                 title="编辑成果"
                 description="成果会同时影响后台列表、Dashboard 统计和公开成果页。"
-                items={["slug 变更会影响公开详情页地址。", "featured 只用于公开首页精选展示。", "private 与 restricted 不进入公开列表。"]}
+                items={["slug 变更会影响公开详情页地址。", "featured 只用于公开首页精选展示。", "private 与 unlisted 不进入公开列表。"]}
               />
               <AdminFormHelpCard
                 title="内容复核"

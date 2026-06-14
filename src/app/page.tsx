@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import { ArrowRight, BarChart3, BookOpen, Bot, BrainCircuit, FileText, FolderKanban, KeyRound, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, Bot, BrainCircuit, FileText, FolderKanban, ShieldCheck, Sparkles } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
 import { HomeSection } from "@/components/home/home-section";
 import { PublicProjectCard, PublicPublicationCard } from "@/components/public/public-content-cards";
@@ -269,10 +269,6 @@ export default async function HomePage() {
                 进入 Skill 库
                 <Sparkles className="transition duration-300 group-hover:rotate-6 group-hover:scale-105" size={18} />
               </Link>
-              <Link href="/access-request" className="public-cta-motion group inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/85 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-                申请访问
-                <KeyRound className="transition duration-300 group-hover:-rotate-6 group-hover:scale-105" size={18} />
-              </Link>
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:gap-5">
@@ -411,13 +407,13 @@ export default async function HomePage() {
               <ShieldCheck size={17} />
               Public Boundary
             </p>
-            <h2 className="public-display mt-3 text-2xl font-semibold tracking-normal md:text-3xl">需要更多材料时，通过访问申请处理</h2>
+            <h2 className="public-display mt-3 text-2xl font-semibold tracking-normal md:text-3xl">公开内容边界清晰可控</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">
-              部分内容可能保持 restricted 或 private。公开站点只展示明确设为 public 的内容和公开附件，不展示私密文件、内部文件地址、临时访问地址或内部管理信息。
+              公开站点只展示明确设为 public 的内容和公开附件。private 与 unlisted 内容继续留在管理员后台，不展示私密文件、内部文件地址、临时访问地址或内部管理信息。
             </p>
           </div>
-          <Link href="/access-request" className="public-cta-motion inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-navy-950 transition hover:bg-blue-50">
-            提交访问申请
+          <Link href="/about" className="public-cta-motion inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-navy-950 transition hover:bg-blue-50">
+            了解工作站边界
             <ArrowRight size={18} />
           </Link>
         </div>

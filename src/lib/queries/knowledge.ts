@@ -161,28 +161,6 @@ export async function getPublicKnowledgeNoteBySlug(slug: string) {
   return { ...note, projects: project ? { id: project.id, title: project.title, slug: project.slug } : null };
 }
 
-export async function getViewableKnowledgeNoteBySlug(slug: string) {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    return mockKnowledgeFallback().find((note) => note.visibility === "public" && note.slug === slug) ?? null;
-  }
-
-  const { data, error } = await supabase
-    .from("knowledge_notes")
-    .select("*, projects(id,title,slug)")
-    .in("visibility", ["public", "restricted"] satisfies Visibility[])
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (error) {
-    console.error("getViewableKnowledgeNoteBySlug failed", { code: error.code, message: error.message });
-    return null;
-  }
-
-  return data as KnowledgeNoteRecord | null;
-}
-
 export async function getPublicKnowledgeNotesByProjectId(projectId: string, options?: { limit?: number; excludeSlug?: string }) {
   const supabase = await createClient();
   const limit = options?.limit ?? 4;

@@ -2,7 +2,7 @@
 
 ## 目标
 
-Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A 新增访问申请记录与管理员处理状态。Phase 2E-B 新增 restricted 内容与按邮箱授权的只读访问基础。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2P-G-1 新增 Documents / 文档包专用多资产关联表并压缩文件中心批量操作 UI。Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包，Phase 2Q-A-4 增强 Publication 后台详情页成果中枢。Phase 2Q-B-1 新增 `research_asset_links` 显式关系表，用于 Project / Knowledge / Skill / Publication 的管理员后台关系与 backlinks。Phase 2Q-B-2 只优化显式关系管理体验，不新增 Supabase migration。Phase 2Q-B-4 移除此前的后台全局研究资产关系视图页面，不新增 Supabase migration，并继续保留 0019 支撑四类资产详情页内的显式关系管理。Phase 2R-A-1 只 polish 公开首页、公开导航、管理员登录入口和公开查询边界；#100 追加 UI polish 将首页 H1 改为“个人研究工作站”，恢复左侧文案 + 右侧统计卡片 hero，并压缩 Knowledge / Skill 首页预览卡片，不新增 Supabase migration。Phase 2R-A-2 只 refine 公开首页 hero 视觉识别、轻量背景装饰和 H1 系统字体栈，不新增 Supabase migration，不引入字体文件或外部字体服务。Phase 2R-A-3 只 polish 公开 Projects / Publications / Knowledge / Skills 列表页、轻量 URL 筛选、公开卡片、空状态和 metadata，不新增 Supabase migration。Phase 2R-A-4A 只新增 public 文件附件查询、组件、下载 route 和后台 visibility 操作，不新增 Supabase migration、不修改 RLS 或 Storage policy；它依赖既有 `documents.visibility` 和 0020 link tables。Phase 2R-A-4B 只 polish 公开 Project / Publication / Knowledge / Skill 详情页、public related content 和 metadata，不新增 Supabase migration、不修改 RLS、Storage policy 或 Documents 底层流程。Phase 2R-B-1 只 polish 访问申请页、详情页上下文 CTA、未公开 fallback 和后台 access requests 展示，不新增 Supabase migration、不修改 RLS、Storage policy、Access Grants schema、public 文件下载 route 或邮件服务。Phase 2R-C-1 只 polish 公开 metadata、分享卡片、sitemap 和 robots，不新增 Supabase migration、不修改 RLS、Storage policy、Access Grants、Documents 或 public 文件下载 route。Phase 2R-C-2 只新增公开发布前 smoke 巡检、公开文案 hardening 和附件 metadata 移动端换行保护，不新增 Supabase migration、不修改 RLS、Storage policy、Access Grants、Documents 或 public 文件下载 route。Viewer magic link 登录仍存在已知问题，后续需 Phase 2I 专项修复。viewer 附件授权下载、Google Calendar、邮件发送和 Notion 同步尚未实现。
+Phase 2A 建立 Supabase Auth、数据库 schema、RLS 与本地配置基础。Phase 2B 已完成 Projects、Knowledge Base、Skills Library 的真实 CRUD。Phase 2C 接入 Publications 真实 CRUD、Documents 文件中心与 Supabase Storage 私密上传下载。Phase 2E-A / 2E-B 曾新增访问申请、restricted 内容与按邮箱授权的只读访问基础；Phase 2R-Z 已将这条外部访问链路退役。Phase 2J-A 接入 Profile 真实编辑与公开 About 读取。Phase 2J-B 接入站内 Calendar CRUD 与 Dashboard 近期日程。Phase 2K-A 新增 Resume 履历素材库。Phase 2K-B 新增 Resume 简历版本组合与后台预览。Phase 2K-H 新增 JD 分析历史与投递记录。Phase 2P-D 将 Documents 打磨为可维护的私密附件管理系统，Phase 2P-E-1 增加批量移动和批量解除关联，Phase 2P-E-1-B 澄清内容详情页分组展示，Phase 2P-E-1-C 增加文档包整体迁移 / 同步关联工具，Phase 2P-E-2 增加批量删除文件和删除整个文档包及文件，Phase 2P-E-3 增加多文件和文档包 zip 临时下载，Phase 2P-F-1 增加后台全局 metadata 搜索，Phase 2P-F-2 增强搜索类型筛选、统计和高亮体验，Phase 2P-G-1 新增 Documents / 文档包专用多资产关联表并压缩文件中心批量操作 UI。Phase 2Q-A-1 增强 Project 后台详情页研究中枢，Phase 2Q-A-2 增强 Knowledge 后台详情页知识节点，Phase 2Q-A-3 增强 Skill 后台详情页能力包 / 工作流包，Phase 2Q-A-4 增强 Publication 后台详情页成果中枢。Phase 2Q-B-1 新增 `research_asset_links` 显式关系表，用于 Project / Knowledge / Skill / Publication 的管理员后台关系与 backlinks。Phase 2Q-B-2 只优化显式关系管理体验，不新增 Supabase migration。Phase 2Q-B-4 移除此前的后台全局研究资产关系视图页面，不新增 Supabase migration，并继续保留 0019 支撑四类资产详情页内的显式关系管理。Phase 2R-A-1 只 polish 公开首页、公开导航、管理员登录入口和公开查询边界；#100 追加 UI polish 将首页 H1 改为“个人研究工作站”，恢复左侧文案 + 右侧统计卡片 hero，并压缩 Knowledge / Skill 首页预览卡片，不新增 Supabase migration。Phase 2R-A-2 只 refine 公开首页 hero 视觉识别、轻量背景装饰和 H1 系统字体栈，不新增 Supabase migration，不引入字体文件或外部字体服务。Phase 2R-A-3 只 polish 公开 Projects / Publications / Knowledge / Skills 列表页、轻量 URL 筛选、公开卡片、空状态和 metadata，不新增 Supabase migration。Phase 2R-A-4A 只新增 public 文件附件查询、组件、下载 route 和后台 visibility 操作，不新增 Supabase migration、不修改 RLS 或 Storage policy；它依赖既有 `documents.visibility` 和 0020 link tables。Phase 2R-A-4B 只 polish 公开 Project / Publication / Knowledge / Skill 详情页、public related content 和 metadata，不新增 Supabase migration、不修改 RLS、Storage policy 或 Documents 底层流程。Phase 2R-B-1 曾 polish 访问申请体验；Phase 2R-Z 已删除公开申请、Viewer、Access Requests、Access Grants 和 restricted 外部授权入口。Phase 2R-C-1 只 polish 公开 metadata、分享卡片、sitemap 和 robots，不新增 Supabase migration、不修改 RLS、Storage policy、Documents 或 public 文件下载 route。Phase 2R-C-2 只新增公开发布前 smoke 巡检、公开文案 hardening 和附件 metadata 移动端换行保护，不新增 Supabase migration、不修改 RLS、Storage policy、Documents 或 public 文件下载 route。Viewer magic link、restricted 外部授权、访问申请和 Access Grants 已退役，不再作为 Phase 2I 或 hotfix 继续修复。Google Calendar、邮件发送和 Notion 同步尚未实现。
 
 ## 环境变量
 
@@ -43,7 +43,7 @@ AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODE
 3. 启用 Email + Password。
 4. 创建一个管理员用户。
 5. 复制该用户的 Auth UUID。
-6. 如需使用外部授权访问登录，在 Supabase Auth URL Configuration 中允许生产域名的 `/viewer/callback` 回调地址。
+6. Phase 2R-Z 后不再配置外部 Viewer callback；管理员登录仍只使用现有 `/login`。
 
 ## 数据库迁移
 
@@ -58,7 +58,7 @@ AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODE
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 均不新增 migration，继续依赖既有字段。Phase 2Q-B-1 新增 `0019_research_asset_links.sql`，只创建管理员后台显式资产关系表，不修改 Documents、Storage policy 或公开读取规则。Phase 2Q-B-2 / 2Q-B-3 / 2Q-B-4 不新增 migration，继续依赖已执行的 0019；2Q-B-4 只移除独立全局关系视图页面，四类资产详情页内的显式关系系统仍需要 0019。Phase 2P-G-1 新增 `0020_document_asset_links.sql`，只创建 Documents / 文档包专用多资产关联表，回填 legacy 关联，不修改 Storage policy 或 `research_asset_links`。Phase 2R-A-1 / 2R-A-2 / 2R-A-3 / 2R-A-4A / 2R-A-4B / 2R-B-1 / 2R-C-1 / 2R-C-2 不新增业务 schema，不修改 RLS、Storage policy、bucket、`storage_path` 或 `research_asset_links`；2R-A-4A 复用既有 `documents.visibility`、`document_collections.visibility` 和 0020 link tables，只新增应用层 public 附件查询、组件、下载 route 与后台 visibility 操作；2R-A-4B 只调整公开详情页组件、related public content 和 metadata；2R-B-1 只复用既有 `access_requests` 字段增加上下文申请、未公开 fallback 和后台展示；2R-C-1 只调整公开 metadata、sitemap 和 robots；2R-C-2 只新增公开 smoke 巡检、访客文案 hardening 和附件 metadata 移动端换行保护。`0021_public_attachment_service_role_grants.sql` 是 2R-A-4A 的权限 hotfix，只给 server-side `service_role` 补公开附件查询 / 下载校验所需表的 `select` 权限，不新增表、字段或 RPC，不修改 RLS、Storage policy、bucket、`storage_path` 或文件数据。执行 0021 后，后续数据库变更应新增 `0022_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 均不新增 migration，继续依赖既有字段。Phase 2Q-B-1 新增 `0019_research_asset_links.sql`，只创建管理员后台显式资产关系表，不修改 Documents、Storage policy 或公开读取规则。Phase 2Q-B-2 / 2Q-B-3 / 2Q-B-4 不新增 migration，继续依赖已执行的 0019；2Q-B-4 只移除独立全局关系视图页面，四类资产详情页内的显式关系系统仍需要 0019。Phase 2P-G-1 新增 `0020_document_asset_links.sql`，只创建 Documents / 文档包专用多资产关联表，回填 legacy 关联，不修改 Storage policy 或 `research_asset_links`。Phase 2R-A-1 / 2R-A-2 / 2R-A-3 / 2R-A-4A / 2R-A-4B / 2R-C-1 / 2R-C-2 不新增业务 schema，不修改 RLS、Storage policy、bucket、`storage_path` 或 `research_asset_links`；2R-A-4A 复用既有 `documents.visibility`、`document_collections.visibility` 和 0020 link tables，只新增应用层 public 附件查询、组件、下载 route 与后台 visibility 操作；2R-A-4B 只调整公开详情页组件、related public content 和 metadata；2R-C-1 只调整公开 metadata、sitemap 和 robots；2R-C-2 只新增公开 smoke 巡检、访客文案 hardening 和附件 metadata 移动端换行保护。`0021_public_attachment_service_role_grants.sql` 是 2R-A-4A 的权限 hotfix，只给 server-side `service_role` 补公开附件查询 / 下载校验所需表的 `select` 权限，不新增表、字段或 RPC，不修改 RLS、Storage policy、bucket、`storage_path` 或文件数据。Phase 2R-Z 新增 `0022_remove_external_access_and_restricted_viewer.sql`，用于将历史 `restricted` 内容回写为 `private`、收紧四类内容表 visibility / public read policy，并删除旧访问申请 / 授权表与授权函数。执行 0022 后，后续数据库变更应新增 `0023_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -218,6 +218,7 @@ supabase/migrations/0006_viewer_login_grant_check.sql
 
 - 0006 已在当前生产 Supabase 项目执行。
 - 0006 只提供登录前授权检查 RPC，不修复全部 Viewer magic link/session 问题。
+- Phase 2R-Z 已用 0022 退役 Viewer magic link、Access Grants、访问申请和 restricted 外部授权；0004-0006 仅作为历史迁移保留，不再是当前产品能力。
 - 后续如需数据库变更，必须新增新编号 migration，不得修改或重跑已执行过的旧 migration。
 
 Phase 2J-A 新增 Profile 真实编辑。合并对应代码后，新建环境或生产环境需要继续运行：
@@ -457,6 +458,29 @@ supabase/migrations/0021_public_attachment_service_role_grants.sql
 - 不给 `anon`、viewer、restricted 或普通公开页面授予 Documents / raw link rows 读取权限。
 - 不修改 RLS、Storage policy、bucket public 状态、`storage_path`、文件 visibility、文件关联数据或 signed URL 生成规则。
 
+## Phase 2R-Z 外部访问链路退役
+
+Phase 2R-Z 移除外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权。合并对应代码后，新建环境或生产环境需要继续运行：
+
+```text
+supabase/migrations/0022_remove_external_access_and_restricted_viewer.sql
+```
+
+`0022` 会：
+
+- 将 `projects`、`publications`、`knowledge_notes`、`skills` 中历史 `visibility = 'restricted'` 的记录更新为 `private`。
+- 重建四类内容表的 visibility check constraint，只保留 `public`、`private` 和 `unlisted`。
+- 重建四类内容表 public read policy，只允许 `visibility = 'public'` 或 `public.is_admin()` 读取。
+- 删除旧 `public.can_request_viewer_login(text)` 与 `public.has_content_access(text, uuid)`。
+- 删除旧 `public.content_access_grants` 与 `public.access_requests`。
+
+边界：
+
+- `0022` 只收紧或移除 access / restricted 相关 RLS 与 schema，不放宽公开访问。
+- `0022` 不修改 Documents、Storage bucket、Storage policy、`storage_path`、public 文件下载 route、Documents 上传 / 删除 / zip 下载或显式资产关系表。
+- 公开页面继续只展示 `visibility = 'public'` 的内容；private / unlisted / 历史 restricted slug fallback 不确认内容是否存在，也不提供访问申请或 Viewer 登录入口。
+- 后续不要恢复 `/access-request`、`/viewer/*`、`/dashboard/access-requests`、`/dashboard/access-grants`、访问申请 / 授权 actions、queries、forms、validations 或流程文档。
+
 ## 创建管理员
 
 在 Supabase SQL Editor 中插入管理员 UUID：
@@ -473,9 +497,9 @@ values ('00000000-0000-0000-0000-000000000000');
 公开访客：
 
 - 只能读取 `profiles`、`projects`、`publications`、`knowledge_notes`、`skills` 中 `visibility = 'public'` 的记录。
-- 可以向 `access_requests` 提交访问申请。
 - 不能读取 `calendar_events`、`documents`、`activity_logs`、`skill_versions`、`admin_users`。
-- 不能读取、更新或删除访问申请记录；除访问申请提交外，不能写入任何业务表。
+- 不能提交访问申请；Phase 2R-Z 后 `access_requests` 已由 0022 删除。
+- 不能写入任何业务表。
 - 公开可读记录不会携带管理员 Auth 用户 UUID 字段。
 - 表级访问需要执行 `0002_grant_api_table_privileges.sql`，RLS 才能在 API 请求中继续判断行级权限。
 
@@ -483,16 +507,15 @@ values ('00000000-0000-0000-0000-000000000000');
 
 - 不会自动获得后台权限。
 - 不能读取 private/unlisted 内容。
-- 只有邮箱匹配 active 且未过期授权时，才能读取对应 restricted 内容详情。
+- 不再通过 Access Grant 或 Viewer magic link 获得 restricted 内容访问。
 - 不能写入业务表。
 
 管理员：
 
 - 必须存在于 `public.admin_users`。
 - 可以读取 private/unlisted 内容。
-- 可以读取和管理 restricted 内容与访问授权。
 - 可以插入、更新、删除业务表数据。
-- 可以查看访问申请，并更新处理状态和管理员备注。
+- 后台不再提供 Access Requests、Access Grants 或 Viewer 授权管理入口。
 
 ## Storage 与文件安全
 
@@ -542,9 +565,7 @@ Phase 2C 使用：
 - 公开首页 `/` 始终可访问，并只展示公开内容。
 - Projects、Knowledge Base、Skills Library、Publications 已接入真实 CRUD。
 - Documents 已接入真实文件记录、默认私密上传、短时签名下载、删除流程和显式 public 附件下载基础。
-- Access Requests 已接入真实提交、列表、详情与处理状态更新流程。
-- Restricted Access 依赖 0005 migration；未执行 0005 时无法保存 `restricted` visibility，也无法创建或读取访问授权。
-- Viewer login grant check 依赖 0006 migration；未执行 0006 时 `/viewer/login` 的授权检查 RPC 不存在。
+- Access Requests、Access Grants、Viewer login/callback 和 restricted 外部授权已在 Phase 2R-Z 移除；执行 0022 后旧表、旧授权函数和 `restricted` visibility 会被清理。
 - Calendar 后台已由 `/dashboard/calendar` 接入真实 `calendar_events` CRUD；未执行 0008 时，新字段保存会失败，Dashboard 近期日程会降级为空或只读取旧字段。
 - Resume 后台由 `/dashboard/resume` 接入真实 `resume_items` CRUD；未执行 0009 时，简历素材库无法完成真实读写，Dashboard 简历素材概览会降级为空。
 - Resume Versions 后台由 `/dashboard/resume/versions` 接入真实 `resume_versions` 与 `resume_version_items`；未执行 0010 时，简历版本列表、版本表单、详情与预览无法完成真实读写。
@@ -559,15 +580,16 @@ Phase 2C 使用：
 - Phase 2R-A-3 公开列表页 polish 不需要新增 migration；`/projects`、`/publications`、`/knowledge` 和 `/skills` 继续使用既有 public 查询和 RLS 边界，轻量筛选只基于已加载 public 记录和 URL query params，不公开 private Documents、Storage path、signed URL、`file_path`、raw `document_asset_links` 或 `research_asset_links` 管理能力。
 - Phase 2R-A-4A 公开附件基础不需要新增业务 schema；它复用既有 `documents.visibility` 与 0020 link tables，只新增 public 附件查询、组件、下载 route 和后台 visibility 操作，不修改 RLS、Storage policy、bucket 或 `storage_path`。生产 hotfix 需要执行 `0021_public_attachment_service_role_grants.sql`，为 server-side public 附件校验补齐 service-role `select` grant。
 - Phase 2R-A-4B 公开详情页 polish 不需要新增 migration；它只复用既有 public 内容查询、2R-A-4A public 附件查询和应用层组件，不修改 RLS、Storage policy、bucket、`storage_path`、Documents 上传 / 删除 / zip 下载或文件多关联核心逻辑。
-- Phase 2R-B-1 访问申请体验 polish 不需要新增 migration；它只复用既有 `access_requests` 字段保存内容类型、标题、站内路径和理由，通过应用层 query 带入公开上下文，并在后台展示来源和目标，不修改 RLS、Storage policy、Access Grants schema、public 文件下载 route 或邮件服务。
+- Phase 2R-B-1 访问申请体验 polish 是历史能力；Phase 2R-Z 已删除该公开 / 后台链路，后续不再恢复。
 - Phase 2R-C-1 公开 SEO 与分享体验 polish 不需要新增 migration；它只调整公开 metadata、canonical、Open Graph / Twitter card、sitemap 和 robots。sitemap 只收录 public 内容和公开静态入口，不收录 `/public-files/[id]/download`、signed URL、Storage path、dashboard、viewer 或非 public 内容。
-- Phase 2R-C-2 公开发布前 QA / hardening 不需要新增 migration；它只新增公开 smoke 巡检脚本、访客文案 hardening 和附件 metadata 移动端换行保护，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+- Phase 2R-C-2 公开发布前 QA / hardening 不需要新增 migration；它只新增公开 smoke 巡检脚本、访客文案 hardening 和附件 metadata 移动端换行保护，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
+- Phase 2R-Z 新增 `0022_remove_external_access_and_restricted_viewer.sql`；未执行 0022 时，数据库里可能仍保留历史 `restricted` 记录、旧访问申请 / 授权表和旧授权函数，但当前产品代码已经没有相关入口。
 - `/dashboard/search` metadata 搜索、type 筛选和关键词高亮不需要 0019 migration；未执行 0018 时，文档包相关搜索结果会缺少真实 collection 数据。
 - 研究资产显式关系依赖 0019 migration；未执行 0019 时，四类后台详情页的显式关系读写会失败或显示空关系。
 - Documents 多资产关联依赖 0020 migration；未执行 0020 时，文件 / 文档包多关联读写会失败或只显示 legacy fallback 关联。
 - 公开 Project / Publication 附件展示依赖 0021 service-role grant hotfix；未执行 0021 时，Vercel 已有 `SUPABASE_SERVICE_ROLE_KEY` 也可能在 `isPublicAsset` 或文件关联查询处出现 permission denied，并让附件面板返回空数组。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
-- Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
+- Access Requests 是历史能力；当前代码不再提供公开表单或后台申请列表，0022 会删除旧表。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。
 - Calendar 增强字段与 public 读取 policy 依赖 0008 migration；未执行 0008 时后台 Calendar 新建/编辑中的地点、成果/知识/Skill 关联与 event type 约束不可用。
 - Supabase 真实端到端登录验证需要配置项目 URL、publishable key、执行迁移并创建管理员后再进行。
@@ -588,8 +610,8 @@ npm run build
 - Documents 多关联保存失败：确认生产 Supabase 已执行 `0020_document_asset_links.sql`，当前用户在 `admin_users` 中，且目标 Project / Knowledge / Skill / Publication 记录真实存在。
 - Documents 关联 chips 或按关联筛选结果不完整：确认 `0020_document_asset_links.sql` 已执行并完成 legacy 回填；未回填前旧记录只能依赖 legacy primary relation fallback。同一资产同时有具体关系和 `related` 时，UI 会隐藏低价值 `related` fallback，这是预期展示降噪。
 - 公开 Project / Publication 详情页不显示 public 附件：确认正在访问 `/projects/[slug]` 或 `/publications/[slug]`，目标资产与文件均为 public，文件关联当前资产，生产 Vercel 存在 server-side `SUPABASE_SERVICE_ROLE_KEY`，且目标 Supabase 已执行 `0021_public_attachment_service_role_grants.sql`。
+- 仍在数据库中看到旧访问申请 / 授权表或 `restricted` 内容：确认目标 Supabase 已执行 `0022_remove_external_access_and_restricted_viewer.sql`；当前产品代码不会再读取这些旧能力。
 - 显式资产关系保存失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且 source / target 资产真实存在。
 - 显式资产关系列表为空或读取失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且目标环境已有 Project / Knowledge / Skill / Publication 之间的显式关系记录。
 - 文件类型被拒绝：确认扩展名和 MIME type 都在白名单中，单文件不超过 50 MB，批次不超过 100 个文件 / 200 MB，且不是 exe、dmg、app、msi、bat 或 cmd。
-- Viewer 登录失败：已知问题，后续 Phase 2I 专项排查。先确认 0005、0006 已执行，Auth callback URL 已配置，再结合 Supabase Auth 日志与 Vercel Function 日志定位。
 - 本地构建没有 Supabase 环境变量：这是预期行为，未配置时会保留 mock preview。

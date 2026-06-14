@@ -101,7 +101,7 @@ export default async function PublicSkillsPage({ searchParams }: { searchParams:
         </PublicListingControls>
 
         {skills.length === 0 ? (
-          <PublicListingEmptyState title="暂无符合条件的公开 Skill" description="当前筛选没有匹配的 public Skill。可以清空筛选，或通过访问申请说明你希望了解的研究工作流。" actionHref="/skills" actionLabel="清空筛选" />
+          <PublicListingEmptyState title="暂无符合条件的公开 Skill" description="当前筛选没有匹配的 public Skill。可以清空筛选，或返回列表查看全部公开 Skill。" actionHref="/skills" actionLabel="清空筛选" />
         ) : (
           <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">
             {skills.map((skill) => (

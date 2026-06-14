@@ -5,8 +5,6 @@ import { Field, Select, TextInput } from "./form-fields";
 import { DocumentRelatedSelect, type DocumentRelatedOptions } from "./document-related-select";
 import { SubmitButton } from "./submit-button";
 
-const documentVisibilityOptions = visibilityOptions.filter((option) => option.value !== "restricted");
-
 export function DocumentMetadataForm({
   action,
   document,
@@ -38,7 +36,7 @@ export function DocumentMetadataForm({
             hint="只有 public 文件，且关联到 public Project / Publication / Knowledge / Skill 时，才会在公开页面显示下载入口。"
           >
             <Select name="visibility" defaultValue={document.visibility}>
-              {documentVisibilityOptions.map((option) => (
+              {visibilityOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </Select>

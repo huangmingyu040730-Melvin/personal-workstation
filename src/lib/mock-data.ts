@@ -4,11 +4,9 @@ import {
   Bot,
   BriefcaseBusiness,
   CalendarDays,
-  ClipboardCheck,
   FileText,
   FolderOpen,
   Home,
-  KeyRound,
   Library,
   Settings,
   Search,
@@ -70,8 +68,6 @@ export const sidebarGroups = [
   {
     label: "系统",
     items: [
-      { label: "访问申请", href: "/dashboard/access-requests", icon: ClipboardCheck },
-      { label: "访问授权", href: "/dashboard/access-grants", icon: KeyRound },
       { label: "个人信息", href: "/dashboard/profile", icon: UserRound },
       { label: "设置", href: "/settings", icon: Settings }
     ]
@@ -256,6 +252,5 @@ export const quickActions = [
   { label: "新增笔记", icon: Library, href: "/dashboard/knowledge/new" },
   { label: "新建 Skill", icon: WandSparkles, href: "/dashboard/skills/new" },
   { label: "上传文件", icon: FileText, href: "/dashboard/documents/upload" },
-  { label: "求职中心", icon: BriefcaseBusiness, href: "/dashboard/career" },
-  { label: "访问申请", icon: ClipboardCheck, href: "/dashboard/access-requests" }
+  { label: "求职中心", icon: BriefcaseBusiness, href: "/dashboard/career" }
 ];

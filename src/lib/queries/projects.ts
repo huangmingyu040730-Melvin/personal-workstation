@@ -131,28 +131,6 @@ export async function getPublicProjectBySlug(slug: string) {
   return data as ProjectRecord | null;
 }
 
-export async function getViewableProjectBySlug(slug: string) {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    return mockProjectFallback().find((project) => project.visibility === "public" && project.slug === slug) ?? null;
-  }
-
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .in("visibility", ["public", "restricted"] satisfies Visibility[])
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (error) {
-    console.error("getViewableProjectBySlug failed", { code: error.code, message: error.message });
-    return null;
-  }
-
-  return data as ProjectRecord | null;
-}
-
 export async function getPublicProjectById(id: string | null | undefined) {
   if (!id) {
     return null;

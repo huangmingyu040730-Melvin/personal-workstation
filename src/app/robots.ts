@@ -10,12 +10,12 @@ export default function robots(): MetadataRoute.Robots {
         "/projects",
         "/publications",
         "/knowledge",
-        "/skills",
-        "/access-request"
+        "/skills"
       ],
       disallow: [
         "/dashboard",
         "/login",
+        "/access-request",
         "/documents",
         "/viewer",
         "/api",

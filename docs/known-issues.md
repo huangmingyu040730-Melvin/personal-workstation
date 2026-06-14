@@ -1,46 +1,15 @@
 # Known Issues
 
-## Viewer magic link 登录问题
+## 2026-06-15 - Viewer / restricted external access retired
 
-状态：未稳定，后续单独做 Phase 2I / hotfix；当前不视为已验收能力。
+状态：已退役，不再作为待修问题。
 
-当前状态：
-
-- Phase 2E-B restricted 授权基础代码已实现。
-- 已实现 `restricted` visibility、`content_access_grants`、`has_content_access()`、后台 Access Grants、viewer login 和 viewer callback。
-- 已尝试 PR #19、PR #20 修复，但尚未形成稳定验收结论。
-- 后续 Phase 2I 应聚焦 magic link 回调路径、session cookie 写入和 restricted 只读访问闭环。
-- 在 Phase 2I 完成并通过 Preview / 生产真实验收前，仍可能出现：
-  - 授权邮箱无法发送 magic link。
-  - magic link 成功但 viewer session 未稳定建立。
-  - 已授权用户仍无法查看 restricted 内容。
-
-当前影响：
-
-- 不影响 public 内容浏览。
-- 不影响管理员后台。
-- 不影响 Documents 私密文件。
-- 不影响访问申请提交与审批。
-- 不影响公开站点 SEO 和 UI。
+Phase 2R-Z 明确移除了外部访问申请、Viewer magic link、Access Grants 和 restricted 外部授权链路。旧的 viewer magic link 不稳定问题不再进入 Phase 2I 或 hotfix 路线。
 
 当前边界：
 
-- Phase 2I 只允许修复 Viewer login、viewer callback、viewer session 与 restricted 只读访问闭环。
-- 不扩展 restricted grants、RLS、Supabase Auth 或 Storage 的权限边界。
-- Documents、signed URL 和 Storage 路径仍不得对 Viewer 或公开访客开放。
-- restricted 内容基础代码保留，但不作为当前已验收稳定能力。
-
-后续建议单独开启：
-
-```text
-Phase 2I: Viewer login and restricted access stabilization
-```
-
-该阶段应专项验证：
-
-- 已授权邮箱可以稳定收到 magic link。
-- magic link callback 可以稳定建立 viewer session。
-- 授权用户只能只读访问被授权 restricted 内容。
-- 撤销授权后访问失效。
-- viewer 不能进入后台。
-- viewer 不获得 Documents 或附件下载权限。
+- 公开站点只展示 `visibility = 'public'` 的内容。
+- private / unlisted / 历史 restricted 内容不会在公开页面确认是否存在。
+- `/access-request`、`/viewer/login`、`/viewer/callback`、`/dashboard/access-requests` 和 `/dashboard/access-grants` 不再作为产品入口。
+- 0022 迁移会把历史 `restricted` 内容回写为 `private`，并删除旧访问申请 / 授权表和授权函数。
+- Documents、Storage policy、public 文件下载 route、后台内容管理和管理员登录不受本次退役影响。

@@ -2,9 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { PublicDetailBody, PublicDetailGrid, PublicDetailHero, PublicDetailMetaList, PublicDetailSection, PublicDetailTags, PublicRelatedContent, type PublicDetailChip, type PublicRelatedItem } from "@/components/public/public-detail-shell";
 import { PublicDocumentAttachmentsPanel } from "@/components/public/public-document-attachments-panel";
+import { PublicUnavailableNotice } from "@/components/public/public-unavailable-notice";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
-import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
-import { buildAccessRequestHref } from "@/lib/access-request-context";
 import { getPublicationTypeLabel } from "@/lib/content-options";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
@@ -38,17 +37,10 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
   const publication = await getPublicPublicationBySlug(slug);
 
   if (!publication) {
-    const requestHref = buildAccessRequestHref({ contentType: "publication", slug, from: "publication_restricted" });
-
     return (
       <PublicShell>
-        <PublicPageHero eyebrow="Access Request" title="该内容暂未公开或需要授权访问" description="当前公开页面无法显示这项研究内容。公开站点不会泄露未公开正文、附件、内部关系或文件内部信息。" />
-        <RestrictedAccessNotice
-          requestHref={requestHref}
-          loginHref={`/viewer/login?next=${encodeURIComponent(`/publications/${slug}`)}`}
-          backHref="/publications"
-          backLabel="返回公开成果"
-        />
+        <PublicPageHero eyebrow="Public Content" title="内容不存在或未公开" description="当前公开页面无法显示这项研究内容。公开站点不会泄露未公开正文、附件、内部关系或文件内部信息。" />
+        <PublicUnavailableNotice backHref="/publications" backLabel="返回公开成果" />
       </PublicShell>
     );
   }
@@ -73,12 +65,6 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
     description: note.excerpt,
     ctaLabel: "阅读"
   }));
-  const accessRequestHref = buildAccessRequestHref({
-    contentType: "publication",
-    slug: publication.slug,
-    title: publication.title,
-    from: "publication_detail"
-  });
 
   return (
     <PublicShell>
@@ -89,7 +75,6 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
         chips={heroChips}
         backHref="/publications"
         backLabel="返回公开成果"
-        accessHref={accessRequestHref}
       />
       <PublicDetailBody>
         <PublicDetailGrid
@@ -137,9 +122,6 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
                 <p className="text-sm leading-7 text-slate-600">
                   本页不展示历史附件字段、内部文件地址、内部附件关系或临时访问地址。公开附件下载只通过安全路由按需生成。
                 </p>
-                <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
-                  申请查看未公开材料
-                </Link>
               </PublicDetailSection>
             </>
           )}

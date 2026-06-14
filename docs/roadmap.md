@@ -9,7 +9,7 @@
 网站同时承担：
 
 - 对外公开展示研究方向、公开项目、学术成果、知识笔记和 AI Skill / 工作流。
-- 对内管理全部项目、知识、成果、统一私密附件、日程、访问申请与授权基础。
+- 对内管理全部项目、知识、成果、统一私密附件、日程、公开内容运营和求职闭环。
 - 维护求职中心 / Resume / AI JD / 投递看板的闭环，但后续只做 bugfix 和必要文案修正。
 
 Notion 可作为草稿、临时研究笔记、日常记录和自动化中间层，但正式公开门户、权限系统、私密资产库和统一浏览体验继续由个人网站承担。
@@ -25,12 +25,11 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 公开首页。
 - About 页面。
 - 公开 Projects / Publications / Skills / Knowledge 列表与详情。
-- 访问申请表单。
 - 公开统计、精选内容和 SEO 页面。
 
 公开页面不得展示：
 
-- private、restricted 或 unlisted 内容。
+- private、unlisted 或历史 restricted 内容。
 - 后台新增、编辑、删除入口。
 - private / unlisted Documents、raw 附件关系、signed URL、Storage bucket 或 Storage 路径。
 - Activity Logs、私密日历、内部任务或管理设置。
@@ -41,25 +40,23 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 只有管理员本人可以进入后台，用于：
 
-- 查看全部 public / unlisted / restricted / private 内容。
+- 查看全部 public / unlisted / private 内容。
 - 新建、编辑和删除 Projects、Publications、Knowledge、Skills。
 - 上传与管理私密 Documents、文档包和文件夹上传。
-- 管理访问申请与访问授权基础。
 - 查看 Dashboard、公开内容维护提示和 Activity Logs。
 
 管理员身份继续由 Supabase Auth、`public.admin_users` 和 `public.is_admin()` 控制，不在代码中硬编码邮箱、UUID 或密码。
 
-### Restricted Access Foundation
+### Retired External Access
 
-已实现基础代码：
+Phase 2R-Z 已退役：
 
-- `restricted` visibility。
-- `content_access_grants`。
-- `has_content_access()`。
-- 后台 Access Grants。
-- viewer login 和 callback。
+- 外部访问申请。
+- Access Grants。
+- Viewer magic link / callback。
+- restricted 外部授权。
 
-但 Viewer magic link 登录仍不稳定，restricted 访问体验尚未完成真实稳定验收。该问题已冻结，后续单独进入 Phase 2I。
+这些能力不再作为待修问题或未来路线恢复；公开站点只展示 public 内容。
 
 ## Visibility Model
 
@@ -67,10 +64,9 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 | --- | --- | --- | --- |
 | public | 所有人可浏览 | 是 | 已稳定使用 |
 | unlisted | 不公开列出，当前保持保守 | 否 | 字段与后台管理已具备，公开访问保持保守 |
-| restricted | 管理员可见，未来授权 viewer 只读 | 否 | 基础代码已实现，viewer 登录待修 |
 | private | 仅管理员本人可查看 | 否 | 已稳定使用 |
 
-文件附件默认比正文更严格。Documents 是 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；上传默认 private。Phase 2R-A-4A 起，只有管理员显式设为 public 且关联到 public 资产的文件，才会在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。即使未来 viewer 可以查看 restricted 正文，也不自动获得 private Documents 权限。
+文件附件默认比正文更严格。Documents 是 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；上传默认 private。Phase 2R-A-4A 起，只有管理员显式设为 public 且关联到 public 资产的文件，才会在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。外部授权链路已移除，不存在通过 viewer 获得 Documents 权限的路径。
 
 ## Phase Status
 
@@ -330,7 +326,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - `related` 降噪是展示归一化，不删除 legacy 字段、0020 回填 rows 或任何 Storage object。
 - UI polish 不新增 migration，仍依赖 0020 的专用多关联表。
 - 不公开附件、不生成 public signed URL，不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 文件总结或向量搜索。
-- 不修改 Resume / Career、viewer/restricted、Calendar、Profile 或 Market Brief。
+- 不修改 Resume / Career、外部授权、Calendar、Profile 或 Market Brief。
 
 ### Phase 2Q-A-1 - Project Detail Research Hub
 
@@ -350,7 +346,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 Storage policy、Documents 上传 / 下载 / 删除流程或 `storage_path` 生成规则。
 - 不读取文件正文，不解析附件，不做 OCR、AI 摘要、向量搜索或文件内容索引。
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
-- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+- 不修改 Resume / Career 或 Market Brief。
 
 ### Phase 2Q-A-2 - Knowledge Detail Node Hub
 
@@ -372,7 +368,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 流程或 `storage_path` 生成规则。
 - 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
-- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+- 不修改 Resume / Career、外部授权或 Market Brief。
 
 ### Phase 2Q-A-3 - Skill Detail Capability Hub
 
@@ -393,7 +389,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 流程或 `storage_path` 生成规则。
 - 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
-- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+- 不修改 Resume / Career、外部授权或 Market Brief。
 
 ### Phase 2Q-A-4 - Publication Detail Output Hub
 
@@ -416,7 +412,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 Storage policy、Documents 上传 / 下载 / 删除 / zip 流程或 `storage_path` 生成规则。
 - 不读取文件正文，不解析 PDF / Word / Excel / zip，不做 OCR、AI 摘要、向量搜索或文件内容索引。
 - 不暴露 Storage path、signed URL、token、headers、cookie、API key、Supabase key 或 secret。
-- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+- 不修改 Resume / Career、外部授权或 Market Brief。
 
 ### Phase 2Q-B-1 - Research Asset Links Foundation
 
@@ -434,7 +430,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - Documents 不纳入 `research_asset_links`；当前 Documents 多关联由专用 `document_asset_links` / `document_collection_asset_links` 管理，legacy `related_type / related_id` 仅作兼容字段。
 - 不新增 RPC，不保存 zip，不修改 Storage policy，不读取 Storage object，不生成 signed URL。
 - 不做 AI 自动关联、关系图谱可视化、拖拽连线、公开展示或复杂权限继承。
-- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+- 不修改 Resume / Career、外部授权或 Market Brief。
 
 ### Phase 2Q-B-2 - Research Asset Links Management Polish
 
@@ -453,7 +449,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不新增 migration，不修改 `0019_research_asset_links.sql`，不新增 RPC，不引入数据库事务。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 - 不做 AI 自动关联、关系图谱可视化、拖拽连线、批量导入、批量删除或复杂权限继承。
-- 不修改 Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
+- 不修改 Storage policy、Documents、Resume / Career、外部授权或 Market Brief。
 
 ### Phase 2Q-B-3 - Research Asset Network View MVP
 
@@ -475,7 +471,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不引入 d3、cytoscape、react-flow 等复杂可视化库，不做拖拽连线、编辑或批量关系管理。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 - 不做 AI 自动关联、公开展示、向量搜索、外部搜索服务或复杂权限继承。
-- 不修改 Storage policy、Documents、Resume / Career、viewer/restricted 或 Market Brief。
+- 不修改 Storage policy、Documents、Resume / Career、外部授权或 Market Brief。
 
 ### Phase 2Q-B-4 - Remove Research Asset Network View
 
@@ -496,7 +492,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不做新的可视化替代方案，不引入新的可视化库。
 - 不读取文件正文，不读取 Storage object，不生成 signed URL，不展示 Storage path。
 - Documents 不纳入 `research_asset_links`，继续使用文件和文档包专用关联模型。
-- 不修改 Resume / Career、viewer/restricted 或 Market Brief。
+- 不修改 Resume / Career、外部授权或 Market Brief。
 
 ### Phase 2R-A-1 - Public Research Workstation Homepage Polish
 
@@ -504,17 +500,17 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - 首页首屏 H1 改为“个人研究工作站”，站点身份仍在品牌、metadata、footer 或 eyebrow 中保留“黄铭语研究工作站”。
 - Hero 恢复左侧个人定位、标题、说明、标签 chips 和 CTA，右侧展示公开项目、公开成果、公开 Skill、知识笔记四张统计卡片。
-- 首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口。
+- 首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览。
 - 首页 section 使用更明确的 wrapper、边框、间距和交替背景；公开项目与学术成果内部两列分隔，Knowledge 和 Skill 独立成段。
 - Knowledge / Skill 首页预览改为更紧凑的 preview card，最多展示 4 条 public 内容，不影响公开列表页卡片设计。
 - 首页增加克制的 micro-interactions：统计卡片、CTA、标签 chips 和预览卡片 hover / focus 时轻微上浮、边框变化和箭头位移。
-- 公开导航包含首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”。
+- 公开导航包含首页、研究项目、学术成果、知识库、Skill 库和轻量“管理员登录”。
 - 普通访客公开导航不显示后台菜单、文件中心或全局关系图谱入口。
 - 公开 Publication 查询收窄展示边界，公开页面不使用历史 `file_path` 或附件字段。
 
 边界：
 
-- 公开页面只展示 public 内容；restricted 内容仍通过访问申请和授权流程处理，private 内容不进入公开展示。
+- 公开页面只展示 public 内容；private、unlisted 和历史 restricted 内容不进入公开展示，也不通过访问申请或 viewer 授权处理。
 - Documents 原始管理、多资产文件关联、`research_asset_links` 和 AssetLinksPanel 仍只在管理员后台使用。
 - 本阶段不公开附件下载；该边界已在 Phase 2R-A-4A 精确化为只允许显式 public 文件经安全下载 route 访问。仍不展示 Storage 路径或 signed URL。
 - 不新增 migration，不新增 RPC，不修改 RLS 或 Storage policy。
@@ -569,14 +565,14 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - 不新增业务 schema；沿用既有 `documents.visibility`、`document_collections.visibility` 和 `0020_document_asset_links.sql`。0021 只补 `service_role` 的 `select` grant。
 - 不修改 RLS、Storage policy、bucket、`storage_path`、上传、删除、zip 下载或文件多关联数据模型。
-- 不公开 private / unlisted / restricted 文件，不公开文档包 zip 下载，不公开 raw `document_asset_links`、relation note、owner_id、Storage path、Storage bucket、signed URL 或 `file_path`。
+- 不公开 private / unlisted / 历史 restricted 文件，不公开文档包 zip 下载，不公开 raw `document_asset_links`、relation note、owner_id、Storage path、Storage bucket、signed URL 或 `file_path`。
 - Knowledge / Skill 公开附件展示可作为后续独立 polish；本阶段只把基础能力接入 Project / Publication 详情页。
 
 ### Phase 2R-A-4B - Public Research Detail Pages Polish
 
 已完成代码实现。四类公开详情页统一为正式研究详情体验：
 
-- `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 共享公开详情 hero、主内容 section、侧栏 metadata、标签、访问申请 CTA 和 related public content 设计语言。
+- `/projects/[slug]`、`/publications/[slug]`、`/knowledge/[slug]`、`/skills/[slug]` 共享公开详情 hero、主内容 section、侧栏 metadata、标签和 related public content 设计语言。
 - Project 详情展示研究问题、背景、方法、状态、进度、标签、相关公开成果 / 知识和 2R-A-4A 的公开附件面板。
 - Publication 详情展示成果摘要、类型、发布日期、公开关联项目、相关公开知识和 2R-A-4A 的公开附件面板。
 - Knowledge 详情展示分类、摘要 / 正文、公开关联项目、相关公开知识 / 成果；不展示 Documents。
@@ -586,27 +582,21 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 边界：
 
 - 不新增 migration，不新增字段，不新增 RPC，不修改 RLS、Storage policy、bucket、`storage_path`、Documents 上传 / 删除 / zip 下载或文件多关联核心逻辑。
-- 详情页只读取 public 详情查询；private / restricted / unlisted 内容不输出正文或附件，只引导访问申请 / viewer 登录。
+- 详情页只读取 public 详情查询；private / unlisted / 历史 restricted 内容不输出正文或附件，只显示安全 fallback。
 - Related public content 只来自 public 记录或公开字段推导，不展示 `research_asset_links` 管理数据、后台关系备注、raw `document_asset_links` 或 private Documents。
 - Project / Publication 公开附件仍必须满足文件 public、当前资产 public、文件关联当前资产；Knowledge / Skill 本阶段不开放公开附件展示。
 
-### Phase 2R-B-1 - Access Request And Restricted Content Experience Polish
+### Phase 2R-B-1 - Access Request And Restricted Content Experience Polish (retired by 2R-Z)
 
-已完成代码实现。公开展示主链路完成后，访问申请与未公开内容提示被 polish 为更完整的访客闭环：
+历史实现，Phase 2R-Z 已移除。当前代码不再保留访问申请页、访问申请 CTA、viewer 登录入口或后台申请审核入口。不要恢复该能力。
 
-- `/access-request` 页面改为正式“申请访问研究资料”入口，展示申请目标上下文、审核边界和敏感信息提醒。
-- Project / Publication / Knowledge / Skill 公开详情页的“申请访问”CTA 带 `content_type`、slug、公开标题和来源 query。
-- 未公开或需要授权的 slug fallback 不确认内容是否真实存在，只提示“该内容暂未公开或需要授权访问”，并提供申请访问、viewer 邮箱登录和返回公开列表。
-- 访问申请表单复用既有 `access_requests` 字段预填内容类型、标题和站内路径。
-- 后台 access requests 列表 / 详情页展示申请来源、目标标题 / slug、理由摘要、状态和处理边界。
-- 已同意申请仍需管理员手动创建 Access Grant 并选择具体 restricted 内容。
+- 未公开 slug fallback 仅显示“内容不存在或未公开”，不确认内容是否存在。
+- 公开详情页不显示申请访问 CTA。
+- 旧 `/access-request` 和 viewer 登录入口已删除。
 
 边界：
 
-- 不新增 Supabase migration，不新增字段，不修改 RLS、Storage policy、Access Grants schema 或 public 文件下载 route。
-- 访问申请不等于授权，不自动开放 restricted/private 正文、Documents、private attachments、public attachments、zip、Storage path、Storage bucket 或 signed URL。
-- 不新增邮件服务，不自动发送通知，不做 CRM、支付、会员、AI 自动审批、OCR、AI 摘要、向量搜索或关系图谱恢复。
-- 申请上下文只使用公开页面已展示标题和 slug；不得使用 private id 作为公开申请依据。
+- 2R-Z 不修改 Documents、Storage policy、public 文件下载 route 或后台核心内容管理。
 
 ### Phase 2R-C-1 - Public SEO And Sharing Polish
 
@@ -617,29 +607,29 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 公开列表页 Open Graph / Twitter card 标题使用“研究项目 / 学术成果 / 知识库 / Skill 库 | 黄铭语研究工作站”。
 - 公开详情页分享标题使用内容标题，description 使用 public summary / excerpt / description 截断。
 - 统一复用 `public/research-workstation-hero.png` 作为公开安全分享图片，不生成包含私密信息的动态 OG 图片。
-- sitemap 包含公开静态入口、`/access-request` 和所有 public Project / Publication / Knowledge / Skill 详情；Supabase 查询失败时安全降级为基础公开静态页面。
-- robots 允许公开页面和访问申请被索引，阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等路径。
+- sitemap 包含公开静态入口和所有 public Project / Publication / Knowledge / Skill 详情；Supabase 查询失败时安全降级为基础公开静态页面。
+- robots 允许公开页面索引，阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径。
 
 边界：
 
-- 不新增 migration，不修改 RLS、Storage policy、Access Grants、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
-- sitemap 不包含 private / restricted / unlisted 内容，不包含 `/public-files/[id]/download`、signed URL、Storage path、dashboard、viewer 或 admin login。
-- metadata 不读取或输出 private / restricted / unlisted 正文、private Documents、`file_path`、raw `document_asset_links`、`research_asset_links` 管理数据、Storage bucket、Storage path、signed URL 或 owner_id。
+- 不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
+- sitemap 不包含 private / unlisted / 历史 restricted 内容，不包含 `/public-files/[id]/download`、signed URL、Storage path、dashboard、viewer 或 admin login。
+- metadata 不读取或输出 private / unlisted / 历史 restricted 正文、private Documents、`file_path`、raw `document_asset_links`、`research_asset_links` 管理数据、Storage bucket、Storage path、signed URL 或 owner_id。
 - robots 和 sitemap 不是安全边界；真实边界仍依赖 Supabase Auth、RLS、Storage policy 和服务端下载 route 校验。
 
 ### Phase 2R-C-2 - Public Launch QA And Hardening
 
 已完成代码实现。公开站点主链路进入发布前 QA 与轻量 hardening：
 
-- 新增 `npm run smoke:public`，对运行中的公开站点巡检首页、四类列表页、访问申请页、未公开 fallback、sitemap、robots、metadata 和敏感字段边界。
+- 新增 `npm run smoke:public`，对运行中的公开站点巡检首页、四类列表页、未公开 fallback、sitemap、robots、metadata 和敏感字段边界。
 - 公开页面文案进一步收敛，不在访客页面直接展示 Storage / signed URL 等内部实现词。
 - 公开附件 metadata 行增加长分类、关系标签、MIME type、文件大小和更新时间的换行保护，降低 390px 移动端横向溢出风险。
-- smoke 覆盖 access-request query 不进入 metadata、fallback noindex、sitemap 不包含 public file download route、robots 阻止 dashboard / API / viewer / login / public-files。
+- smoke 覆盖 fallback noindex、sitemap 不包含 public file download route、robots 阻止 dashboard / API / viewer / login / access-request / public-files。
 
 边界：
 
 - 不新增 migration，不新增业务 schema，不新增字段、RPC、索引、邮件服务、搜索服务或外部依赖。
-- 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 public 附件服务端校验逻辑。
+- 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 public 附件服务端校验逻辑。
 - 不恢复 Market Brief，不修改 Resume / Career，不恢复 `/dashboard/network`。
 - `npm run smoke:public` 只用于发布前公开路由巡检，不作为权限边界；真实安全仍依赖 Auth、RLS、Storage policy 和服务端下载 route 校验。
 
@@ -649,60 +639,70 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - Project / Publication / Knowledge / Skill 后台详情页新增 public readiness checklist。
 - checklist 基于已有字段与现有关系判断：visibility、slug、标题 / 名称、摘要 / description / excerpt、标签 / 分类、正文 / 使用说明、Project 关联、显式资产关系和 Project / Publication public 附件计数。
-- 新增 `docs/public-content-operations.md`，说明什么内容适合 public、什么内容应保持 private / restricted、四类资产发布检查清单、公开附件边界、访问申请边界和发布前 QA。
+- 新增 `docs/public-content-operations.md`，说明什么内容适合 public、什么内容应保持 private / unlisted、四类资产发布检查清单、公开附件边界、外部授权退役边界和发布前 QA。
 - checklist 只是管理员后台提示，不阻止保存，不自动修改 visibility，不自动公开内容或附件。
 
 边界：
 
 - 不新增 migration、数据库字段、RPC、索引、AI、OCR、向量搜索、全文搜索、邮件服务、审批流、支付或会员能力。
-- 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+- 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 - 不改变公开页面安全边界；Knowledge / Skill 公开详情页仍不展示 Documents，Skill 仍不展示 package、不下载、不执行、不安装、不解析文件。
 
-### Phase 2R-E-1 - Access Request Admin Workflow Polish
+### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
-已完成代码实现。公开内容运营基础建立后，后台访问申请管理被 polish 为更清晰的人工审核工作台：
+历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。
 
-- `/dashboard/access-requests` 新增状态统计、状态筛选、目标类型筛选和更完整的申请卡片。
-- 申请卡片展示申请人、目标标题、内容类型、slug、来源页面、公开路径、提交 / 处理时间、备注状态和理由摘要。
-- `/dashboard/access-requests/[id]` 展示申请人信息、目标上下文、完整申请理由、处理记录、内部备注、安全边界和人工处理表单。
-- approved 申请可跳转 Access Grant 创建页，但只预填邮箱、申请 id 和内容类型；仍需管理员手动选择具体 restricted 内容。
-- 新增 `docs/access-request-workflow.md`，记录访问申请后台处理流程、状态含义、内部备注、Access Grant 边界、Documents 边界和 QA 步骤。
+- 旧访问申请表与后台页面被删除。
+- 旧 `docs/access-request-workflow.md` 被删除。
+- 未公开 fallback 不再引导申请访问或 viewer 登录。
 
 边界：
 
-- 不新增 migration、数据库字段、RLS、Storage policy、邮件服务、自动审批、自动授权、AI 判断、OCR、向量搜索、支付或会员能力。
-- 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
-- 访问申请 approved 仍不等于授权，不自动开放 restricted/private 正文、Documents、private attachments、public attachments、zip、Storage path、Storage bucket 或 signed URL。
+- 2R-Z 不修改 Documents、Storage policy、public 文件下载 route 或后台核心内容管理。
 
-### Phase 2R-E-2 - Access Grants Admin Management Polish
+### Phase 2R-E-2 - Access Grants Admin Management Polish (retired by 2R-Z)
 
-已完成代码实现。访问申请后台流程清晰后，Access Grants 后台管理被 polish 为更明确的手动授权工作台：
+历史实现，Phase 2R-Z 已移除。当前代码不再保留 Access Grants 后台、创建 / 撤销 actions、grant queries 或流程文档。不要恢复该能力。
 
-- `/dashboard/access-grants` 新增有效 / 过期 / 撤销状态筛选、内容类型筛选、状态统计和更完整授权卡片。
-- 授权卡片展示邮箱、内容类型、内容标题、slug、visibility、创建时间、过期时间、撤销时间线索、备注状态和操作入口。
-- `/dashboard/access-grants/new` 强化手动选择具体 restricted 内容的说明；从申请跳转时只把邮箱、申请 id 和内容类型作为人工核对上下文。
-- 新增 `/dashboard/access-grants/[id]` 授权详情页，集中展示单条授权、目标内容、安全边界和撤销操作。
-- 新增 `docs/access-grants-workflow.md`，记录授权管理流程、状态含义、创建 / 撤销边界、Documents 边界和 QA 步骤。
+- 旧 `/dashboard/access-grants`、`/dashboard/access-grants/new`、`/dashboard/access-grants/[id]` 被删除。
+- 旧 `docs/access-grants-workflow.md` 被删除。
+- 后续不再修复 Viewer magic link 或 restricted 外部授权。
 
 边界：
 
-- 不新增 migration、数据库字段、RLS、Storage policy、邮件服务、自动授权、自动内容选择、AI 判断、OCR、向量搜索、支付或会员能力。
-- 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
-- 当前 schema 不记录 `request_id` 或独立 `revoked_at`；后台只把申请 id 作为创建页上下文，并在 revoked 状态下用 `updated_at` 作为撤销时间线索。
+- 2R-Z 新增 0022 migration 收紧 visibility / public read policy，并删除旧授权表与授权函数。
+
+### Phase 2R-Z - Remove External Access Request And Viewer Authorization
+
+已完成代码实现。公开研究工作站回到 public-only 展示与管理员私密后台：
+
+- 删除 `/access-request`、`/viewer/login`、`/viewer/callback`、`/dashboard/access-requests`、`/dashboard/access-grants`、`/dashboard/access-grants/new` 和 `/dashboard/access-grants/[id]`。
+- 删除访问申请 / 授权相关 actions、queries、forms、validations、context helper 和 viewer redirect helper。
+- 公开导航、首页、列表页、详情页和 fallback 不再显示访问申请或 viewer 登录入口。
+- 后台 Dashboard 和 sidebar 不再显示访问申请 / 授权入口或待处理申请卡片。
+- 后台 visibility 选项收紧为 public / private / unlisted。
+- `npm run smoke:public` 不再访问 `/access-request`，并检查 fallback 不含访问申请 / viewer 登录链接。
+- 新增 `0022_remove_external_access_and_restricted_viewer.sql`。
+
+边界：
+
+- 不修改 Documents 上传 / 删除 / zip 下载。
+- 不修改 Storage policy 或 `workspace-files` bucket。
+- 不修改 `/public-files/[id]/download`。
+- 不修改 `research_asset_links`。
+- 不修改后台 Project / Publication / Knowledge / Skill 核心 CRUD。
 
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
 
-### Phase 2E-A - Access Requests
+### Phase 2E-A - Access Requests (retired)
 
-已完成。公开访问申请表单、后台申请管理、pending / approved / rejected 状态、管理员备注和 Dashboard 待处理申请提示已建立。
+历史能力，已被 Phase 2R-Z 移除。
 
-### Phase 2E-B - Restricted Access Foundation
+### Phase 2E-B - Restricted Access Foundation (retired)
 
-基础代码已完成。`restricted` visibility、访问授权表、授权管理、viewer login 和 viewer callback 已建立。
-
-未完成：Viewer magic link 登录仍不稳定，详见 `docs/known-issues.md`。
+历史能力，已被 Phase 2R-Z 移除；Viewer magic link 不再作为待修问题。
 
 ### Phase 2F - Public Site Operations And SEO
 
@@ -748,14 +748,13 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示，2R-C-1 只 polish 公开 SEO、分享卡片、sitemap 和 robots，2R-C-2 只做公开发布前 smoke、移动端溢出防护和敏感字段文案 hardening，2R-D-1 只做后台公开内容 readiness 提示和运营文档，2R-E-1 只 polish 后台访问申请人工审核工作台，2R-E-2 只 polish Access Grants 后台手动授权管理体验。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览和管理员登录入口。2R-Z 已移除访问申请、Access Grants、Viewer magic link 和 restricted 外部授权，后续不要恢复。
 - Documents 上传默认 private；只有管理员显式设为 public 且关联 public 资产的文件，才可在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。
 - Documents 作为可维护的统一默认私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页继续嵌入后台附件视图；公开 Project / Publication 详情页只展示经 public 附件查询归一化后的安全字段，不展示 raw link rows、Storage 路径、Storage bucket、owner_id 或 signed URL；公开 Knowledge / Skill 详情页不展示 Documents。
 - Documents 多资产关联、显式研究资产关系和后台搜索仍是管理员后台能力，不在公开页面展示或作为公开导航入口；“管理员登录”只进入登录流程，不展示后台内容。
 - 新建内容时的“保存并上传附件”仅在创建成功后跳转统一上传页，不创建临时上传记录或 staging 文件。
-- Access Requests / Access Grants 继续作为 restricted 访问基础。
-- Viewer magic link 和 restricted 访问可以另开 bugfix，但不得扩大 private Documents 权限。
+- 外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权不再作为未来路线或 bugfix。
 
 ### Career Maintenance
 

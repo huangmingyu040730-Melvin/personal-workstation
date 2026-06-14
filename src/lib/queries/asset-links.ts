@@ -37,7 +37,7 @@ type AssetOptionRow = {
   status?: string | null;
   category?: string | null;
   publication_type?: string | null;
-  visibility?: "public" | "private" | "unlisted" | "restricted" | null;
+  visibility?: "public" | "private" | "unlisted" | null;
   updated_at?: string | null;
 };
 

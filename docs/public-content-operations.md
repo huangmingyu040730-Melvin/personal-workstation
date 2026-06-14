@@ -20,16 +20,15 @@ Phase 2R-D-1 的目标是让公开研究工作站进入可持续运营状态：�
 - Knowledge 能提供分类、摘要和正文说明。
 - Skill 能说明用途、适用场景和使用说明，但不把文件包当成公开下载能力。
 
-## 什么内容应该 private / restricted
+## 什么内容应该 private / unlisted
 
-应保持 `private` 或 `restricted` 的内容包括：
+应保持 `private` 或 `unlisted` 的内容包括：
 
 - 尚未整理、摘要不足、结论未确认或不适合对外展示的草稿。
 - 含有私人身份信息、内部备注、未公开合作信息、敏感研究材料或不可公开数据来源的内容。
-- 仅供授权访客查看的正文，可考虑 `restricted`，但仍不自动开放 Documents。
 - 附件、数据文件、代码包、Skill package、原始资料和文档包默认保持 private。
 
-`unlisted` 当前仍保持保守，不作为公开列表内容运营目标。
+Phase 2R-Z 已移除外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权；不再把 `restricted` 作为运营选项，也不再通过公开页面处理未公开材料请求。
 
 ## Project 公开发布检查清单
 
@@ -96,16 +95,15 @@ Phase 2R-D-1 的目标是让公开研究工作站进入可持续运营状态：�
 
 Knowledge / Skill 公开详情页不展示 Documents。Skill package、代码包和压缩包只作为后台资料存储，不公开下载、不执行、不安装、不解析。
 
-## 访问申请处理边界
+## 外部访问与授权边界
 
-访问申请用于表达访客希望查看更多研究材料，不等于授权。
+Phase 2R-Z 后，公开研究工作站不再提供外部访问申请或 viewer 授权入口。
 
-- 公开详情页和 fallback 只能使用内容类型、slug、公开标题和来源 URL 生成申请上下文。
-- fallback 不确认 private / restricted / unlisted 内容是否真实存在。
-- 申请提交后状态为 `pending`，不会自动创建 Access Grant。
-- `approved` 只代表申请处理状态，不自动开放 restricted/private 正文。
-- 访问申请不开放 Documents、private attachments、zip、Storage path、Storage bucket 或 signed URL。
-- 如需授权 restricted 内容，管理员仍需在后台手动创建 Access Grant。
+- 公开详情页不显示“申请访问”CTA。
+- 未公开或不存在的 slug fallback 只提示“内容不存在或未公开”，不确认 private / unlisted / 历史 restricted 内容是否真实存在。
+- `/access-request`、`/viewer/login`、`/viewer/callback`、后台 Access Requests 和 Access Grants 均已移除。
+- 历史 `restricted` 内容通过 0022 迁移回写为 `private`。
+- Documents、private attachments、zip、Storage path、Storage bucket 和 signed URL 不会因任何外部请求开放。
 
 ## 发布前 QA 步骤
 
@@ -116,19 +114,18 @@ Knowledge / Skill 公开详情页不展示 Documents。Skill package、代码包
 3. 确认 `visibility` 是否确实应设为 `public`。
 4. 检查 public 字段不包含私密信息、Storage 路径、signed URL、owner_id 或内部备注。
 5. Project / Publication 如需附件，确认文件为 public 且关联当前 public 内容。
-6. 打开对应公开详情页，确认展示内容和访问申请 CTA 正常。
+6. 打开对应公开详情页，确认展示内容正常，且没有访问申请或 viewer 登录入口。
 7. 运行 `npm run lint`、`npm run build`、`git diff --check`。
 8. 发布前启动本地服务并运行 `npm run smoke:public`，确认公开主链路、fallback、sitemap 和 robots 仍通过。
 
 ## 本阶段没有改变的安全边界
 
-Phase 2R-D-1 没有新增数据库字段、migration、RLS、Storage policy、邮件服务、审批流、AI 摘要、OCR、向量搜索、全文索引、PDF 预览、public zip 下载、支付或会员能力。
+Phase 2R-D-1 没有新增数据库字段、migration、RLS、Storage policy、邮件服务、审批流、AI 摘要、OCR、向量搜索、全文索引、PDF 预览、public zip 下载、支付或会员能力。Phase 2R-Z 只退役外部访问与授权链路，不改变 Documents、Storage policy 或 public 下载 route。
 
 本阶段没有修改：
 
 - Documents 上传、删除、zip 下载。
 - `/public-files/[id]/download` route。
-- Access Grants 核心权限。
 - public 页面查询边界。
 - `workspace-files` private bucket。
 - Knowledge / Skill 公开详情页不展示 Documents 的规则。
