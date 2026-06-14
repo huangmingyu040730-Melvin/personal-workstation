@@ -405,6 +405,56 @@ sitemap / robots 检查：
 - 本流程不新增功能、不新增 migration、不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
 - 本流程不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
 
+## v1.0 Maintenance Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 在 v1.0 稳定维护阶段，按 `docs/maintenance-playbook.md` 维护公开内容、Documents、public attachment、安全检查和部署验收。
+
+原则：
+
+1. 后续优先补真实内容，不继续扩复杂功能。
+2. 暂时跳过 public content sprint。
+3. 新内容由管理员在后台逐步手动补充。
+4. 不大改首页、About、公开列表 / 详情或后台主结构。
+5. 不恢复 access request、viewer、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
+
+日常内容维护：
+
+1. 新建 Project / Publication / Knowledge / Skill 时先设为 private。
+2. 补齐标题、slug、摘要、标签、正文或说明。
+3. 检查 public readiness checklist。
+4. 人工确认没有敏感信息后再设为 public。
+5. 打开对应公开页面和 `/sitemap.xml` 确认展示与收录。
+6. 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+
+public attachment 维护：
+
+1. 文件通过 Documents 上传，默认 private。
+2. 文件关联到 Project / Publication 后，再人工判断是否适合公开。
+3. 只有适合公开的文件才设为 public。
+4. 公开展示仅限 public Project / Publication 页面。
+5. 下载必须走 `/public-files/[id]/download`。
+6. Knowledge / Skill 不展示 Documents。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 运行 `git diff --check`。
+- 暂存后运行 `git diff --cached --check`。
+- 当前没有独立 `typecheck` script；如果未来新增，也运行 `npm run typecheck`。
+
+边界：
+
+- 本流程不新增 migration、数据库字段、RLS、Storage policy、public zip、AI 摘要、OCR、向量搜索、全文搜索、PDF 在线预览、支付或外部授权。
+- 本流程不修改 Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09
