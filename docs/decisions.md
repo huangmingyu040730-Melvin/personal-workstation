@@ -509,7 +509,7 @@
 
 - Phase 2F 只完善公开站点运营体验、sitemap、robots、metadata、内容发现和 About 页面。
 - `/sitemap.xml` 只包含 public 页面和 `visibility = "public"` 的 Projects、Publications、Skills、Knowledge 详情页。
-- `/robots.txt` 允许公开页面抓取，禁止后台、登录、Documents、Viewer 和访问申请表单被抓取，并指向正式 sitemap。
+- `/robots.txt` 允许公开页面抓取，禁止后台、登录、Documents、Viewer 和访问申请表单被抓取，并指向正式 sitemap。此处关于禁止访问申请表单的规则已被 2026-06-14 Phase 2R-C-1 取代：`/access-request` 作为公开申请入口允许索引，但不得把 query 上下文写入 metadata。
 - Viewer magic link 登录仍作为已知问题记录，Phase 2F 不继续修改 Viewer login、viewer callback、restricted grants、RLS、Supabase Auth、Storage 或 migration。
 
 原因：
@@ -1837,3 +1837,28 @@
 - 不新增邮件服务，不自动发送通知，不做 CRM、支付、会员、AI 自动审批、OCR、AI 摘要或向量搜索。
 - 不公开 private / restricted 正文，不公开 Documents、private attachments、Storage path、Storage bucket、signed URL、`file_path`、raw `document_asset_links` 或 `research_asset_links` 管理能力。
 - 申请上下文只使用当前公开页面已展示的标题和 slug；未公开 fallback 不确认 private / restricted 内容是否真实存在，也不使用 private id 作为公开申请依据。
+
+## 2026-06-14 - Polish Public SEO And Sharing Without Expanding Public Access
+
+类型：decision
+
+决策：
+
+- Phase 2R-C-1 polish 公开站点 metadata、canonical、Open Graph、Twitter card、sitemap 和 robots。
+- 公开页面继续使用统一站点名“黄铭语研究工作站”；页面 title 交给 Next.js metadata template 拼接，避免重复站点名。
+- 首页和公开列表页的分享标题包含站点名；公开详情页的分享标题使用内容标题，description 只来自 public summary / excerpt / description 截断。
+- OG / Twitter 图片复用已有 `public/research-workstation-hero.png`，不新增动态 OG image generation，不引入外部图片。
+- sitemap 只收录公开静态入口、`/access-request` 和 public Project / Publication / Knowledge / Skill 详情；查询失败时降级为基础公开静态页面。
+- robots 允许公开内容与访问申请入口被索引，阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等路径。
+
+原因：
+
+- 公开首页、列表页、详情页、公开附件和访问申请主链路已经基本完成，下一步需要让站点在搜索、分享和预览中表现为正式公开研究工作站。
+- SEO / 分享 polish 应复用现有 public 查询和公开安全图片，不需要新增数据库能力、外部服务或动态图片生成链路。
+- sitemap / robots 只能辅助搜索引擎理解站点，不应被当作权限边界；真实安全仍依赖 Auth、RLS、Storage policy 和 server-side 下载校验。
+
+影响：
+
+- 本阶段不新增 migration，不修改 RLS、Storage policy、Access Grants schema、Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
+- sitemap 不包含 private / restricted / unlisted 内容，不包含 dashboard、viewer、admin login、public file download route、signed URL、Storage path 或 private Documents。
+- metadata 不输出 private / restricted 正文、Storage bucket、Storage path、signed URL、`file_path`、owner_id、raw `document_asset_links`、relation note 或 `research_asset_links` 管理数据。

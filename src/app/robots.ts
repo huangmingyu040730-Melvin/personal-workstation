@@ -5,13 +5,24 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
+      allow: [
+        "/",
+        "/projects",
+        "/publications",
+        "/knowledge",
+        "/skills",
+        "/access-request"
+      ],
       disallow: [
         "/dashboard",
         "/login",
         "/documents",
         "/viewer",
-        "/access-request"
+        "/api",
+        "/public-files",
+        "/admin",
+        "/storage",
+        "/signed"
       ]
     },
     sitemap: absoluteUrl("/sitemap.xml")

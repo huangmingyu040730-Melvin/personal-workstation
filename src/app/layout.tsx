@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { siteDescription, siteName, siteUrl } from "@/lib/site";
+import { absoluteUrl, publicOgImage, siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,12 +16,21 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName,
     locale: "zh_CN",
-    type: "website"
+    type: "website",
+    images: [
+      {
+        url: absoluteUrl(publicOgImage.path),
+        width: publicOgImage.width,
+        height: publicOgImage.height,
+        alt: publicOgImage.alt
+      }
+    ]
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: siteName,
-    description: siteDescription
+    description: siteDescription,
+    images: [absoluteUrl(publicOgImage.path)]
   }
 };
 

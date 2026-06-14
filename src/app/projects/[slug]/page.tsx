@@ -14,7 +14,7 @@ import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
 import { getPublicDocumentsForAsset } from "@/lib/queries/public-document-attachments";
 import { getPublicProjectBySlug } from "@/lib/queries/projects";
 import { getPublicPublicationsByProjectId } from "@/lib/queries/publications";
-import { publicMetadataDescription, publicPageMetadata } from "@/lib/site";
+import { publicMetadataDescription, publicNoindexMetadata, publicPageMetadata } from "@/lib/site";
 
 function getProjectStatusLabel(value: string) {
   return projectStatuses.find((status) => status.value === value)?.label ?? value;
@@ -25,14 +25,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const project = await getPublicProjectBySlug(slug);
 
   if (!project) {
-    return {
+    return publicNoindexMetadata({
       title: "研究项目",
       description: "公开研究项目不存在或未公开。",
-      robots: {
-        index: false,
-        follow: false
-      }
-    };
+      path: `/projects/${slug}`
+    });
   }
 
   return publicPageMetadata({

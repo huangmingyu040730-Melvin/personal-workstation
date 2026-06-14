@@ -9,7 +9,7 @@ import { skillStatuses } from "@/lib/content-options";
 import { formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicSkillBySlug, getRelatedPublicSkills } from "@/lib/queries/skills";
-import { publicMetadataDescription, publicPageMetadata } from "@/lib/site";
+import { publicMetadataDescription, publicNoindexMetadata, publicPageMetadata } from "@/lib/site";
 
 function getSkillStatusLabel(value: string) {
   return skillStatuses.find((status) => status.value === value)?.label ?? value;
@@ -20,14 +20,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const skill = await getPublicSkillBySlug(slug);
 
   if (!skill) {
-    return {
+    return publicNoindexMetadata({
       title: "Skill 库",
       description: "公开 Skill 不存在或未公开。",
-      robots: {
-        index: false,
-        follow: false
-      }
-    };
+      path: `/skills/${slug}`
+    });
   }
 
   return publicPageMetadata({
