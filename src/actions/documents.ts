@@ -19,6 +19,7 @@ import {
 } from "@/lib/storage/documents";
 import {
   documentBulkDeleteSchema,
+  documentBulkVisibilitySchema,
   documentBulkRelationSchema,
   addDocumentAssetLinksSchema,
   addDocumentCollectionAssetLinksSchema,
@@ -642,7 +643,18 @@ function revalidateDocumentPaths(options: {
   }
 }
 
+function revalidatePublicDocumentAttachmentPaths() {
+  revalidatePath("/projects");
+  revalidatePath("/publications");
+  revalidatePath("/knowledge");
+  revalidatePath("/skills");
+}
+
 function revalidateDocumentAssetLinks(assetLinks: DocumentAssetLinkInput[]) {
+  if (assetLinks.length > 0) {
+    revalidatePublicDocumentAttachmentPaths();
+  }
+
   for (const link of assetLinks) {
     revalidateDocumentPaths({
       relatedType: link.asset_type,
@@ -1055,6 +1067,7 @@ export async function updateDocumentMetadataAction(id: string, formData: FormDat
   const metadata = documentEditableMetadataSchema.safeParse({
     name: getString(formData, "name"),
     category: getString(formData, "category"),
+    visibility: getString(formData, "visibility"),
     related_type: relatedValues.related_type,
     related_id: relatedValues.related_id
   });
@@ -1072,7 +1085,7 @@ export async function updateDocumentMetadataAction(id: string, formData: FormDat
 
   const { data: existing, error: fetchError } = await supabase
     .from("documents")
-    .select("id,name,category,collection_id,related_type,related_id")
+    .select("id,name,category,collection_id,visibility,related_type,related_id")
     .eq("id", id)
     .maybeSingle();
 
@@ -1085,6 +1098,7 @@ export async function updateDocumentMetadataAction(id: string, formData: FormDat
     .update({
       name: metadata.data.name,
       category: metadata.data.category,
+      visibility: metadata.data.visibility,
       related_type: relatedType,
       related_id: metadata.data.related_id
     })
@@ -1104,6 +1118,8 @@ export async function updateDocumentMetadataAction(id: string, formData: FormDat
     metadata: {
       name: metadata.data.name,
       category: metadata.data.category,
+      old_visibility: existing.visibility,
+      new_visibility: metadata.data.visibility,
       old_related_type: existing.related_type,
       old_related_id: existing.related_id,
       new_related_type: relatedType,
@@ -1123,6 +1139,7 @@ export async function updateDocumentMetadataAction(id: string, formData: FormDat
     relatedType,
     relatedId: metadata.data.related_id
   });
+  revalidatePublicDocumentAttachmentPaths();
 
   redirect(`${detailPath}?notice=metadata_updated`);
 }
@@ -1566,6 +1583,7 @@ export async function removeDocumentAssetLinkAction(linkId: string, formData: Fo
     relatedId: link.asset_id
   });
   revalidatePath(getDashboardPathname(returnTo));
+  revalidatePublicDocumentAttachmentPaths();
 
   redirect(getReturnPathWithMessage(returnTo, { notice: "document_asset_link_removed" }));
 }
@@ -1692,6 +1710,7 @@ export async function bulkRemoveDocumentAssetLinksAction(formData: FormData) {
       });
     }
   }
+  revalidatePublicDocumentAttachmentPaths();
 
   redirect(getReturnPathWithMessage(returnTo, {
     notice: parsed.data.remove_scope === "all" ? "document_asset_links_cleared" : "document_asset_links_removed",
@@ -1928,6 +1947,7 @@ export async function removeDocumentCollectionAssetLinkAction(linkId: string, fo
     relatedId: link.asset_id
   });
   revalidatePath(getDashboardPathname(returnTo));
+  revalidatePublicDocumentAttachmentPaths();
 
   redirect(getReturnPathWithMessage(returnTo, {
     notice: parsed.data.apply_to_documents ? "collection_asset_link_removed_from_documents" : "collection_asset_link_removed",
@@ -2046,6 +2066,90 @@ export async function bulkUpdateDocumentRelationsAction(formData: FormData) {
   }));
 }
 
+export async function bulkUpdateDocumentVisibilityAction(formData: FormData) {
+  const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to"));
+  const { supabase, isAdmin, error } = await getAdminClient();
+
+  if (!supabase || !isAdmin) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(error ?? "当前账号没有管理员权限。") }));
+  }
+
+  const parsed = documentBulkVisibilitySchema.safeParse({
+    document_ids: getDocumentIdsFromForm(formData),
+    visibility: getString(formData, "visibility"),
+    return_to: returnTo
+  });
+
+  if (!parsed.success) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(parsed.error.issues[0]?.message ?? "请检查批量权限信息。")
+    }));
+  }
+
+  const { data: existingDocuments, error: fetchError } = await supabase
+    .from("documents")
+    .select("id,collection_id,visibility,related_type,related_id")
+    .in("id", parsed.data.document_ids);
+
+  if (fetchError) {
+    redirect(getReturnPathWithMessage(returnTo, {
+      error: encodeFormError(fetchError.message || "读取文件记录失败。")
+    }));
+  }
+
+  if (!existingDocuments || existingDocuments.length !== parsed.data.document_ids.length) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError("部分文件不存在或没有权限访问。") }));
+  }
+
+  const { error: updateError } = await supabase
+    .from("documents")
+    .update({
+      visibility: parsed.data.visibility
+    })
+    .in("id", parsed.data.document_ids);
+
+  if (updateError) {
+    redirect(getReturnPathWithMessage(returnTo, { error: encodeFormError(updateError.message || "批量更新文件权限失败。") }));
+  }
+
+  await writeActivityLog({
+    action: "document.bulk_update_visibility",
+    entityType: "document",
+    entityId: parsed.data.document_ids[0],
+    metadata: {
+      document_ids: parsed.data.document_ids,
+      document_count: parsed.data.document_ids.length,
+      old_visibility_counts: existingDocuments.reduce<Record<string, number>>((counts, document) => {
+        const visibility = String(document.visibility ?? "unknown");
+        counts[visibility] = (counts[visibility] ?? 0) + 1;
+        return counts;
+      }, {}),
+      new_visibility: parsed.data.visibility
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/documents");
+  revalidatePath(getDashboardPathname(returnTo));
+  revalidatePublicDocumentAttachmentPaths();
+
+  for (const collectionId of uniqueNullableValues(existingDocuments.map((document) => document.collection_id))) {
+    revalidatePath(`/dashboard/documents/collections/${collectionId}`);
+  }
+
+  for (const relation of uniqueRelationKeys(existingDocuments)) {
+    revalidateDocumentPaths({
+      relatedType: relation.relatedType,
+      relatedId: relation.relatedId
+    });
+  }
+
+  redirect(getReturnPathWithMessage(returnTo, {
+    notice: "documents_visibility_updated",
+    count: `${parsed.data.document_ids.length}`
+  }));
+}
+
 export async function bulkDeleteDocumentsAction(formData: FormData) {
   const returnTo = getSafeDashboardReturnTo(getOptionalString(formData, "return_to"));
   const { supabase, isAdmin, error } = await getAdminClient();
@@ -2120,6 +2224,7 @@ export async function bulkDeleteDocumentsAction(formData: FormData) {
       relatedId: relation.relatedId
     });
   }
+  revalidatePublicDocumentAttachmentPaths();
 
   redirect(getReturnPathWithMessage(returnTo, {
     notice: "documents_deleted",
@@ -2290,6 +2395,7 @@ export async function deleteDocumentCollectionWithFilesAction(id: string, formDa
       relatedId: relation.relatedId
     });
   }
+  revalidatePublicDocumentAttachmentPaths();
 
   redirect(`/dashboard/documents?notice=collection_deleted_with_files&count=${documentsToDelete.length}`);
 }
@@ -2336,5 +2442,6 @@ export async function deleteDocumentAction(id: string) {
     relatedType: documentToDelete.related_type as DocumentRelatedType | null,
     relatedId: documentToDelete.related_id
   });
+  revalidatePublicDocumentAttachmentPaths();
   redirect("/dashboard/documents?notice=documents_deleted&count=1");
 }

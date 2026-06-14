@@ -57,6 +57,7 @@ export default async function DocumentCollectionDetailPage({
   const collectionLinksAddedToDocumentsNotice = query.notice === "collection_asset_links_added_to_documents";
   const collectionLinkRemovedNotice = query.notice === "collection_asset_link_removed";
   const collectionLinkRemovedFromDocumentsNotice = query.notice === "collection_asset_link_removed_from_documents";
+  const visibilityUpdatedNotice = query.notice === "documents_visibility_updated";
   const bulkCount = Number(getSingleQueryValue(query.count) ?? 0);
   const deleteAction = deleteDocumentCollectionAction.bind(null, collection.id);
   const deleteWithFilesAction = deleteDocumentCollectionWithFilesAction.bind(null, collection.id);
@@ -75,7 +76,7 @@ export default async function DocumentCollectionDetailPage({
         <PageHeader
           eyebrow={getDocumentCollectionTypeLabel(collection.collection_type)}
           title={collection.title}
-          description="一次上传批次、文件夹或附件包。文件仍保存在 private bucket 中，只允许管理员下载。"
+          description="一次上传批次、文件夹或附件包。文件仍保存在 private bucket 中；显式公开的包内文件会由公开内容页的安全下载路由访问。"
           action={
             <Link href="/dashboard/documents/upload" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
               <Upload size={18} />
@@ -139,7 +140,12 @@ export default async function DocumentCollectionDetailPage({
             文档包关联已移除，并同步移除 {bulkCount || documents.length} 个包内文件的相同关联。
           </div>
         ) : null}
-        <AdminSecurityNote>文档包只是私密附件管理层。即使关联公开 Project、Publication、Knowledge 或 Skill，也不会在公开页面展示附件下载入口。</AdminSecurityNote>
+        {visibilityUpdatedNotice ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            已更新 {bulkCount || documents.length} 个文件的公开状态。Storage object 未移动、未重命名。
+          </div>
+        ) : null}
+        <AdminSecurityNote>文档包只是后台管理层。包内文件默认私密；只有显式设为公开且关联到公开内容的文件，才会通过对应公开页面的安全下载路由提供下载。</AdminSecurityNote>
         {hasRelationMismatch ? (
           <div className="rounded-3xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
             文档包关联对象与部分文件关联对象可能不同；如需整体迁移资料包，请使用“同步文档包与包内文件关联”。

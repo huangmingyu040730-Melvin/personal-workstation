@@ -211,7 +211,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2Q-B-1 起 Project / Knowledge / Skill / Publication 后台详情页支持显式资产关系，管理员可手动维护“相关 / 支持 / 引用 / 使用 / 产出 / 来源于”关系并查看 backlinks。
 - Phase 2Q-B-2 起显式资产关系区域支持本地筛选目标资产、关系统计、方向 / 类型筛选，以及只修改关系类型和备注的编辑流程。
 - Phase 2Q-B-4 起取消此前的全局关系可视化页面；显式资产关系继续在 Project / Knowledge / Skill / Publication 后台详情页中维护。
-- Phase 2R-A-1 起公开首页和公开导航强调“黄铭语研究工作站”站点身份，首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口；#100 追加 UI polish 将 hero H1 改为“个人研究工作站”，恢复左侧定位 / 标签 / CTA 与右侧统计卡片首屏结构，Knowledge / Skill 首页预览改为紧凑卡片并展示最多 4 条，补充克制的 hover / focus micro-interactions，并在公开导航加入轻量“管理员登录”入口。Phase 2R-A-2 在不改布局的前提下为 hero 增加金融 / 量化 / 研究风格的低对比 CSS 背景元素，并优化 H1 系统字体栈。Phase 2R-A-3 将四个公开列表页升级为统一 listing header、轻量筛选、公开内容卡片和友好空状态。公开页面仍只展示 public 内容，不公开 Documents、附件下载、Storage 路径、signed URL、`file_path` 或后台关系管理。
+- Phase 2R-A-1 起公开首页和公开导航强调“黄铭语研究工作站”站点身份，首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口；#100 追加 UI polish 将 hero H1 改为“个人研究工作站”，恢复左侧定位 / 标签 / CTA 与右侧统计卡片首屏结构，Knowledge / Skill 首页预览改为紧凑卡片并展示最多 4 条，补充克制的 hover / focus micro-interactions，并在公开导航加入轻量“管理员登录”入口。Phase 2R-A-2 在不改布局的前提下为 hero 增加金融 / 量化 / 研究风格的低对比 CSS 背景元素，并优化 H1 系统字体栈。Phase 2R-A-3 将四个公开列表页升级为统一 listing header、轻量筛选、公开内容卡片和友好空状态。Phase 2R-A-4A 允许公开 Project / Publication 详情页展示显式 public 文件附件；公开页面仍只展示 public 内容，不公开 private Documents、Storage 路径、signed URL、`file_path`、raw link rows 或后台关系管理。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。
@@ -292,13 +292,16 @@ Phase 2C 使用 Supabase Storage bucket：
 - 普通非管理员登录用户不能读取或修改文件。
 - 管理员通过 `public.is_admin()` 和 Storage policy 操作文件。
 - 上传采用两阶段流程：Server Actions 只验证管理员、校验 metadata、生成安全路径并最终写入数据库；文件二进制由浏览器直接上传到 Supabase Storage，不经过 Vercel Function。
+- 文件上传默认写入 `documents.visibility = 'private'`。管理员可在文件详情页或文件中心批量工具中显式设为 `public`；只有 public 文件且关联到 public Project / Publication / Knowledge / Skill 时，公开内容页才展示安全附件摘要。
 - 文件和文档包 metadata 可在后台修正；新增 / 移除多资产关联写入 `document_asset_links` 或 `document_collection_asset_links`，必要时只同步 legacy primary relation，不修改 `storage_bucket`、`storage_path`、文件大小、MIME type、原始路径、`collection_id` 或文档包统计字段。关联 chips 的 `related` 降噪和多关联选择器 polish 只发生在展示层，不删除 legacy 字段或回填 rows，不新增 migration。内容详情页只展示后台附件摘要和现有后台下载入口，不输出 Storage path 或 signed URL。
+- public 附件展示只返回安全字段：文件名、分类、大小、MIME type、更新时间、关系标签和 `/public-files/[id]/download`。页面不输出 `storage_path`、`storage_bucket`、owner、raw `document_asset_links`、relation note 或 signed URL。
+- public 下载路由会在服务端复核文件为 public、当前资产为 public 且文件确实关联该资产，再按需生成 60 秒短时 signed URL；signed URL 不保存到数据库，也不写入页面 HTML。
 - 批量删除文件和删除整个文档包及文件采用保守顺序：先删除 private Storage object，再删除 `documents` / `document_collections` 记录；该流程不新增数据库事务或 RPC，失败时显示中文安全错误并要求人工复核。
-- 下载使用 60 秒短时 signed URL，不保存到数据库，也不在公开页面输出。
+- 管理员下载与 public 下载均使用 60 秒短时 signed URL，不保存到数据库，也不在页面 HTML 中输出。
 - zip 下载通过 `jszip` 在请求时临时生成，不保存到 Storage；仅管理员后台可用，不公开 signed URL、Storage 路径或 zip 持久链接。
 - zip 下载当前限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限或任一 Storage object 读取失败时不部分打包。
 - 单文件上传限制为 50 MB；批量 / 文件夹上传单次最多 100 个文件、总量 200 MB，并同时校验扩展名与 MIME type。
 - 支持 PDF、Office、Markdown、文本、CSV/TSV、JSON/YAML、Notebook、代码文件、图片和 zip/tar/gz/7z 压缩包。
-- 不支持 exe、dmg、app、msi、bat、cmd；上传的代码和 Skill 包只作为私密文件存储，不执行、不解析、不安装。
-- 即使文件关联到 public Project、Publication、Knowledge 或 Skill，附件仍保持私密，仅管理员可下载。
-- 即使用户被授权查看 restricted 内容，关联 Documents 仍保持私密，本阶段不生成外部 signed URL，也不开放附件下载。
+- 不支持 exe、dmg、app、msi、bat、cmd；上传的代码和 Skill 包只作为文件存储，不执行、不解析、不安装。
+- private / unlisted 文件即使关联到 public Project、Publication、Knowledge 或 Skill，也不会在公开页面展示下载入口。
+- restricted 内容授权不开放后台 Documents、私密附件、Storage 路径或 signed URL；public 附件仍只按 public 文件与 public 资产关联规则展示。

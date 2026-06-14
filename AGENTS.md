@@ -9,11 +9,12 @@
 - 面向个人展示、学术研究项目管理、知识积累和 AI Skill 工作流管理的网站。
 - 网站默认语言为中文。
 - 当前产品定位为“公开研究工作站 + 私密数字资产后台”。
-- Phase 2B 起接入 Projects、Knowledge Base、Skills Library 的真实 Supabase CRUD；Phase 2C 接入 Publications、Documents 与 private Storage；Phase 2E-B 建立 restricted 内容授权基础；Phase 2P 起 Documents 成为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
+- Phase 2B 起接入 Projects、Knowledge Base、Skills Library 的真实 Supabase CRUD；Phase 2C 接入 Publications、Documents 与 private Storage；Phase 2E-B 建立 restricted 内容授权基础；Phase 2P 起 Documents 成为 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；Phase 2R-A-4A 起支持管理员显式公开单个文件，并通过安全下载路由在相关公开内容页展示公开附件。
 - Phase 2O-A 后主线收口为研究资产沉淀、公开展示、文件 / 知识管理和求职闭环维护；Market Brief / 市场简报模块已弃用，不恢复产品入口、API、runner、素材包、数据探针或推荐环境变量。
 - Phase 2R-A 起公开首页与公开导航进入“黄铭语研究工作站”展示 polish；首页 H1 使用“个人研究工作站”，站点身份仍可在品牌、metadata、footer 或 eyebrow 中保留“黄铭语研究工作站”。公开页面只展示 public 内容，访问申请用于处理未公开或受限材料请求。
 - Phase 2R-A-2 起公开首页 hero 可使用轻量 CSS 背景装饰表达金融、量化、研究和学术氛围；H1 文案仍为“个人研究工作站”，只使用系统字体栈，不提交字体文件或外部字体服务。
 - Phase 2R-A-3 起公开 Projects / Publications / Knowledge / Skills 列表页作为正式研究内容索引维护，使用统一 listing header、轻量筛选、公开卡片和空状态；仍只展示 public 内容。
+- Phase 2R-A-4A 起公开 Project / Publication 详情页可展示显式公开文件附件；文件必须 `documents.visibility = 'public'` 且关联到当前 public 资产，下载经 `/public-files/[id]/download` 短时签名路由校验，不把 signed URL 写入页面 HTML。
 
 ## Tech Stack
 
@@ -52,8 +53,9 @@ npm run build
 - 公开首页 hero 采用左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构；Knowledge / Skill 首页预览使用紧凑卡片展示更多 public 条目，公开列表页卡片设计不必随首页联动。
 - 公开首页 hero 视觉 polish 应保持浅色、克制和专业；可使用抽象网格、图表面板、散点、曲线或公式片段等自绘 CSS / 轻量 SVG 元素，但不得使用真实行情、具体股票代码、外部图片、图表库、动画库或字体文件。
 - 公开列表页筛选只能基于已有公开字段和 URL query params，不新增数据库字段、全文搜索、外部搜索服务、Documents 读取、文件内容读取或内部关系读取。
-- Documents 和 Storage 始终保持私密；公开页面、viewer 页面、sitemap、robots 不得输出附件下载入口、Storage 路径或 signed URL。
-- 公开 Project / Publication / Knowledge / Skill 页面不得展示 Documents 多资产关联、`research_asset_links` 管理能力、`file_path`、Storage path 或 signed URL；Publication 公开查询应避免把历史附件字段作为展示数据使用。
+- `workspace-files` bucket 始终保持 private；Documents 上传默认写入 `visibility = 'private'`。只有管理员显式设为 `public`，且文件关联到 public Project / Publication / Knowledge / Skill 时，公开页面才可展示安全附件摘要和 `/public-files/[id]/download` 入口。
+- 公开 Project / Publication / Knowledge / Skill 页面不得展示 Documents 原始多资产 link rows、relation notes、`research_asset_links` 管理能力、`file_path`、Storage path、Storage bucket、owner_id 或 signed URL；Publication 公开查询应避免把历史附件字段作为展示数据使用。
+- public 文件下载路由必须在服务端重新校验：文件为 public、Storage bucket 为 `workspace-files`、当前资产为 public 且文件确实关联该资产；路由只能按需生成 60 秒短时 signed URL 或重定向，不得把 signed URL 写入页面 HTML。
 - Documents 上传继续使用两阶段浏览器直传 Supabase Storage；Server Action 只处理管理员验证、metadata 校验、安全路径生成和 finalize 写库，不接收文件二进制。
 - Documents 的 `storage_path` 必须保持 ASCII-safe object key；中文文件名和文件夹名只保存在显示字段中。
 - `research_asset_links` 只用于 Project / Knowledge / Skill / Publication 之间的管理员后台显式关系；Documents 与文档包不得混入该表。
@@ -63,7 +65,7 @@ npm run build
 - 新增、移除或同步 Documents 关联时不得移动、重命名或重写 Storage object，不得修改既有 `storage_path` 生成规则。
 - 编辑 `research_asset_links` 时只允许修改 `relation_type` 和 `note`；如需更换 source / target，应删除后重新创建，不新增 schema 或迁移来绕过该边界。
 - 全局研究资产关系图谱页面已取消并移除；不要恢复 `/dashboard/network`、Network View、force graph 或其它可视化网络入口。`research_asset_links` 显式关系系统仍保留在 Project / Knowledge / Skill / Publication 后台详情页的 AssetLinksPanel 中，Documents 不纳入显式关系表。
-- Skill 包、代码包和压缩包只作为私密文件存储，不执行、不解析、不安装。
+- Skill 包、代码包和压缩包只作为文件存储，不执行、不解析、不安装。
 - 不提交密钥、`.env`、API token、私钥或任何敏感文件。
 - 保留 `.gitignore` 对 `.env`、`node_modules`、`.next`、`dist`、`out` 等文件的忽略规则。
 - 每轮代码修改后运行 `npm run lint` 和 `npm run build`，并修复发现的问题。

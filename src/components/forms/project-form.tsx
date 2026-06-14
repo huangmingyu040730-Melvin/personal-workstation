@@ -84,7 +84,7 @@ export function ProjectForm({
       </AdminFormSection>
       {!project ? (
         <p className="text-sm leading-6 text-slate-500">
-          需要上传附件时，可以先保存当前内容，系统会自动跳转到文件中心并预选当前项目。文件仍为私密附件，不会在公开页面展示。
+          需要上传附件时，可以先保存当前内容，系统会自动跳转到文件中心并预选当前项目。新文件默认私密；如需公开下载，需在文件中心显式设为公开。
         </p>
       ) : null}
       <div className="flex flex-wrap gap-3 pt-2">

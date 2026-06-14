@@ -32,8 +32,10 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - private、restricted 或 unlisted 内容。
 - 后台新增、编辑、删除入口。
-- Documents、附件下载入口、signed URL 或 Storage 路径。
+- private / unlisted Documents、raw 附件关系、signed URL、Storage bucket 或 Storage 路径。
 - Activity Logs、私密日历、内部任务或管理设置。
+
+公开 Project / Publication 详情页可以展示显式 public 文件附件摘要，但只能通过安全下载路由访问，不直接输出 Storage 路径或 signed URL。
 
 ### Private Admin Backend
 
@@ -68,7 +70,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 | restricted | 管理员可见，未来授权 viewer 只读 | 否 | 基础代码已实现，viewer 登录待修 |
 | private | 仅管理员本人可查看 | 否 | 已稳定使用 |
 
-文件附件默认比正文更严格。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座；即使 Publication 或其他内容设置为 public，关联 Documents 仍保持 private，不在公开页面提供下载入口。即使未来 viewer 可以查看 restricted 正文，也不自动获得 Documents 权限。
+文件附件默认比正文更严格。Documents 是 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；上传默认 private。Phase 2R-A-4A 起，只有管理员显式设为 public 且关联到 public 资产的文件，才会在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。即使未来 viewer 可以查看 restricted 正文，也不自动获得 private Documents 权限。
 
 ## Phase Status
 
@@ -513,8 +515,8 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 边界：
 
 - 公开页面只展示 public 内容；restricted 内容仍通过访问申请和授权流程处理，private 内容不进入公开展示。
-- Documents、多资产文件关联、`research_asset_links` 和 AssetLinksPanel 仍只在管理员后台使用。
-- 不公开附件下载，不展示 Storage 路径，不生成 signed URL。
+- Documents 原始管理、多资产文件关联、`research_asset_links` 和 AssetLinksPanel 仍只在管理员后台使用。
+- 本阶段不公开附件下载；该边界已在 Phase 2R-A-4A 精确化为只允许显式 public 文件经安全下载 route 访问。仍不展示 Storage 路径或 signed URL。
 - 不新增 migration，不新增 RPC，不修改 RLS 或 Storage policy。
 - 不修改 Documents 上传、删除、zip 下载、Resume / Career、Market Brief 或后台显式关系管理。
 
@@ -532,7 +534,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 - 不新增 migration，不新增 RPC，不修改 RLS 或 Storage policy。
 - 不修改 Supabase schema、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career 或 Market Brief。
-- 不改变公开内容查询；公开页面仍只展示 public 内容，不公开 Documents、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理能力。
+- 不改变公开内容查询；公开页面仍只展示 public 内容。附件边界已在 Phase 2R-A-4A 精确化为显式 public 文件安全下载；仍不公开 private Documents、Storage path、signed URL、`file_path`、raw `document_asset_links` 或 `research_asset_links` 管理能力。
 
 ### Phase 2R-A-3 - Public Research Listing Pages Polish
 
@@ -550,6 +552,24 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不新增 migration，不新增字段，不新增 RPC、索引、外部搜索服务、全文搜索、OCR、AI 摘要或向量搜索。
 - 不修改 RLS、Storage policy、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career 或 Market Brief。
 - 公开列表页只展示 public 内容，不展示 Documents、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理能力。
+
+### Phase 2R-A-4A - Public Document Attachments Foundation
+
+已完成代码实现。公开内容详情开始支持安全的公开附件底座，但不做公开文件中心或大规模下载页：
+
+- Documents 上传仍默认 private，不自动公开既有文件。
+- 文件详情页可编辑 `documents.visibility`，文件中心批量工具可将选中文件设为 public 或 private。
+- 公开 Project / Publication 详情页可展示当前 public 资产关联的 public 文件附件。
+- 公开附件组件只展示安全摘要字段：文件名、分类、文件大小、MIME type、更新时间、关系标签和下载入口。
+- 下载入口使用 `/public-files/[id]/download`，服务端复核文件 public、当前资产 public、文件确实关联该资产后，才按需生成 60 秒短时 signed URL。
+- 同一文件对同一资产已有具体关系时，公开附件关系标签同样隐藏低价值 legacy `related` fallback。
+
+边界：
+
+- 不新增 migration；沿用既有 `documents.visibility`、`document_collections.visibility` 和 `0020_document_asset_links.sql`。
+- 不修改 RLS、Storage policy、bucket、`storage_path`、上传、删除、zip 下载或文件多关联数据模型。
+- 不公开 private / unlisted / restricted 文件，不公开文档包 zip 下载，不公开 raw `document_asset_links`、relation note、owner_id、Storage path、Storage bucket、signed URL 或 `file_path`。
+- Knowledge / Skill 公开附件展示可作为后续独立 polish；本阶段只把基础能力接入 Project / Publication 详情页。
 
 ### Phase 2D - Public Research Workstation
 
@@ -609,14 +629,14 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，不改变公开内容边界。
-- Documents 继续保持私密，不开放公开下载或 viewer signed URL。
-- Documents 作为可维护的统一私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的私密附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
-- 内容详情页只嵌入后台私密附件视图，公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件下载入口。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础。
+- Documents 上传默认 private；只有管理员显式设为 public 且关联 public 资产的文件，才可在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。
+- Documents 作为可维护的统一默认私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
+- 内容详情页继续嵌入后台附件视图；公开 Project / Publication 详情页只展示经 public 附件查询归一化后的安全字段，不展示 raw link rows、Storage 路径、Storage bucket、owner_id 或 signed URL。
 - Documents 多资产关联、显式研究资产关系和后台搜索仍是管理员后台能力，不在公开页面展示或作为公开导航入口；“管理员登录”只进入登录流程，不展示后台内容。
 - 新建内容时的“保存并上传附件”仅在创建成功后跳转统一上传页，不创建临时上传记录或 staging 文件。
 - Access Requests / Access Grants 继续作为 restricted 访问基础。
-- Viewer magic link 和 restricted 访问可以另开 bugfix，但不得扩大 Documents 权限。
+- Viewer magic link 和 restricted 访问可以另开 bugfix，但不得扩大 private Documents 权限。
 
 ### Career Maintenance
 

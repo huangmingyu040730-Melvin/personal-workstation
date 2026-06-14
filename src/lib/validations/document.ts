@@ -6,6 +6,8 @@ const documentCategoryValues = documentCategories.map((item) => item.value) as [
 const relatedTypeValues = documentRelatedTypes.map((item) => item.value) as [string, ...string[]];
 const collectionTypeValues = documentCollectionTypes.map((item) => item.value) as [string, ...string[]];
 const documentAssetRelationTypeValues = documentAssetRelationTypes.map((item) => item.value) as [string, ...string[]];
+const documentVisibilityValues = ["private", "public", "unlisted"] as const;
+const documentBulkVisibilityValues = ["private", "public"] as const;
 
 const documentAssetLinkTargetSchema = z.object({
   asset_type: z.enum(relatedTypeValues, { message: "请选择有效关联类型" }),
@@ -41,6 +43,7 @@ export const documentMetadataSchema = z.object({
 export const documentEditableMetadataSchema = z.object({
   name: z.string().trim().min(2, "文件显示名称至少需要 2 个字符").max(180, "文件显示名称不能超过 180 个字符"),
   category: z.enum(documentCategoryValues, { message: "请选择有效文件分类" }),
+  visibility: z.enum(documentVisibilityValues, { message: "请选择有效文件权限" }),
   related_type: z.preprocess((value) => (value === "" ? null : value), z.enum(relatedTypeValues).nullable()).optional().transform((value) => value ?? null),
   related_id: optionalText()
 }).superRefine((value, ctx) => {
@@ -160,6 +163,12 @@ export const documentBulkDeleteSchema = z.object({
       path: ["delete_confirm"]
     });
   }
+});
+
+export const documentBulkVisibilitySchema = z.object({
+  document_ids: z.array(z.string().uuid("文件选择无效")).min(1, "请至少选择一个文件。"),
+  visibility: z.enum(documentBulkVisibilityValues, { message: "请选择有效文件权限" }),
+  return_to: optionalText()
 });
 
 export const addDocumentAssetLinksSchema = z.object({

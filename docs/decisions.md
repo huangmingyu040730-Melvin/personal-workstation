@@ -236,7 +236,7 @@
 - Phase 2C 使用单一私密 Supabase Storage bucket：`workspace-files`。
 - 文件上传、读取、更新和删除均通过 Storage policy 限定 `bucket_id = 'workspace-files'` 且 `public.is_admin()`。
 - 管理员下载文件时按需生成 60 秒 signed URL，不保存到数据库，不输出到公开页面。
-- 即使文件关联到 public Publication，附件本轮仍保持私密，仅管理员可下载。
+- 当时即使文件关联到 public Publication，附件仍保持私密，仅管理员可下载；该公开附件边界已在 2026-06-14 的 Phase 2R-A-4A 决策中被精确化为“显式 public 文件 + public 资产关联 + public 下载 route 校验”。
 
 ## 2026-06-09 - Store Resume Versions Separately From Resume Items
 
@@ -1675,7 +1675,7 @@
 - 公开导航新增“管理员登录”只链接到 `/login?next=/dashboard`，不展示后台内容、文件中心、关系图谱或 Career / Resume 菜单。
 - 公开 Publication 查询对历史 `file_path` / `cover_url` 做公开边界处理，避免公开组件误用附件字段。
 - 本阶段不新增 migration，不新增 RPC，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、Resume / Career、Market Brief 或后台显式关系管理。
-- 不公开附件下载，不展示 Storage 路径，不生成 signed URL，不输出 API key、Supabase key、Authorization header、cookie、token、service role key 或 secret。
+- 本阶段不公开附件下载；该边界已在 Phase 2R-A-4A 被精确化为只允许显式 public 文件经安全下载 route 访问。仍不展示 Storage 路径、signed URL、API key、Supabase key、Authorization header、cookie、token、service role key 或 secret。
 
 ## 2026-06-14 - Refine Public Homepage Hero Visual Identity
 
@@ -1701,7 +1701,7 @@
 - `src/app/globals.css` 新增 `public-research-title` 和 hero 背景 / 统计卡片装饰样式。
 - 不使用真实市场数据、具体股票代码、外部图片、字体文件、外部字体服务、图表库或动画库。
 - 不新增 migration，不新增 RPC，不修改 RLS、Storage policy、Supabase schema、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career 或 Market Brief。
-- 公开页面仍只展示 public 内容，不公开 Documents、附件下载、Storage path、signed URL、`file_path`、`document_asset_links`、`research_asset_links` 管理功能或任何 secret。
+- 公开页面仍只展示 public 内容；附件边界已在 Phase 2R-A-4A 精确化为显式 public 文件安全下载。仍不公开 private Documents、Storage path、signed URL、`file_path`、raw `document_asset_links`、`research_asset_links` 管理功能或任何 secret。
 
 ## 2026-06-14 - Polish Public Research Listing Pages
 
@@ -1729,3 +1729,33 @@
 - 不新增 migration，不新增字段，不新增 RPC、索引、外部搜索服务、OCR、AI 摘要或向量搜索。
 - 不修改 RLS、Storage policy、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career、Market Brief 或后台页面。
 - 公开页面仍只展示 public 内容，不展示 Documents、Storage path、signed URL、`file_path`、`document_asset_links`、`research_asset_links` 管理功能或任何 secret。
+
+## 2026-06-14 - Add Public Document Attachments Foundation
+
+类型：decision
+
+决策：
+
+- Phase 2R-A-4A 为公开 Project / Publication 详情页新增安全公开附件底座。
+- Documents 上传仍默认 private，不自动公开既有文件；管理员可在文件详情页或文件中心批量工具中显式设置单个文件 `documents.visibility = 'public'`。
+- public 文件只有关联到至少一个 public Project / Publication / Knowledge / Skill 时，才可能在公开内容页展示。
+- 在某个资产详情页展示和下载时，当前资产必须为 public，且文件必须通过 `document_asset_links` 或 legacy `documents.related_type / related_id` 关联到当前资产。
+- 公开附件组件只接收安全字段：id、文件名、分类、文件大小、MIME type、更新时间、关系标签和 `/public-files/[id]/download`。
+- `/public-files/[id]/download` 路由服务端复核文件 public、bucket 为 `workspace-files`、当前资产 public 且关联存在后，才按需生成 60 秒短时 signed URL。
+- signed URL 不保存到数据库，不写入页面 HTML；页面不展示 `storage_path`、`storage_bucket`、owner_id、raw `document_asset_links`、relation note 或 `file_path`。
+- 公开附件关系标签沿用展示归一化：同一资产下已有 `deliverable` 等具体关系时，隐藏 legacy `related` fallback。
+
+原因：
+
+- 公开研究页面需要能分享少量明确审核过的附件，但不能把 Documents 变成公开文件中心。
+- private Storage bucket 和短时签名路由可以在不改 Storage policy 的前提下提供可撤回、可校验的下载能力。
+- `documents.visibility` 与 `document_asset_links` 已经存在，足以表达“文件是否可公开”和“文件关联哪个公开资产”，不需要新增 migration。
+- legacy `related_type / related_id` 仍需兼容，但在展示层应继续被具体关系降噪。
+
+影响：
+
+- 新增 public 附件查询层、公开附件面板和 public 下载 route。
+- Project / Publication 公开详情页显示当前 public 资产下的 public 文件附件；Knowledge / Skill 可后续作为独立 polish 扩展。
+- 文件详情页支持编辑 visibility；文件中心批量工具支持把选中文件设为 public 或 private，并显示公开风险提示。
+- 本阶段不新增 migration，不新增 RPC，不修改 RLS、Storage policy、bucket、`storage_path`、上传、删除、zip 下载、文件多关联数据模型或 `research_asset_links`。
+- 不公开 private / unlisted / restricted 文件，不公开文档包 zip 下载，不公开 raw link rows、relation note、owner_id、Storage path、Storage bucket、signed URL、service role key、API key、Supabase key、Authorization header、cookie、token 或 secret。

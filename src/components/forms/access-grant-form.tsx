@@ -66,7 +66,7 @@ export function AccessGrantForm({
         <Textarea name="admin_note" className="min-h-32" maxLength={1200} />
       </Field>
       </AdminFormSection>
-      <AdminSecurityNote>授权只开放对应内容详情页的只读访问，不开放后台、Documents、附件下载、Storage 路径或 signed URL。Viewer 登录仍有已知问题，后续将单独 Hotfix 验证。</AdminSecurityNote>
+      <AdminSecurityNote>授权只开放对应内容详情页的只读访问，不开放后台 Documents、私密附件下载、Storage 路径或 signed URL。Viewer 登录仍有已知问题，后续将单独 Hotfix 验证。</AdminSecurityNote>
       <SubmitButton>创建授权</SubmitButton>
     </form>
   );

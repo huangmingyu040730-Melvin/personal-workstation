@@ -84,7 +84,7 @@ export default async function DocumentDetailPage({
             文件关联已移除，其他关联已保留。
           </div>
         ) : null}
-        <AdminSecurityNote>文件始终保存在 private bucket 中。下载操作会生成短时链接，公开站点不会展示文件路径或下载入口。</AdminSecurityNote>
+        <AdminSecurityNote>文件始终保存在 private bucket 中。管理员下载和公开下载都会按需生成短时链接；公开页面只显示显式 public 且关联到当前公开内容的文件，不输出 Storage 路径或 signed URL。</AdminSecurityNote>
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.7fr)_minmax(320px,0.3fr)]">
         <div className="min-w-0 space-y-5">
           <Card>

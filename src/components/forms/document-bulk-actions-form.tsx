@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Download, FileText, Link2, MoveRight, Trash2, Unlink } from "lucide-react";
+import { Download, Eye, FileText, Link2, LockKeyhole, MoveRight, Trash2, Unlink } from "lucide-react";
 import { useState } from "react";
-import { addDocumentAssetLinksAction, bulkDeleteDocumentsAction, bulkRemoveDocumentAssetLinksAction, bulkUpdateDocumentRelationsAction } from "@/actions/documents";
+import { addDocumentAssetLinksAction, bulkDeleteDocumentsAction, bulkRemoveDocumentAssetLinksAction, bulkUpdateDocumentRelationsAction, bulkUpdateDocumentVisibilityAction } from "@/actions/documents";
 import { DocumentRelationChips } from "@/components/documents/document-relation-chips";
 import { DocumentVisibilityBadge } from "@/components/documents/document-visibility-badge";
 import { documentAssetRelationTypes, getDocumentCategoryLabel } from "@/lib/content-options";
@@ -70,7 +70,7 @@ export function DocumentBulkActionsForm({
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <p className="text-sm leading-6 text-slate-600">
             <span className="font-semibold text-slate-950">已选择 {selectedCount} 个文件。</span>
-            {" "}选择文件后可批量添加关联、移除关联、下载 zip 或删除；所有关联操作都不会移动 Storage object。
+            {" "}选择文件后可批量添加关联、移除关联、设置公开性、下载 zip 或删除；关联和权限操作都不会移动 Storage object。
           </p>
           <div className="flex flex-wrap gap-2">
             <details className="group relative">
@@ -118,6 +118,32 @@ export function DocumentBulkActionsForm({
                     </SubmitButton>
                     <SubmitButton name="remove_scope" value="all" pendingLabel="清空中..." variant="secondary" disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
                       清空全部关联
+                    </SubmitButton>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details className="group relative">
+              <summary className={cn("inline-flex cursor-pointer list-none items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-semibold", selectedCount > 0 ? "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:text-blue-700" : "border-slate-200 bg-white text-slate-400")}>
+                <Eye size={15} />
+                设置公开性
+              </summary>
+              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,460px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                <form action={bulkUpdateDocumentVisibilityAction} className="space-y-3">
+                  <input type="hidden" name="return_to" value={returnTo} />
+                  {hiddenSelectedInputs}
+                  <p className="rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                    公开文件会在相关公开内容页面展示，并可被访客下载。请确认文件不含敏感信息；Storage object 不会移动，页面不会输出 Storage 路径或 signed URL。
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <SubmitButton name="visibility" value="public" pendingLabel="设置中..." disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                      <Eye size={15} />
+                      设为公开
+                    </SubmitButton>
+                    <SubmitButton name="visibility" value="private" pendingLabel="设置中..." variant="secondary" disabled={selectedCount === 0} className="gap-2 px-4 py-2.5">
+                      <LockKeyhole size={15} />
+                      设为私密
                     </SubmitButton>
                   </div>
                 </form>
