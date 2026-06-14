@@ -13,6 +13,7 @@
 - Phase 2O-A 后主线收口为研究资产沉淀、公开展示、文件 / 知识管理和求职闭环维护；Market Brief / 市场简报模块已弃用，不恢复产品入口、API、runner、素材包、数据探针或推荐环境变量。
 - Phase 2R-A 起公开首页与公开导航进入“黄铭语研究工作站”展示 polish；首页 H1 使用“个人研究工作站”，站点身份仍可在品牌、metadata、footer 或 eyebrow 中保留“黄铭语研究工作站”。公开页面只展示 public 内容，访问申请用于处理未公开或受限材料请求。
 - Phase 2R-A-2 起公开首页 hero 可使用轻量 CSS 背景装饰表达金融、量化、研究和学术氛围；H1 文案仍为“个人研究工作站”，只使用系统字体栈，不提交字体文件或外部字体服务。
+- Phase 2R-A-3 起公开 Projects / Publications / Knowledge / Skills 列表页作为正式研究内容索引维护，使用统一 listing header、轻量筛选、公开卡片和空状态；仍只展示 public 内容。
 
 ## Tech Stack
 
@@ -50,6 +51,7 @@ npm run build
 - 公开首页和公开导航面向普通访客，主入口应保持为首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”；不要在公开导航中加入后台菜单、文件中心或全局关系图谱入口。
 - 公开首页 hero 采用左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构；Knowledge / Skill 首页预览使用紧凑卡片展示更多 public 条目，公开列表页卡片设计不必随首页联动。
 - 公开首页 hero 视觉 polish 应保持浅色、克制和专业；可使用抽象网格、图表面板、散点、曲线或公式片段等自绘 CSS / 轻量 SVG 元素，但不得使用真实行情、具体股票代码、外部图片、图表库、动画库或字体文件。
+- 公开列表页筛选只能基于已有公开字段和 URL query params，不新增数据库字段、全文搜索、外部搜索服务、Documents 读取、文件内容读取或内部关系读取。
 - Documents 和 Storage 始终保持私密；公开页面、viewer 页面、sitemap、robots 不得输出附件下载入口、Storage 路径或 signed URL。
 - 公开 Project / Publication / Knowledge / Skill 页面不得展示 Documents 多资产关联、`research_asset_links` 管理能力、`file_path`、Storage path 或 signed URL；Publication 公开查询应避免把历史附件字段作为展示数据使用。
 - Documents 上传继续使用两阶段浏览器直传 Supabase Storage；Server Action 只处理管理员验证、metadata 校验、安全路径生成和 finalize 写库，不接收文件二进制。

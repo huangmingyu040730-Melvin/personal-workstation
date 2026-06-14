@@ -534,6 +534,23 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 Supabase schema、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career 或 Market Brief。
 - 不改变公开内容查询；公开页面仍只展示 public 内容，不公开 Documents、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理能力。
 
+### Phase 2R-A-3 - Public Research Listing Pages Polish
+
+已完成代码实现。公开首页完成后，四个公开列表页继续统一为正式研究内容索引：
+
+- `/projects`、`/publications`、`/knowledge`、`/skills` 采用统一 listing header、公开统计、轻量筛选、内容 grid 和友好空状态。
+- Projects 支持基于 status、tag、featured 和关键词的轻量浏览；卡片展示 title、summary、status、progress、tags 和详情入口。
+- Publications 支持基于 publication_type、tag、时间排序和关键词的轻量浏览；公开查询继续清空 `file_path` / `cover_url`，不展示附件入口。
+- Knowledge 支持 category、tag 和关键词浏览，卡片更紧凑，适合多条公开知识笔记扫描。
+- Skills 支持 status、category、platform 和关键词浏览，平台 chips 清晰展示，仍只作为公开说明目录，不提供 Skill package 下载或执行入口。
+- 四页 metadata 标题统一为“页面名 | 黄铭语研究工作站”。
+
+边界：
+
+- 不新增 migration，不新增字段，不新增 RPC、索引、外部搜索服务、全文搜索、OCR、AI 摘要或向量搜索。
+- 不修改 RLS、Storage policy、Documents 后台、文件多关联逻辑、AssetLinksPanel、Resume / Career 或 Market Brief。
+- 公开列表页只展示 public 内容，不展示 Documents、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理能力。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -592,7 +609,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，不改变公开内容边界。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，不改变公开内容边界。
 - Documents 继续保持私密，不开放公开下载或 viewer signed URL。
 - Documents 作为可维护的统一私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的私密附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页只嵌入后台私密附件视图，公开 Projects、Publications、Knowledge 和 Skills 页面仍不展示附件下载入口。
