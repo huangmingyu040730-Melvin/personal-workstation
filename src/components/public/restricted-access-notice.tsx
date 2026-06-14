@@ -37,7 +37,7 @@ export function RestrictedAccessNotice({
             </Link>
           ) : null}
         </div>
-        <p className="mt-5 text-xs leading-5 text-slate-500">申请不会自动授权；授权访问也只开放对应内容详情，不开放后台、内部附件库、Storage 路径或附件下载。</p>
+        <p className="mt-5 text-xs leading-5 text-slate-500">申请不会自动授权；授权访问也只开放对应内容详情，不开放后台、内部附件库、文件内部地址或附件下载。</p>
       </Card>
     </section>
   );

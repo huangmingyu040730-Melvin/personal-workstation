@@ -627,6 +627,22 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - metadata 不读取或输出 private / restricted / unlisted 正文、private Documents、`file_path`、raw `document_asset_links`、`research_asset_links` 管理数据、Storage bucket、Storage path、signed URL 或 owner_id。
 - robots 和 sitemap 不是安全边界；真实边界仍依赖 Supabase Auth、RLS、Storage policy 和服务端下载 route 校验。
 
+### Phase 2R-C-2 - Public Launch QA And Hardening
+
+已完成代码实现。公开站点主链路进入发布前 QA 与轻量 hardening：
+
+- 新增 `npm run smoke:public`，对运行中的公开站点巡检首页、四类列表页、访问申请页、未公开 fallback、sitemap、robots、metadata 和敏感字段边界。
+- 公开页面文案进一步收敛，不在访客页面直接展示 Storage / signed URL 等内部实现词。
+- 公开附件 metadata 行增加长分类、关系标签、MIME type、文件大小和更新时间的换行保护，降低 390px 移动端横向溢出风险。
+- smoke 覆盖 access-request query 不进入 metadata、fallback noindex、sitemap 不包含 public file download route、robots 阻止 dashboard / API / viewer / login / public-files。
+
+边界：
+
+- 不新增 migration，不新增业务 schema，不新增字段、RPC、索引、邮件服务、搜索服务或外部依赖。
+- 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 public 附件服务端校验逻辑。
+- 不恢复 Market Brief，不修改 Resume / Career，不恢复 `/dashboard/network`。
+- `npm run smoke:public` 只用于发布前公开路由巡检，不作为权限边界；真实安全仍依赖 Auth、RLS、Storage policy 和服务端下载 route 校验。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -685,7 +701,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示，2R-C-1 只 polish 公开 SEO、分享卡片、sitemap 和 robots。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示，2R-C-1 只 polish 公开 SEO、分享卡片、sitemap 和 robots，2R-C-2 只做公开发布前 smoke、移动端溢出防护和敏感字段文案 hardening。
 - Documents 上传默认 private；只有管理员显式设为 public 且关联 public 资产的文件，才可在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。
 - Documents 作为可维护的统一默认私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页继续嵌入后台附件视图；公开 Project / Publication 详情页只展示经 public 附件查询归一化后的安全字段，不展示 raw link rows、Storage 路径、Storage bucket、owner_id 或 signed URL；公开 Knowledge / Skill 详情页不展示 Documents。

@@ -72,7 +72,7 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
       <PublicListingHero
         eyebrow="Publications"
         title="公开学术成果"
-        description="公开展示整理完成的报告、论文草稿、策略分析和阅读综述。附件、Storage 路径和内部文件字段不会出现在公开页面。"
+        description="公开展示整理完成的报告、论文草稿、策略分析和阅读综述。私密附件和内部文件字段不会出现在公开页面。"
         stats={[
           { label: "公开成果", value: allPublications.length },
           { label: "成果类型", value: typeCount },

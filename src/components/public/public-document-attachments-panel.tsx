@@ -32,12 +32,12 @@ export function PublicDocumentAttachmentsPanel({
                   {attachment.original_name && attachment.original_name !== attachment.name ? (
                     <p className="mt-0.5 break-words text-xs leading-5 text-stone-500">{attachment.original_name}</p>
                   ) : null}
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-500">
-                    <span>{attachment.category_label}</span>
-                    {attachment.relation_label ? <span>{attachment.relation_label}</span> : null}
-                    <span>{attachment.mime_type}</span>
-                    <span>{formatFileSize(attachment.file_size)}</span>
-                    <span>{formatDateTime(attachment.updated_at)}</span>
+                  <div className="mt-2 flex min-w-0 flex-wrap gap-2 text-xs text-stone-500">
+                    <span className="max-w-full break-words">{attachment.category_label}</span>
+                    {attachment.relation_label ? <span className="max-w-full break-words">{attachment.relation_label}</span> : null}
+                    <span className="max-w-full break-all">{attachment.mime_type}</span>
+                    <span className="max-w-full break-words">{formatFileSize(attachment.file_size)}</span>
+                    <span className="max-w-full break-words">{formatDateTime(attachment.updated_at)}</span>
                   </div>
                 </div>
               </div>
@@ -53,7 +53,7 @@ export function PublicDocumentAttachmentsPanel({
         ))}
       </div>
       <p className="mt-4 text-xs leading-5 text-stone-500">
-        下载会按需生成短时链接；页面不会公开 Storage 路径或永久文件地址。
+        下载会由服务端按需校验；页面不会公开永久文件地址。
       </p>
     </Card>
   );

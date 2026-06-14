@@ -325,6 +325,38 @@ npm run build
 - 检查首页、四个列表页、四类详情页和 `/access-request` 的 `<title>`、canonical、OG/Twitter metadata；确认不重复站点名、不包含 query 上下文或私密字段。
 - 在 390px 宽度下抽查首页、一个列表页、一个详情页和 `/access-request` 无横向溢出。
 
+## Public Launch QA And Hardening Workflow
+
+日期：2026-06-14
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2R-C-2 的公开发布前 QA，确认公开主链路、SEO、访问申请、公开附件边界和移动端展示可以安全发布。
+
+步骤：
+
+1. 从最新 `main` 开始，确认本轮不新增 migration、不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+2. 启动本地服务；如只做 mock fallback 巡检，可使用占位 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 让公开页安全降级。
+3. 运行 `npm run smoke:public`；如服务不在默认端口，设置 `PUBLIC_SMOKE_BASE_URL`。
+4. 确认 smoke 覆盖 `/`、四类公开列表页、`/access-request`、四类 fallback、`/sitemap.xml` 和 `/robots.txt`。
+5. 确认 `/access-request` query 中的 title / slug 不进入 metadata。
+6. 确认未公开 fallback 保持 noindex，并只提供访问申请 / viewer 登录 / 返回列表，不确认内容是否真实存在。
+7. 确认 sitemap 只包含公开静态入口和 public 详情，不包含 `/dashboard`、`/api`、`/viewer`、`/login`、`/public-files`、signed URL、Storage path 或非 public 内容。
+8. 确认 robots 允许公开页面和访问申请入口，并 disallow `/dashboard`、`/api`、`/viewer`、`/login`、`/public-files`。
+9. 用浏览器在 390px 宽度抽查首页、四类列表页、四类详情或 fallback、`/access-request`，确认无横向溢出，长标题、长文件 metadata 和 CTA 不挤出屏幕。
+10. 如果公开文案出现面向内部实现的 Storage / signed URL 术语，应改为访客可理解的边界说明；安全规则仍保留在代码和文档中。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 运行 `git diff --check`。
+- 运行 `npm run smoke:public`。
+- 浏览器 390px 冒烟确认公开主链路无横向溢出。
+- 确认没有新增 migration，没有修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09

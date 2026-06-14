@@ -53,7 +53,7 @@ export default async function AccessRequestPage({
                 </div>
               </div>
               <p className="leading-7 text-slate-600">
-                上下文只用于帮助管理员理解申请目标；表单不会读取或展示 private / restricted 正文、附件、内部关系或 Storage 信息。
+                上下文只用于帮助管理员理解申请目标；表单不会读取或展示 private / restricted 正文、附件、内部关系或文件内部信息。
               </p>
             </div>
           </Card>
@@ -66,7 +66,7 @@ export default async function AccessRequestPage({
               </p>
               <p className="flex gap-2">
                 <LockKeyhole className="mt-1 shrink-0 text-blue-700" size={18} />
-                私密文件、Storage 路径、signed URL、后台记录和内部关系不会通过申请表单直接公开。
+                私密文件、内部文件地址、临时访问地址、后台记录和内部关系不会通过申请表单直接公开。
               </p>
               <p className="flex gap-2">
                 <FileText className="mt-1 shrink-0 text-blue-700" size={18} />

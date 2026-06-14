@@ -44,7 +44,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
 
     return (
       <PublicShell>
-        <PublicPageHero eyebrow="Access Request" title="该内容暂未公开或需要授权访问" description="当前公开页面无法显示这项研究内容。公开站点不会泄露私密包、附件、内部版本记录或 Storage 信息。" />
+        <PublicPageHero eyebrow="Access Request" title="该内容暂未公开或需要授权访问" description="当前公开页面无法显示这项研究内容。公开站点不会泄露私密包、附件、内部版本记录或文件内部信息。" />
         <RestrictedAccessNotice
           requestHref={requestHref}
           loginHref={`/viewer/login?next=${encodeURIComponent(`/skills/${slug}`)}`}
@@ -152,7 +152,7 @@ export default async function PublicSkillDetailPage({ params }: { params: Promis
               </PublicDetailSection>
               <PublicDetailSection title="公开边界">
                 <p className="text-sm leading-7 text-slate-600">
-                  本页是公开说明页，不是 Skill 包下载入口。页面不展示私密附件、文件中心资料、内部文件地址、临时下载地址、后台版本记录，也不会执行、安装或解析 Skill 文件。
+                  本页是公开说明页，不是 Skill 包下载入口。页面不展示私密附件、文件中心资料、内部文件地址、临时访问地址、后台版本记录，也不会执行、安装或解析 Skill 文件。
                 </p>
                 <Link href={accessRequestHref} className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800">
                   申请查看未公开材料
