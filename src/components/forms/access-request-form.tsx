@@ -68,7 +68,7 @@ export function AccessRequestForm({
         <Textarea name="reason" required maxLength={1200} className="min-h-40" />
       </Field>
       <div className="rounded-2xl bg-blue-50 px-4 py-3 text-sm leading-7 text-blue-800">
-        提交申请不代表一定会授权，也不会自动开放 Documents、私密附件、Storage 路径或临时下载链接。
+        提交申请不代表一定会授权，也不会自动开放 Documents、私密附件、内部文件地址或临时下载链接。
       </div>
       <div className="flex flex-wrap gap-3 pt-2">
         <SubmitButton pendingLabel="提交中...">提交申请</SubmitButton>

@@ -19,6 +19,7 @@
 - Phase 2R-A-4B 起公开 Project / Publication / Knowledge / Skill 详情页统一为正式公开研究详情体验；详情页只读取 public 详情查询，Project / Publication 可展示 2R-A-4A 的公开附件，Knowledge / Skill 不展示 Documents。
 - Phase 2R-B-1 起访问申请与未公开内容 fallback 进入正式访客闭环：公开详情页“申请访问”按钮带 `content_type`、`slug`、公开标题和来源 query，上下文只来自当前公开页面已展示字段；访问申请不等于授权，不自动开放 Documents、private attachments、signed URL 或 restricted/private 正文，不新增邮件服务或 migration。
 - Phase 2R-C-1 起公开 SEO、分享卡片、sitemap 和 robots 作为正式公开研究工作站体验维护；metadata 使用“黄铭语研究工作站”站点模板，sitemap 只收录 public 内容和公开静态入口，robots 允许公开页面并阻止 dashboard、API、viewer、public-files 和后台下载入口。
+- Phase 2R-C-2 起公开站点进入发布前 QA / hardening；只做公开路由、公开附件边界、访问申请、SEO / sitemap / robots、390px 移动端和敏感字段巡检及轻量修补，不新增业务功能、migration、RLS、Storage policy、Documents 或 Access Grants 权限变化。
 
 ## Tech Stack
 
@@ -47,6 +48,12 @@ npm run lint
 npm run build
 ```
 
+公开站点发布前 smoke：
+
+```bash
+npm run smoke:public
+```
+
 ## Working Rules
 
 - 保持组件可复用，页面优先组合基础组件，不在页面中堆重复样式。
@@ -60,6 +67,7 @@ npm run build
 - 公开详情页应使用统一公开阅读骨架、SEO metadata 和 related public content；相关内容只可来自 public 记录或公开字段推导，不展示 private / restricted / unlisted 内容，不把后台字段表样式搬到公开页面。
 - 公开详情页和未公开内容 fallback 的访问申请 CTA 应使用 slug 与公开标题带上下文；不得使用 private id 作为公开申请依据，不得在 fallback 中确认 private / restricted 内容是否真实存在。
 - 公开页面 metadata、Open Graph、Twitter card、sitemap 和 robots 不得读取或输出 private / restricted / unlisted 内容、Storage path、signed URL、`file_path`、raw Documents link rows、`research_asset_links` 管理数据或 owner_id；`/public-files/[id]/download` 不进入 sitemap。
+- 公开站点发布前可使用 `npm run smoke:public` 巡检本地运行中的站点；该脚本只访问公开路由、fallback、sitemap 和 robots，不需要 secrets，不得读取 private data。
 - `workspace-files` bucket 始终保持 private；Documents 上传默认写入 `visibility = 'private'`。只有管理员显式设为 `public`，且文件关联到 public Project / Publication / Knowledge / Skill 时，公开页面才可展示安全附件摘要和 `/public-files/[id]/download` 入口。
 - 公开 Project / Publication / Knowledge / Skill 页面不得展示 Documents 原始多资产 link rows、relation notes、`research_asset_links` 管理能力、`file_path`、Storage path、Storage bucket、owner_id 或 signed URL；Publication 公开查询应避免把历史附件字段作为展示数据使用。
 - public 文件下载路由必须在服务端重新校验：文件为 public、Storage bucket 为 `workspace-files`、当前资产为 public 且文件确实关联该资产；路由只能按需生成 60 秒短时 signed URL 或重定向，不得把 signed URL 写入页面 HTML。

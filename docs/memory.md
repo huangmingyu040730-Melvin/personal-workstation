@@ -60,6 +60,7 @@
 - Phase 2R-A-4B：公开 Project / Publication / Knowledge / Skill 详情页统一为正式研究详情体验，使用 detail hero、主内容 section、侧栏 metadata、related public content、访问申请 CTA 和安全 metadata；Project / Publication 继续整合 public attachments，Knowledge / Skill 不展示 Documents 或 Skill package。
 - Phase 2R-B-1：访问申请与受限内容体验 polish，公开详情页申请 CTA 带 `content_type`、slug、公开标题和来源 query；`/access-request` 显示申请上下文并预填表单；未公开 fallback 不确认内容是否存在，只引导申请访问、viewer 登录或返回列表；后台申请列表 / 详情页展示来源、目标、理由摘要和处理边界。
 - Phase 2R-C-1：公开 SEO 与分享体验 polish，统一 metadata、canonical、Open Graph / Twitter card、sitemap 和 robots；sitemap 只收录 public 内容和公开静态入口，robots 阻止 dashboard、API、viewer、public-files 和后台下载入口。
+- Phase 2R-C-2：公开发布前 QA / hardening，新增 `npm run smoke:public` 巡检公开路由、未公开 fallback、access-request query、metadata、sitemap、robots 和敏感字段边界；公开文案避免访客页面暴露内部文件实现词，公开附件 metadata 增加移动端换行保护。
 
 当前网站包括：
 
@@ -89,6 +90,7 @@
 - Phase 2R-A-3 后，四个公开列表页只使用既有 public 查询结果、现有公开字段和 URL query params 做轻量筛选；不新增全文搜索、外部搜索服务、向量库、数据库字段、Documents 读取或内部关系读取。
 - Phase 2R-B-1 后，访问申请上下文只使用公开页面已展示标题和 slug；不得使用 private id 作为公开申请依据，未公开 fallback 不得确认 private / restricted 内容是否真实存在。
 - Phase 2R-C-1 后，公开 metadata 使用“黄铭语研究工作站”模板；详情页 description 只使用 public summary / excerpt / description 截断；`/access-request` metadata 不读取 query title / slug；未公开 fallback metadata 保持 noindex。
+- Phase 2R-C-2 后，发布前公开 QA 可使用 `npm run smoke:public` 巡检运行中的站点；该脚本只访问公开路由、fallback、sitemap 和 robots，不读取 private data，也不作为真实权限边界。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、restricted / unlisted / private 内容或后台关系页面。
 - robots 允许公开页面和访问申请入口索引，阻止 dashboard、login、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
 - 访问申请不等于授权；申请提交和 approved 状态不会自动开放 restricted/private 正文、Documents、private attachments、public attachments、zip、Storage path、Storage bucket 或 signed URL。
@@ -239,6 +241,7 @@ Research Asset Links：
 - Phase 2R-A-4B 采用 public detail polish 决策：四类公开详情页统一为正式研究详情体验；Project / Publication 整合 4A 的公开附件，Knowledge / Skill 暂不展示 Documents；所有 related content 只展示 public 记录，不读取后台显式关系管理或私密文件。
 - Phase 2R-B-1 采用 access request context polish 决策：用现有 `access_requests` 字段承载申请目标上下文，公开详情页 CTA 带内容类型、slug、公开标题和来源，申请页显示上下文并预填表单，后台显示来源和目标；不新增 migration、不修改 RLS 或 Storage policy、不新增邮件服务、不自动授权、不开放 Documents。
 - Phase 2R-C-1 采用 public SEO and sharing polish 决策：只在应用层统一公开 metadata、OG/Twitter card、sitemap 和 robots；复用公开安全图片，不生成动态私密 OG；sitemap 只收 public 内容并在查询失败时降级；不新增 migration、不修改 RLS、Storage policy、Access Grants、Documents 或 public 文件下载 route。
+- Phase 2R-C-2 采用 public launch QA and hardening 决策：只新增公开 smoke 脚本、访客文案 hardening 和附件 metadata 移动端换行保护；不新增公开能力、不新增 migration、不修改 RLS、Storage policy、Documents、public 文件下载 route 或 Access Grants 核心权限。
 - 后续数据库变更必须新增 `0022_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
@@ -306,6 +309,7 @@ Research Asset Links：
 - Phase 2R-A-4B：不新增 migration；只新增 / 调整公开详情组件、四类详情页组合、public related content 和 metadata，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或多关联核心逻辑。
 - Phase 2R-B-1：不新增 migration；只复用既有 `access_requests` 字段做上下文预填、申请页 polish、未公开 fallback 文案和后台申请展示，不修改 RLS、Storage policy、Access Grants schema、public 文件下载 route 或邮件服务。
 - Phase 2R-C-1：不新增 migration；只调整公开 metadata、canonical、OG/Twitter card、sitemap 和 robots，不修改 RLS、Storage policy、Documents、Access Grants、public 文件下载 route 或任何 Supabase schema。
+- Phase 2R-C-2：不新增 migration；只新增公开 smoke 巡检脚本、访客文案 hardening 和公开附件 metadata 移动端换行保护，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或任何 Supabase schema。
 
 规则：
 
@@ -326,6 +330,7 @@ Research Asset Links：
 - Documents metadata、清理与导出维护：文件详情页修正单个文件显示名、分类、visibility 和 legacy primary relation，并在关联区域用 checkbox / chips 添加或移除多资产关联；文档包详情页修正文档包名称、描述、类型和 legacy primary relation，并在关联区域添加 / 移除文档包关联，可选择同步到包内文件；列表页用 category、related_type、collection 筛选整理，其中 related_type / related_id 表示包含该资产关联；Documents 列表或文档包详情页用紧凑批量工具栏批量添加、移除或清空关联、批量设置 public/private、批量删除文件或下载选中文件 zip；内容详情页用文档包、独立文件、跨文档包文件和关联 chips 理解附件关系，chips 已对同一资产的 legacy `related` 做展示降噪；危险区用于删除整个文档包及文件；文档包详情页或内容详情页文档包卡片用于下载整个文档包 zip；跨模块查找资产时先使用 `/dashboard/search?q=关键词` 按 metadata 搜索，再用 `type` 筛选聚焦 Documents、Knowledge、Projects 等类型。
 - 公开详情与附件维护：四类公开详情页只展示 public 记录；Project / Publication 可显示 public related content 与显式 public 文件附件，管理员先在文件详情页或文件中心批量工具将文件显式设为 public，并确认该文件通过专用 link row 或 legacy primary relation 关联到对应 public Project / Publication；公开详情页只显示安全附件摘要，下载点击 `/public-files/[id]/download`，服务端再校验 public 文件、public 资产和关联存在后短时签名；Knowledge / Skill 公开详情不展示 Documents。
 - 公开 SEO 与分享维护：页面 metadata 通过 `src/lib/site.ts` 统一站点名、canonical、OG / Twitter card 和公开安全图片；sitemap 只收录 public 内容和公开静态入口，查询失败时降级；robots 阻止 dashboard、API、viewer、public-files 等路径；robots / sitemap 不作为权限边界。
+- 公开发布前 QA：启动本地服务后运行 `npm run smoke:public`，巡检公开入口、fallback、access-request query、metadata、sitemap、robots 和敏感字段；结合浏览器 390px 冒烟确认首页、列表页、详情或 fallback、访问申请和公开附件 metadata 无横向溢出。
 - 访问申请与受限内容体验维护：公开详情页申请 CTA 使用 `content_type`、slug、公开标题和 `from` 生成 `/access-request` query；申请页展示上下文并预填内容类型、标题和站内路径；未公开 fallback 用专业授权提示，不确认内容是否存在；后台 access requests 列表 / 详情页查看来源、目标和理由；审批状态不自动授权，approved 后仍需手动创建 Access Grant；本流程不新增邮件服务、不开放 Documents、不生成 signed URL。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
@@ -340,7 +345,7 @@ Research Asset Links：
 
 建议顺序：
 
-1. Phase 2P / 2Q / 2R-A-4A / 2R-A-4B / 2R-B-1 / 2R-C-1 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql`、`0020_document_asset_links.sql` 和 `0021_public_attachment_service_role_grants.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、公开四类详情页统一布局与 390px 移动端堆叠、四类详情页申请 CTA 上下文、`/access-request` 预填和独立提交、未公开 fallback、后台 access requests 来源 / 目标展示、公开 metadata / OG / Twitter card、`/sitemap.xml` 只收 public 内容、`/robots.txt` 阻止 dashboard / API / viewer / public-files、Knowledge / Skill 不展示 Documents、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
+1. Phase 2P / 2Q / 2R-A-4A / 2R-A-4B / 2R-B-1 / 2R-C-1 / 2R-C-2 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql`、`0020_document_asset_links.sql` 和 `0021_public_attachment_service_role_grants.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、公开四类详情页统一布局与 390px 移动端堆叠、四类详情页申请 CTA 上下文、`/access-request` 预填和独立提交、未公开 fallback、后台 access requests 来源 / 目标展示、公开 metadata / OG / Twitter card、`/sitemap.xml` 只收 public 内容、`/robots.txt` 阻止 dashboard / API / viewer / public-files、`npm run smoke:public` 发布前巡检、Knowledge / Skill 不展示 Documents、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及 `/dashboard/projects/[id]`、`/dashboard/knowledge/[id]`、`/dashboard/skills/[id]`、`/dashboard/publications/[id]` 的中枢展示、快捷操作、显式资产关系、backlinks、目标资产筛选、关系筛选和关系编辑。
 2. Phase 2I：Viewer 登录与 restricted 访问专项修复。
 3. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
 4. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。

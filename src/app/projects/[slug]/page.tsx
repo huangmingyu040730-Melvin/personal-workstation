@@ -49,7 +49,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
 
     return (
       <PublicShell>
-        <PublicPageHero eyebrow="Access Request" title="该内容暂未公开或需要授权访问" description="当前公开页面无法显示这项研究内容。公开站点不会泄露未公开正文、附件、内部关系或 Storage 信息。" />
+        <PublicPageHero eyebrow="Access Request" title="该内容暂未公开或需要授权访问" description="当前公开页面无法显示这项研究内容。公开站点不会泄露未公开正文、附件、内部关系或文件内部信息。" />
         <RestrictedAccessNotice
           requestHref={requestHref}
           loginHref={`/viewer/login?next=${encodeURIComponent(`/projects/${slug}`)}`}

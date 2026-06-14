@@ -1862,3 +1862,28 @@
 - 本阶段不新增 migration，不修改 RLS、Storage policy、Access Grants schema、Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
 - sitemap 不包含 private / restricted / unlisted 内容，不包含 dashboard、viewer、admin login、public file download route、signed URL、Storage path 或 private Documents。
 - metadata 不输出 private / restricted 正文、Storage bucket、Storage path、signed URL、`file_path`、owner_id、raw `document_asset_links`、relation note 或 `research_asset_links` 管理数据。
+
+## 2026-06-14 - Public Launch QA And Hardening Without Expanding Access
+
+类型：decision
+
+决策：
+
+- Phase 2R-C-2 作为公开站点发布前 QA / hardening 阶段，不新增公开业务功能。
+- 新增零依赖 `npm run smoke:public`，对运行中的公开站点巡检公开入口、未公开 fallback、access-request query、metadata、sitemap、robots 和敏感字段边界。
+- 公开页面文案避免直接向访客展示 Storage / signed URL 等内部实现词，改用更面向访客的文件边界说明。
+- 公开附件面板的 metadata chips 增加长文本换行保护，减少 390px 移动端横向溢出。
+- `npm run smoke:public` 只作为发布前巡检辅助，不替代真实权限边界。
+
+原因：
+
+- 公开首页、列表、详情、公开附件、访问申请、SEO、sitemap 和 robots 主链路已经完成，下一步需要确认发布前可分享、可索引和移动端可用，而不是继续扩展权限面。
+- 公开页面中出现底层存储术语会增加访客困惑，也会让 smoke 难以判断是否泄露内部字段；将访客文案和内部安全规则分离更清晰。
+- 公开附件 metadata 可能包含长 MIME type、长分类或长关系标签，移动端必须能自然换行。
+
+影响：
+
+- 本阶段不新增 migration，不修改 Supabase schema、RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
+- 不修改 public 附件服务端校验条件：文件仍需 public、当前资产仍需 public、文件仍需关联当前资产，下载仍由服务端按需短时签名。
+- 不恢复 Market Brief，不修改 Resume / Career，不恢复 `/dashboard/network` 或后台全局关系图谱。
+- 后续公开发布前可先启动本地服务，再运行 `npm run smoke:public`，并结合 `npm run lint`、`npm run build`、`git diff --check` 和浏览器 390px 冒烟完成验收。
