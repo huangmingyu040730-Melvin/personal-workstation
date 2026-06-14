@@ -29,6 +29,7 @@
 - Phase 2R-A-2 后，首页 hero 在保留左侧文案 + 右侧统计卡片结构的基础上，增加低对比金融 / 量化 / 研究风格 CSS 背景装饰，并用系统中文 serif 栈优化“个人研究工作站”标题质感；#101 预览反馈后，背景装饰重心从右侧移到左侧 / 中间偏左，避免被统计卡片遮挡。
 - Phase 2R-A-3 后，公开 Projects / Publications / Knowledge / Skills 列表页统一为正式研究内容索引：listing header、公开统计、轻量 URL 筛选、公开卡片、友好空状态和更清晰 metadata。
 - Phase 2R-A-4A 后，公开 Project / Publication 详情页可展示显式 public 文件附件；附件下载通过 `/public-files/[id]/download` 服务端校验后按需生成 60 秒短时 signed URL，页面 HTML 不输出 signed URL、Storage 路径或 raw link rows。
+- 2R-A-4A public 附件线上排查确认：Vercel Production / Preview 已配置 `SUPABASE_SERVICE_ROLE_KEY`，但 server-side service-role 查询曾因缺少表级 `select` grant 在 `publications` 校验处返回 permission denied。`0021_public_attachment_service_role_grants.sql` 已作为 hotfix 补齐公开附件查询 / 下载校验所需的 service-role 只读权限，不修改 RLS、Storage policy、bucket 或文件数据。
 - Phase 2R-A-4B 后，公开 Project / Publication / Knowledge / Skill 详情页统一为正式研究详情体验：detail hero、主内容 section、侧栏 metadata、related public content、访问申请 CTA 和安全 SEO metadata；Project / Publication 详情继续整合公开附件，Knowledge / Skill 不展示 Documents。
 - 首页区块之间使用清晰 section wrapper、边框和交替背景分隔，并补充克制的 hover / focus micro-interactions。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”；不显示后台菜单、文件中心或全局关系图谱入口。
@@ -255,6 +256,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 关联 chips 在展示查询层归一化：同一文件 / 文档包对同一资产如果已有具体关系，则隐藏同一资产的 legacy `related` fallback；只有 `related` 是唯一关系时才显示“相关”。
 - #99 追加 UI polish：上传页、文件详情页、文档包详情页和文件中心批量添加关联都使用 checkbox / chips 分组选择器，不再使用原生多选框；文件中心“权限”列显示为轻量私密状态标签。
 - Phase 2R-A-4A 新增公开附件底座：公开 Project / Publication 详情页可展示当前 public 资产下显式 public 文件；附件组件只接收 id、文件名、分类、大小、MIME type、更新时间、关系标签和 `/public-files/[id]/download`，不接收或输出 Storage path、Storage bucket、owner_id、signed URL、raw link rows 或 relation note。
+- `0021_public_attachment_service_role_grants.sql` 只给 `service_role` 授予 `projects`、`publications`、`knowledge_notes`、`skills`、`documents` 和 `document_asset_links` 的 `select`，用于 server-side public 附件查询与下载 route 复核；它不开放匿名 Documents 读取，也不把 private Storage bucket 改为 public。
 - Phase 2R-A-4B polish 公开四类详情页：Project 展示研究问题、背景、方法、状态、进度、标签、相关公开成果 / 知识和公开附件；Publication 展示成果摘要、类型、日期、项目、相关知识和公开附件；Knowledge 展示分类、摘要 / 正文、公开项目和相关公开内容；Skill 展示说明、平台、状态、版本和相关公开 Skill，但不公开 Skill 包或私密附件。
 - public 下载路由会服务端复核：文件 `visibility = "public"`、文件属于 `workspace-files`、当前资产为 public，且文件通过 `document_asset_links` 或 legacy `related_type / related_id` 关联到该资产；通过后才按需生成 60 秒短时 signed URL。
 - public 附件关系展示也会对同一资产下的 legacy `related` fallback 做降噪：已有 `deliverable` 等具体关系时，不再同时展示“相关”。
@@ -264,7 +266,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - Publication 有附件时禁止直接删除。
 - 公开页面不展示 private / unlisted Documents，不展示 signed URL，不展示 Storage 路径。
 
-文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；Phase 2R-A-4A 只允许管理员显式公开单个文件后，通过当前 public Project / Publication 详情页的安全下载路由展示，Phase 2R-A-4B 只 polish 公开详情页整合方式和 public related content，不公开 Knowledge / Skill 附件、不公开 raw Documents 管理能力、不执行上传代码、不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示；Phase 2P-E-1-C 只增加主动整体迁移 / 同步关联工具；Phase 2P-E-2 只增加管理员批量删除文件和删除整个文档包及文件能力；Phase 2P-E-3 只增加管理员后台 zip 临时下载能力。Phase 2P-G-1 新增 0020 migration 和专用多关联表，同时保留 legacy primary relation 兼容；关联 chips 的 `related` 降噪、多关联选择器和权限列 polish 只在展示层完成，不删除 legacy 数据，不新增 migration，不改 Storage policy，不新增 RPC。Phase 2R-A-4A / 2R-A-4B 不新增 migration、不新增 RPC、不修改 RLS 或 Storage policy。zip 按请求生成，不保存到 Storage。
+文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；Phase 2R-A-4A 只允许管理员显式公开单个文件后，通过当前 public Project / Publication 详情页的安全下载路由展示，Phase 2R-A-4B 只 polish 公开详情页整合方式和 public related content，不公开 Knowledge / Skill 附件、不公开 raw Documents 管理能力、不执行上传代码、不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示；Phase 2P-E-1-C 只增加主动整体迁移 / 同步关联工具；Phase 2P-E-2 只增加管理员批量删除文件和删除整个文档包及文件能力；Phase 2P-E-3 只增加管理员后台 zip 临时下载能力。Phase 2P-G-1 新增 0020 migration 和专用多关联表，同时保留 legacy primary relation 兼容；关联 chips 的 `related` 降噪、多关联选择器和权限列 polish 只在展示层完成，不删除 legacy 数据，不新增 migration，不改 Storage policy，不新增 RPC。Phase 2R-A-4A / 2R-A-4B 不新增业务 schema、不新增 RPC、不修改 RLS 或 Storage policy；0021 只补 service-role `select` grant。zip 按请求生成，不保存到 Storage。
 
 ### Access Requests
 
@@ -376,10 +378,16 @@ Phase 2R-A-2 只 refine 公开首页 hero 视觉识别：增加自绘 CSS 金融
 
 Phase 2R-A-3 只 polish 公开 Projects / Publications / Knowledge / Skills 列表页和 SEO metadata：筛选基于已有 public 字段和 URL query params，不新增 Supabase migration，不新增字段、RPC、索引、外部搜索服务或动画库，不读取 Documents、Storage object、文件内容、`document_asset_links` 或 `research_asset_links`。
 
+Phase 2R-A-4A public 附件功能本身不新增业务 schema，但生产排查发现 server-side `service_role` 缺少表级 `select` grant 会导致 public 附件面板返回空数组。hotfix 后需要继续执行：
+
+- `0021_public_attachment_service_role_grants.sql`
+
+`0021` 只给 `service_role` 补公开附件查询和 `/public-files/[id]/download` 校验链路需要的只读表权限；不新增表、字段、RPC，不修改 RLS、Storage policy、bucket public 状态、`storage_path` 或文件多关联数据。
+
 规则：
 
 - 已执行过的 migration 不应修改。
-- 执行 0020 后，后续数据库变更应新增 `0021_*` 或更高编号。
+- 执行 0021 后，后续数据库变更应新增 `0022_*` 或更高编号。
 - 不得重跑旧 migration。
 - 不得放宽 Storage / RLS。
 - 不得提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL 或 `service_role`。

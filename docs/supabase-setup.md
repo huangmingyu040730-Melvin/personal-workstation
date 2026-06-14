@@ -58,7 +58,7 @@ AI Provider 复用通用 `AI_PROVIDER` / `AI_API_KEY` / `AI_BASE_URL` / `AI_MODE
 - `0007_profile_public_fields.sql`
 - `0008_calendar_events.sql`
 
-Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 均不新增 migration，继续依赖既有字段。Phase 2Q-B-1 新增 `0019_research_asset_links.sql`，只创建管理员后台显式资产关系表，不修改 Documents、Storage policy 或公开读取规则。Phase 2Q-B-2 / 2Q-B-3 / 2Q-B-4 不新增 migration，继续依赖已执行的 0019；2Q-B-4 只移除独立全局关系视图页面，四类资产详情页内的显式关系系统仍需要 0019。Phase 2P-G-1 新增 `0020_document_asset_links.sql`，只创建 Documents / 文档包专用多资产关联表，回填 legacy 关联，不修改 Storage policy 或 `research_asset_links`。Phase 2R-A-1 / 2R-A-2 / 2R-A-3 / 2R-A-4A / 2R-A-4B 不新增 migration，不修改 RLS、Storage policy、bucket、`storage_path` 或 `research_asset_links`；2R-A-4A 复用既有 `documents.visibility`、`document_collections.visibility` 和 0020 link tables，只新增应用层 public 附件查询、组件、下载 route 与后台 visibility 操作；2R-A-4B 只调整公开详情页组件、related public content 和 metadata。执行 0020 后，后续数据库变更应新增 `0021_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
+Phase 2K-A 合并后还需要执行 `0009_resume_items.sql`。Phase 2K-B 合并后还需要执行 `0010_resume_versions.sql`。Phase 2K-C 合并后还需要执行 `0011_resume_template_fields.sql`。Phase 2K-H 合并后还需要执行 `0012_resume_jd_reviews.sql`。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `0018_document_collections_and_folder_uploads.sql`。Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 均不新增 migration，继续依赖既有字段。Phase 2Q-B-1 新增 `0019_research_asset_links.sql`，只创建管理员后台显式资产关系表，不修改 Documents、Storage policy 或公开读取规则。Phase 2Q-B-2 / 2Q-B-3 / 2Q-B-4 不新增 migration，继续依赖已执行的 0019；2Q-B-4 只移除独立全局关系视图页面，四类资产详情页内的显式关系系统仍需要 0019。Phase 2P-G-1 新增 `0020_document_asset_links.sql`，只创建 Documents / 文档包专用多资产关联表，回填 legacy 关联，不修改 Storage policy 或 `research_asset_links`。Phase 2R-A-1 / 2R-A-2 / 2R-A-3 / 2R-A-4A / 2R-A-4B 不新增业务 schema，不修改 RLS、Storage policy、bucket、`storage_path` 或 `research_asset_links`；2R-A-4A 复用既有 `documents.visibility`、`document_collections.visibility` 和 0020 link tables，只新增应用层 public 附件查询、组件、下载 route 与后台 visibility 操作；2R-A-4B 只调整公开详情页组件、related public content 和 metadata。`0021_public_attachment_service_role_grants.sql` 是 2R-A-4A 的权限 hotfix，只给 server-side `service_role` 补公开附件查询 / 下载校验所需表的 `select` 权限，不新增表、字段或 RPC，不修改 RLS、Storage policy、bucket、`storage_path` 或文件数据。执行 0021 后，后续数据库变更应新增 `0022_*` 或更高编号，并继续保持最小权限、RLS 和 private Storage 边界。
 
 先运行或复制执行：
 
@@ -375,6 +375,7 @@ Document Collection 权限边界：
 
 - Documents 上传默认 private；显式 public 文件可通过 2R-A-4A 的 public 附件查询在相关 public 内容页展示，但文档包管理、private / unlisted 文件、raw 关系表、Storage path 和 signed URL 不进入公开页面、sitemap、viewer 或 restricted 内容页。
 - public 文件下载必须由 `/public-files/[id]/download` 服务端复核文件 public、当前资产 public 和关联存在后短时签名；不修改 Storage policy，不创建 public bucket。
+- 公开附件查询和下载 route 使用 server-side service-role client 做复核；生产环境必须同时配置 `SUPABASE_SERVICE_ROLE_KEY` 且执行 `0021_public_attachment_service_role_grants.sql`，否则 service-role 可能因缺少表级 `select` grant 返回 permission denied，附件面板会显示为空。
 - Skill 包只作为文件存储，不执行、不解析、不安装。
 - zip 下载仅在管理员请求时临时生成，不保存到 Storage，不开放公开附件入口。
 - `/dashboard/search` 只查询数据库 metadata，类型筛选和关键词高亮只发生在应用展示层，不读取 Storage object，不生成 signed URL，不需要数据库迁移、索引或 RPC。
@@ -382,7 +383,7 @@ Document Collection 权限边界：
 - 本阶段不做 OCR、文件内容索引或 AI 总结。
 - 不修改 Resume / Career 逻辑，不恢复 Market Brief。
 
-Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 / 2Q-B-2 / 2Q-B-3 / 2Q-B-4 / 2R-A-1 / 2R-A-2 / 2R-A-3 / 2R-A-4A / 2R-A-4B 只使用既有字段增强或收口后台管理能力与公开展示，不新增 migration。文件 metadata 编辑只更新显示名称、分类、visibility 和关联对象；文档包 metadata 编辑只更新名称、描述、类型和关联对象；批量移动和批量解除关联只更新 `documents.related_type` / `documents.related_id`；RelatedDocumentsPanel 分组展示只改变后台展示；文档包整体迁移 / 同步关联只同步更新 `document_collections.related_type / related_id` 和包内全部 `documents.related_type / related_id`；批量删除文件会删除所选 `documents` 记录与对应 Storage object，删除整个文档包及文件会删除包内文件和 `document_collections` 记录；zip 下载按请求临时读取 Storage object 并生成响应；全局搜索只查询 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections metadata，类型筛选和关键词高亮只影响展示体验；Project 研究中枢只聚合现有 Project 字段、附件面板和相关资产 metadata；Knowledge 知识节点只聚合现有 Knowledge 字段、关联 Project、同项目 Publications、附件面板和搜索入口；Skill 能力包只聚合现有 Skill 字段、版本记录、附件面板和搜索入口；Publication 成果中枢只聚合现有 Publication 字段、关联 Project、同项目 Knowledge、附件面板和搜索入口；显式关系管理 polish 只更新 `research_asset_links.relation_type` 与 `note`，并在客户端筛选已查询关系和目标候选；2Q-B-4 只移除独立全局关系视图页面及其应用层查询和组件；2R-A-1 只调整公开首页、公开导航、公开 publication 查询边界、首页 hero 结构、首页紧凑 preview card 和 micro-interactions；2R-A-2 只调整公开首页 hero 背景 CSS 装饰、标题系统字体栈和统计卡片视觉细节；2R-A-3 只调整四个公开列表页的 listing header、公开统计、轻量 URL 筛选、公开卡片、空状态和 metadata；2R-A-4A 只新增 public 附件安全查询、公开附件面板、public 下载 route 和后台文件 visibility 操作；2R-A-4B 只调整四类公开详情页的展示组件、public related content 和 SEO metadata。这些操作不会修改 `storage_path` 生成规则，不会移动或重命名 Supabase Storage object，不会修改 Storage policy，也不会新增数据库事务或 RPC。
+Phase 2P-D / 2P-E-1 / 2P-E-1-B / 2P-E-1-C / 2P-E-2 / 2P-E-3 / 2P-F-1 / 2P-F-2 / 2Q-A-1 / 2Q-A-2 / 2Q-A-3 / 2Q-A-4 / 2Q-B-2 / 2Q-B-3 / 2Q-B-4 / 2R-A-1 / 2R-A-2 / 2R-A-3 / 2R-A-4A / 2R-A-4B 只使用既有字段增强或收口后台管理能力与公开展示，不新增业务 schema。文件 metadata 编辑只更新显示名称、分类、visibility 和关联对象；文档包 metadata 编辑只更新名称、描述、类型和关联对象；批量移动和批量解除关联只更新 `documents.related_type` / `documents.related_id`；RelatedDocumentsPanel 分组展示只改变后台展示；文档包整体迁移 / 同步关联只同步更新 `document_collections.related_type / related_id` 和包内全部 `documents.related_type / related_id`；批量删除文件会删除所选 `documents` 记录与对应 Storage object，删除整个文档包及文件会删除包内文件和 `document_collections` 记录；zip 下载按请求临时读取 Storage object 并生成响应；全局搜索只查询 Projects、Publications、Knowledge、Skills、Documents 和 Document Collections metadata，类型筛选和关键词高亮只影响展示体验；Project 研究中枢只聚合现有 Project 字段、附件面板和相关资产 metadata；Knowledge 知识节点只聚合现有 Knowledge 字段、关联 Project、同项目 Publications、附件面板和搜索入口；Skill 能力包只聚合现有 Skill 字段、版本记录、附件面板和搜索入口；Publication 成果中枢只聚合现有 Publication 字段、关联 Project、同项目 Knowledge、附件面板和搜索入口；显式关系管理 polish 只更新 `research_asset_links.relation_type` 与 `note`，并在客户端筛选已查询关系和目标候选；2Q-B-4 只移除独立全局关系视图页面及其应用层查询和组件；2R-A-1 只调整公开首页、公开导航、公开 publication 查询边界、首页 hero 结构、首页紧凑 preview card 和 micro-interactions；2R-A-2 只调整公开首页 hero 背景 CSS 装饰、标题系统字体栈和统计卡片视觉细节；2R-A-3 只调整四个公开列表页的 listing header、公开统计、轻量 URL 筛选、公开卡片、空状态和 metadata；2R-A-4A 只新增 public 附件安全查询、公开附件面板、public 下载 route 和后台文件 visibility 操作；2R-A-4B 只调整四类公开详情页的展示组件、public related content 和 SEO metadata；0021 只补 service-role `select` grant。这些操作不会修改 `storage_path` 生成规则，不会移动或重命名 Supabase Storage object，不会修改 Storage policy，也不会新增数据库事务或 RPC。
 
 Phase 2Q-B-1 新增研究资产显式关系。合并对应代码后，新建环境或生产环境需要继续运行：
 
@@ -441,6 +442,20 @@ Document Asset Links 权限边界：
 - `documents.related_type / related_id` 与 `document_collections.related_type / related_id` 仍保留为 legacy primary relation、路径 fallback 和兼容 query params。
 - 新展示、筛选、RelatedDocumentsPanel 和搜索应优先读取 `document_asset_links` / `document_collection_asset_links`，仅在同一 `asset_type + asset_id` 没有任何 link row 时 fallback 到 legacy 字段。
 - 关联 chips 的 legacy `related` 降噪是应用层展示归一化；同一资产已有具体关系时不重复显示“相关”，不删除 0020 回填 rows，不新增 migration。
+
+## 公开附件 Service Role Grant Hotfix
+
+Phase 2R-A-4A 公开附件查询使用 server-side service-role client 复核 public 资产、public 文件和文件关联。生产环境如果只配置 `SUPABASE_SERVICE_ROLE_KEY`，但缺少表级 grant，公开详情页会在 `isPublicAsset` 或文件关联查询处返回 permission denied，附件面板显示为空。合并 hotfix 后需要继续运行：
+
+```text
+supabase/migrations/0021_public_attachment_service_role_grants.sql
+```
+
+`0021` 会：
+
+- 给 `service_role` 授予 `public.projects`、`public.publications`、`public.knowledge_notes`、`public.skills`、`public.documents` 和 `public.document_asset_links` 的 `select`。
+- 不给 `anon`、viewer、restricted 或普通公开页面授予 Documents / raw link rows 读取权限。
+- 不修改 RLS、Storage policy、bucket public 状态、`storage_path`、文件 visibility、文件关联数据或 signed URL 生成规则。
 
 ## 创建管理员
 
@@ -542,11 +557,12 @@ Phase 2C 使用：
 - Phase 2R-A-1 公开首页、公开导航、管理员登录入口、hero 结构、紧凑 Knowledge / Skill 首页预览和 micro-interactions polish 不需要新增 migration；公开页面继续使用既有 public 查询和 RLS 边界，不公开 private Documents、Storage 路径、signed URL 或后台关系管理。管理员登录入口只进入现有登录流程，不改变 Auth、RLS 或后台权限。
 - Phase 2R-A-2 公开首页 hero 视觉识别 polish 不需要新增 migration；它只增加自绘 CSS 背景装饰、H1 系统字体栈和统计卡片视觉细节，不引入字体文件、外部字体服务、图表库或动画库，也不改变 Auth、RLS、Storage、Documents、公开查询或后台权限。
 - Phase 2R-A-3 公开列表页 polish 不需要新增 migration；`/projects`、`/publications`、`/knowledge` 和 `/skills` 继续使用既有 public 查询和 RLS 边界，轻量筛选只基于已加载 public 记录和 URL query params，不公开 private Documents、Storage path、signed URL、`file_path`、raw `document_asset_links` 或 `research_asset_links` 管理能力。
-- Phase 2R-A-4A 公开附件基础不需要新增 migration；它复用既有 `documents.visibility` 与 0020 link tables，只新增 public 附件查询、组件、下载 route 和后台 visibility 操作，不修改 RLS、Storage policy、bucket 或 `storage_path`。
+- Phase 2R-A-4A 公开附件基础不需要新增业务 schema；它复用既有 `documents.visibility` 与 0020 link tables，只新增 public 附件查询、组件、下载 route 和后台 visibility 操作，不修改 RLS、Storage policy、bucket 或 `storage_path`。生产 hotfix 需要执行 `0021_public_attachment_service_role_grants.sql`，为 server-side public 附件校验补齐 service-role `select` grant。
 - Phase 2R-A-4B 公开详情页 polish 不需要新增 migration；它只复用既有 public 内容查询、2R-A-4A public 附件查询和应用层组件，不修改 RLS、Storage policy、bucket、`storage_path`、Documents 上传 / 删除 / zip 下载或文件多关联核心逻辑。
 - `/dashboard/search` metadata 搜索、type 筛选和关键词高亮不需要 0019 migration；未执行 0018 时，文档包相关搜索结果会缺少真实 collection 数据。
 - 研究资产显式关系依赖 0019 migration；未执行 0019 时，四类后台详情页的显式关系读写会失败或显示空关系。
 - Documents 多资产关联依赖 0020 migration；未执行 0020 时，文件 / 文档包多关联读写会失败或只显示 legacy fallback 关联。
+- 公开 Project / Publication 附件展示依赖 0021 service-role grant hotfix；未执行 0021 时，Vercel 已有 `SUPABASE_SERVICE_ROLE_KEY` 也可能在 `isPublicAsset` 或文件关联查询处出现 permission denied，并让附件面板返回空数组。
 - Storage 上传依赖 0003 migration；当前生产环境已执行，其他环境未执行 0003 时真实上传无法完成。
 - Access Requests 依赖 0004 migration；未执行 0004 时公开表单与后台申请列表无法完成真实读写。
 - Profile 公开字段依赖 0007 migration；未执行 0007 时后台 Profile 保存新字段会失败，About 页面会使用安全 fallback。
@@ -568,6 +584,7 @@ npm run build
 - 文件上传失败：确认生产 Supabase 已执行 `0003_publications_documents_storage.sql` 和 `0018_document_collections_and_folder_uploads.sql`，bucket 为 private，且当前用户在 `admin_users` 中。
 - Documents 多关联保存失败：确认生产 Supabase 已执行 `0020_document_asset_links.sql`，当前用户在 `admin_users` 中，且目标 Project / Knowledge / Skill / Publication 记录真实存在。
 - Documents 关联 chips 或按关联筛选结果不完整：确认 `0020_document_asset_links.sql` 已执行并完成 legacy 回填；未回填前旧记录只能依赖 legacy primary relation fallback。同一资产同时有具体关系和 `related` 时，UI 会隐藏低价值 `related` fallback，这是预期展示降噪。
+- 公开 Project / Publication 详情页不显示 public 附件：确认正在访问 `/projects/[slug]` 或 `/publications/[slug]`，目标资产与文件均为 public，文件关联当前资产，生产 Vercel 存在 server-side `SUPABASE_SERVICE_ROLE_KEY`，且目标 Supabase 已执行 `0021_public_attachment_service_role_grants.sql`。
 - 显式资产关系保存失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且 source / target 资产真实存在。
 - 显式资产关系列表为空或读取失败：确认生产 Supabase 已执行 `0019_research_asset_links.sql`，当前用户在 `admin_users` 中，且目标环境已有 Project / Knowledge / Skill / Publication 之间的显式关系记录。
 - 文件类型被拒绝：确认扩展名和 MIME type 都在白名单中，单文件不超过 50 MB，批次不超过 100 个文件 / 200 MB，且不是 exe、dmg、app、msi、bat 或 cmd。

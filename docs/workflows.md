@@ -367,11 +367,12 @@ npm run build
 44. zip 下载失败时不部分打包，不输出 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
 45. public 附件只在 Project / Publication 公开详情页展示安全摘要字段；页面不得输出 Storage path、Storage bucket、owner_id、signed URL、raw `document_asset_links` 或 relation note。
 46. `/public-files/[id]/download` route 必须重新查询文件记录并校验 `documents.visibility = 'public'`、bucket 为 `workspace-files`、当前资产 public 且文件关联当前资产；校验失败返回 404 / 403 类结果，不生成 signed URL。
-47. 上传和整理文件后，先通过 `/dashboard/search?q=关键词` 按文件名、original_name、relative_path、文档包标题、项目、知识笔记、成果或 Skill metadata 全局查找资产。
-48. 需要聚焦某类结果时，在搜索页使用 `type=documents`、`type=knowledge`、`type=projects` 等类型筛选；切回 `type=all` 可恢复全部分组。
-49. 全局搜索只查询数据库 metadata；q trim 后少于 2 个字符时不执行查询，每类最多返回 8 条，并显示全部和每类命中数量。
-50. 搜索结果标题和描述可高亮关键词，但高亮只在 React 展示层完成，不保存索引。
-51. 文件正文搜索、PDF / Word / Excel / zip 解析、OCR、AI 摘要和向量搜索属于后续阶段；当前全局搜索不得读取文件正文、生成 signed URL 或输出 Storage path。
+47. 公开附件真实环境验收前确认目标 Supabase 已执行 `0021_public_attachment_service_role_grants.sql`，且 Vercel Production / Preview 仅在 server-side 配置 `SUPABASE_SERVICE_ROLE_KEY`；不得把该 key 输出到客户端、日志或文档。
+48. 上传和整理文件后，先通过 `/dashboard/search?q=关键词` 按文件名、original_name、relative_path、文档包标题、项目、知识笔记、成果或 Skill metadata 全局查找资产。
+49. 需要聚焦某类结果时，在搜索页使用 `type=documents`、`type=knowledge`、`type=projects` 等类型筛选；切回 `type=all` 可恢复全部分组。
+50. 全局搜索只查询数据库 metadata；q trim 后少于 2 个字符时不执行查询，每类最多返回 8 条，并显示全部和每类命中数量。
+51. 搜索结果标题和描述可高亮关键词，但高亮只在 React 展示层完成，不保存索引。
+52. 文件正文搜索、PDF / Word / Excel / zip 解析、OCR、AI 摘要和向量搜索属于后续阶段；当前全局搜索不得读取文件正文、生成 signed URL 或输出 Storage path。
 
 验证要求：
 
@@ -424,7 +425,7 @@ npm run build
 - 确认 `/dashboard/projects/[id]` 保留返回、编辑和删除入口。
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
 - 确认相关资产继续展示通过 `project_id` 显式关联的知识笔记和学术成果，显式关联资产区域可展示 outbound 与 backlink，搜索入口仍可用。
-- 确认公开 Project 页面不展示后台研究中枢、private 附件、Storage 路径或 signed URL；如有 public 附件，只显示安全摘要和 `/public-files/[id]/download`。
+- 确认公开 Project 页面不展示后台研究中枢、private 附件、Storage 路径或 signed URL；执行 0021 后，如有符合条件的 public 附件，只显示安全摘要和 `/public-files/[id]/download`。
 
 ## Knowledge Node Workflow
 
@@ -540,7 +541,7 @@ npm run build
 - 确认 summary、abstract、成果类型、标签、可见性、关联 Project 和 metadata 展示正常，空字段有友好空状态。
 - 确认 RelatedDocumentsPanel 的文档包、独立文件和跨文档包文件展示仍沿用既有行为。
 - 确认同项目 Knowledge 继续通过现有 `project_id` 展示，显式关联资产区域可展示 outbound 与 backlink，搜索入口仍可用。
-- 确认公开 Publication 页面不展示后台成果中枢、private 附件、Storage 路径、signed URL 或 `file_path`；如有 public 附件，只显示安全摘要和 `/public-files/[id]/download`。
+- 确认公开 Publication 页面不展示后台成果中枢、private 附件、Storage 路径、signed URL 或 `file_path`；执行 0021 后，如有符合条件的 public 附件，只显示安全摘要和 `/public-files/[id]/download`。
 
 ## Research Asset Links Workflow
 

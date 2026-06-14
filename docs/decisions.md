@@ -1749,7 +1749,7 @@
 
 - 公开研究页面需要能分享少量明确审核过的附件，但不能把 Documents 变成公开文件中心。
 - private Storage bucket 和短时签名路由可以在不改 Storage policy 的前提下提供可撤回、可校验的下载能力。
-- `documents.visibility` 与 `document_asset_links` 已经存在，足以表达“文件是否可公开”和“文件关联哪个公开资产”，不需要新增 migration。
+- `documents.visibility` 与 `document_asset_links` 已经存在，足以表达“文件是否可公开”和“文件关联哪个公开资产”，因此 2R-A-4A 不需要新增业务 schema；后续 `0021_public_attachment_service_role_grants.sql` 仅作为权限 hotfix 补齐 server-side 查询所需 grant。
 - legacy `related_type / related_id` 仍需兼容，但在展示层应继续被具体关系降噪。
 
 影响：
@@ -1757,8 +1757,32 @@
 - 新增 public 附件查询层、公开附件面板和 public 下载 route。
 - Project / Publication 公开详情页显示当前 public 资产下的 public 文件附件；Knowledge / Skill 可后续作为独立 polish 扩展。
 - 文件详情页支持编辑 visibility；文件中心批量工具支持把选中文件设为 public 或 private，并显示公开风险提示。
-- 本阶段不新增 migration，不新增 RPC，不修改 RLS、Storage policy、bucket、`storage_path`、上传、删除、zip 下载、文件多关联数据模型或 `research_asset_links`。
+- 本阶段不新增业务 schema、RPC 或数据模型；后续 0021 hotfix 只补 `service_role` 的只读表权限，不修改 RLS、Storage policy、bucket、`storage_path`、上传、删除、zip 下载、文件多关联数据模型或 `research_asset_links`。
 - 不公开 private / unlisted / restricted 文件，不公开文档包 zip 下载，不公开 raw link rows、relation note、owner_id、Storage path、Storage bucket、signed URL、service role key、API key、Supabase key、Authorization header、cookie、token 或 secret。
+
+## 2026-06-14 - Grant Service Role Read Access For Public Attachment Checks
+
+类型：decision
+
+决策：
+
+- 新增 `supabase/migrations/0021_public_attachment_service_role_grants.sql`。
+- 该 migration 只给 Supabase `service_role` 授予 `projects`、`publications`、`knowledge_notes`、`skills`、`documents` 和 `document_asset_links` 的 `select` 权限。
+- 该权限仅用于 server-side `getPublicDocumentsForAsset()` 和 `/public-files/[id]/download` route 复核 public 资产、public 文件和文件关联。
+- 不给 `anon`、viewer 或普通公开页面开放 Documents / raw link rows 读取。
+- 不修改 RLS、不修改 Storage policy、不把 `workspace-files` bucket 改为 public、不移动或重写 Storage object、不公开 signed URL。
+
+原因：
+
+- 生产排查发现 Vercel 已存在 `SUPABASE_SERVICE_ROLE_KEY`，但 public Publication 详情页 runtime log 中 `isPublicAsset` 在查询 `publications` 时返回 `permission denied for table publications`。
+- #103 的公开附件查询使用 server-side service-role client 做安全复核；如果数据库没有给 `service_role` 表级 `select` grant，查询会在资产 public 校验阶段失败并返回空附件数组。
+- 补 grant 比放宽 RLS、公开 bucket 或绕过 public 资产校验更小，也更符合 private Storage 和公开附件边界。
+
+影响：
+
+- 执行 0021 后，公开 Project / Publication 详情页的 public 附件查询可以继续按既有条件返回结果：文件 public、bucket 为 `workspace-files`、当前资产 public，且文件关联当前资产。
+- `/public-files/[id]/download` 仍只在服务端校验通过后生成 60 秒短时 signed URL。
+- 如果附件仍为空，下一步应检查数据条件：当前页面是否为 `/projects/[slug]` 或 `/publications/[slug]`、资产 visibility、文件 visibility、bucket、Storage path 和 document asset link / legacy relation。
 
 ## 2026-06-14 - Polish Public Research Detail Pages
 
