@@ -5,6 +5,7 @@ const siteUrl = "https://personal-workstation.vercel.app";
 const siteName = "黄铭语研究工作站";
 const publicRoutes = [
   "/",
+  "/about",
   "/projects",
   "/publications",
   "/knowledge",
@@ -77,7 +78,7 @@ for (const fragment of forbiddenSitemapFragments) {
 
 const robots = await fetchText("/robots.txt");
 assertStatus(robots, 200, "robots");
-for (const route of ["/", "/projects", "/publications", "/knowledge", "/skills"]) {
+for (const route of ["/", "/about", "/projects", "/publications", "/knowledge", "/skills"]) {
   assertMatches(robots.body, new RegExp(`Allow:\\s*${escapeRegExp(route)}(?:\\n|$)`), `robots allows ${route}`);
 }
 for (const route of ["/dashboard", "/api", "/viewer", "/login", "/access-request", "/public-files"]) {

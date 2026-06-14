@@ -48,6 +48,7 @@
 - Phase 2R-C-1 polish 公开 SEO 与分享体验：统一 metadata、canonical、Open Graph / Twitter card、sitemap 和 robots；sitemap 只收录 public 内容，robots 阻止 dashboard / API / viewer / public-files 等敏感路径
 - Phase 2R-C-2 发布前 QA 与 hardening：新增轻量 `npm run smoke:public` 巡检公开路由、fallback、sitemap、robots、metadata 与敏感字段边界，并修补公开文案和附件 metadata 长内容换行
 - Phase 2R-D-1 公开内容运营基础：Project / Publication / Knowledge / Skill 后台详情页新增基于既有字段的 public readiness checklist，并新增公开内容运营文档；只提示、不阻止保存、不自动公开内容或附件
+- Phase 2R-F-1 公开 About / Resume Profile polish：`/about` 成为正式公开个人简介页，展示研究方向、工作站说明、公开技能 / 工具方向、公开内容导航和保守联系方式；不恢复外部访问申请或授权链路
 - Phase 2R-Z 移除外部访问申请与 viewer 授权：删除 `/access-request`、viewer login/callback、后台 Access Requests / Access Grants、restricted 外部授权代码；新增 0022 迁移将 restricted 回写 private、收紧 public read policy 并删除旧授权表 / 函数；不改 Documents、Storage policy、public 文件下载 route 或核心后台内容管理
 
 ## 本地启动
@@ -217,7 +218,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2Q-B-1 起 Project / Knowledge / Skill / Publication 后台详情页支持显式资产关系，管理员可手动维护“相关 / 支持 / 引用 / 使用 / 产出 / 来源于”关系并查看 backlinks。
 - Phase 2Q-B-2 起显式资产关系区域支持本地筛选目标资产、关系统计、方向 / 类型筛选，以及只修改关系类型和备注的编辑流程。
 - Phase 2Q-B-4 起取消此前的全局关系可视化页面；显式资产关系继续在 Project / Knowledge / Skill / Publication 后台详情页中维护。
-- Phase 2R-A-1 起公开首页和公开导航强调“黄铭语研究工作站”站点身份；Phase 2R-A-4A 允许公开 Project / Publication 详情页展示显式 public 文件附件；0021 hotfix 补齐该 server-side 查询所需的 `service_role` 只读授权。Phase 2R-D-1 在四类后台详情页加入 public readiness checklist，并新增公开内容运营指南。Phase 2R-Z 已移除访问申请、Access Grants、Viewer 登录和 restricted 外部授权，公开页面仍只展示 public 内容，不公开 private Documents、Storage 路径、signed URL、`file_path`、raw link rows 或后台关系管理。
+- Phase 2R-A-1 起公开首页和公开导航强调“黄铭语研究工作站”站点身份；Phase 2R-A-4A 允许公开 Project / Publication 详情页展示显式 public 文件附件；0021 hotfix 补齐该 server-side 查询所需的 `service_role` 只读授权。Phase 2R-D-1 在四类后台详情页加入 public readiness checklist，并新增公开内容运营指南。Phase 2R-F-1 将 `/about` 打磨为正式公开个人简介页。Phase 2R-Z 已移除访问申请、Access Grants、Viewer 登录和 restricted 外部授权，公开页面仍只展示 public 内容，不公开 private Documents、Storage 路径、signed URL、`file_path`、raw link rows 或后台关系管理。
 - Viewer 登录与 restricted 外部访问不再作为 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。

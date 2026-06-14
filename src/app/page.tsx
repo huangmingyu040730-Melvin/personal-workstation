@@ -269,6 +269,10 @@ export default async function HomePage() {
                 进入 Skill 库
                 <Sparkles className="transition duration-300 group-hover:rotate-6 group-hover:scale-105" size={18} />
               </Link>
+              <Link href="/about" className="public-cta-motion group inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/85 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-white hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                关于我
+                <ArrowRight className="transition duration-300 group-hover:translate-x-1" size={18} />
+              </Link>
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:gap-5">

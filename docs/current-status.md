@@ -35,9 +35,10 @@ Phase 2R-Z 已移除外部访问申请、Access Grants、Viewer magic link 和 r
 - Phase 2R-C-2 后，公开站点进入发布前 QA / hardening：新增 `npm run smoke:public` 巡检公开入口、未公开 fallback、metadata、sitemap、robots 和敏感字段边界；公开文案进一步避免暴露内部文件实现细节，公开附件 metadata 在移动端长分类 / MIME type 下可换行。
 - Phase 2R-D-1 后，公开内容运营基础建立：四类后台详情页新增 public readiness checklist，帮助管理员用既有字段判断内容是否适合公开；该提示只读、不阻止保存、不自动公开内容或附件。
 - Phase 2R-Z 后，访问申请、Viewer 登录、Access Grants 和 restricted 外部授权代码已移除；0022 迁移将历史 restricted 内容回写 private，收紧可见性约束和 public read policy，并删除旧访问申请 / 授权表与授权函数。
+- Phase 2R-F-1 后，`/about` 成为正式公开个人简介页，集中展示个人定位、研究方向、公开研究工作站说明、技能 / 工具方向、公开内容导航和保守 Contact / Links；不新增 migration，不恢复外部访问申请或授权。
 - 首页区块之间使用清晰 section wrapper、边框和交替背景分隔，并补充克制的 hover / focus micro-interactions。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库和轻量“管理员登录”；不显示后台菜单、文件中心、访问申请或全局关系图谱入口。
-- About 页面 `/about`。
+- About 页面 `/about`，用于公开个人简介、研究方向、工作站说明和公开内容导航。
 - 公开 Projects 列表与详情 `/projects`、`/projects/[slug]`。
 - 公开 Publications 列表与详情 `/publications`、`/publications/[slug]`。
 - 公开 Skills 列表与详情 `/skills`、`/skills/[slug]`。
@@ -394,7 +395,7 @@ Resume 预览页中 summary / 素材概述里的 bullet-like 文本自动拆行�
 Phase 2O-A 后，默认路线从“继续扩展新功能”转为“稳定现有工作台”：
 
 - 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系；Project 后台详情页可作为单个研究项目的中枢入口，Knowledge 后台详情页可作为单个知识节点入口，Skill 后台详情页可作为能力包 / 工作流包入口，Publication 后台详情页可作为成果中枢入口，先整理研究框架、成果摘要、正文摘要、使用说明、平台版本、私密附件、显式资产关系和相关搜索入口。
-- 公开展示：Phase 2R-A-1 起把公开首页作为“黄铭语研究工作站”入口维护，首屏 H1 为“个人研究工作站”，清晰展示研究方向、公开 Projects、Publications、Knowledge 和 Skills；Phase 2R-A-2 只强化 hero 的金融 / 量化 / 研究视觉氛围和标题字体质感；Phase 2R-A-3 只把四个公开列表页打磨为正式内容索引并增加轻量筛选，不改变公开内容查询或权限边界；Phase 2R-C-1 起统一公开 SEO、分享卡片、sitemap 和 robots，让公开站点可被安全索引和分享；Phase 2R-C-2 起用 `npm run smoke:public` 和浏览器冒烟作为公开发布前 QA，复查公开路由、fallback、sitemap、robots、metadata 和移动端边界；Phase 2R-D-1 起后台详情页提供 public readiness checklist 和公开内容运营文档，帮助管理员持续整理可公开内容；Phase 2R-Z 起移除访问申请、Access Grants、Viewer magic link 和 restricted 外部授权，公开导航保留轻量“管理员登录”入口但不显示后台菜单、文件中心、访问申请或全局关系图谱入口，公开页面继续只读展示 public 内容。
+- 公开展示：Phase 2R-A-1 起把公开首页作为“黄铭语研究工作站”入口维护，首屏 H1 为“个人研究工作站”，清晰展示研究方向、公开 Projects、Publications、Knowledge 和 Skills；Phase 2R-A-2 只强化 hero 的金融 / 量化 / 研究视觉氛围和标题字体质感；Phase 2R-A-3 只把四个公开列表页打磨为正式内容索引并增加轻量筛选，不改变公开内容查询或权限边界；Phase 2R-C-1 起统一公开 SEO、分享卡片、sitemap 和 robots，让公开站点可被安全索引和分享；Phase 2R-C-2 起用 `npm run smoke:public` 和浏览器冒烟作为公开发布前 QA，复查公开路由、fallback、sitemap、robots、metadata 和移动端边界；Phase 2R-D-1 起后台详情页提供 public readiness checklist 和公开内容运营文档，帮助管理员持续整理可公开内容；Phase 2R-F-1 起 `/about` 作为正式公开个人简介页维护；Phase 2R-Z 起移除访问申请、Access Grants、Viewer magic link 和 restricted 外部授权，公开导航保留轻量“管理员登录”入口但不显示后台菜单、文件中心、访问申请或全局关系图谱入口，公开页面继续只读展示 public 内容。
 - 文件 / 知识管理：Documents 作为可维护的统一默认私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills；公开站点只在 Project / Publication 详情页展示显式 public 且关联当前 public 资产的安全附件摘要，Knowledge / Skill 公开详情不展示 Documents。需要调整单个文件时使用文件详情页添加 / 移除多资产关联；需要整理多个文件时使用 Documents 紧凑批量工具栏添加、移除或清空关联；需要调整整个资料包时使用文档包详情页的关联管理和可选同步到包内文件；legacy primary relation 仅作为兼容字段处理。需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。

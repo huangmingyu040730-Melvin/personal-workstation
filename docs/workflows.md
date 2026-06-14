@@ -315,6 +315,34 @@ npm run build
 - 确认没有新增数据库字段，没有修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 - 确认公开页面仍只展示 public 内容；Knowledge / Skill 公开详情仍不展示 Documents。
 
+## Public About Profile Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 维护 Phase 2R-F-1 的公开个人简介页，让 `/about` 作为个人研究主页、作品集入口和公开研究工作站说明页。
+
+步骤：
+
+1. 打开 `/about`，确认 Hero 展示姓名 / 站点身份、简短定位、公开简介和 Projects / Publications / 首页 CTA。
+2. 确认 Research Focus、Workstation Explanation、Skills / Tools、Public Content Navigation 和 Contact / Links 区块展示正常。
+3. Contact / Links 只展示公开 Profile 字段；不要硬编码私人邮箱、Auth UUID、Supabase 配置或私密联系方式。
+4. 确认 About 页面没有访问申请、Viewer login、Access Grants 或 restricted 外部授权入口。
+5. 确认公开内容导航可进入 `/projects`、`/publications`、`/knowledge` 和 `/skills`。
+6. 确认 `/about` 在 sitemap 中，且 `/access-request`、`/viewer` 和 `/public-files` 不在 sitemap 中。
+7. 确认 robots 继续阻止 dashboard、api、viewer、access-request、public-files 等敏感路径。
+8. 确认 390px 移动端无横向溢出。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 在本地运行中站点执行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 确认公开页面 HTML 不出现 signed URL、Storage path、`file_path`、owner_id、raw document links 或后台关系管理数据。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09

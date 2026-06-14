@@ -1,5 +1,27 @@
 # Decisions
 
+## 2026-06-15 - Polish Public About Profile Without Expanding Access
+
+类型：decision
+
+决策：
+
+- Phase 2R-F-1 将 `/about` 打磨为正式公开个人简介页，用于展示个人定位、研究方向、公开研究工作站说明、技能 / 工具方向、公开内容导航和保守 Contact / Links。
+- About 页面只读取 `visibility = 'public'` 且 `is_public = true` 的 Profile 字段，或使用静态公开文案 fallback。
+- 首页增加轻量 About 入口；`npm run smoke:public` 覆盖 `/about`；robots 明确允许 `/about`。
+- 不新增 migration，不修改 RLS、Storage policy、Documents、`/public-files/[id]/download` 或四类公开内容核心查询。
+- 不恢复访问申请、Viewer login、Access Grants 或 restricted 外部授权。
+
+原因：
+
+- 公开研究工作站已经具备内容展示主链路，需要一个更正式的个人简介页承接作品集、研究主页和站点说明。
+- About 的价值在于解释公开内容和私密后台边界，而不是引入新的权限或联系流程。
+
+影响：
+
+- `/about` 成为公开站点的个人公开资料和研究工作站说明页。
+- 公开联系方式只来自管理员明确公开的 Profile 字段；不得硬编码私人邮箱、Auth UUID、Supabase 配置或敏感联系信息。
+
 ## 2026-06-15 - Retire External Access Requests And Viewer Authorization
 
 类型：decision
