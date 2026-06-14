@@ -47,7 +47,7 @@ export default async function UploadDocumentPage({ searchParams }: { searchParam
               <AdminFormHelpCard
                 title="私密文件边界"
                 tone="slate"
-                items={["文件权限固定为 private。", "公开页面不会展示下载入口。", "下载链接短时有效，不保存到数据库。", "关联公开内容也不会开放附件。"]}
+                items={["上传默认写入 private。", "只有显式设为 public 且关联公开内容时，公开页面才会展示下载入口。", "下载链接短时有效，不保存到数据库。", "Storage 路径和 signed URL 不会写入页面 HTML。"]}
               />
             </>
           }

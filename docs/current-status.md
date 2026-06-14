@@ -28,6 +28,7 @@
 - #100 追加 UI polish 后，hero H1 使用“个人研究工作站”，首屏恢复左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构；Knowledge / Skill 首页预览改为紧凑卡片并展示最多 4 条 public 内容。
 - Phase 2R-A-2 后，首页 hero 在保留左侧文案 + 右侧统计卡片结构的基础上，增加低对比金融 / 量化 / 研究风格 CSS 背景装饰，并用系统中文 serif 栈优化“个人研究工作站”标题质感；#101 预览反馈后，背景装饰重心从右侧移到左侧 / 中间偏左，避免被统计卡片遮挡。
 - Phase 2R-A-3 后，公开 Projects / Publications / Knowledge / Skills 列表页统一为正式研究内容索引：listing header、公开统计、轻量 URL 筛选、公开卡片、友好空状态和更清晰 metadata。
+- Phase 2R-A-4A 后，公开 Project / Publication 详情页可展示显式 public 文件附件；附件下载通过 `/public-files/[id]/download` 服务端校验后按需生成 60 秒短时 signed URL，页面 HTML 不输出 signed URL、Storage 路径或 raw link rows。
 - 首页区块之间使用清晰 section wrapper、边框和交替背景分隔，并补充克制的 hover / focus micro-interactions。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”；不显示后台菜单、文件中心或全局关系图谱入口。
 - About 页面 `/about`。
@@ -45,7 +46,7 @@
 - 大屏左右留白已改善。
 - 卡片和按钮动效已增强。
 
-公开页面不得展示 Documents 下载入口、signed URL、Storage 路径、`file_path`、后台操作入口、Activity Logs、后台关系管理或非 public 内容。Publication 公开查询会对历史 `file_path` / `cover_url` 做公开边界处理，避免公开组件误用。
+公开页面只展示 public 内容和显式 public 文件附件。公开页面不得展示 private / restricted / unlisted 内容、Storage 路径、Storage bucket、owner_id、signed URL、`file_path`、raw `document_asset_links`、后台操作入口、Activity Logs、后台关系管理或非 public 内容。Publication 公开查询会对历史 `file_path` / `cover_url` 做公开边界处理，避免公开组件误用。
 
 ### Admin Backend
 
@@ -60,6 +61,7 @@
 - Documents 文档包、多文件 / 文件夹上传与统一私密附件底座。
 - Documents 文件 metadata、文档包 metadata、关联对象与列表筛选维护能力。
 - Documents 文件中心紧凑批量操作工具栏，以及批量添加 / 移除多资产关联能力。
+- Documents 文件详情页和文件中心批量工具支持显式设置文件 `visibility`；上传默认 private，不自动公开旧文件。
 - Documents 批量删除文件与删除整个文档包及文件能力。
 - Documents 多文件与文档包 zip 临时下载能力。
 - 后台全局搜索 `/dashboard/search`，按研究资产 metadata 搜索 Projects、Publications、Knowledge、Skills、Documents 和文档包，并支持类型筛选、统计和关键词高亮。
@@ -228,14 +230,15 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - 文件夹上传 metadata。
 - 管理员下载。
 - signed URL 短时下载。
+- 文件上传默认 `visibility = "private"`；管理员可在文件详情页或文件中心批量工具中显式设为 `public` / `private`。
 - 文件和文档包可关联 Publication / Project / Knowledge / Skill，并支持一个文件或文档包同时关联多个研究资产。
 - Project / Publication / Knowledge / Skill 后台详情页可直接查看关联文件和文档包。
 - 各内容详情页上传入口复用 `/dashboard/documents/upload`，并通过 query params 预填关联对象、上传模式、分类和文档包类型。
 - Project / Publication / Knowledge / Skill 新建表单支持“保存并上传附件”操作：对象先创建成功，再跳转统一上传页并预选新对象。
-- 文件详情页支持编辑文件显示名称、分类和 legacy primary relation，并可查看全部关联 chips、添加关联或移除 link-table 关联。
+- 文件详情页支持编辑文件显示名称、分类、visibility 和 legacy primary relation，并可查看全部关联 chips、添加关联或移除 link-table 关联。
 - 文档包详情页支持编辑文档包名称、描述、类型和 legacy primary relation，并可查看全部关联 chips、添加 / 移除文档包关联，可选择同步到包内文件。
 - Documents 列表支持按 category、related_type 和 collection 状态筛选；`related_type / related_id` 现在表示“包含该资产关联”，`related_type=unlinked` 可查看没有专用关联和 legacy 关联的文件。
-- Documents 文件中心批量区已改为紧凑工具栏，支持批量添加关联、按资产批量移除关联、清空全部关联、zip 下载、批量删除和高级 legacy primary relation 操作。
+- Documents 文件中心批量区已改为紧凑工具栏，支持批量添加关联、按资产批量移除关联、清空全部关联、设置公开性、zip 下载、批量删除和高级 legacy primary relation 操作。
 - Documents 列表支持批量删除选中文件，删除数据库记录和对应 private Storage object，但不会自动删除空文档包。
 - Documents 列表支持勾选多个文件后临时下载 zip。
 - 文档包详情页支持批量修改包内文件关联对象或批量解除包内文件关联，不修改文档包自身关联或文件 `collection_id`。
@@ -250,15 +253,16 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - `document_asset_links` 与 `document_collection_asset_links` 记录文件 / 文档包到 Project / Knowledge / Skill / Publication 的多资产关联，支持 `related`、`source_material`、`supporting_material`、`deliverable`、`reference`、`input`、`output` 关系类型和备注。
 - 关联 chips 在展示查询层归一化：同一文件 / 文档包对同一资产如果已有具体关系，则隐藏同一资产的 legacy `related` fallback；只有 `related` 是唯一关系时才显示“相关”。
 - #99 追加 UI polish：上传页、文件详情页、文档包详情页和文件中心批量添加关联都使用 checkbox / chips 分组选择器，不再使用原生多选框；文件中心“权限”列显示为轻量私密状态标签。
+- Phase 2R-A-4A 新增公开附件底座：公开 Project / Publication 详情页可展示当前 public 资产下显式 public 文件；附件组件只接收 id、文件名、分类、大小、MIME type、更新时间、关系标签和 `/public-files/[id]/download`，不接收或输出 Storage path、Storage bucket、owner_id、signed URL、raw link rows 或 relation note。
+- public 下载路由会服务端复核：文件 `visibility = "public"`、文件属于 `workspace-files`、当前资产为 public，且文件通过 `document_asset_links` 或 legacy `related_type / related_id` 关联到该资产；通过后才按需生成 60 秒短时 signed URL。
+- public 附件关系展示也会对同一资产下的 legacy `related` fallback 做降噪：已有 `deliverable` 等具体关系时，不再同时展示“相关”。
 - `documents.relative_path` / `documents.folder_path` 保存文件夹上传的相对路径信息。
 - `documents.storage_path` 使用 ASCII-safe object key；中文文件名和文件夹名只保存在显示名、`original_name`、`relative_path` 等展示字段中。
 - 单文件最大 50 MB；批量 / 文件夹上传单次最多 100 个文件，总量 200 MB。
 - Publication 有附件时禁止直接删除。
-- 公开页面不展示 Documents。
-- 公开页面不展示 signed URL。
-- 公开页面不展示 Storage 路径。
+- 公开页面不展示 private / unlisted Documents，不展示 signed URL，不展示 Storage 路径。
 
-文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一私密附件底座，但不对外开放，不生成公开下载链接，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示；Phase 2P-E-1-C 只增加主动整体迁移 / 同步关联工具；Phase 2P-E-2 只增加管理员批量删除文件和删除整个文档包及文件能力；Phase 2P-E-3 只增加管理员后台 zip 临时下载能力。Phase 2P-G-1 新增 0020 migration 和专用多关联表，同时保留 legacy primary relation 兼容；关联 chips 的 `related` 降噪、多关联选择器和权限列 polish 只在展示层完成，不删除 legacy 数据，不新增 migration，不改 Storage policy，不新增 RPC。zip 按请求生成，不保存到 Storage。
+文件上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。Documents 是 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；Phase 2R-A-4A 只允许管理员显式公开单个文件后，通过当前 public 资产详情页的安全下载路由展示，不公开 raw Documents 管理能力，不执行上传代码，不解析或安装 Skill 包。Phase 2P-B 只把附件查看与预填上传入口嵌入后台内容详情页；Phase 2P-C 只增加 create-and-upload 跳转流，不做 pending upload、临时文件 staging 或 create action 文件处理。Phase 2P-D 只增强后台 metadata 管理与筛选；Phase 2P-E-1 只增强批量关联整理能力；Phase 2P-E-1-B 只澄清内容详情页附件展示；Phase 2P-E-1-C 只增加主动整体迁移 / 同步关联工具；Phase 2P-E-2 只增加管理员批量删除文件和删除整个文档包及文件能力；Phase 2P-E-3 只增加管理员后台 zip 临时下载能力。Phase 2P-G-1 新增 0020 migration 和专用多关联表，同时保留 legacy primary relation 兼容；关联 chips 的 `related` 降噪、多关联选择器和权限列 polish 只在展示层完成，不删除 legacy 数据，不新增 migration，不改 Storage policy，不新增 RPC。Phase 2R-A-4A 不新增 migration、不新增 RPC、不修改 RLS 或 Storage policy。zip 按请求生成，不保存到 Storage。
 
 ### Access Requests
 

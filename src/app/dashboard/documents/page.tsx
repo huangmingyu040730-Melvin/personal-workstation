@@ -28,6 +28,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const assetLinksAddedNotice = params.notice === "document_asset_links_added";
   const assetLinksRemovedNotice = params.notice === "document_asset_links_removed";
   const assetLinksClearedNotice = params.notice === "document_asset_links_cleared";
+  const visibilityUpdatedNotice = params.notice === "documents_visibility_updated";
   const bulkCount = Number(params.count ?? 0);
   const [documents, projects, publications, knowledgeNotes, skills] = await Promise.all([
     getDocuments({ category, relatedType, relatedId, collection }),
@@ -93,7 +94,12 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           已清空 {bulkCount || documents.length} 个文件的全部多关联。Storage object 未移动、未删除。
         </div>
       ) : null}
-      <AdminSecurityNote>文件中心只面向管理员后台。文件默认私密，公开页面不会展示下载入口、Storage 路径或 signed URL。</AdminSecurityNote>
+      {visibilityUpdatedNotice ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          已更新 {bulkCount || documents.length} 个文件的公开状态。Storage object 未移动、未重命名。
+        </div>
+      ) : null}
+      <AdminSecurityNote>文件中心只面向管理员后台。文件默认私密；只有显式设为公开且关联到公开内容的文件，才会通过公开页面的安全下载路由提供下载。</AdminSecurityNote>
       <AdminSection>
       <form className="flex flex-wrap gap-3">
         <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">

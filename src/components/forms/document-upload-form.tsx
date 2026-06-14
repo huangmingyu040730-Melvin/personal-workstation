@@ -449,7 +449,7 @@ export function DocumentUploadForm({
         </Link>
       ) : null}
 
-      <AdminFormSection title="上传模式" description="单文件流程保持兼容；多文件和文件夹会创建一个私密文档包。">
+      <AdminFormSection title="上传模式" description="单文件流程保持兼容；多文件和文件夹会创建一个默认私密的文档包。">
         <div className="grid gap-3 md:grid-cols-2">
           <button
             type="button"
@@ -512,7 +512,7 @@ export function DocumentUploadForm({
       </AdminFormSection>
 
       {mode === "batch" ? (
-        <AdminFormSection title="文档包信息" description="文档包表示一次上传批次、文件夹或附件包；附件仍保持私密。">
+        <AdminFormSection title="文档包信息" description="文档包表示一次上传批次、文件夹或附件包；新文件默认保持私密。">
           <div className="grid gap-5 md:grid-cols-2">
             <Field label="文档包名称" hint="留空时会使用根文件夹名称或默认文档包名称。">
               <TextInput name="collection_title" placeholder="例如 因子研究数据包" disabled={pending} />
@@ -548,7 +548,7 @@ export function DocumentUploadForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="关联对象" description="文件和文档包可以同时关联多个 Project、Publication、Knowledge 或 Skill；附件仍保持私密。">
+      <AdminFormSection title="关联对象" description="文件和文档包可以同时关联多个 Project、Publication、Knowledge 或 Skill；新文件默认私密，后续可在文件中心显式设为公开。">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
           <Field
             label="关联对象"
@@ -599,7 +599,7 @@ export function DocumentUploadForm({
         </AdminFormSection>
       ) : null}
 
-      <AdminSecurityNote>文件权限固定为私密。即使关联到公开 Project、Publication、Knowledge 或 Skill，附件也只允许管理员通过短时链接下载。Skill 包只作为文件存储，不执行、不解析、不安装。</AdminSecurityNote>
+      <AdminSecurityNote>上传后的文件默认是私密。只有管理员显式设为公开、且文件关联到公开 Project / Publication / Knowledge / Skill 时，公开页面才会显示安全下载入口。Skill 包只作为文件存储，不执行、不解析、不安装。</AdminSecurityNote>
 
       <div className="flex flex-wrap gap-3 pt-2">
         <button

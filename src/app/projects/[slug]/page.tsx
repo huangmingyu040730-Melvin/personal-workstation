@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { StatusBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { PublicDocumentAttachmentsPanel } from "@/components/public/public-document-attachments-panel";
 import { Progress } from "@/components/progress";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
+import { getPublicDocumentsForAsset } from "@/lib/queries/public-document-attachments";
 import { getPublicProjectBySlug, getViewableProjectBySlug } from "@/lib/queries/projects";
 import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
 import { getPublicPublicationsByProjectId } from "@/lib/queries/publications";
@@ -49,9 +51,10 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
     );
   }
 
-  const [relatedPublications, relatedKnowledge] = await Promise.all([
+  const [relatedPublications, relatedKnowledge, publicDocuments] = await Promise.all([
     getPublicPublicationsByProjectId(project.id, 4),
-    getPublicKnowledgeNotesByProjectId(project.id, { limit: 4 })
+    getPublicKnowledgeNotesByProjectId(project.id, { limit: 4 }),
+    project.visibility === "public" ? getPublicDocumentsForAsset("project", project.id) : Promise.resolve([])
   ]);
   const hasResearchDetails = Boolean(project.background?.trim() || project.research_question?.trim() || project.methodology?.trim());
 
@@ -73,6 +76,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
               <p className="text-sm leading-7 text-stone-600">该项目的公开背景、问题和方法仍在整理中。当前页面先展示已公开的摘要、状态、进度和关联内容。</p>
             </Card>
           ) : null}
+          <PublicDocumentAttachmentsPanel attachments={publicDocuments} />
         </div>
         <div className="space-y-5">
           <Card>
@@ -98,7 +102,7 @@ export default async function PublicProjectDetailPage({ params }: { params: Prom
           </Card>
           <Card>
             <CardHeader title="公开说明" />
-            <p className="text-sm leading-7 text-stone-600">本页只展示公开项目字段，不包含私密笔记、内部日志或文件附件。</p>
+            <p className="text-sm leading-7 text-stone-600">本页只展示公开项目字段。只有显式设为公开、且关联到当前公开项目的文件会出现在公开附件区域；私密文件、Storage 路径和短时链接不会写入页面。</p>
           </Card>
         </div>
       </section>

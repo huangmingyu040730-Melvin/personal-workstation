@@ -24,7 +24,7 @@ export default async function NewPublicationPage({ searchParams }: { searchParam
               <AdminFormHelpCard
                 title="附件提醒"
                 tone="slate"
-                items={["附件请在文件中心上传。", "公开成果的附件仍保持私密。", "有附件关联时删除成果会被保护。"]}
+                items={["附件请在文件中心上传。", "新附件默认私密；如需公开下载，需在文件中心显式设为公开。", "有附件关联时删除成果会被保护。"]}
               />
             </>
           }

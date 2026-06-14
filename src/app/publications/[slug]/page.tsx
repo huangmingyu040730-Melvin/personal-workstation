@@ -2,12 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Card, CardHeader } from "@/components/card";
+import { PublicDocumentAttachmentsPanel } from "@/components/public/public-document-attachments-panel";
 import { PublicPageHero, PublicShell } from "@/components/public/public-shell";
 import { RestrictedAccessNotice } from "@/components/public/restricted-access-notice";
 import { getPublicationTypeLabel } from "@/lib/content-options";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import { getPublicKnowledgeNotesByProjectId } from "@/lib/queries/knowledge";
+import { getPublicDocumentsForAsset } from "@/lib/queries/public-document-attachments";
 import { getPublicPublicationBySlug, getViewablePublicationBySlug } from "@/lib/queries/publications";
 import { publicPageMetadata } from "@/lib/site";
 
@@ -47,9 +49,12 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
     );
   }
 
-  const relatedKnowledge = publication.project_id
-    ? await getPublicKnowledgeNotesByProjectId(publication.project_id, { limit: 3 })
-    : [];
+  const [relatedKnowledge, publicDocuments] = await Promise.all([
+    publication.project_id
+      ? getPublicKnowledgeNotesByProjectId(publication.project_id, { limit: 3 })
+      : Promise.resolve([]),
+    publication.visibility === "public" ? getPublicDocumentsForAsset("publication", publication.id) : Promise.resolve([])
+  ]);
 
   return (
     <PublicShell>
@@ -67,10 +72,7 @@ export default async function PublicPublicationDetailPage({ params }: { params: 
               <p className="text-sm leading-7 text-stone-600">{publication.summary}</p>
             </Card>
           ) : null}
-          <Card>
-            <CardHeader title="附件说明" />
-            <p className="text-sm leading-7 text-stone-600">公开成果页面不提供附件下载。关联文件仍为私密资料，仅管理员可在后台通过短时链接访问。</p>
-          </Card>
+          <PublicDocumentAttachmentsPanel attachments={publicDocuments} />
         </div>
         <div className="space-y-5">
           <Card>

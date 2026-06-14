@@ -134,7 +134,7 @@ npm run build
 6. 本轮使用 private bucket `workspace-files`，不创建 public bucket。
 7. 文件上传使用两阶段流程：Server Action 准备 metadata 和路径，浏览器直接上传到 Supabase Storage，Server Action 最终确认并写入数据库。
 8. 文件上传必须使用服务端生成路径和 `upsert: false`，失败时尽力清理已上传对象或异常记录。
-9. 文件下载只为管理员生成 60 秒 signed URL，不保存 signed URL，不输出到公开页面。
+9. 文件上传默认 private；管理员下载和 public 下载 route 都只按需生成 60 秒 signed URL，不保存 signed URL，也不写入页面 HTML。
 10. Publication 删除前检查关联 documents；存在附件时阻止删除。
 11. Activity Logs 只记录后台摘要，不记录文件内容、signed URL、完整 Storage 路径、密码、密钥或 Auth UUID。
 
@@ -143,7 +143,7 @@ npm run build
 - 运行 `npm run lint`。
 - 运行 `npm run build`。
 - 检查 0003 migration 只包含 private bucket 和最小 Storage policies。
-- 检查公开首页不展示 private/unlisted Publications，也不展示任何附件下载入口。
+- 检查公开首页不展示 private/unlisted Publications，也不展示 Storage 路径、signed URL 或 raw 文件关系；公开附件只允许后续 public route 按规则展示。
 - 新建环境或 Preview 环境执行 0003 前，不对对应 Supabase 项目做 Storage 写入测试。
 - 管理员真实上传、下载、关联和删除验收需要用户本人登录完成。
 
@@ -194,7 +194,7 @@ npm run build
 5. 外部用户通过 `/viewer/login` 使用邮箱魔法链接登录，不使用明文密码，不进入后台；当前该链路仍不稳定，修复工作不得混入其他阶段。
 6. 公开详情页读取受 RLS 保护的数据；未授权时只显示申请入口和授权登录入口，不展示正文。
 7. 撤销授权只更新授权状态为 `revoked`，RLS 会阻止后续读取。
-8. Documents、Storage、附件下载和 signed URL 不随 restricted 内容授权开放。
+8. private Documents、Storage、附件下载和 signed URL 不随 restricted 内容授权开放；显式 public 文件仍只按 public 下载 route 规则访问。
 9. Viewer 登录前授权检查依赖 `0006_viewer_login_grant_check.sql`，但 0006 只提供 RPC，不代表 viewer 登录链路已稳定。
 
 验证要求：
@@ -227,10 +227,11 @@ npm run build
 8. 公开导航只面向普通访客，保留首页、研究项目、学术成果、知识库、Skill 库、访问申请和轻量“管理员登录”，不放后台菜单、文件中心或全局关系图谱入口。
 9. “管理员登录”只链接到登录流程；未登录访客不能直接进入后台，已登录管理员沿用现有 `/login?next=/dashboard` / dashboard 逻辑。
 10. 公开列表和详情页只展示 public 内容；restricted 内容通过访问申请和授权流程处理，private 内容不进入公开展示。
-11. 需要查看或下载附件时，管理员回到后台 Documents、内容详情页的 RelatedDocumentsPanel 或文档包详情页处理；公开页面不提供附件下载。
-12. Documents 多资产关联、显式资产关系和后台搜索只用于管理员整理，不在公开页面展示。
-13. 如需要外部访客申请未公开内容，引导其访问 `/access-request`；申请通过不自动开放 Documents、Storage、附件下载或后台入口。
-14. Publication 公开页面不得展示历史 `file_path`、Storage 路径、signed URL 或附件下载入口。
+11. 需要公开少量附件时，管理员先在文件详情页或文件中心批量工具把文件显式设为 public，并确认文件关联到当前 public Project / Publication；未显式 public 的文件仍只在后台 Documents、RelatedDocumentsPanel 或文档包详情页处理。
+12. 公开 Project / Publication 详情页只展示安全附件摘要和 `/public-files/[id]/download` 入口；下载 route 服务端复核文件 public、当前资产 public 和关联存在后，才生成 60 秒短时 signed URL。
+13. Documents raw 多资产关联、relation note、Storage path、Storage bucket、owner_id、显式资产关系和后台搜索只用于管理员整理，不在公开页面展示。
+14. 如需要外部访客申请未公开内容，引导其访问 `/access-request`；申请通过不自动开放 private Documents、Storage、私密附件下载或后台入口。
+15. Publication 公开页面不得展示历史 `file_path`、Storage 路径、Storage bucket、signed URL 或 raw 附件关系。
 
 验证要求：
 
@@ -242,7 +243,8 @@ npm run build
 - 确认 `/projects`、`/publications`、`/knowledge`、`/skills` 是统一公开内容索引体验，筛选可用、空状态友好、移动端不横向溢出。
 - 确认公开导航显示“管理员登录”，但不显示后台菜单、文件中心、关系图谱或 Documents 入口。
 - 确认 private / restricted / unlisted 内容不会出现在公开列表、公开首页或 sitemap。
-- 确认公开 Project / Publication / Knowledge / Skill 页面不展示附件下载、Storage path、signed URL、`file_path`、`document_asset_links` 或 `research_asset_links` 管理功能。
+- 确认公开 Project / Publication 页面只展示符合条件的 public 附件；公开 Knowledge / Skill 当前不强制展示附件。
+- 确认公开页面不展示 private / unlisted 文件、Storage path、Storage bucket、signed URL、`file_path`、raw `document_asset_links`、relation note 或 `research_asset_links` 管理功能。
 - 本流程不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或后台显式关系管理，不引入字体文件、外部字体服务、图表库、动画库、外部搜索服务或向量库。
 
 ## Project Documentation Wrap-up
@@ -330,11 +332,11 @@ npm run build
 13. query params 只用于预填；服务端必须继续通过 `ensureRelatedRecordExists` 或同等逻辑验证每个关联对象存在且管理员可读。
 14. 上传到已有文档包时，文件应继承文档包多关联，并允许叠加当前上传页传入的关联；不要因为文件和文档包 legacy primary relation 不一致而阻断上传。
 15. Publication 删除前同时检查关联 `documents` 和 `document_collections`，存在附件或文档包时阻止删除。
-16. Skill 包、代码文件和压缩包只作为私密文件存储，不执行、不解析、不安装。
-17. 文件详情页只允许编辑显示名称、分类和 legacy primary relation，不允许编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id；多资产关联在详情页的关联区域添加或移除。
+16. Skill 包、代码文件和压缩包只作为文件存储，不执行、不解析、不安装。
+17. 文件详情页只允许编辑显示名称、分类、visibility 和 legacy primary relation，不允许编辑 Storage bucket/path、大小、MIME type、原始文件名、relative_path、folder_path 或 collection_id；多资产关联在详情页的关联区域添加或移除。
 18. 文档包详情页只允许编辑名称、描述、类型和 legacy primary relation，不允许手动编辑 file_count、total_size、root_folder_name、owner_id、visibility 或时间戳；多资产关联在文档包关联区域添加或移除。
 19. 普通“编辑文档包信息”只修改文档包 metadata，不自动批量修改包内文件的多关联或 legacy primary relation。
-20. Documents 列表和文档包详情页允许勾选多个文件后批量添加关联、按指定资产移除关联、清空全部关联，legacy primary relation 操作放在高级兼容区域。
+20. Documents 列表和文档包详情页允许勾选多个文件后批量添加关联、按指定资产移除关联、清空全部关联、批量设为 public / private，legacy primary relation 操作放在高级兼容区域。
 21. 批量添加关联写入 `document_asset_links`，目标关联对象必须在 Server Action 中重新校验存在；如果文件没有 legacy primary relation，可用首个新关联补齐 legacy 字段。
 22. 批量移除指定关联只删除对应 link rows；清空全部关联会删除所选文件的 link rows，并清空 legacy primary relation。
 23. 文档包详情页的“添加文档包关联”可选择同步到包内文件；移除文档包关联也可选择从包内文件移除等价关联。
@@ -344,7 +346,7 @@ npm run build
 27. 多个文件调整：使用 Documents 列表或文档包详情页的紧凑批量工具栏，只修改所选文件 metadata 或专用 link rows。
 28. 整个资料包调整：使用文档包详情页的关联管理和可选同步到包内文件；legacy “同步主关联”只作为兼容工具保留。
 29. 文档包整体同步必须由 Server Action 按 `collection_id` 查询包内文件，不接收前端传入的文件 ID 或文件数量。
-30. Documents 列表筛选只影响后台文件中心；`related_type / related_id` 表示“包含该资产关联”，不得读取文件内容或生成 signed URL。
+30. Documents 列表筛选只影响后台文件中心；`related_type / related_id` 表示“包含该资产关联”，不得读取文件内容或在列表页生成 signed URL。
 31. 批量删除文件必须在 Server Action 中重新读取所选文件记录；读取失败或选择为空时不得执行删除。
 32. 批量删除文件必须要求确认 checkbox，缺失时返回“请先确认删除操作。”。
 33. 批量删除文件先删除 Supabase Storage object，再删除 `documents` 记录；Storage 删除失败时不删除数据库记录。
@@ -359,17 +361,20 @@ npm run build
 42. zip 按请求临时生成，不保存到 Storage，不创建持久化 zip 记录。
 43. zip 下载限制为最多 50 个文件、总原始大小 100 MB；数据库声明大小会先用于预检查，下载后按实际字节数再次检查；超限时拆分下载，系统不生成部分 zip。
 44. zip 下载失败时不部分打包，不输出 Storage path、signed URL、token、Authorization header、cookie、API key、Supabase key 或 secret。
-45. 上传和整理文件后，先通过 `/dashboard/search?q=关键词` 按文件名、original_name、relative_path、文档包标题、项目、知识笔记、成果或 Skill metadata 全局查找资产。
-46. 需要聚焦某类结果时，在搜索页使用 `type=documents`、`type=knowledge`、`type=projects` 等类型筛选；切回 `type=all` 可恢复全部分组。
-47. 全局搜索只查询数据库 metadata；q trim 后少于 2 个字符时不执行查询，每类最多返回 8 条，并显示全部和每类命中数量。
-48. 搜索结果标题和描述可高亮关键词，但高亮只在 React 展示层完成，不保存索引。
-49. 文件正文搜索、PDF / Word / Excel / zip 解析、OCR、AI 摘要和向量搜索属于后续阶段；当前全局搜索不得读取文件正文、生成 signed URL 或输出 Storage path。
+45. public 附件只在 Project / Publication 公开详情页展示安全摘要字段；页面不得输出 Storage path、Storage bucket、owner_id、signed URL、raw `document_asset_links` 或 relation note。
+46. `/public-files/[id]/download` route 必须重新查询文件记录并校验 `documents.visibility = 'public'`、bucket 为 `workspace-files`、当前资产 public 且文件关联当前资产；校验失败返回 404 / 403 类结果，不生成 signed URL。
+47. 上传和整理文件后，先通过 `/dashboard/search?q=关键词` 按文件名、original_name、relative_path、文档包标题、项目、知识笔记、成果或 Skill metadata 全局查找资产。
+48. 需要聚焦某类结果时，在搜索页使用 `type=documents`、`type=knowledge`、`type=projects` 等类型筛选；切回 `type=all` 可恢复全部分组。
+49. 全局搜索只查询数据库 metadata；q trim 后少于 2 个字符时不执行查询，每类最多返回 8 条，并显示全部和每类命中数量。
+50. 搜索结果标题和描述可高亮关键词，但高亮只在 React 展示层完成，不保存索引。
+51. 文件正文搜索、PDF / Word / Excel / zip 解析、OCR、AI 摘要和向量搜索属于后续阶段；当前全局搜索不得读取文件正文、生成 signed URL 或输出 Storage path。
 
 验证要求：
 
 - 运行 `npm run lint`。
 - 运行 `npm run build`。
-- 确认公开 Projects、Publications、Knowledge、Skills 页面不展示附件、Storage 路径、signed URL 或下载入口。
+- 确认公开 Project / Publication 详情页只展示显式 public 且关联当前 public 资产的文件附件；Knowledge / Skill 当前不要求展示附件。
+- 确认公开页面不展示 private / unlisted 文件、Storage 路径、Storage bucket、signed URL、raw link rows 或 relation note。
 - 确认未配置或未执行 `0018_document_collections_and_folder_uploads.sql` 的环境会清晰失败或降级，不假装上传成功。
 - 真实上传验收需要用户本人登录管理员账号，并确认目标 Supabase 环境已执行 0003、0018 和 0020。
 - metadata 编辑验收需要确认 0018 已执行；多关联添加 / 移除验收需要确认 0020 已执行。

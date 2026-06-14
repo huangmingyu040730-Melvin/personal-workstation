@@ -46,7 +46,7 @@ export function DocumentCollectionForm({
           />
         </div>
         <p className="mt-4 text-sm leading-6 text-slate-500">
-          文档包和包内文件允许拥有不同关联对象；文件级关联请在文件详情页单独调整。附件仍保持 private，关联公开内容也不会开放下载入口。Skill 包只作为文件存储，不执行、不解析、不安装。
+          文档包和包内文件允许拥有不同关联对象；文件级关联请在文件详情页单独调整。包内文件默认 private，只有文件级显式 public 且关联公开内容时才会开放公开下载。Skill 包只作为文件存储，不执行、不解析、不安装。
         </p>
         <div className="mt-5">
           <SubmitButton pendingLabel="保存中...">保存文档包信息</SubmitButton>

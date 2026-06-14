@@ -56,8 +56,8 @@ export function DocumentCollectionSyncForm({
         <div className="mt-4 space-y-2 rounded-2xl bg-white px-4 py-3 text-xs leading-5 text-slate-500">
           <p>此操作只修改文档包和包内文件的关联 metadata。</p>
           <p>为保持兼容，会同步写入或清空对应多关联 link rows。</p>
-          <p>不会移动、重命名、删除 Storage object，也不会修改文件的 collection_id 或公开附件下载入口。</p>
-          <p>Skill 包只作为私密文件存储，不执行、不解析、不安装。</p>
+          <p>不会移动、重命名、删除 Storage object，也不会修改文件的 collection_id；若文件已显式 public，公开附件区会按新关联重新判断。</p>
+          <p>Skill 包只作为文件存储，不执行、不解析、不安装。</p>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
