@@ -19,6 +19,8 @@ Phase 2R-Z 已移除外部访问申请、Access Grants、Viewer magic link 和 r
 
 Phase 2R-G-1 将当前稳定版本收口为 v1.0 final QA / release notes。PR #115 已关闭且不合并，后续不继续推进 Phase 2R-F-2 homepage featured content polish，首页保持当前 `main` 的主结构。
 
+Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenance-playbook.md` 作为日常维护手册，暂时跳过 public content sprint，后续真实内容由管理员在后台逐步手动补充和完善，不继续大改框架或页面主结构。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -39,6 +41,7 @@ Phase 2R-G-1 将当前稳定版本收口为 v1.0 final QA / release notes。PR #
 - Phase 2R-Z 后，访问申请、Viewer 登录、Access Grants 和 restricted 外部授权代码已移除；0022 迁移将历史 restricted 内容回写 private，收紧可见性约束和 public read policy，并删除旧访问申请 / 授权表与授权函数。
 - Phase 2R-F-1 后，`/about` 成为正式公开个人简介页，集中展示个人定位、研究方向、公开研究工作站说明、技能 / 工具方向、公开内容导航和保守 Contact / Links；不新增 migration，不恢复外部访问申请或授权。
 - Phase 2R-G-1 后，新增 `docs/v1-release-notes.md`，集中记录 v1.0 版本定位、公开站点能力、后台能力、安全边界、退役功能、当前不做事项和可复制验收清单。
+- Phase 2R-G-2 后，新增 `docs/maintenance-playbook.md`，记录 v1.0 稳定维护阶段的 public 内容发布、public attachment、部署前后检查、安全巡检和故障排查流程；不新增功能，不修改页面主结构。
 - 首页区块之间使用清晰 section wrapper、边框和交替背景分隔，并补充克制的 hover / focus micro-interactions。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库和轻量“管理员登录”；不显示后台菜单、文件中心、访问申请或全局关系图谱入口。
 - About 页面 `/about`，用于公开个人简介、研究方向、工作站说明和公开内容导航。
@@ -103,7 +106,7 @@ Phase 2R-G-1 将当前稳定版本收口为 v1.0 final QA / release notes。PR #
 
 后台仍只允许管理员访问。后台写入继续通过 Server Actions 验证管理员身份，并依赖 Supabase RLS 作为数据库权限边界。
 
-Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar、Career 和 Profile；Market Brief 已弃用并移除产品入口；访问申请 / Access Grants / Viewer 外部授权已在 Phase 2R-Z 退役，不恢复；求职中心后续只做 bugfix、文案修正和 broken link 修复，不主动扩展新的求职自动化功能。
+Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar、Career 和 Profile；Market Brief 已弃用并移除产品入口；访问申请 / Access Grants / Viewer 外部授权已在 Phase 2R-Z 退役，不恢复；Phase 2R-G-2 起 v1.0 维护以 playbook、手动内容补充、安全巡检和小 bug 修复为主，不主动扩展新的公开内容 sprint、首页精选区或求职自动化功能。
 
 ### Workspace Search
 

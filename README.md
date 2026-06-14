@@ -8,7 +8,7 @@
 - 对内管理全部项目、知识、成果、文件、日历与自动化。
 - 公开站点只展示 public 内容；外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权已在 Phase 2R-Z 退役，不恢复。
 
-当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，公开内容运营指南详见 `docs/public-content-operations.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
+当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.0 维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
 
 ## 技术栈
 
@@ -50,6 +50,7 @@
 - Phase 2R-D-1 公开内容运营基础：Project / Publication / Knowledge / Skill 后台详情页新增基于既有字段的 public readiness checklist，并新增公开内容运营文档；只提示、不阻止保存、不自动公开内容或附件
 - Phase 2R-F-1 公开 About / Resume Profile polish：`/about` 成为正式公开个人简介页，展示研究方向、工作站说明、公开技能 / 工具方向、公开内容导航和保守联系方式；不恢复外部访问申请或授权链路
 - Phase 2R-G-1 v1.0 final QA / release notes：新增 v1.0 发布说明和最终验收清单；#115 已关闭不合并，首页保持当前 `main` 主结构，不继续推进 2R-F-2 首页精选区改版
+- Phase 2R-G-2 v1.0 maintenance playbook：新增稳定维护手册，记录日常 public 内容、Documents、公开附件、安全检查、部署验收和故障排查流程；暂时跳过 public content sprint，后续内容由管理员手动逐步补充
 - Phase 2R-Z 移除外部访问申请与 viewer 授权：删除 `/access-request`、viewer login/callback、后台 Access Requests / Access Grants、restricted 外部授权代码；新增 0022 迁移将 restricted 回写 private、收紧 public read policy 并删除旧授权表 / 函数；不改 Documents、Storage policy、public 文件下载 route 或核心后台内容管理
 
 ## 本地启动

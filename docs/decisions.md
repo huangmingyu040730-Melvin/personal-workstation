@@ -1,5 +1,28 @@
 # Decisions
 
+## 2026-06-15 - Enter v1 Maintenance With A Playbook
+
+类型：decision
+
+决策：
+
+- Phase 2R-G-2 将 v1.0 日常维护流程文档化。
+- 新增 `docs/maintenance-playbook.md`，记录新增 public 内容、公开附件、部署前检查、部署后检查、安全巡检和故障排查顺序。
+- 暂时跳过 public content sprint，已有 public 内容继续保留，后续真实内容由管理员在后台逐步手动补充。
+- 不继续推进 #115 或 Phase 2R-F-2，不重做首页精选区，不大改页面主结构。
+- 本阶段不新增功能、不新增 migration、不修改 RLS、Storage policy、Documents、`/public-files/[id]/download` 或后台主流程。
+
+原因：
+
+- v1.0 final QA / release notes 已完成并合并，当前更需要可重复维护手册，而不是继续扩展功能或补编造内容。
+- 公开站点和私密后台的关键边界已经稳定，日常维护应围绕内容质量、附件公开边界、安全巡检和部署验收执行。
+
+影响：
+
+- 后续维护优先查阅 `docs/maintenance-playbook.md`。
+- 管理员新增内容时先 private、补齐公开字段、检查 readiness、人工确认安全后再 public。
+- public attachment 仍只通过 Documents 显式 public + public Project / Publication 关联 + `/public-files/[id]/download` 服务端校验展示和下载。
+
 ## 2026-06-15 - Close 2R-F-2 And Ship v1 Final QA Notes
 
 类型：decision
