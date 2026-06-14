@@ -1935,3 +1935,27 @@
 - 不新增 migration、数据库字段、RLS、Storage policy、邮件服务、自动审批、自动授权、AI 判断、OCR、向量搜索、支付或会员能力。
 - 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
 - Access Grant 创建入口最多预填邮箱、申请 id 和内容类型；不得自动选择 private id，也不得自动开放 restricted/private 正文、Documents、private attachments、zip、Storage path、Storage bucket 或 signed URL。
+
+## 2026-06-15 - Polish Access Grants Admin Management Without Permission Model Changes
+
+类型：decision
+
+决策：
+
+- Phase 2R-E-2 将 `/dashboard/access-grants` polish 为手动授权管理工作台。
+- 列表页提供有效 / 过期 / 撤销状态筛选、内容类型筛选、状态统计和更完整授权卡片。
+- 创建页继续要求管理员手动选择具体 restricted 内容；从申请跳转时只把邮箱、申请 id 和内容类型作为上下文线索。
+- 新增授权详情页 `/dashboard/access-grants/[id]`，集中展示授权对象、目标内容、有效状态、安全边界和撤销操作。
+- 新增 `docs/access-grants-workflow.md` 记录创建、撤销、状态、Documents 和 QA 边界。
+
+原因：
+
+- Phase 2R-E-1 已把 Access Request 整理为人工审核队列，下一步需要把真正授权记录本身做成可维护的后台管理层。
+- 管理员需要快速区分 active / expired / revoked 授权，并按 Project / Publication / Knowledge / Skill 定位授权对象。
+- 授权管理不应被误解为邮件、审批自动化、Documents 开放或 public 附件权限变更。
+
+影响：
+
+- 不新增 migration、数据库字段、RLS、Storage policy、邮件服务、自动授权、自动内容选择、AI 判断、OCR、向量搜索、支付或会员能力。
+- 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
+- 当前 `content_access_grants` schema 不记录 `request_id` 或独立 `revoked_at`；后台只把申请 id 作为创建页上下文，并在 revoked 状态下用 `updated_at` 作为撤销时间线索。

@@ -6,11 +6,14 @@ type TargetOption = {
   id: string;
   type: AccessGrantContentType;
   title: string;
+  slug: string;
   href: string;
+  adminHref: string;
   visibility: Visibility;
 };
 
 export type GrantContentOptions = Record<AccessGrantContentType, TargetOption[]>;
+export type AccessGrantEffectiveStatus = "active" | "expired" | "revoked";
 
 const emptyOptions: GrantContentOptions = {
   project: [],
@@ -18,6 +21,18 @@ const emptyOptions: GrantContentOptions = {
   skill: [],
   knowledge: []
 };
+
+export function getAccessGrantEffectiveStatus(grant: Pick<ContentAccessGrantRecord, "status" | "expires_at">, now = new Date()): AccessGrantEffectiveStatus {
+  if (grant.status === "revoked") {
+    return "revoked";
+  }
+
+  if (grant.expires_at && new Date(grant.expires_at).getTime() <= now.getTime()) {
+    return "expired";
+  }
+
+  return "active";
+}
 
 export async function getAccessGrants(filters?: { status?: string; contentType?: string }) {
   const supabase = await createClient();
@@ -32,8 +47,12 @@ export async function getAccessGrants(filters?: { status?: string; contentType?:
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: false });
 
-  if (filters?.status && filters.status !== "all") {
-    query = query.eq("status", filters.status);
+  if (filters?.status === "revoked") {
+    query = query.eq("status", "revoked");
+  } else if (filters?.status === "expired") {
+    query = query.eq("status", "active").not("expires_at", "is", null).lte("expires_at", new Date().toISOString());
+  } else if (filters?.status === "active") {
+    query = query.eq("status", "active").or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
   }
 
   if (filters?.contentType && filters.contentType !== "all") {
@@ -69,17 +88,29 @@ export async function getAccessGrantById(id: string) {
 }
 
 export async function getGrantContentOptions(): Promise<GrantContentOptions> {
+  return getGrantContentOptionsByVisibility("restricted");
+}
+
+async function getGrantContentOptionsByVisibility(visibility: "restricted" | "all"): Promise<GrantContentOptions> {
   const supabase = await createClient();
 
   if (!supabase) {
     return emptyOptions;
   }
 
+  const visibilityFilter = <T>(query: T) => {
+    if (visibility === "restricted") {
+      return (query as { eq: (column: string, value: string) => T }).eq("visibility", "restricted");
+    }
+
+    return query;
+  };
+
   const [projects, publications, skills, knowledge] = await Promise.all([
-    supabase.from("projects").select("id,title,slug,visibility").eq("visibility", "restricted").order("updated_at", { ascending: false }),
-    supabase.from("publications").select("id,title,slug,visibility").eq("visibility", "restricted").order("updated_at", { ascending: false }),
-    supabase.from("skills").select("id,name,slug,visibility").eq("visibility", "restricted").order("updated_at", { ascending: false }),
-    supabase.from("knowledge_notes").select("id,title,slug,visibility").eq("visibility", "restricted").order("updated_at", { ascending: false })
+    visibilityFilter(supabase.from("projects").select("id,title,slug,visibility")).order("updated_at", { ascending: false }),
+    visibilityFilter(supabase.from("publications").select("id,title,slug,visibility")).order("updated_at", { ascending: false }),
+    visibilityFilter(supabase.from("skills").select("id,name,slug,visibility")).order("updated_at", { ascending: false }),
+    visibilityFilter(supabase.from("knowledge_notes").select("id,title,slug,visibility")).order("updated_at", { ascending: false })
   ]);
 
   for (const result of [projects, publications, skills, knowledge]) {
@@ -94,28 +125,36 @@ export async function getGrantContentOptions(): Promise<GrantContentOptions> {
       id: item.id,
       type: "project",
       title: item.title,
+      slug: item.slug,
       href: `/projects/${item.slug}`,
+      adminHref: `/dashboard/projects/${item.id}`,
       visibility: item.visibility as Visibility
     })),
     publication: (publications.data ?? []).map((item) => ({
       id: item.id,
       type: "publication",
       title: item.title,
+      slug: item.slug,
       href: `/publications/${item.slug}`,
+      adminHref: `/dashboard/publications/${item.id}`,
       visibility: item.visibility as Visibility
     })),
     skill: (skills.data ?? []).map((item) => ({
       id: item.id,
       type: "skill",
       title: item.name,
+      slug: item.slug,
       href: `/skills/${item.slug}`,
+      adminHref: `/dashboard/skills/${item.id}`,
       visibility: item.visibility as Visibility
     })),
     knowledge: (knowledge.data ?? []).map((item) => ({
       id: item.id,
       type: "knowledge",
       title: item.title,
+      slug: item.slug,
       href: `/knowledge/${item.slug}`,
+      adminHref: `/dashboard/knowledge/${item.id}`,
       visibility: item.visibility as Visibility
     }))
   };
@@ -131,7 +170,7 @@ async function attachGrantTargets(grants: ContentAccessGrantRecord[]): Promise<C
     return [];
   }
 
-  const options = await getGrantContentOptions();
+  const options = await getGrantContentOptionsByVisibility("all");
 
   return grants.map((grant) => ({
     ...grant,

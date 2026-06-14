@@ -674,6 +674,22 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 - 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
 - 访问申请 approved 仍不等于授权，不自动开放 restricted/private 正文、Documents、private attachments、public attachments、zip、Storage path、Storage bucket 或 signed URL。
 
+### Phase 2R-E-2 - Access Grants Admin Management Polish
+
+已完成代码实现。访问申请后台流程清晰后，Access Grants 后台管理被 polish 为更明确的手动授权工作台：
+
+- `/dashboard/access-grants` 新增有效 / 过期 / 撤销状态筛选、内容类型筛选、状态统计和更完整授权卡片。
+- 授权卡片展示邮箱、内容类型、内容标题、slug、visibility、创建时间、过期时间、撤销时间线索、备注状态和操作入口。
+- `/dashboard/access-grants/new` 强化手动选择具体 restricted 内容的说明；从申请跳转时只把邮箱、申请 id 和内容类型作为人工核对上下文。
+- 新增 `/dashboard/access-grants/[id]` 授权详情页，集中展示单条授权、目标内容、安全边界和撤销操作。
+- 新增 `docs/access-grants-workflow.md`，记录授权管理流程、状态含义、创建 / 撤销边界、Documents 边界和 QA 步骤。
+
+边界：
+
+- 不新增 migration、数据库字段、RLS、Storage policy、邮件服务、自动授权、自动内容选择、AI 判断、OCR、向量搜索、支付或会员能力。
+- 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
+- 当前 schema 不记录 `request_id` 或独立 `revoked_at`；后台只把申请 id 作为创建页上下文，并在 revoked 状态下用 `updated_at` 作为撤销时间线索。
+
 ### Phase 2D - Public Research Workstation
 
 已完成。公开首页、About、公开 Projects / Publications / Skills / Knowledge 列表与详情、公开内容填充、公开详情展示质量和后台公开内容运营提示已建立。
@@ -732,7 +748,7 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 继续维护公开站点与私密后台的边界：
 
-- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示，2R-C-1 只 polish 公开 SEO、分享卡片、sitemap 和 robots，2R-C-2 只做公开发布前 smoke、移动端溢出防护和敏感字段文案 hardening，2R-D-1 只做后台公开内容 readiness 提示和运营文档，2R-E-1 只 polish 后台访问申请人工审核工作台。
+- public 页面只展示明确设为 `public` 的内容；公开首页和公开导航承担“黄铭语研究工作站”说明，首页 H1 使用“个人研究工作站”，并展示研究方向、公开内容预览、访问申请和管理员登录入口。2R-A-2 的 hero 背景和标题字体 polish 只增强视觉识别，2R-A-3 的公开列表页 polish 只增强浏览体验，2R-A-4A 只新增显式 public 文件附件的安全展示和下载基础，2R-A-4B 只 polish 四类公开详情页和 related public content，2R-B-1 只 polish 访问申请、上下文 CTA、未公开 fallback 和后台申请审核展示，2R-C-1 只 polish 公开 SEO、分享卡片、sitemap 和 robots，2R-C-2 只做公开发布前 smoke、移动端溢出防护和敏感字段文案 hardening，2R-D-1 只做后台公开内容 readiness 提示和运营文档，2R-E-1 只 polish 后台访问申请人工审核工作台，2R-E-2 只 polish Access Grants 后台手动授权管理体验。
 - Documents 上传默认 private；只有管理员显式设为 public 且关联 public 资产的文件，才可在对应公开内容页展示安全附件摘要并通过短时签名下载路由访问。
 - Documents 作为可维护的统一默认私密附件管理系统承载 Project、Publication、Knowledge 和 Skill 的附件，并通过专用多关联表表达一个文件或文档包对应多个资产，避免每个模块重复实现文件系统。
 - 内容详情页继续嵌入后台附件视图；公开 Project / Publication 详情页只展示经 public 附件查询归一化后的安全字段，不展示 raw link rows、Storage 路径、Storage bucket、owner_id 或 signed URL；公开 Knowledge / Skill 详情页不展示 Documents。
