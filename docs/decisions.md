@@ -1911,3 +1911,27 @@
 - 不修改 RLS、Storage policy、bucket、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或 Access Grants 核心权限。
 - Knowledge / Skill 公开详情页仍不展示 Documents；Skill 仍不展示 package、不下载、不执行、不安装、不解析文件。
 - 后续运营 public 内容时，先看后台详情页 readiness checklist，再按 `docs/public-content-operations.md` 做人工判断和 QA。
+
+## 2026-06-15 - Polish Access Request Admin Workflow Without Auto Authorization
+
+类型：decision
+
+决策：
+
+- Phase 2R-E-1 将后台访问申请列表和详情页 polish 为人工审核工作台。
+- 列表页提供状态统计、状态筛选、目标类型筛选和更完整的申请卡片。
+- 详情页集中展示申请人、目标上下文、完整理由、处理记录、内部备注、安全边界和手动 Access Grant 引导。
+- approved 只代表申请处理状态；真正授权仍必须在 Access Grants 中手动创建并选择具体 restricted 内容。
+- 新增 `docs/access-request-workflow.md` 记录后台处理流程和边界。
+
+原因：
+
+- 公开站点和公开内容运营主链路已经完成，下一步需要把访客申请变成可持续处理的后台队列。
+- 管理员需要快速区分 pending / approved / rejected、Project / Publication / Knowledge / Skill 申请，并在详情页复核来源、slug、理由和内部备注。
+- 访问申请不能被误用为自动授权、邮件通知或 Documents 开放流程。
+
+影响：
+
+- 不新增 migration、数据库字段、RLS、Storage policy、邮件服务、自动审批、自动授权、AI 判断、OCR、向量搜索、支付或会员能力。
+- 不修改 Documents 上传 / 删除 / zip 下载、public 文件下载 route、Access Grants 核心权限或 restricted/private 访问边界。
+- Access Grant 创建入口最多预填邮箱、申请 id 和内容类型；不得自动选择 private id，也不得自动开放 restricted/private 正文、Documents、private attachments、zip、Storage path、Storage bucket 或 signed URL。
