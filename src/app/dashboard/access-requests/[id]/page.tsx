@@ -5,6 +5,7 @@ import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
 import { Card, CardHeader } from "@/components/card";
 import { AccessRequestReviewForm } from "@/components/forms/access-request-review-form";
 import { PageHeader } from "@/components/page-header";
+import { getAccessRequestContextFromStoredUrl } from "@/lib/access-request-context";
 import { getAccessRequestContentTypeLabel, getAccessRequestStatusLabel } from "@/lib/content-options";
 import { formatDateTime } from "@/lib/format";
 import { getFormError } from "@/lib/forms";
@@ -23,6 +24,7 @@ export default async function AccessRequestDetailPage({
   if (!request) {
     notFound();
   }
+  const requestContext = getAccessRequestContextFromStoredUrl(request.requested_content_url);
 
   return (
     <AppShell>
@@ -51,9 +53,21 @@ export default async function AccessRequestDetailPage({
             <dl className="space-y-3 text-sm">
               <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-slate-500">内容类型</dt><dd className="mt-1 font-medium text-slate-900">{getAccessRequestContentTypeLabel(request.requested_content_type)}</dd></div>
               <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-slate-500">内容标题</dt><dd className="mt-1 font-medium text-slate-900">{request.requested_content_title ?? "未指定"}</dd></div>
-              <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-slate-500">内容链接</dt><dd className="mt-1 break-all font-medium text-slate-900">{request.requested_content_url ?? "未填写"}</dd></div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-slate-500">来源</dt><dd className="mt-1 font-medium text-slate-900">{requestContext.sourceLabel}</dd></div>
+                <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-slate-500">公开路径</dt><dd className="mt-1 break-all font-medium text-slate-900">{requestContext.publicPath ?? "未填写"}</dd></div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-slate-500">原始申请链接</dt><dd className="mt-1 break-all font-medium text-slate-900">{request.requested_content_url ?? "未填写"}</dd></div>
               <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-slate-500">申请理由</dt><dd className="mt-2 whitespace-pre-wrap leading-7 text-slate-700">{request.reason}</dd></div>
             </dl>
+          </Card>
+          <Card className="border-blue-100 bg-blue-50/60">
+            <CardHeader title="处理边界" />
+            <div className="space-y-2 text-sm leading-7 text-blue-800">
+              <p>访问申请只表示访客希望查看更多资料，不等同于授权。</p>
+              <p>同意申请后，如需开放 restricted 内容，请继续创建 Access Grant，并手动选择具体内容。</p>
+              <p>本流程不会自动公开 Documents、private attachments、Storage path、signed URL、raw document links 或后台显式关系。</p>
+            </div>
           </Card>
         </div>
         <AdminSection title="处理申请" description="保存审批状态后，可为已同意申请创建具体内容授权。">

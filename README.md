@@ -46,6 +46,7 @@
 - Skill 后台详情页能力包 / 工作流包，整合用途、平台、版本、私密资料、版本记录和相关资产搜索入口
 - Publication 后台详情页成果中枢，整合成果摘要、abstract、关联 Project、私密材料、同项目知识节点和搜索入口
 - Phase 2R-A 起公开首页与公开导航转向“黄铭语研究工作站”展示 polish；首页 H1 使用“个人研究工作站”，首屏恢复左侧个人定位 / 标签 / CTA 与右侧公开统计卡片结构，Knowledge / Skill 首页预览使用更紧凑卡片展示更多 public 条目，并在公开导航保留轻量“管理员登录”入口；Phase 2R-A-2 进一步用轻量 CSS 背景装饰和系统字体栈增强金融、量化、研究和学术视觉识别；Phase 2R-A-3 将公开 Projects / Publications / Knowledge / Skills 列表页 polish 为正式研究内容索引；Phase 2R-A-4B 统一公开四类详情页为正式研究详情体验
+- Phase 2R-B-1 polish 访问申请与受限内容体验：详情页申请 CTA 带公开上下文，`/access-request` 展示申请目标和审核边界，后台申请列表 / 详情页显示来源、目标和理由摘要；申请不自动授权、不新增邮件服务、不公开 Documents
 
 ## 本地启动
 
@@ -125,7 +126,7 @@ values ('00000000-0000-0000-0000-000000000000');
 
 请将示例 UUID 替换为真实 Auth 用户 ID。
 
-Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。Phase 2Q-B-1 新增 `supabase/migrations/0019_research_asset_links.sql`，用于创建仅管理员后台使用的 `research_asset_links` 显式关系表。Phase 2Q-B-4 已移除此前的全局关系可视化页面，但四类资产详情页中的显式关系系统仍保留。Phase 2P-G-1 新增 `supabase/migrations/0020_document_asset_links.sql`，用于创建 Documents 与文档包专用的多资产关联表，并从 legacy `related_type / related_id` 回填初始关联。Phase 2R-A-1 只 polish 公开首页、公开导航和公开查询边界，不新增 migration。Phase 2R-A-2 只 refine 公开首页 hero 视觉识别、轻量背景装饰和 H1 系统字体栈，不新增 migration，不引入字体文件或外部字体服务。Phase 2R-A-3 只 polish 公开四类列表页、轻量筛选和 metadata，不新增 migration，不读取 Documents、文件内容或内部关系表。Phase 2R-A-4A / 2R-A-4B 原本不新增业务 schema；2R-A-4A 复用既有 `documents.visibility` 与 0020 link tables 做安全公开附件底座，2R-A-4B 只 polish 四类公开详情页、related public content 和 metadata。随后 `supabase/migrations/0021_public_attachment_service_role_grants.sql` 作为公开附件权限 hotfix，只给 server-side `service_role` 补公开附件查询 / 下载校验所需表的 `select` 权限，不修改 RLS、Storage policy、bucket 或文件数据。Documents 不纳入 `research_asset_links`；`documents.related_type / related_id` 与 `document_collections.related_type / related_id` 仅保留为 legacy primary relation 与兼容 fallback。关联 chips 在展示层降噪：如果同一资产已有更具体关系，则不重复显示 legacy `related`。新建环境仍需按顺序执行 0001 至 0021。更完整的配置步骤见 `docs/supabase-setup.md`。
+Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publications_documents_storage.sql`，用于创建私密 `workspace-files` Storage bucket 与管理员专属 Storage policies。Phase 2E-A 新增 `supabase/migrations/0004_access_requests.sql`，用于创建公开访问申请表与最小 RLS/GRANT。Phase 2E-B 新增 `supabase/migrations/0005_restricted_content_access.sql`，用于扩展 `restricted` 可见性、创建内容授权表和受限内容读取 policy。Viewer 登录前授权检查使用 `supabase/migrations/0006_viewer_login_grant_check.sql`。Phase 2J-A 新增 `supabase/migrations/0007_profile_public_fields.sql`，用于补充公开 Profile 编辑字段。Phase 2J-B 新增 `supabase/migrations/0008_calendar_events.sql`，用于补充站内日程字段、索引与 public 日程读取 policy。Phase 2K-A 新增 `supabase/migrations/0009_resume_items.sql`，用于创建 Resume 履历素材库。Phase 2K-B 新增 `supabase/migrations/0010_resume_versions.sql`，用于创建简历版本和素材选择关系。Phase 2K-C 新增 `supabase/migrations/0011_resume_template_fields.sql`，用于补充履历素材结构化 `details`、版本顶部个人字段开关、区块顺序和逐条素材可见字段控制。Phase 2K-H 新增 `supabase/migrations/0012_resume_jd_reviews.sql`，用于保存 JD 分析历史、AI 建议和投递状态。0013 至 0017 是已保留的旧迁移；当前产品代码不再依赖这些旧表。Phase 2P-A 新增 `supabase/migrations/0018_document_collections_and_folder_uploads.sql`，用于创建 Documents 文档包、文件夹上传 metadata、Knowledge 关联与 50 MB Storage 上限。Phase 2Q-B-1 新增 `supabase/migrations/0019_research_asset_links.sql`，用于创建仅管理员后台使用的 `research_asset_links` 显式关系表。Phase 2Q-B-4 已移除此前的全局关系可视化页面，但四类资产详情页中的显式关系系统仍保留。Phase 2P-G-1 新增 `supabase/migrations/0020_document_asset_links.sql`，用于创建 Documents 与文档包专用的多资产关联表，并从 legacy `related_type / related_id` 回填初始关联。Phase 2R-A-1 只 polish 公开首页、公开导航和公开查询边界，不新增 migration。Phase 2R-A-2 只 refine 公开首页 hero 视觉识别、轻量背景装饰和 H1 系统字体栈，不新增 migration，不引入字体文件或外部字体服务。Phase 2R-A-3 只 polish 公开四类列表页、轻量筛选和 metadata，不新增 migration，不读取 Documents、文件内容或内部关系表。Phase 2R-A-4A / 2R-A-4B 原本不新增业务 schema；2R-A-4A 复用既有 `documents.visibility` 与 0020 link tables 做安全公开附件底座，2R-A-4B 只 polish 四类公开详情页、related public content 和 metadata。随后 `supabase/migrations/0021_public_attachment_service_role_grants.sql` 作为公开附件权限 hotfix，只给 server-side `service_role` 补公开附件查询 / 下载校验所需表的 `select` 权限，不修改 RLS、Storage policy、bucket 或文件数据。Phase 2R-B-1 只 polish 访问申请页、详情页上下文 CTA、未公开 fallback 和后台申请展示，不新增 migration、不改 RLS、不新增邮件服务。Documents 不纳入 `research_asset_links`；`documents.related_type / related_id` 与 `document_collections.related_type / related_id` 仅保留为 legacy primary relation 与兼容 fallback。关联 chips 在展示层降噪：如果同一资产已有更具体关系，则不重复显示 legacy `related`。新建环境仍需按顺序执行 0001 至 0021。更完整的配置步骤见 `docs/supabase-setup.md`。
 
 ## 页面
 
@@ -141,7 +142,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/knowledge/[slug]` 公开知识笔记详情
 - `/skills` 公开 Skill 列表
 - `/skills/[slug]` 公开 Skill 详情
-- `/access-request` 访问申请表单
+- `/access-request` 访问申请表单，支持从公开详情页带入申请目标上下文
 - `/viewer/login` 外部授权访问邮箱登录
 - `/login` 管理员登录
 
@@ -211,7 +212,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Phase 2Q-B-1 起 Project / Knowledge / Skill / Publication 后台详情页支持显式资产关系，管理员可手动维护“相关 / 支持 / 引用 / 使用 / 产出 / 来源于”关系并查看 backlinks。
 - Phase 2Q-B-2 起显式资产关系区域支持本地筛选目标资产、关系统计、方向 / 类型筛选，以及只修改关系类型和备注的编辑流程。
 - Phase 2Q-B-4 起取消此前的全局关系可视化页面；显式资产关系继续在 Project / Knowledge / Skill / Publication 后台详情页中维护。
-- Phase 2R-A-1 起公开首页和公开导航强调“黄铭语研究工作站”站点身份，首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口；#100 追加 UI polish 将 hero H1 改为“个人研究工作站”，恢复左侧定位 / 标签 / CTA 与右侧统计卡片首屏结构，Knowledge / Skill 首页预览改为紧凑卡片并展示最多 4 条，补充克制的 hover / focus micro-interactions，并在公开导航加入轻量“管理员登录”入口。Phase 2R-A-2 在不改布局的前提下为 hero 增加金融 / 量化 / 研究风格的低对比 CSS 背景元素，并优化 H1 系统字体栈。Phase 2R-A-3 将四个公开列表页升级为统一 listing header、轻量筛选、公开内容卡片和友好空状态。Phase 2R-A-4A 允许公开 Project / Publication 详情页展示显式 public 文件附件；0021 hotfix 补齐该 server-side 查询所需的 `service_role` 只读授权。Phase 2R-A-4B 将公开 Project / Publication / Knowledge / Skill 详情页统一为正式研究详情体验、related public content 和安全 metadata。公开页面仍只展示 public 内容，不公开 private Documents、Storage 路径、signed URL、`file_path`、raw link rows 或后台关系管理。
+- Phase 2R-A-1 起公开首页和公开导航强调“黄铭语研究工作站”站点身份，首页展示研究方向、公开 Project / Publication / Knowledge / Skill 预览和访问申请入口；#100 追加 UI polish 将 hero H1 改为“个人研究工作站”，恢复左侧定位 / 标签 / CTA 与右侧统计卡片首屏结构，Knowledge / Skill 首页预览改为紧凑卡片并展示最多 4 条，补充克制的 hover / focus micro-interactions，并在公开导航加入轻量“管理员登录”入口。Phase 2R-A-2 在不改布局的前提下为 hero 增加金融 / 量化 / 研究风格的低对比 CSS 背景元素，并优化 H1 系统字体栈。Phase 2R-A-3 将四个公开列表页升级为统一 listing header、轻量筛选、公开内容卡片和友好空状态。Phase 2R-A-4A 允许公开 Project / Publication 详情页展示显式 public 文件附件；0021 hotfix 补齐该 server-side 查询所需的 `service_role` 只读授权。Phase 2R-A-4B 将公开 Project / Publication / Knowledge / Skill 详情页统一为正式研究详情体验、related public content 和安全 metadata。Phase 2R-B-1 将访问申请页、未公开内容 fallback 和后台申请审核体验 polish 为正式访客闭环：申请按钮带公开上下文，申请页展示目标与边界，后台能看到来源和目标。公开页面仍只展示 public 内容，不公开 private Documents、Storage 路径、signed URL、`file_path`、raw link rows 或后台关系管理。
 - Viewer 登录与 restricted 访问可作为独立 bugfix 专项继续修复。
 - Calendar、Documents、Profile、Projects、Knowledge、Skills、Publications 和 Career Center 以稳定维护为主。
 - 不主动扩展新的求职自动化、Market Brief 或独立 AI 生成产品线。
@@ -222,7 +223,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - 配置 Supabase 后，后台页面会要求登录，并通过 `public.admin_users` + `public.is_admin()` 判断管理员权限。
 - 登录成功后的 `next` 跳转会经过内部后台路径白名单校验，不允许跳到外部 URL。
 - 公开首页与公开列表/详情页只读取 `visibility = "public"` 的项目、成果、知识文章与 Skill；private / unlisted 不在公开页面返回或展示。
-- 公开访客可以在 `/access-request` 提交访问申请；管理员可在后台将指定 restricted 内容授权给指定邮箱。Viewer 登录和 restricted 只读访问基础代码已实现，但 magic link 登录仍存在已知问题，详见 `docs/known-issues.md`。
+- 公开访客可以在 `/access-request` 提交访问申请；从 Project / Publication / Knowledge / Skill 公开详情页进入时，申请链接会带 `content_type`、slug、公开标题和来源，后台可看到申请目标和来源。访问申请只是申请，不自动授权、不发送邮件、不开放 Documents 或 signed URL；管理员可在后台将指定 restricted 内容授权给指定邮箱。Viewer 登录和 restricted 只读访问基础代码已实现，但 magic link 登录仍存在已知问题，详见 `docs/known-issues.md`。
 - 公开 About 页面不硬编码管理员邮箱、Supabase 配置、Auth UUID 或其他敏感联系信息。
 - 后台 Projects、Publications、Skills、Knowledge 列表页提供轻量公开运营提示，帮助维护 public / featured 内容质量。
 - 公开可读取内容表不存储管理员 Supabase Auth UUID；管理员身份只保存在私密的 `admin_users` 表中。
@@ -233,7 +234,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Project / Knowledge / Skill / Publication 后台详情页已支持显式资产关系面板：管理员可在四类研究资产之间手动创建关系，查看 outbound 和 backlink，按方向 / 对方资产类型 / 关系类型筛选，编辑 relation_type 与 note，并删除关系；如需更换 source / target，需要删除后重新创建。全局关系可视化页面已移除，现有 `project_id` 关系继续保留，不迁移、不删除；搜索入口也继续作为辅助定位能力。
 - Skill package 仅作为私密资料存储和管理，不安装、不解析、不执行。
 - Publication 的 `file_path` 不展示也不作为下载入口，`cover_url` 仅作为安全 metadata 状态展示。
-- Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看并更新 pending / approved / rejected 状态与备注。
+- Access Requests 使用真实 Supabase 表记录访问申请；匿名访客只能提交，管理员可查看申请来源、目标标题 / slug、理由摘要，并更新 pending / approved / rejected 状态与备注。
 - Access Grants 已具备后台创建、列表和撤销基础；restricted 访问链路仍需 Phase 2I 稳定 Viewer 登录。
 - Profile 已接入真实 Supabase 编辑；公开 About 页面优先读取 `is_public = true` 且 `visibility = "public"` 的 Profile 字段。
 - Calendar 已接入站内 `calendar_events` CRUD；管理员可在 `/dashboard/calendar` 新建、编辑、删除日程，Dashboard 会展示近期日程。
@@ -244,7 +245,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - Dashboard 已读取真实项目、笔记、Skill、Publications、Documents、Calendar、Career 与 Activity Logs。
 - Google Calendar、提醒系统和外部日历同步尚未实现，也不是当前主动扩展优先级。
 - `profiles.contact` 与 `profiles.social_links` 仅应保存希望公开展示的联系方式；若 profile 记录设置为 public，其中公开字段会被访客读取。
-- 文件附件默认比正文内容更严格；即使 Project、Publication、Knowledge 或 Skill 设置为 public，关联 Documents 仍保持 private，本阶段不会在公开页面提供下载入口。
+- 文件附件默认比正文内容更严格；即使 Project、Publication、Knowledge 或 Skill 设置为 public，关联 Documents 仍默认 private。只有管理员显式设为 public 且关联到当前 public Project / Publication 的文件，才会通过安全附件摘要和 `/public-files/[id]/download` 公开；访问申请不会自动开放任何 Documents。
 - Notion 的长期定位是草稿、临时研究笔记、日常记录和协作辅助，不替代个人网站的正式公开门户、权限系统与私密资产库。
 
 ## 已知问题
