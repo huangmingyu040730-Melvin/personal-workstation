@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Check, Clipboard, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { generateProjectAiDraftAction } from "@/actions/ai-draft-form-copilot";
 import type { ProjectAiDraftResult, ProjectAiDraftState } from "@/lib/ai-draft-form-copilot";
@@ -14,15 +14,34 @@ type ProjectAiDraftAssistantProps = {
 };
 
 const initialState: ProjectAiDraftState = { status: "idle" };
+const generationSteps = [
+  { title: "读取当前草稿", description: "收集标题、简介和研究字段" },
+  { title: "组织补全方向", description: "判断缺失字段与可优化内容" },
+  { title: "生成结构化建议", description: "整理摘要、方法、标签和阶段计划" },
+  { title: "复核公开边界", description: "补充 public 风险和下一步建议" }
+] as const;
 
 export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, formId }: ProjectAiDraftAssistantProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<ProjectAiDraftState>(initialState);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [appliedKey, setAppliedKey] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
 
-  function handleGenerate() {
+  useEffect(() => {
+    if (!isGenerating) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveStep((current) => Math.min(current + 1, generationSteps.length - 1));
+    }, 1200);
+
+    return () => window.clearInterval(intervalId);
+  }, [isGenerating]);
+
+  async function handleGenerate() {
     const form = getTargetForm(rootRef.current, formId);
     if (!form) {
       setState({ status: "error", message: "未找到当前 Project 表单，请刷新页面后重试。" });
@@ -43,9 +62,18 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
       start_date: readFormValue(form, "start_date")
     };
 
-    startTransition(() => {
-      void generateProjectAiDraftAction({ assetType: "project", draft }).then(setState);
-    });
+    setState(initialState);
+    setCopiedKey(null);
+    setAppliedKey(null);
+    setActiveStep(0);
+    setIsGenerating(true);
+
+    try {
+      const nextState = await generateProjectAiDraftAction({ assetType: "project", draft });
+      setState(nextState);
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   async function copyText(key: string, value: string | string[]) {
@@ -72,85 +100,127 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
   }
 
   return (
-    <section ref={rootRef} className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-emerald-50/40 p-5 shadow-soft">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
+    <section ref={rootRef} className="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-soft">
+      <div className="border-b border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
             <Sparkles size={20} />
           </div>
-          <div>
-            <h2 className="text-base font-semibold text-slate-950">AI 草稿补全助手</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              点击时读取当前表单里的标题、简介、研究背景、研究问题、方法、标签、状态和可见性；进度、日期和里程碑只作为可选上下文。
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold leading-6 text-slate-950">AI 草稿补全助手</h2>
+              <span className="rounded-full bg-blue-600/10 px-2 py-0.5 text-[11px] font-semibold text-blue-700">Project</span>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-slate-600">
+              根据左侧当前草稿补全摘要、方法、标签和阶段计划。
             </p>
           </div>
         </div>
-        <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 text-xs leading-5 text-slate-600 shadow-sm">
-          <span className="font-semibold text-slate-900">{providerLabel}</span>
-          <span className="mx-1 text-slate-300">/</span>
-          <span>{model}</span>
+        <div className="mt-3 flex min-w-0 items-center gap-2 rounded-2xl border border-blue-100 bg-white/80 px-3 py-2 text-xs leading-5 text-slate-600 shadow-sm">
+          <span className="shrink-0 font-semibold text-slate-950">{providerLabel}</span>
+          <span className="shrink-0 text-slate-300">/</span>
+          <span className="min-w-0 truncate">{model}</span>
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-blue-100 bg-white/80 p-4 text-sm leading-6 text-blue-800">
-        AI 只会根据当前表单草稿生成建议，不会自动保存、不会自动公开内容，也不会读取 Documents 或生成下载链接。请人工复核后再采用。
-      </div>
+      <div className="space-y-4 p-4">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-3 py-2 text-xs leading-5 text-blue-800">
+          只读取当前表单草稿；不自动保存、不自动公开，不读取 Documents 或生成下载链接。
+        </div>
 
-      {!isConfigured ? (
-        <div className="mt-4 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-          <AlertTriangle className="mt-0.5 shrink-0" size={18} />
-          <div>
-            <p className="font-semibold">AI 草稿助手尚未配置</p>
-            <p className="mt-1">请在服务端环境变量中配置 AI_API_KEY，或继续使用 OPENAI_API_KEY。Project 表单仍可正常编辑和保存。</p>
+        {!isConfigured ? (
+          <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+            <AlertTriangle className="mt-0.5 shrink-0" size={16} />
+            <div>
+              <p className="font-semibold">AI 草稿助手尚未配置</p>
+              <p className="mt-1">配置 AI_API_KEY 或 OPENAI_API_KEY 后可用；Project 表单仍可正常编辑和保存。</p>
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={handleGenerate}
-          disabled={!isConfigured || isPending}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0"
+          disabled={!isConfigured || isGenerating}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0"
         >
-          {isPending ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
-          根据当前表单生成建议
+          {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
+          {isGenerating ? "正在生成建议" : "根据当前表单生成建议"}
         </button>
-        <p className="text-xs leading-5 text-slate-500">采用建议只更新浏览器中的表单字段；仍需手动点击保存。</p>
+        <p className="text-xs leading-5 text-slate-500">采用建议只更新浏览器字段；仍需手动保存。</p>
+
+        {isGenerating ? <GenerationProgress activeStep={activeStep} /> : null}
+
+        {state.message ? (
+          <div
+            className={cn(
+              "rounded-2xl border px-3 py-2 text-xs leading-5",
+              state.status === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-100 bg-emerald-50 text-emerald-700"
+            )}
+          >
+            {state.message}
+          </div>
+        ) : null}
+
+        {state.result ? (
+          <ProjectAiDraftResultView
+            result={state.result}
+            copiedKey={copiedKey}
+            appliedKey={appliedKey}
+            onCopy={copyText}
+            onApply={applyField}
+          />
+        ) : null}
+
+        {state.rawText ? (
+          <DraftBlock
+            title="AI 原始文本"
+            value={state.rawText}
+            copied={copiedKey === "raw"}
+            onCopy={() => copyText("raw", state.rawText ?? "")}
+          />
+        ) : null}
+
+        {state.modelName ? <p className="text-xs text-slate-400">Model: {state.modelName}</p> : null}
       </div>
-
-      {state.message ? (
-        <div
-          className={cn(
-            "mt-4 rounded-2xl border px-4 py-3 text-sm leading-6",
-            state.status === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-100 bg-emerald-50 text-emerald-700"
-          )}
-        >
-          {state.message}
-        </div>
-      ) : null}
-
-      {state.result ? (
-        <ProjectAiDraftResultView
-          result={state.result}
-          copiedKey={copiedKey}
-          appliedKey={appliedKey}
-          onCopy={copyText}
-          onApply={applyField}
-        />
-      ) : null}
-
-      {state.rawText ? (
-        <DraftBlock
-          title="AI 原始文本"
-          value={state.rawText}
-          copied={copiedKey === "raw"}
-          onCopy={() => copyText("raw", state.rawText ?? "")}
-        />
-      ) : null}
-
-      {state.modelName ? <p className="mt-4 text-xs text-slate-400">Model: {state.modelName}</p> : null}
     </section>
+  );
+}
+
+function GenerationProgress({ activeStep }: { activeStep: number }) {
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-slate-50 p-3" aria-live="polite">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold text-slate-950">生成进度</p>
+        <p className="text-[11px] font-medium text-blue-700">{activeStep + 1}/{generationSteps.length}</p>
+      </div>
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-100">
+        <div
+          className="h-full rounded-full bg-blue-600 transition-all duration-500"
+          style={{ width: `${((activeStep + 1) / generationSteps.length) * 100}%` }}
+        />
+      </div>
+      <ol className="mt-3 space-y-2">
+        {generationSteps.map((step, index) => (
+          <li key={step.title} className="flex gap-2">
+            <span
+              className={cn(
+                "mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold",
+                index < activeStep && "border-blue-600 bg-blue-600 text-white",
+                index === activeStep && "border-blue-600 bg-white text-blue-700 shadow-[0_0_0_4px_rgba(37,99,235,0.12)]",
+                index > activeStep && "border-slate-200 bg-white text-slate-300"
+              )}
+            >
+              {index < activeStep ? "✓" : index + 1}
+            </span>
+            <span className="min-w-0">
+              <span className={cn("block text-xs font-semibold", index <= activeStep ? "text-slate-900" : "text-slate-400")}>{step.title}</span>
+              <span className="block text-[11px] leading-4 text-slate-500">{step.description}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
