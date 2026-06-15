@@ -1,13 +1,16 @@
 import { createPublicationAction } from "@/actions/publications";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { PublicationAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { PublicationForm } from "@/components/forms/publication-form";
 import { PageHeader } from "@/components/page-header";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import { getFormError } from "@/lib/forms";
 import { getProjectOptions } from "@/lib/queries/projects";
 
 export default async function NewPublicationPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [params, projects] = await Promise.all([searchParams, getProjectOptions()]);
+  const aiConfig = getAiProviderConfig();
 
   return (
     <AppShell>
@@ -16,6 +19,12 @@ export default async function NewPublicationPage({ searchParams }: { searchParam
         <AdminFormSurface
           sidebar={
             <>
+              <PublicationAiDraftAssistant
+                formId="publication-form"
+                isConfigured={aiConfig.isConfigured}
+                providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+                model={aiConfig.model}
+              />
               <AdminFormHelpCard
                 title="成果录入建议"
                 description="适合沉淀研究报告、阶段总结、策略方法论和数据分析成果。"

@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import { updatePublicationAction } from "@/actions/publications";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { PublicationAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { PublicationForm } from "@/components/forms/publication-form";
 import { PageHeader } from "@/components/page-header";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import { getFormError } from "@/lib/forms";
 import { getPublicationById } from "@/lib/queries/publications";
 import { getProjectOptions } from "@/lib/queries/projects";
@@ -17,6 +19,7 @@ export default async function EditPublicationPage({
 }) {
   const [{ id }, query, projects] = await Promise.all([params, searchParams, getProjectOptions()]);
   const publication = await getPublicationById(id);
+  const aiConfig = getAiProviderConfig();
 
   if (!publication) {
     notFound();
@@ -29,6 +32,12 @@ export default async function EditPublicationPage({
         <AdminFormSurface
           sidebar={
             <>
+              <PublicationAiDraftAssistant
+                formId="publication-form"
+                isConfigured={aiConfig.isConfigured}
+                providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+                model={aiConfig.model}
+              />
               <AdminFormHelpCard
                 title="编辑成果"
                 description="成果会同时影响后台列表、Dashboard 统计和公开成果页。"

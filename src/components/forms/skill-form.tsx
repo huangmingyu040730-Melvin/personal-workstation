@@ -15,7 +15,7 @@ export function SkillForm({
   error?: string;
 }) {
   return (
-    <form action={action} className="space-y-5">
+    <form id="skill-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
       <AdminFormSection title="基本信息" description="定义 Skill 名称、分类、状态、平台与简短描述。">
       <div className="grid gap-5 md:grid-cols-2">

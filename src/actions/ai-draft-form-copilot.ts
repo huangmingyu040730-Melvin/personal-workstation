@@ -2,12 +2,24 @@
 
 import OpenAI from "openai";
 import { getAdminClient } from "@/lib/auth/admin";
-import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
+import { getAiProviderConfig, getAiProviderDisplayName, type AiProviderConfig } from "@/lib/ai-provider";
 import {
+  buildKnowledgeAiDraftPrompt,
   buildProjectAiDraftPrompt,
+  buildPublicationAiDraftPrompt,
+  buildSkillAiDraftPrompt,
+  knowledgeAiDraftRequestSchema,
+  normalizeKnowledgeAiDraftResult,
   normalizeProjectAiDraftResult,
+  normalizePublicationAiDraftResult,
+  normalizeSkillAiDraftResult,
   projectAiDraftRequestSchema,
-  type ProjectAiDraftState
+  publicationAiDraftRequestSchema,
+  skillAiDraftRequestSchema,
+  type KnowledgeAiDraftState,
+  type ProjectAiDraftState,
+  type PublicationAiDraftState,
+  type SkillAiDraftState
 } from "@/lib/ai-draft-form-copilot";
 
 export async function generateProjectAiDraftAction(input: unknown): Promise<ProjectAiDraftState> {
@@ -37,8 +49,141 @@ export async function generateProjectAiDraftAction(input: unknown): Promise<Proj
   }
 
   const prompt = buildProjectAiDraftPrompt(parsed.data.draft);
+  return requestAiDraft({
+    aiConfig,
+    prompt,
+    logLabel: "Project AI draft copilot request error",
+    systemRole: "你是管理员后台的中文研究项目表单草稿助手。",
+    normalize: normalizeProjectAiDraftResult
+  });
+}
+
+export async function generatePublicationAiDraftAction(input: unknown): Promise<PublicationAiDraftState> {
+  const parsed = publicationAiDraftRequestSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0]?.message ?? "AI 草稿助手只接受 Publication 表单白名单字段。"
+    };
+  }
+
+  const { isAdmin, error } = await getAdminClient();
+  if (!isAdmin) {
+    return {
+      status: "error",
+      message: error ?? "当前账号没有管理员权限。"
+    };
+  }
+
+  const aiConfig = getAiProviderConfig();
+  if (!aiConfig.isConfigured || !aiConfig.apiKey) {
+    return {
+      status: "error",
+      message: "AI 草稿助手尚未配置。请在服务端环境变量中设置 AI_API_KEY，或继续使用 OPENAI_API_KEY。"
+    };
+  }
+
+  return requestAiDraft({
+    aiConfig,
+    prompt: buildPublicationAiDraftPrompt(parsed.data.draft),
+    logLabel: "Publication AI draft copilot request error",
+    systemRole: "你是管理员后台的中文学术成果表单草稿助手。",
+    normalize: normalizePublicationAiDraftResult
+  });
+}
+
+export async function generateKnowledgeAiDraftAction(input: unknown): Promise<KnowledgeAiDraftState> {
+  const parsed = knowledgeAiDraftRequestSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0]?.message ?? "AI 草稿助手只接受 Knowledge 表单白名单字段。"
+    };
+  }
+
+  const { isAdmin, error } = await getAdminClient();
+  if (!isAdmin) {
+    return {
+      status: "error",
+      message: error ?? "当前账号没有管理员权限。"
+    };
+  }
+
+  const aiConfig = getAiProviderConfig();
+  if (!aiConfig.isConfigured || !aiConfig.apiKey) {
+    return {
+      status: "error",
+      message: "AI 草稿助手尚未配置。请在服务端环境变量中设置 AI_API_KEY，或继续使用 OPENAI_API_KEY。"
+    };
+  }
+
+  return requestAiDraft({
+    aiConfig,
+    prompt: buildKnowledgeAiDraftPrompt(parsed.data.draft),
+    logLabel: "Knowledge AI draft copilot request error",
+    systemRole: "你是管理员后台的中文知识笔记表单草稿助手。",
+    normalize: normalizeKnowledgeAiDraftResult
+  });
+}
+
+export async function generateSkillAiDraftAction(input: unknown): Promise<SkillAiDraftState> {
+  const parsed = skillAiDraftRequestSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0]?.message ?? "AI 草稿助手只接受 Skill 表单白名单字段。"
+    };
+  }
+
+  const { isAdmin, error } = await getAdminClient();
+  if (!isAdmin) {
+    return {
+      status: "error",
+      message: error ?? "当前账号没有管理员权限。"
+    };
+  }
+
+  const aiConfig = getAiProviderConfig();
+  if (!aiConfig.isConfigured || !aiConfig.apiKey) {
+    return {
+      status: "error",
+      message: "AI 草稿助手尚未配置。请在服务端环境变量中设置 AI_API_KEY，或继续使用 OPENAI_API_KEY。"
+    };
+  }
+
+  return requestAiDraft({
+    aiConfig,
+    prompt: buildSkillAiDraftPrompt(parsed.data.draft),
+    logLabel: "Skill AI draft copilot request error",
+    systemRole: "你是管理员后台的中文 Skill 表单草稿助手。",
+    normalize: normalizeSkillAiDraftResult
+  });
+}
+
+async function requestAiDraft<TResult>({
+  aiConfig,
+  prompt,
+  logLabel,
+  systemRole,
+  normalize
+}: {
+  aiConfig: AiProviderConfig;
+  prompt: string;
+  logLabel: string;
+  systemRole: string;
+  normalize: (value: Record<string, unknown>) => TResult;
+}): Promise<{
+  status: "success" | "error";
+  message?: string;
+  result?: TResult;
+  rawText?: string;
+  modelName?: string;
+}> {
   const client = new OpenAI({
-    apiKey: aiConfig.apiKey,
+    apiKey: aiConfig.apiKey ?? "",
     baseURL: aiConfig.baseURL
   });
 
@@ -49,7 +194,7 @@ export async function generateProjectAiDraftAction(input: unknown): Promise<Proj
         {
           role: "system",
           content: [
-            "你是管理员后台的中文研究项目表单草稿助手。",
+            systemRole,
             "你只能输出 JSON object，不要输出 Markdown 代码围栏。",
             "所有建议都必须可人工复核，不得宣称已经保存或已经公开。"
           ].join("\n")
@@ -84,14 +229,14 @@ export async function generateProjectAiDraftAction(input: unknown): Promise<Proj
     return {
       status: "success",
       message: "AI 草稿建议已生成。请人工复核后再采用到表单。",
-      result: normalizeProjectAiDraftResult(parsedOutput),
+      result: normalize(parsedOutput),
       modelName: aiConfig.model
     };
   } catch (requestError) {
-    console.error("Project AI draft copilot request error", {
+    console.error(logLabel, {
       provider: getAiProviderDisplayName(aiConfig.provider),
       status: readErrorStatus(requestError),
-      message: requestError instanceof Error ? requestError.message : "unknown"
+      errorName: requestError instanceof Error ? requestError.name : "unknown"
     });
 
     return {

@@ -51,7 +51,7 @@
 - Phase 2R-F-1 公开 About / Resume Profile polish：`/about` 成为正式公开个人简介页，展示研究方向、工作站说明、公开技能 / 工具方向、公开内容导航和保守联系方式；不恢复外部访问申请或授权链路
 - Phase 2R-G-1 v1.0 final QA / release notes：新增 v1.0 发布说明和最终验收清单；#115 已关闭不合并，首页保持当前 `main` 主结构，不继续推进 2R-F-2 首页精选区改版
 - Phase 2R-G-2 v1.0 maintenance playbook：新增稳定维护手册，记录日常 public 内容、Documents、公开附件、安全检查、部署验收和故障排查流程；暂时跳过 public content sprint，后续内容由管理员手动逐步补充
-- Phase 3A-R AI Draft Form Copilot：Project 新建 / 编辑表单新增管理员 AI 草稿补全助手；#118 已关闭不合并，AI 只读取当前表单白名单字段，支持复制或采用建议到浏览器表单，不自动保存、不自动公开、不读取 Documents
+- Phase 3A-R / 3A-S AI Draft Form Copilot：Project、Publication、Knowledge、Skill 新建 / 编辑表单均提供管理员 AI 草稿补全助手；#118 已关闭不合并，AI 只读取当前表单白名单字段，支持复制或采用建议到浏览器表单，不自动保存、不自动公开、不读取 Documents / Storage
 - Phase 2R-Z 移除外部访问申请与 viewer 授权：删除 `/access-request`、viewer login/callback、后台 Access Requests / Access Grants、restricted 外部授权代码；新增 0022 迁移将 restricted 回写 private、收紧 public read policy 并删除旧授权表 / 函数；不改 Documents、Storage policy、public 文件下载 route 或核心后台内容管理
 
 ## 本地启动
@@ -106,7 +106,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 不要提交 `.env.local`，不要在前端项目中放入 `service_role` key。
 
-如需使用 AI JD 简历优化助手或后台 Project AI 草稿补全助手，推荐只在服务端环境配置通用 AI Provider：
+如需使用 AI JD 简历优化助手或后台 AI 草稿补全助手，推荐只在服务端环境配置通用 AI Provider：
 
 ```text
 AI_PROVIDER=deepseek
@@ -122,7 +122,7 @@ OPENAI_API_KEY=your_openai_api_key
 OPENAI_MODEL=optional_model_name
 ```
 
-`AI_API_KEY` 和 `OPENAI_API_KEY` 不得暴露到客户端。未配置时，JD 优化页面和 Project 新建 / 编辑表单仍可打开，但会提示尚未配置 AI 能力。
+`AI_API_KEY` 和 `OPENAI_API_KEY` 不得暴露到客户端。未配置时，JD 优化页面以及 Project / Publication / Knowledge / Skill 新建和编辑表单仍可打开，但会提示尚未配置 AI 能力。
 
 初始化数据库：
 

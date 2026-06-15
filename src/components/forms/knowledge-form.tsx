@@ -17,7 +17,7 @@ export function KnowledgeForm({
   error?: string;
 }) {
   return (
-    <form action={action} className="space-y-5">
+    <form id="knowledge-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
       <AdminFormSection title="基本信息" description="标题、slug、分类和关联项目用于组织知识库内容。">
       <div className="grid gap-5 md:grid-cols-2">

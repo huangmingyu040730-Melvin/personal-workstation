@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import { updateSkillAction } from "@/actions/skills";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { SkillAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { SkillForm } from "@/components/forms/skill-form";
 import { PageHeader } from "@/components/page-header";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import { getFormError } from "@/lib/forms";
 import { getSkillById } from "@/lib/queries/skills";
 
@@ -16,6 +18,7 @@ export default async function EditSkillPage({
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const skill = await getSkillById(id);
+  const aiConfig = getAiProviderConfig();
 
   if (!skill) {
     notFound();
@@ -28,6 +31,12 @@ export default async function EditSkillPage({
         <AdminFormSurface
           sidebar={
             <>
+              <SkillAiDraftAssistant
+                formId="skill-form"
+                isConfigured={aiConfig.isConfigured}
+                providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+                model={aiConfig.model}
+              />
               <AdminFormHelpCard
                 title="编辑 Skill"
                 description="保存后会刷新 Skill 详情、Dashboard 与公开首页数据。"

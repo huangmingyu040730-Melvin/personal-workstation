@@ -17,7 +17,7 @@ export function PublicationForm({
   error?: string;
 }) {
   return (
-    <form action={action} className="space-y-5">
+    <form id="publication-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
       <AdminFormSection title="基本信息" description="成果标题、slug 与类型决定后台列表和公开详情的基础展示。">
       <div className="grid gap-5 md:grid-cols-2">

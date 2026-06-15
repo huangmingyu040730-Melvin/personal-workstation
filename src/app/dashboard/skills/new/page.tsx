@@ -1,12 +1,15 @@
 import { createSkillAction } from "@/actions/skills";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { SkillAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { SkillForm } from "@/components/forms/skill-form";
 import { PageHeader } from "@/components/page-header";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import { getFormError } from "@/lib/forms";
 
 export default async function NewSkillPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
+  const aiConfig = getAiProviderConfig();
 
   return (
     <AppShell>
@@ -15,6 +18,12 @@ export default async function NewSkillPage({ searchParams }: { searchParams: Pro
         <AdminFormSurface
           sidebar={
             <>
+              <SkillAiDraftAssistant
+                formId="skill-form"
+                isConfigured={aiConfig.isConfigured}
+                providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+                model={aiConfig.model}
+              />
               <AdminFormHelpCard
                 title="Skill 录入建议"
                 description="Skill 更适合记录固定输入、输出和使用步骤，而不是一次性 prompt。"

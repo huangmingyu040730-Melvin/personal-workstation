@@ -1,13 +1,16 @@
 import { createKnowledgeAction } from "@/actions/knowledge";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { KnowledgeAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { KnowledgeForm } from "@/components/forms/knowledge-form";
 import { PageHeader } from "@/components/page-header";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import { getFormError } from "@/lib/forms";
 import { getProjectOptions } from "@/lib/queries/projects";
 
 export default async function NewKnowledgePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [params, projects] = await Promise.all([searchParams, getProjectOptions()]);
+  const aiConfig = getAiProviderConfig();
 
   return (
     <AppShell>
@@ -16,6 +19,12 @@ export default async function NewKnowledgePage({ searchParams }: { searchParams:
         <AdminFormSurface
           sidebar={
             <>
+              <KnowledgeAiDraftAssistant
+                formId="knowledge-form"
+                isConfigured={aiConfig.isConfigured}
+                providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+                model={aiConfig.model}
+              />
               <AdminFormHelpCard
                 title="知识文章建议"
                 description="适合沉淀可公开复用的方法、工具、框架和学习笔记。"
