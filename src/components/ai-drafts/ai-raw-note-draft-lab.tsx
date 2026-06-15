@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Clipboard, FileText, Loader2, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
 import { generateStructuredDraftFromRawNoteAction } from "@/actions/ai-raw-note-draft-lab";
 import {
@@ -13,6 +14,7 @@ import {
   type RawNotePublicationDraftResult,
   type RawNoteSkillDraftResult
 } from "@/lib/ai-raw-note-draft-lab";
+import { getAiDraftHandoffNewFormPath, saveAiDraftHandoff } from "@/lib/ai-draft-handoff";
 import { cn } from "@/lib/utils";
 
 type AiRawNoteDraftLabProps = {
@@ -35,6 +37,7 @@ const targetOptions: Array<{
 const initialState: AiRawNoteDraftState = { status: "idle" };
 
 export function AiRawNoteDraftLab({ isConfigured, providerLabel, model }: AiRawNoteDraftLabProps) {
+  const router = useRouter();
   const [targetType, setTargetType] = useState<AiDraftTargetType>("project");
   const [rawText, setRawText] = useState("");
   const [state, setState] = useState<AiRawNoteDraftState>(initialState);
@@ -71,6 +74,20 @@ export function AiRawNoteDraftLab({ isConfigured, providerLabel, model }: AiRawN
     await navigator.clipboard?.writeText(text);
     setCopiedKey(key);
     window.setTimeout(() => setCopiedKey((current) => (current === key ? null : current)), 1600);
+  }
+
+  function handlePrefillNewForm(target: AiDraftTargetType, result: AiRawNoteDraftResult) {
+    const saved = saveAiDraftHandoff(target, result);
+    if (!saved) {
+      setState((current) => ({
+        ...current,
+        status: "error",
+        message: "当前浏览器无法写入 sessionStorage，暂时不能带入新建表单。请改用复制字段。"
+      }));
+      return;
+    }
+
+    router.push(getAiDraftHandoffNewFormPath(target));
   }
 
   return (
@@ -184,7 +201,13 @@ export function AiRawNoteDraftLab({ isConfigured, providerLabel, model }: AiRawN
         ) : null}
 
         {state.result && state.targetType ? (
-          <DraftResultView result={state.result} targetType={state.targetType} copiedKey={copiedKey} onCopy={copyText} />
+          <DraftResultView
+            result={state.result}
+            targetType={state.targetType}
+            copiedKey={copiedKey}
+            onCopy={copyText}
+            onPrefillNewForm={() => handlePrefillNewForm(state.targetType as AiDraftTargetType, state.result as AiRawNoteDraftResult)}
+          />
         ) : null}
 
         {state.rawText ? (
@@ -218,12 +241,14 @@ function DraftResultView({
   result,
   targetType,
   copiedKey,
-  onCopy
+  onCopy,
+  onPrefillNewForm
 }: {
   result: AiRawNoteDraftResult;
   targetType: AiDraftTargetType;
   copiedKey: string | null;
   onCopy: (key: string, value: string | string[]) => void;
+  onPrefillNewForm: () => void;
 }) {
   const markdown = buildDraftMarkdown(targetType, result);
 
@@ -237,15 +262,28 @@ function DraftResultView({
             <p className="mt-1 text-xs leading-5 text-blue-800">只生成可复制草稿；不会写入数据库或修改 visibility。</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => onCopy("complete-markdown", markdown)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
-        >
-          {copiedKey === "complete-markdown" ? <Check size={14} /> : <Clipboard size={14} />}
-          {copiedKey === "complete-markdown" ? "已复制" : "复制完整 Markdown"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onPrefillNewForm}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+          >
+            <Wand2 size={14} />
+            带入新建 {getTargetShortLabel(targetType)} 表单
+          </button>
+          <button
+            type="button"
+            onClick={() => onCopy("complete-markdown", markdown)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+          >
+            {copiedKey === "complete-markdown" ? <Check size={14} /> : <Clipboard size={14} />}
+            {copiedKey === "complete-markdown" ? "已复制" : "复制完整 Markdown"}
+          </button>
+        </div>
       </div>
+      <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+        带入新建表单只会保存到当前浏览器的临时 sessionStorage，不会写入数据库，也不会自动保存。
+      </p>
 
       {targetType === "project" ? <ProjectDraftBlocks result={result as RawNoteProjectDraftResult} copiedKey={copiedKey} onCopy={onCopy} /> : null}
       {targetType === "publication" ? <PublicationDraftBlocks result={result as RawNotePublicationDraftResult} copiedKey={copiedKey} onCopy={onCopy} /> : null}
@@ -417,6 +455,15 @@ function CopyButton({ copied, onCopy }: { copied: boolean; onCopy: () => void })
 
 function getTargetLabel(targetType: AiDraftTargetType) {
   return targetOptions.find((option) => option.value === targetType)?.label ?? "结构化";
+}
+
+function getTargetShortLabel(targetType: AiDraftTargetType) {
+  return {
+    project: "Project",
+    publication: "Publication",
+    knowledge: "Knowledge",
+    skill: "Skill"
+  }[targetType];
 }
 
 function buildDraftMarkdown(targetType: AiDraftTargetType, result: AiRawNoteDraftResult) {

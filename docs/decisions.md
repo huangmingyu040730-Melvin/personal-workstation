@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-06-16 - Add AI Draft Lab To New Form Prefill
+
+类型：decision
+
+决策：
+
+- Phase 3B-1 将 `/dashboard/ai-drafts` 生成的结构化草稿带入对应新建表单。
+- Handoff 使用当前浏览器 `sessionStorage`，不使用 URL query，不写数据库，不新增草稿表。
+- 支持 Project、Publication、Knowledge 和 Skill 四类新建表单。
+- 新建页只在检测到对应 target 草稿时显示确认条；管理员点击“填入表单”后才写入浏览器字段。
+- 填入后清除对应 `sessionStorage` handoff；点击“忽略并清除”只清除 handoff，不改表单。
+- 不自动提交表单，不自动保存数据库，不自动创建资产，不自动修改 `visibility`。
+- 不读取 Documents、Storage、Skill package、uploaded code、zip 内容、signed URL、raw relation rows 或 private attachment metadata。
+
+原因：
+
+- Phase 3B 已能把 raw note 变成结构化草稿，但管理员仍需要在实验室和新建表单之间手动复制多个字段。
+- `sessionStorage` 适合承载当前标签页的临时草稿，避免 URL query 过长，也避免引入草稿表、migration、权限或清理任务。
+- 先显示确认条而不是自动填入，可以降低误填、刷新重复填入或覆盖已有输入的风险。
+
+影响：
+
+- 新增 `src/lib/ai-draft-handoff.ts` 负责保存、读取和清除当前浏览器 handoff。
+- 新增 `src/lib/browser-form-controls.ts` 作为浏览器表单读写 helper，并复用到既有 AI 表单助手。
+- 新增 `src/components/forms/ai-draft-handoff-receiver.tsx`，挂载到 Project / Publication / Knowledge / Skill 新建页表单上方。
+- AI 草稿实验室结果区新增“带入新建表单”按钮和 sessionStorage 安全提示。
+- 不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、`/public-files/[id]/download`、公开页面、外部访问退役边界或首页结构。
+
 ## 2026-06-16 - Add AI Raw Note To Structured Draft Lab
 
 类型：decision

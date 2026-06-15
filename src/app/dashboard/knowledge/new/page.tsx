@@ -1,6 +1,7 @@
 import { createKnowledgeAction } from "@/actions/knowledge";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { AiDraftHandoffReceiver } from "@/components/forms/ai-draft-handoff-receiver";
 import { KnowledgeAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { KnowledgeForm } from "@/components/forms/knowledge-form";
 import { PageHeader } from "@/components/page-header";
@@ -38,6 +39,7 @@ export default async function NewKnowledgePage({ searchParams }: { searchParams:
             </>
           }
         >
+          <AiDraftHandoffReceiver targetType="knowledge" formId="knowledge-form" />
           <KnowledgeForm action={createKnowledgeAction} projects={projects} error={getFormError(params)} />
         </AdminFormSurface>
       </AdminPageSurface>

@@ -21,7 +21,7 @@ Phase 2R-G-1 将当前稳定版本收口为 v1.0 final QA / release notes。PR #
 
 Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenance-playbook.md` 作为日常维护手册，暂时跳过 public content sprint，后续真实内容由管理员在后台逐步手动补充和完善，不继续大改框架或页面主结构。
 
-Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草稿补全助手。Phase 3A-S 继续把同一方向扩展到 Publication、Knowledge 和 Skill 新建 / 编辑表单。Phase 3A-T 为四类表单助手增加补全空字段、优化已有内容、公开风险检查三种模式。Phase 3B 新增独立后台 AI 草稿实验室 `/dashboard/ai-drafts`，可把原始想法、研究笔记、会议摘录或粗糙文本转换成 Project / Publication / Knowledge / Skill 结构化草稿。#118 的详情页事后点评式 AI 已关闭且不合并；当前 AI 只服务管理员后台内容生产效率，不做公开 AI 聊天，不自动保存、不自动公开、不读取 Documents 或 Storage。
+Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草稿补全助手。Phase 3A-S 继续把同一方向扩展到 Publication、Knowledge 和 Skill 新建 / 编辑表单。Phase 3A-T 为四类表单助手增加补全空字段、优化已有内容、公开风险检查三种模式。Phase 3B 新增独立后台 AI 草稿实验室 `/dashboard/ai-drafts`，可把原始想法、研究笔记、会议摘录或粗糙文本转换成 Project / Publication / Knowledge / Skill 结构化草稿。Phase 3B-1 允许把实验室结果通过当前浏览器 `sessionStorage` 带入对应新建表单，由管理员确认后预填字段。#118 的详情页事后点评式 AI 已关闭且不合并；当前 AI 只服务管理员后台内容生产效率，不做公开 AI 聊天，不自动保存、不自动创建资产、不自动公开、不读取 Documents 或 Storage。
 
 ## Completed Capabilities
 
@@ -88,7 +88,7 @@ Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草�
 - Publication 后台详情页成果中枢：集中展示成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Project / Publication / Knowledge / Skill 后台详情页提供公开发布准备度 checklist，基于 visibility、slug、标题、摘要、标签 / 分类、正文 / 说明、关系和 public 附件计数等已有字段提示公开运营状态。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
-- `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；只输出可复制字段和完整 Markdown，不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
+- `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
 - 文档包整体迁移 / 同步关联工具。
 - Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
@@ -386,6 +386,8 @@ Phase 3A-R Project AI 表单草稿助手不需要新增 migration；它只新增
 Phase 3A-S Publication / Knowledge / Skill AI 表单草稿助手不需要新增 migration；它只扩展后台三类资产新建 / 编辑表单、严格白名单 Server Action 和文档。不新增字段、RPC、索引，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 
 Phase 3B AI 原始素材转结构化草稿实验室不需要新增 migration；它只新增后台 `/dashboard/ai-drafts` 页面、严格白名单 Server Action 和文档。不新增草稿表，不写数据库，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
+
+Phase 3B-1 AI Draft Lab to New Form Prefill 不需要新增 migration；它只新增浏览器 `sessionStorage` handoff 和四类新建表单的确认预填提示。不自动提交表单，不自动保存数据库，不自动创建资产，不修改 `visibility`，不读取 Documents / Storage，也不修改 RLS、Storage policy 或 public 文件下载 route。
 
 Phase 2R-Z 新增 `0022_remove_external_access_and_restricted_viewer.sql`；该迁移将历史 `restricted` 内容回写为 `private`，收紧四类内容表 visibility constraint 和 public read policy，并删除旧访问申请 / 授权表与授权函数。不修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 

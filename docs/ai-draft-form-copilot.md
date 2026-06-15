@@ -16,7 +16,7 @@ AI Draft Form Copilot 是管理员后台表单内的草稿补全助手，不是�
 与 Phase 3B AI 草稿实验室的区别：
 
 - AI Draft Form Copilot 运行在 Project / Publication / Knowledge / Skill 新建与编辑表单内，读取当前浏览器表单的字段白名单，并可把建议采用到当前表单。
-- AI 草稿实验室运行在独立后台页面 `/dashboard/ai-drafts`，只接收 `targetType` 与一段管理员粘贴的 `rawText`，输出可复制的结构化草稿，不知道当前表单状态。
+- AI 草稿实验室运行在独立后台页面 `/dashboard/ai-drafts`，只接收 `targetType` 与一段管理员粘贴的 `rawText`，输出结构化草稿；Phase 3B-1 起可把结果临时保存到当前浏览器 `sessionStorage`，由管理员确认后预填对应新建表单。
 - 两者都不自动提交表单、不保存数据库、不创建资产、不自动公开、不读取 Documents / Storage，也不修改 public download route。
 
 支持入口：

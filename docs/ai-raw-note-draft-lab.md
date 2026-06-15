@@ -142,6 +142,44 @@ Server Action 只接受：
 
 如果模型返回非 JSON 文本，页面只展示原始文本并提示人工复核，不自动写入任何表单或数据库。
 
+## Phase 3B-1 表单预填
+
+Phase 3B-1 后，结构化草稿结果区增加“带入新建表单”按钮：
+
+- Project：带入新建 Project 表单。
+- Publication：带入新建 Publication 表单。
+- Knowledge：带入新建 Knowledge 表单。
+- Skill：带入新建 Skill 表单。
+
+按钮行为：
+
+1. 把当前结构化草稿保存到当前浏览器标签页的 `sessionStorage`。
+2. 跳转到对应新建页：`/dashboard/projects/new`、`/dashboard/publications/new`、`/dashboard/knowledge/new` 或 `/dashboard/skills/new`。
+3. 新建页显示“检测到 AI 草稿”提示条。
+4. 管理员点击“填入表单”后，草稿才会写入浏览器表单字段。
+5. 填入后立即清除 `sessionStorage` 中这份 handoff，避免刷新后重复误填。
+6. 管理员仍需人工检查并手动点击保存。
+
+管理员也可以点击“忽略并清除”，清除 `sessionStorage` 且不改动表单。
+
+字段映射：
+
+- Project：`title`、`summary`、`background`、`research_question`、`methodology`、`tags`、`milestones`。
+- Publication：`title`、`summary`、`abstract`、`tags`；`publication_type_suggestion` 只有能匹配现有 option value 或 label 时才填入。
+- Knowledge：`title`、`excerpt`、`content_draft` 到 `content`、`tags`；`category_suggestion` 只有能匹配现有分类 option 时才填入。
+- Skill：`name`、`description`、`content`、`input_description`、`output_description`、`usage_guide`、`platforms`；`category_suggestion` 只有能匹配现有分类 option 时才填入。
+
+不映射：
+
+- `public_readiness_notes`
+- `sensitive_risks`
+- `next_steps`
+- `visibility`
+- Project relation
+- status
+- Skill package
+- Documents
+
 ## Prompt 边界
 
 Prompt 要求模型：
@@ -183,6 +221,8 @@ Prompt 要求模型：
 
 - 不自动创建数据库记录。
 - 不自动保存草稿。
+- 不自动提交新建表单。
+- 不通过 prefill 自动保存或自动创建资产。
 - 不新增草稿表。
 - 不新增 migration。
 - 不改 RLS。

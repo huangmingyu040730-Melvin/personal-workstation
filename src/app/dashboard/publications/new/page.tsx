@@ -1,6 +1,7 @@
 import { createPublicationAction } from "@/actions/publications";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { AiDraftHandoffReceiver } from "@/components/forms/ai-draft-handoff-receiver";
 import { PublicationAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { PublicationForm } from "@/components/forms/publication-form";
 import { PageHeader } from "@/components/page-header";
@@ -38,6 +39,7 @@ export default async function NewPublicationPage({ searchParams }: { searchParam
             </>
           }
         >
+          <AiDraftHandoffReceiver targetType="publication" formId="publication-form" />
           <PublicationForm action={createPublicationAction} projects={projects} error={getFormError(params)} />
         </AdminFormSurface>
       </AdminPageSurface>

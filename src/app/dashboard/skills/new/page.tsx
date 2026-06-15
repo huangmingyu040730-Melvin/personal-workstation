@@ -1,6 +1,7 @@
 import { createSkillAction } from "@/actions/skills";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { AiDraftHandoffReceiver } from "@/components/forms/ai-draft-handoff-receiver";
 import { SkillAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { SkillForm } from "@/components/forms/skill-form";
 import { PageHeader } from "@/components/page-header";
@@ -37,6 +38,7 @@ export default async function NewSkillPage({ searchParams }: { searchParams: Pro
             </>
           }
         >
+          <AiDraftHandoffReceiver targetType="skill" formId="skill-form" />
           <SkillForm action={createSkillAction} error={getFormError(params)} />
         </AdminFormSurface>
       </AdminPageSurface>
