@@ -15,7 +15,7 @@ export function ProjectForm({
   error?: string;
 }) {
   return (
-    <form action={action} className="space-y-5">
+    <form id="project-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
       <AdminFormSection title="基本信息" description="用于列表、详情页和公开卡片展示的核心信息。">
       <div className="grid gap-5 md:grid-cols-2">

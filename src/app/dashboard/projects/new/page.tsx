@@ -1,12 +1,15 @@
 import { createProjectAction } from "@/actions/projects";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { ProjectAiDraftAssistant } from "@/components/forms/project-ai-draft-assistant";
 import { ProjectForm } from "@/components/forms/project-form";
 import { PageHeader } from "@/components/page-header";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import { getFormError } from "@/lib/forms";
 
 export default async function NewProjectPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
+  const aiConfig = getAiProviderConfig();
 
   return (
     <AppShell>
@@ -15,6 +18,12 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
         <AdminFormSurface
           sidebar={
             <>
+              <ProjectAiDraftAssistant
+                formId="project-form"
+                isConfigured={aiConfig.isConfigured}
+                providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+                model={aiConfig.model}
+              />
               <AdminFormHelpCard
                 title="项目录入建议"
                 description="先补齐标题、简介、状态和进度，再逐步完善研究背景、问题与方法。"

@@ -695,6 +695,25 @@ Phase 2R-Z 已退役：
 - 不修改首页、About、公开列表、公开详情、后台主结构、Documents、RLS、Storage policy 或 public file download route。
 - 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
 
+### Phase 3A-R - Project AI Draft Form Copilot
+
+已完成代码实现。AI 能力从 #118 的详情页事后点评方向调整为 Project 新建 / 编辑表单中的草稿补全助手；#118 已关闭且不合并。
+
+- `/dashboard/projects/new` 和 `/dashboard/projects/[id]/edit` 表单内新增 AI 草稿补全助手。
+- AI 读取当前浏览器表单草稿字段，而不是依赖已保存资产 ID。
+- 输入白名单包括 `title`、`summary`、`background`、`research_question`、`methodology`、`tags`、`status`、`visibility`、`milestones`、`progress` 和 `start_date`。
+- 输出包括 summary / background / research question / methodology 草稿、标签建议、研究流程、阶段计划、公开准备度、敏感风险和下一步建议。
+- 管理员可复制建议，或将字段建议采用到浏览器表单；采用不会提交表单，仍需手动保存。
+- 未配置 AI API key 时，Project 表单正常显示，AI 按钮禁用并显示尚未配置提示。
+
+边界：
+
+- 不自动保存数据库，不自动创建 Project，不自动修改 `visibility`，不自动公开内容。
+- 不读取 Documents、Storage object、Storage path、file path、owner_id、raw relation rows、private file metadata 或 signed URL。
+- 不新增 migration，不新增字段，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public file download route。
+- 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
+- Publication / Knowledge / Skill 表单 AI 留作后续独立阶段，不在本阶段为了覆盖四类资产增加复杂度。
+
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
 历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。

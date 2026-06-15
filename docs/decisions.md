@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-06-15 - Replace Detail AI Copilot With Project Draft Form Copilot
+
+类型：decision
+
+决策：
+
+- 关闭 #118，且不合并详情页事后点评式 AI Content Copilot。
+- Phase 3A-R 改为 Project 新建 / 编辑表单内的 AI Draft Form Copilot。
+- AI 输入来自当前浏览器表单草稿字段，不要求 Project 已经保存到数据库。
+- Server Action 只接受结构化白名单字段：`title`、`summary`、`background`、`research_question`、`methodology`、`tags`、`status`、`visibility`、`milestones`、`progress`、`start_date` 和 `end_date`。
+- AI 输出包括 summary / background / research question / methodology 草稿、标签建议、研究流程、阶段计划、公开准备度、敏感风险和下一步建议。
+- 管理员可以复制建议，或采用到浏览器表单字段；采用不会提交表单，不自动保存数据库，不自动创建 Project，不自动修改 `visibility`。
+- 未配置 AI API key 时，Project 新建 / 编辑表单正常显示，AI 生成按钮禁用并提示尚未配置。
+
+原因：
+
+- #118 的详情页 AI 更像创建完成后的点评助手，不能直接提升新建或编辑草稿时的效率。
+- Project 是当前研究资产沉淀的核心入口，先把 Project 表单补全体验做扎实，比同时覆盖四类资产更符合稳定维护阶段的复杂度控制。
+
+影响：
+
+- 新增 `src/actions/ai-draft-form-copilot.ts`、`src/lib/ai-draft-form-copilot.ts` 和 `src/components/forms/project-ai-draft-assistant.tsx`。
+- Project 新建 / 编辑表单嵌入 AI 草稿助手。
+- 新增 `docs/ai-draft-form-copilot.md`。
+- 不新增 migration，不修改 RLS、Storage policy、Documents、`/public-files/[id]/download`、公开页面或外部访问退役边界。
+- 不读取 Documents 文件正文、Storage object、Storage path、file path、owner_id、raw relation rows、private file metadata 或 signed URL。
+
 ## 2026-06-15 - Enter v1 Maintenance With A Playbook
 
 类型：decision

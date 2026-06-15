@@ -23,6 +23,7 @@
 8. 不恢复 Market Brief。
 9. 不为了内容运营新增数据库字段、migration、RLS 或 Storage policy。
 10. 不大改首页、About、公开列表、公开详情或后台主结构。
+11. Project 表单 AI 草稿助手只用于管理员新建 / 编辑 Project 时补全草稿，不自动保存、不自动公开、不读取 Documents。
 
 暂时跳过 public content sprint。已有 public 内容可以继续在线展示，后续新内容由管理员在后台逐步手动补充、整理和发布。
 
@@ -33,14 +34,18 @@
 1. 在后台新建 Project、Publication、Knowledge 或 Skill。
 2. 初始 `visibility` 先设为 `private`。
 3. 补齐标题、slug、摘要、标签、正文或说明。
-4. 在详情页检查 public readiness checklist。
-5. 确认 public 字段没有敏感信息、内部路径、私人联系信息、未公开客户信息或后台说明。
-6. 确认内容确实适合公开展示后，再把 `visibility` 设为 `public`。
-7. 打开对应 public 页面检查展示效果。
-8. 打开 `/sitemap.xml`，确认该 public 内容已经被收录。
-9. 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+4. 新建或编辑 Project 时，可以使用表单内 AI 草稿助手根据当前草稿生成摘要、背景、研究问题、方法、标签、研究流程和阶段计划建议。
+5. AI 建议只复制或采用到浏览器表单，管理员必须人工复核后手动保存。
+6. 在详情页检查 public readiness checklist。
+7. 确认 public 字段没有敏感信息、内部路径、私人联系信息、未公开客户信息或后台说明。
+8. 确认内容确实适合公开展示后，再把 `visibility` 设为 `public`。
+9. 打开对应 public 页面检查展示效果。
+10. 打开 `/sitemap.xml`，确认该 public 内容已经被收录。
+11. 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
 
 发布前不要自动公开内容，也不要因为 checklist 缺项而绕过人工判断。Checklist 只是提示，不阻止保存。
+
+Project 表单 AI 草稿助手同样只是提示：不会自动保存数据库，不会自动修改 `visibility`，不会读取 Documents 或生成下载链接。
 
 ## 新增附件流程
 
@@ -133,6 +138,7 @@ npm run start
 - Supabase service role key。
 - Vercel env value。
 - private Documents。
+- Project AI 草稿助手输出被误发布为未经复核的事实。
 
 推荐检查范围：
 
@@ -156,6 +162,7 @@ npm run start
 - Market Brief 产品入口。
 - public zip 下载。
 - AI 摘要。
+- 详情页事后点评式 AI Content Copilot。
 - OCR。
 - 向量搜索。
 - 全文搜索。
