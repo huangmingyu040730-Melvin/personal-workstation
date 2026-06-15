@@ -556,8 +556,10 @@ Skill：
 5. Server Action 校验当前用户是管理员。
 6. Server Action 只接收 `targetType` 和 `rawText`，不接受任意 prompt。
 7. AI 返回目标类型对应的结构化 JSON 草稿。
-8. 管理员人工复核后，可以复制单个字段或复制完整 Markdown。
-9. 管理员手动打开对应新建表单，人工粘贴并保存。
+8. 管理员人工复核后，可以复制单个字段、复制完整 Markdown，或点击“带入新建表单”。
+9. 点击“带入新建表单”时，页面把当前草稿保存到当前浏览器 `sessionStorage` 并跳转到对应新建页。
+10. 新建页显示“检测到 AI 草稿”提示条；管理员点击“填入表单”后才写入浏览器字段。
+11. 填入后清除对应 `sessionStorage` handoff；管理员继续人工检查并手动保存。
 
 输入白名单：
 
@@ -571,19 +573,29 @@ Skill：
 - Knowledge：title、category_suggestion、excerpt、content_outline、content_draft、tags、public_readiness_notes、sensitive_risks、next_steps。
 - Skill：name、category_suggestion、description、content、input_description、output_description、usage_guide、platforms、workflow_steps、public_readiness_notes、sensitive_risks、next_steps。
 
+Prefill 映射：
+
+- Project：title、summary、background、research_question、methodology、tags、milestones。
+- Publication：title、summary、abstract、tags；publication_type_suggestion 能匹配 option value 或 label 时才填入。
+- Knowledge：title、excerpt、content_draft 到 content、tags；category_suggestion 能匹配 option 时才填入。
+- Skill：name、description、content、input_description、output_description、usage_guide、platforms；category_suggestion 能匹配 option 时才填入。
+- 不映射 public_readiness_notes、sensitive_risks、next_steps、visibility、Project relation、status、Skill package 或 Documents。
+
 验证要求：
 
 - 未配置 AI API key 时，`/dashboard/ai-drafts` 不崩溃，生成按钮禁用并显示尚未配置提示。
 - 后台侧边栏和 Dashboard 快速入口可以进入 AI 草稿实验室。
 - 四种目标类型都能在 UI 中选择。
 - 输出可以复制字段或复制完整 Markdown。
+- 结果可以通过 `sessionStorage` 带入四类新建表单，并先显示确认条。
+- 点击“填入表单”后只预填浏览器字段，不自动保存；点击“忽略并清除”不改表单。
 - 390px 移动端无横向滚动。
 - 公开页面没有 AI 草稿入口。
 - sitemap / robots / public smoke 不受影响。
 
 边界：
 
-- 不自动保存数据库，不自动创建 Project / Publication / Knowledge / Skill，不自动修改 `visibility`。
+- 不自动保存数据库，不自动创建 Project / Publication / Knowledge / Skill，不自动提交表单，不自动修改 `visibility`。
 - 不新增草稿表，不新增 migration，不修改 RLS 或 Storage policy。
 - 不读取 Documents、Storage object、Skill package、uploaded code、zip 内容、Storage path、file path、owner_id、raw relation rows、private file metadata 或 signed URL。
 - 不修改 Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。

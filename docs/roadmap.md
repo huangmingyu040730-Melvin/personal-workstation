@@ -772,6 +772,26 @@ Phase 2R-Z 已退役：
 - 不读取 Documents、Storage object、Skill package、uploaded code、zip 内容、file path、owner_id、raw relation rows、private attachment metadata 或 signed URL。
 - 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network`、Market Brief 或 #118 详情页 AI。
 
+### Phase 3B-1 - AI Draft Lab To New Form Prefill
+
+已完成代码实现。Phase 3B-1 让 AI 草稿实验室生成的结构化草稿可以带入对应新建表单，减少复制粘贴成本。
+
+- `/dashboard/ai-drafts` 结果区新增“带入新建 Project / Publication / Knowledge / Skill 表单”按钮。
+- Handoff 使用当前浏览器 `sessionStorage`，不把完整草稿放进 URL query，不写数据库。
+- 四类新建页读取对应 target 的 handoff 后显示确认提示条，管理员可选择“填入表单”或“忽略并清除”。
+- 填入后立即清除 `sessionStorage` 中该草稿，避免刷新后重复误填。
+- Project 映射 title、summary、background、research_question、methodology、tags、milestones。
+- Publication 映射 title、summary、abstract、tags，并在能匹配时填入 publication_type_suggestion。
+- Knowledge 映射 title、excerpt、content_draft、tags，并在能匹配时填入 category_suggestion。
+- Skill 映射 name、description、content、input_description、output_description、usage_guide、platforms，并在能匹配时填入 category_suggestion。
+
+边界：
+
+- 这只是浏览器表单预填，不自动保存、不自动创建资产、不自动提交表单、不自动修改 `visibility`。
+- 不映射 public_readiness_notes、sensitive_risks、next_steps、Project relation、status、Skill package 或 Documents。
+- 不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public file download route。
+- 不读取 Documents、Storage object、Skill package、uploaded code、zip 内容、private attachment metadata 或 signed URL。
+
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
 历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。

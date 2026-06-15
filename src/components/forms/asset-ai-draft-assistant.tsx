@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AlertTriangle, Check, Clipboard, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { generateKnowledgeAiDraftAction, generatePublicationAiDraftAction, generateSkillAiDraftAction } from "@/actions/ai-draft-form-copilot";
 import { AiDraftModeSelector, aiDraftModeSteps, getAiDraftModeActionLabel } from "@/components/forms/ai-draft-mode-controls";
+import { getTargetForm, readFormList, readFormValue, writeFormValue } from "@/lib/browser-form-controls";
 import { publicationTypes, skillStatuses } from "@/lib/content-options";
 import type { AiDraftMode, KnowledgeAiDraftResult, KnowledgeAiDraftState, PublicationAiDraftResult, PublicationAiDraftState, SkillAiDraftResult, SkillAiDraftState } from "@/lib/ai-draft-form-copilot";
 import { cn } from "@/lib/utils";
@@ -694,116 +695,6 @@ function ActionButtons({
       ) : null}
     </div>
   );
-}
-
-function getTargetForm(formId: string) {
-  const form = document.getElementById(formId);
-  return form instanceof HTMLFormElement ? form : null;
-}
-
-function readFormValue(form: HTMLFormElement, name: string) {
-  const controls = getNamedControls(form, name);
-  const control = controls[0];
-
-  if (!control) {
-    return "";
-  }
-
-  if (control instanceof HTMLInputElement && control.type === "checkbox") {
-    return controls
-      .filter((item): item is HTMLInputElement => item instanceof HTMLInputElement && item.type === "checkbox" && item.checked)
-      .map((item) => item.value.trim())
-      .filter(Boolean)[0] ?? "";
-  }
-
-  return control.value.trim();
-}
-
-function readFormList(form: HTMLFormElement, name: string) {
-  const controls = getNamedControls(form, name);
-  const checkboxValues = controls
-    .filter((item): item is HTMLInputElement => item instanceof HTMLInputElement && item.type === "checkbox" && item.checked)
-    .map((item) => item.value.trim())
-    .filter(Boolean);
-
-  if (checkboxValues.length > 0) {
-    return Array.from(new Set(checkboxValues));
-  }
-
-  return Array.from(
-    new Set(
-      readFormValue(form, name)
-        .split(/[\n,，]+/)
-        .map((item) => item.trim())
-        .filter(Boolean)
-    )
-  );
-}
-
-function writeFormValue(form: HTMLFormElement, name: string, value: string | string[]) {
-  const controls = getNamedControls(form, name);
-  if (controls.length === 0) {
-    return false;
-  }
-
-  const values = (Array.isArray(value) ? value : [value]).map((item) => item.trim()).filter(Boolean);
-  if (values.length === 0) {
-    return false;
-  }
-
-  const checkboxes = controls.filter((item): item is HTMLInputElement => item instanceof HTMLInputElement && item.type === "checkbox");
-  if (checkboxes.length > 0) {
-    const selected = new Set(values.map((item) => item.toLowerCase()));
-    checkboxes.forEach((checkbox) => {
-      checkbox.checked = selected.has(checkbox.value.toLowerCase());
-      dispatchInputEvents(checkbox);
-    });
-    return true;
-  }
-
-  const control = controls[0];
-  if (control instanceof HTMLSelectElement) {
-    const nextValue = findSelectOptionValue(control, values);
-    if (!nextValue) {
-      return false;
-    }
-    control.value = nextValue;
-    dispatchInputEvents(control);
-    return true;
-  }
-
-  control.value = Array.isArray(value) ? values.join("\n") : values[0];
-  dispatchInputEvents(control);
-  return true;
-}
-
-function getNamedControls(form: HTMLFormElement, name: string) {
-  return Array.from(form.elements).filter((element): element is HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement => {
-    return (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) && element.name === name;
-  });
-}
-
-function findSelectOptionValue(select: HTMLSelectElement, values: string[]) {
-  const options = Array.from(select.options);
-
-  for (const value of values) {
-    const direct = options.find((option) => option.value === value);
-    if (direct) {
-      return direct.value;
-    }
-
-    const byLabel = options.find((option) => option.text.trim() === value);
-    if (byLabel) {
-      return byLabel.value;
-    }
-  }
-
-  return "";
-}
-
-function dispatchInputEvents(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
-  control.dispatchEvent(new Event("input", { bubbles: true }));
-  control.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function normalizeAllowed<T extends readonly string[]>(value: string, allowed: T) {

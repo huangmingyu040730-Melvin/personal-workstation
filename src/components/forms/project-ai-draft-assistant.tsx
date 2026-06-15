@@ -5,6 +5,7 @@ import { AlertTriangle, Check, Clipboard, Loader2, Sparkles, Wand2 } from "lucid
 import { generateProjectAiDraftAction } from "@/actions/ai-draft-form-copilot";
 import type { AiDraftMode, ProjectAiDraftResult, ProjectAiDraftState } from "@/lib/ai-draft-form-copilot";
 import { AiDraftModeSelector, aiDraftModeSteps, getAiDraftModeActionLabel } from "@/components/forms/ai-draft-mode-controls";
+import { getTargetForm, readFormList, readFormValue, writeFormValue } from "@/lib/browser-form-controls";
 import { cn } from "@/lib/utils";
 
 type ProjectAiDraftAssistantProps = {
@@ -39,7 +40,7 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
   }, [generationSteps.length, isGenerating]);
 
   async function handleGenerate() {
-    const form = getTargetForm(rootRef.current, formId);
+    const form = getTargetForm(formId, rootRef.current);
     if (!form) {
       setState({ status: "error", message: "未找到当前 Project 表单，请刷新页面后重试。" });
       return;
@@ -85,7 +86,7 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
   }
 
   function applyField(key: string, fieldName: string, value: string | string[]) {
-    const form = getTargetForm(rootRef.current, formId);
+    const form = getTargetForm(formId, rootRef.current);
     const text = Array.isArray(value) ? value.join("\n") : value;
     if (!form || !text.trim()) {
       return;
@@ -465,51 +466,6 @@ function ActionButtons({
       ) : null}
     </div>
   );
-}
-
-function getTargetForm(root: HTMLDivElement | null, formId: string | undefined) {
-  if (formId) {
-    const form = document.getElementById(formId);
-    return form instanceof HTMLFormElement ? form : null;
-  }
-
-  return root?.closest("form") ?? null;
-}
-
-function readFormValue(form: HTMLFormElement, name: string) {
-  const control = getFormControl(form, name);
-  return control ? control.value.trim() : "";
-}
-
-function readFormList(form: HTMLFormElement, name: string) {
-  return Array.from(
-    new Set(
-      readFormValue(form, name)
-        .split(/[\n,，]+/)
-        .map((item) => item.trim())
-        .filter(Boolean)
-    )
-  );
-}
-
-function writeFormValue(form: HTMLFormElement, name: string, value: string) {
-  const control = getFormControl(form, name);
-  if (!control) {
-    return;
-  }
-
-  control.value = value;
-  control.dispatchEvent(new Event("input", { bubbles: true }));
-  control.dispatchEvent(new Event("change", { bubbles: true }));
-}
-
-function getFormControl(form: HTMLFormElement, name: string) {
-  const item = form.elements.namedItem(name);
-  if (item instanceof HTMLInputElement || item instanceof HTMLTextAreaElement || item instanceof HTMLSelectElement) {
-    return item;
-  }
-
-  return null;
 }
 
 function normalizeStatus(value: string) {
