@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-06-16 - Add AI Raw Note To Structured Draft Lab
+
+类型：decision
+
+决策：
+
+- Phase 3B 新增独立后台页面 `/dashboard/ai-drafts`，名称为 AI 草稿实验室。
+- 页面把管理员粘贴的原始想法、研究笔记、会议摘录或粗糙文本转换为结构化草稿。
+- 第一版只支持四类目标：`project`、`publication`、`knowledge`、`skill`。
+- Server Action 只接受 `targetType` 和 `rawText`，不接受任意 prompt。
+- 输出只作为可复制草稿使用，支持复制字段和复制完整 Markdown。
+- 不自动保存数据库，不自动创建 Project / Publication / Knowledge / Skill，不自动修改 `visibility`。
+- 不读取 Documents、Storage、文件正文、signed URL、raw relation rows、owner_id 或私密附件 metadata。
+- 不恢复 #118 详情页事后点评式 AI Content Copilot，也不做公开 AI 聊天或访客 AI 功能。
+
+原因：
+
+- 3A-R / 3A-S / 3A-T 已覆盖“当前表单草稿补全”，但管理员还有从粗糙文本、会议摘录或临时备忘开始整理内容的场景。
+- 把 raw note 转结构化草稿放在独立后台实验室，可以提升内容生产效率，同时保持与表单内 copilot 的产品边界清晰。
+- 第一版只输出可复制内容，不引入草稿表、自动保存或自动创建资产，能降低权限、数据模型和误发布风险。
+
+影响：
+
+- 新增 `src/app/dashboard/ai-drafts/page.tsx` 和 `src/components/ai-drafts/ai-raw-note-draft-lab.tsx`。
+- 新增 `src/actions/ai-raw-note-draft-lab.ts` 和 `src/lib/ai-raw-note-draft-lab.ts`，定义输入 schema、target types、prompt、输出 schema、normalizer 和敏感模式拦截。
+- 后台侧边栏 `AI 工作空间` 和 Dashboard 快速入口新增 `AI 草稿`。
+- 新增 `docs/ai-raw-note-draft-lab.md`，并同步 README、current status、roadmap、memory、workflows、maintenance playbook 和表单 copilot 文档。
+- 不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、`/public-files/[id]/download`、公开页面、外部访问退役边界或首页结构。
+
 ## 2026-06-16 - Add Modes To AI Draft Form Copilot
 
 类型：decision

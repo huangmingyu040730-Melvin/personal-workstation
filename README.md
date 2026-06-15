@@ -8,7 +8,7 @@
 - 对内管理全部项目、知识、成果、文件、日历与自动化。
 - 公开站点只展示 public 内容；外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权已在 Phase 2R-Z 退役，不恢复。
 
-当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.0 维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，AI 表单草稿助手说明详见 `docs/ai-draft-form-copilot.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
+当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.0 维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，AI 表单草稿助手说明详见 `docs/ai-draft-form-copilot.md`，AI 原始素材草稿实验室说明详见 `docs/ai-raw-note-draft-lab.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
 
 ## 技术栈
 
@@ -52,6 +52,7 @@
 - Phase 2R-G-1 v1.0 final QA / release notes：新增 v1.0 发布说明和最终验收清单；#115 已关闭不合并，首页保持当前 `main` 主结构，不继续推进 2R-F-2 首页精选区改版
 - Phase 2R-G-2 v1.0 maintenance playbook：新增稳定维护手册，记录日常 public 内容、Documents、公开附件、安全检查、部署验收和故障排查流程；暂时跳过 public content sprint，后续内容由管理员手动逐步补充
 - Phase 3A-R / 3A-S / 3A-T AI Draft Form Copilot：Project、Publication、Knowledge、Skill 新建 / 编辑表单均提供管理员 AI 草稿补全助手，并支持补全空字段、优化已有内容、公开风险检查三种模式；#118 已关闭不合并，AI 只读取当前表单白名单字段，支持复制或采用建议到浏览器表单，不自动保存、不自动公开、不读取 Documents / Storage
+- Phase 3B AI Raw Note Draft Lab：后台新增 `/dashboard/ai-drafts`，支持把原始想法、研究笔记、会议摘录或粗糙文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；只输出可复制内容，不自动创建资产、不保存数据库、不读取 Documents / Storage
 - Phase 2R-Z 移除外部访问申请与 viewer 授权：删除 `/access-request`、viewer login/callback、后台 Access Requests / Access Grants、restricted 外部授权代码；新增 0022 迁移将 restricted 回写 private、收紧 public read policy 并删除旧授权表 / 函数；不改 Documents、Storage policy、public 文件下载 route 或核心后台内容管理
 
 ## 本地启动
@@ -106,7 +107,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 不要提交 `.env.local`，不要在前端项目中放入 `service_role` key。
 
-如需使用 AI JD 简历优化助手或后台 AI 草稿补全助手，推荐只在服务端环境配置通用 AI Provider：
+如需使用 AI JD 简历优化助手、后台 AI 表单草稿补全助手或 AI 草稿实验室，推荐只在服务端环境配置通用 AI Provider：
 
 ```text
 AI_PROVIDER=deepseek
@@ -122,7 +123,7 @@ OPENAI_API_KEY=your_openai_api_key
 OPENAI_MODEL=optional_model_name
 ```
 
-`AI_API_KEY` 和 `OPENAI_API_KEY` 不得暴露到客户端。AI Draft Form Copilot 的三种生成模式不需要额外环境变量；未配置时，JD 优化页面以及 Project / Publication / Knowledge / Skill 新建和编辑表单仍可打开，但会提示尚未配置 AI 能力。
+`AI_API_KEY` 和 `OPENAI_API_KEY` 不得暴露到客户端。AI Draft Form Copilot 的三种生成模式和 AI 草稿实验室不需要额外环境变量；未配置时，JD 优化页面、Project / Publication / Knowledge / Skill 新建与编辑表单以及 `/dashboard/ai-drafts` 仍可打开，但会提示尚未配置 AI 能力。
 
 初始化数据库：
 
@@ -162,6 +163,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 
 - `/dashboard` 管理员工作台
 - `/dashboard/search` 后台全局 metadata 搜索
+- `/dashboard/ai-drafts` AI 草稿实验室
 - `/dashboard/projects` 研究项目管理
 - `/dashboard/projects/[id]` 研究项目详情中枢
 - `/dashboard/publications` 学术成果管理

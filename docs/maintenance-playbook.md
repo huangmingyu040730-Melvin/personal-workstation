@@ -24,6 +24,7 @@
 9. 不为了内容运营新增数据库字段、migration、RLS 或 Storage policy。
 10. 不大改首页、About、公开列表、公开详情或后台主结构。
 11. AI 草稿助手只用于管理员新建 / 编辑 Project、Publication、Knowledge 和 Skill 时补全、优化或检查表单草稿，不自动保存、不自动公开、不读取 Documents / Storage。
+12. AI 草稿实验室只用于把原始素材转换为可复制结构化草稿，不自动创建资产、不保存数据库、不读取 Documents / Storage。
 
 暂时跳过 public content sprint。已有 public 内容可以继续在线展示，后续新内容由管理员在后台逐步手动补充、整理和发布。
 
@@ -31,21 +32,22 @@
 
 管理员后续新增公开内容时，按以下流程操作：
 
-1. 在后台新建 Project、Publication、Knowledge 或 Skill。
-2. 初始 `visibility` 先设为 `private`。
-3. 补齐标题、slug、摘要、标签、正文或说明。
-4. 新建或编辑 Project、Publication、Knowledge 或 Skill 时，可以使用表单内 AI 草稿助手根据当前草稿生成摘要、正文、说明、标签、结构、公开准备度和风险提示；可按场景选择补全空字段、优化已有内容或公开风险检查模式。
-5. AI 建议只复制或采用到浏览器表单，公开风险检查也只作为人工复核提示，管理员必须人工复核后手动保存。
-6. 在详情页检查 public readiness checklist。
-7. 确认 public 字段没有敏感信息、内部路径、私人联系信息、未公开客户信息或后台说明。
-8. 确认内容确实适合公开展示后，再把 `visibility` 设为 `public`。
-9. 打开对应 public 页面检查展示效果。
-10. 打开 `/sitemap.xml`，确认该 public 内容已经被收录。
-11. 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+1. 如果素材还只是会议摘录、临时备忘或粗糙想法，可先进入 `/dashboard/ai-drafts` 生成结构化草稿。
+2. 复制 AI 草稿实验室输出的字段或完整 Markdown，人工复核后再进入后台新建 Project、Publication、Knowledge 或 Skill。
+3. 初始 `visibility` 先设为 `private`。
+4. 补齐标题、slug、摘要、标签、正文或说明。
+5. 新建或编辑 Project、Publication、Knowledge 或 Skill 时，可以使用表单内 AI 草稿助手根据当前草稿生成摘要、正文、说明、标签、结构、公开准备度和风险提示；可按场景选择补全空字段、优化已有内容或公开风险检查模式。
+6. AI 建议只复制或采用到浏览器表单，公开风险检查也只作为人工复核提示，管理员必须人工复核后手动保存。
+7. 在详情页检查 public readiness checklist。
+8. 确认 public 字段没有敏感信息、内部路径、私人联系信息、未公开客户信息或后台说明。
+9. 确认内容确实适合公开展示后，再把 `visibility` 设为 `public`。
+10. 打开对应 public 页面检查展示效果。
+11. 打开 `/sitemap.xml`，确认该 public 内容已经被收录。
+12. 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
 
 发布前不要自动公开内容，也不要因为 checklist 缺项而绕过人工判断。Checklist 只是提示，不阻止保存。
 
-AI 草稿助手同样只是提示：不会自动保存数据库，不会自动修改 `visibility`，不会读取 Documents / Storage 或生成下载链接。公开风险检查模式输出的风险项不能替代管理员发布前判断。
+AI 草稿助手和 AI 草稿实验室同样只是提示：不会自动保存数据库，不会自动修改 `visibility`，不会读取 Documents / Storage 或生成下载链接。公开风险检查模式输出的风险项不能替代管理员发布前判断。
 
 ## 新增附件流程
 
@@ -139,6 +141,7 @@ npm run start
 - Vercel env value。
 - private Documents。
 - AI 草稿助手输出被误发布为未经复核的事实。
+- AI 草稿实验室输出被误认为已经保存或已经公开。
 
 推荐检查范围：
 
@@ -164,6 +167,7 @@ npm run start
 - AI 摘要。
 - 详情页事后点评式 AI Content Copilot。
 - 自动公开或自动保存 AI 草稿建议。
+- AI 草稿实验室自动创建资产或草稿表。
 - OCR。
 - 向量搜索。
 - 全文搜索。
