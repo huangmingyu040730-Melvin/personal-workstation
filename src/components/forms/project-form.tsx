@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
-import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import type { ProjectRecord } from "@/lib/content-types";
 import { projectStatuses, visibilityOptions } from "@/lib/content-options";
-import { ProjectAiDraftAssistant } from "./project-ai-draft-assistant";
 import { Field, Select, Textarea, TextInput, Checkbox, ErrorNotice } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
@@ -16,10 +14,8 @@ export function ProjectForm({
   project?: ProjectRecord | null;
   error?: string;
 }) {
-  const aiConfig = getAiProviderConfig();
-
   return (
-    <form action={action} className="space-y-5">
+    <form id="project-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
       <AdminFormSection title="基本信息" description="用于列表、详情页和公开卡片展示的核心信息。">
       <div className="grid gap-5 md:grid-cols-2">
@@ -72,11 +68,6 @@ export function ProjectForm({
         <Textarea name="methodology" defaultValue={project?.methodology ?? ""} />
       </Field>
       </AdminFormSection>
-      <ProjectAiDraftAssistant
-        isConfigured={aiConfig.isConfigured}
-        providerLabel={getAiProviderDisplayName(aiConfig.provider)}
-        model={aiConfig.model}
-      />
       <AdminFormSection title="展示设置" description="控制内容是否公开、是否进入首页精选区域。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="权限">

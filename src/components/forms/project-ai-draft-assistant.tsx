@@ -10,11 +10,12 @@ type ProjectAiDraftAssistantProps = {
   isConfigured: boolean;
   providerLabel: string;
   model: string;
+  formId?: string;
 };
 
 const initialState: ProjectAiDraftState = { status: "idle" };
 
-export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model }: ProjectAiDraftAssistantProps) {
+export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, formId }: ProjectAiDraftAssistantProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<ProjectAiDraftState>(initialState);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model }: 
   const [isPending, startTransition] = useTransition();
 
   function handleGenerate() {
-    const form = rootRef.current?.closest("form");
+    const form = getTargetForm(rootRef.current, formId);
     if (!form) {
       setState({ status: "error", message: "未找到当前 Project 表单，请刷新页面后重试。" });
       return;
@@ -59,7 +60,7 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model }: 
   }
 
   function applyField(key: string, fieldName: string, value: string | string[]) {
-    const form = rootRef.current?.closest("form");
+    const form = getTargetForm(rootRef.current, formId);
     const text = Array.isArray(value) ? value.join("\n") : value;
     if (!form || !text.trim()) {
       return;
@@ -347,6 +348,15 @@ function ActionButtons({
       ) : null}
     </div>
   );
+}
+
+function getTargetForm(root: HTMLDivElement | null, formId: string | undefined) {
+  if (formId) {
+    const form = document.getElementById(formId);
+    return form instanceof HTMLFormElement ? form : null;
+  }
+
+  return root?.closest("form") ?? null;
 }
 
 function readFormValue(form: HTMLFormElement, name: string) {
