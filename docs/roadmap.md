@@ -752,6 +752,26 @@ Phase 2R-Z 已退役：
 - 不自动保存数据库，不自动创建 Project / Publication / Knowledge / Skill，不自动修改 `visibility`，不自动公开内容。
 - 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
 
+### Phase 3B - AI Raw Note To Structured Draft Lab
+
+已完成代码实现。Phase 3B 新增独立后台 AI 草稿实验室 `/dashboard/ai-drafts`，用于把原始想法、研究笔记、会议摘录或粗糙文本转换成结构化后台内容草稿。
+
+- 新增后台页面 `/dashboard/ai-drafts`，侧边栏和 Dashboard 快速入口可进入。
+- 支持目标类型：`project`、`publication`、`knowledge`、`skill`。
+- Server Action 只接受 `targetType` 和 `rawText`，不接受任意 prompt。
+- rawText 最多 10000 个字符，最少 20 个字符；服务端会拦截明显 secret、API key、Storage path、signed URL、file_path、owner_id 等敏感模式。
+- 输出结构化 JSON 草稿，页面支持复制单个字段或复制完整 Markdown。
+- 如果模型返回非 JSON，页面显示原始文本并提示人工复核，不崩溃。
+- 未配置 AI API key 时，页面正常显示，生成按钮禁用并提示尚未配置。
+
+边界：
+
+- Phase 3B 不是表单内 copilot；表单内补全仍由 Phase 3A-R / 3A-S / 3A-T 维护。
+- 不自动保存数据库，不自动创建 Project / Publication / Knowledge / Skill，不自动修改 `visibility`，不自动公开内容。
+- 不新增草稿表，不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public file download route。
+- 不读取 Documents、Storage object、Skill package、uploaded code、zip 内容、file path、owner_id、raw relation rows、private attachment metadata 或 signed URL。
+- 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network`、Market Brief 或 #118 详情页 AI。
+
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
 历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。

@@ -21,6 +21,7 @@
 - Phase 2R-C-2 起公开站点进入发布前 QA / hardening；只做公开路由、公开附件边界、SEO / sitemap / robots、390px 移动端和敏感字段巡检及轻量修补，不新增业务功能、migration、RLS、Storage policy 或 Documents 权限变化。
 - Phase 2R-Z 起外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权链路已退役；不要恢复 `/access-request`、`/viewer/*`、`/dashboard/access-requests`、`/dashboard/access-grants`、访问申请 / 授权 actions、queries、forms、validations 或流程文档。
 - Phase 3A-T 起 AI Draft Form Copilot 支持 `complete_missing`、`improve_existing`、`public_safety_check` 三种生成模式；当前 AI 方向仍是后台表单内草稿补全 / 优化 / 风险检查，不恢复 #118 详情页 AI，不自动保存、不自动公开，不修改数据库、RLS、Storage、Documents 或 public download route。
+- Phase 3B 起新增后台 AI 草稿实验室 `/dashboard/ai-drafts`，用于把管理员粘贴的 raw note 转为 Project / Publication / Knowledge / Skill 结构化草稿；它不是表单内 copilot，不自动创建资产、不保存草稿、不读取 Documents / Storage，不进入公开导航。
 
 ## Tech Stack
 

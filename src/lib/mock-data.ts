@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   FileText,
+  FlaskConical,
   FolderOpen,
   Home,
   Library,
@@ -49,6 +50,7 @@ export const sidebarGroups = [
   {
     label: "AI 工作空间",
     items: [
+      { label: "AI 草稿", href: "/dashboard/ai-drafts", icon: FlaskConical },
       { label: "Skill 库", href: "/dashboard/skills", icon: WandSparkles },
       { label: "自动化", href: "/automations", icon: Bot }
     ]
@@ -250,6 +252,7 @@ export const quickActions = [
   { label: "新建项目", icon: FolderOpen, href: "/dashboard/projects/new" },
   { label: "新建日程", icon: CalendarDays, href: "/dashboard/calendar/new" },
   { label: "新增笔记", icon: Library, href: "/dashboard/knowledge/new" },
+  { label: "AI 草稿", icon: FlaskConical, href: "/dashboard/ai-drafts" },
   { label: "新建 Skill", icon: WandSparkles, href: "/dashboard/skills/new" },
   { label: "上传文件", icon: FileText, href: "/dashboard/documents/upload" },
   { label: "求职中心", icon: BriefcaseBusiness, href: "/dashboard/career" }

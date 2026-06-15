@@ -71,6 +71,7 @@
 - Phase 3A-R：Project AI Draft Form Copilot，Project 新建 / 编辑表单新增 AI 草稿补全助手；#118 的详情页事后点评式 AI 已关闭且不合并，当前 AI 只读取表单草稿白名单字段，不保存数据库、不自动公开、不读取 Documents / Storage。
 - Phase 3A-S：AI Draft Form Copilot 扩展到 Publication / Knowledge / Skill 新建与编辑表单；三类资产各自使用独立字段白名单、输出结构和“采用到表单”行为，不自动保存、不自动修改 visibility、不读取 Documents / Storage。
 - Phase 3A-T：AI Draft Form Copilot 支持补全空字段、优化已有内容、公开风险检查三种模式；四类资产表单共用模式控件和生成进度文案，公开风险检查优先展示 public readiness、sensitive risks 和 next steps，但仍只作为人工复核提示。
+- Phase 3B：新增 AI Raw Note Draft Lab `/dashboard/ai-drafts`，把管理员粘贴的原始素材转换为 Project / Publication / Knowledge / Skill 结构化草稿；只输出可复制字段和完整 Markdown，不自动保存、不自动创建资产、不读取 Documents / Storage。
 
 当前网站包括：
 
@@ -105,6 +106,7 @@
 - Phase 2R-G-1 后，v1.0 文档收口为当前 `main` 首页结构；不要把 #115 的首页精选区改版作为后续起点，不要重做首页精选区。
 - Phase 2R-G-2 后，v1.0 进入稳定维护 playbook 阶段；当前不做 public content sprint，不补编造内容，不大改页面主结构，后续真实 public 内容由管理员手动逐步补充。
 - Phase 3A-R / 3A-S / 3A-T 后，后台 AI 能力优先服务 Project / Publication / Knowledge / Skill 表单草稿补全，而不是已保存详情页事后点评；AI 读取当前表单中的结构化白名单字段，输出只供管理员复制或采用到浏览器表单，保存仍由管理员手动触发。3A-T 的三种模式只改变生成策略和结果排序，不新增数据库、权限、公开页面或详情页 AI。
+- Phase 3B 后，AI 原始素材转结构化草稿是独立后台页面，不是表单内 copilot；Server Action 只接受 `targetType` 和 `rawText`，不接受任意 prompt，不写数据库，不读取 Documents / Storage，不进入公开导航。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
 - robots 阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
 - Documents 上传默认保持 private；只有管理员显式设置 `documents.visibility = 'public'`，且文件关联到 public 资产时，公开页面才可展示安全附件摘要。
@@ -257,6 +259,7 @@ Research Asset Links：
 - Phase 3A-R 采用 AI draft form copilot 决策：关闭并不合并 #118 的详情页事后点评式 AI，改为 Project 新建 / 编辑表单内的草稿补全助手；Server Action 只接受结构化白名单字段并验证管理员身份；AI 输出不写库、不自动修改 visibility、不读取 Documents / Storage。
 - Phase 3A-S 采用 per-asset AI draft form copilot 决策：Publication / Knowledge / Skill 表单沿用 3A-R 的右侧窄栏助手和安全模型，但按各自字段设计输入白名单、输出结构和可采用字段；不机械复制 Project prompt，不新增 migration，不恢复 #118 详情页 AI。
 - Phase 3A-T 采用 AI draft copilot modes 决策：在既有表单助手中加入 `complete_missing`、`improve_existing` 和 `public_safety_check` 三种模式；默认保持补全空字段，风险检查只优先输出公开准备度、敏感风险和整改建议，不自动保存、不自动公开、不新增详情页 AI。
+- Phase 3B 采用 raw note draft lab 决策：新增 `/dashboard/ai-drafts` 独立后台实验室，把一段 rawText 转为四类资产结构化草稿；只支持复制字段或完整 Markdown，不自动创建资产、不保存草稿、不新增草稿表、不读取 Documents / Storage。
 - Phase 2R-E-1 / 2R-E-2 的访问申请后台与 Access Grants polish 已被 Phase 2R-Z 取代；不要恢复相关页面、actions、queries、forms 或流程文档。
 - Phase 2R-Z 采用 remove external access 决策：新增 0022 migration，将历史 restricted 回写 private，收紧 public read policy，删除旧 `access_requests`、`content_access_grants`、`has_content_access()` 和 `can_request_viewer_login()`；不修改 Documents、Storage policy 或 public 下载 route。
 - 后续数据库变更必须新增 `0023_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。

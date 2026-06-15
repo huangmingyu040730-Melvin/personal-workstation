@@ -537,6 +537,58 @@ Skill：
 - 不新增 migration，不修改 RLS 或 Storage policy。
 - 不恢复 access request、viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
 
+## AI Raw Note Draft Lab Workflow
+
+日期：2026-06-16
+
+类型：workflow
+
+用途：
+
+- 在独立后台页面 `/dashboard/ai-drafts` 中，把原始想法、研究笔记、会议摘录或粗糙文本转换为 Project / Publication / Knowledge / Skill 结构化草稿。
+
+步骤：
+
+1. 打开 `/dashboard/ai-drafts`。
+2. 选择目标草稿类型：Project、Publication、Knowledge 或 Skill。
+3. 粘贴原始文本；不要粘贴客户敏感信息、API key、未脱敏内部资料、Storage path、signed URL 或私密文件内容。
+4. 点击“生成结构化草稿”。
+5. Server Action 校验当前用户是管理员。
+6. Server Action 只接收 `targetType` 和 `rawText`，不接受任意 prompt。
+7. AI 返回目标类型对应的结构化 JSON 草稿。
+8. 管理员人工复核后，可以复制单个字段或复制完整 Markdown。
+9. 管理员手动打开对应新建表单，人工粘贴并保存。
+
+输入白名单：
+
+- `targetType`：`project`、`publication`、`knowledge` 或 `skill`。
+- `rawText`：20 到 10000 个字符。
+
+输出结构：
+
+- Project：title、summary、background、research_question、methodology、tags、milestones、public_readiness_notes、sensitive_risks、next_steps。
+- Publication：title、publication_type_suggestion、summary、abstract、tags、structure_suggestions、public_readiness_notes、sensitive_risks、next_steps。
+- Knowledge：title、category_suggestion、excerpt、content_outline、content_draft、tags、public_readiness_notes、sensitive_risks、next_steps。
+- Skill：name、category_suggestion、description、content、input_description、output_description、usage_guide、platforms、workflow_steps、public_readiness_notes、sensitive_risks、next_steps。
+
+验证要求：
+
+- 未配置 AI API key 时，`/dashboard/ai-drafts` 不崩溃，生成按钮禁用并显示尚未配置提示。
+- 后台侧边栏和 Dashboard 快速入口可以进入 AI 草稿实验室。
+- 四种目标类型都能在 UI 中选择。
+- 输出可以复制字段或复制完整 Markdown。
+- 390px 移动端无横向滚动。
+- 公开页面没有 AI 草稿入口。
+- sitemap / robots / public smoke 不受影响。
+
+边界：
+
+- 不自动保存数据库，不自动创建 Project / Publication / Knowledge / Skill，不自动修改 `visibility`。
+- 不新增草稿表，不新增 migration，不修改 RLS 或 Storage policy。
+- 不读取 Documents、Storage object、Skill package、uploaded code、zip 内容、Storage path、file path、owner_id、raw relation rows、private file metadata 或 signed URL。
+- 不修改 Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
+- 不恢复 access request、viewer login、Access Grants、restricted 外部授权、`/dashboard/network`、Market Brief 或 #118 详情页 AI。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09
