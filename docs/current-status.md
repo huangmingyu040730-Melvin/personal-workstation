@@ -21,6 +21,8 @@ Phase 2R-G-1 将当前稳定版本收口为 v1.0 final QA / release notes。PR #
 
 Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenance-playbook.md` 作为日常维护手册，暂时跳过 public content sprint，后续真实内容由管理员在后台逐步手动补充和完善，不继续大改框架或页面主结构。
 
+Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草稿补全助手。#118 的详情页事后点评式 AI 已关闭且不合并；当前 AI 只读取当前表单白名单字段，帮助补全摘要、背景、研究问题、方法、标签、研究流程和阶段计划，不自动保存、不自动公开、不读取 Documents 或 Storage。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -85,6 +87,7 @@ Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenan
 - Skill 后台详情页能力包 / 工作流包：集中展示用途、平台、版本、状态、使用说明、私密资料、版本记录和相关资产搜索入口。
 - Publication 后台详情页成果中枢：集中展示成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Project / Publication / Knowledge / Skill 后台详情页提供公开发布准备度 checklist，基于 visibility、slug、标题、摘要、标签 / 分类、正文 / 说明、关系和 public 附件计数等已有字段提示公开运营状态。
+- Project 新建 / 编辑表单提供 AI 草稿补全助手，基于当前浏览器表单中的标题、简介、研究背景、研究问题、方法、标签、状态和可见性等白名单字段生成建议；管理员可复制或采用到表单字段，但仍需手动保存。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
 - 文档包整体迁移 / 同步关联工具。
 - Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
@@ -106,7 +109,7 @@ Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenan
 
 后台仍只允许管理员访问。后台写入继续通过 Server Actions 验证管理员身份，并依赖 Supabase RLS 作为数据库权限边界。
 
-Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar、Career 和 Profile；Market Brief 已弃用并移除产品入口；访问申请 / Access Grants / Viewer 外部授权已在 Phase 2R-Z 退役，不恢复；Phase 2R-G-2 起 v1.0 维护以 playbook、手动内容补充、安全巡检和小 bug 修复为主，不主动扩展新的公开内容 sprint、首页精选区或求职自动化功能。
+Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar、Career 和 Profile；Market Brief 已弃用并移除产品入口；访问申请 / Access Grants / Viewer 外部授权已在 Phase 2R-Z 退役，不恢复；Phase 2R-G-2 起 v1.0 维护以 playbook、手动内容补充、安全巡检和小 bug 修复为主，不主动扩展新的公开内容 sprint、首页精选区或求职自动化功能。Phase 3A-R 的 AI 只作为管理员 Project 表单草稿助手，不改变公开站点或权限模型。
 
 ### Workspace Search
 
@@ -376,6 +379,8 @@ Phase 2R-C-1 公开 SEO 与分享体验 polish 不需要新增 migration；它�
 Phase 2R-C-2 公开发布前 QA / hardening 不需要新增 migration；它只新增公开 smoke 脚本、公开文案 hardening 和附件 metadata 移动端换行修补。不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、public 文件下载 route 或任何 Supabase schema。
 
 Phase 2R-D-1 公开内容运营基础不需要新增 migration；它只新增后台 public readiness checklist、一个只读 public 附件计数 helper 和公开内容运营文档。不新增字段、RPC、索引、AI、搜索服务或审批流，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
+
+Phase 3A-R Project AI 表单草稿助手不需要新增 migration；它只新增后台 Project 表单内 AI 组件、严格白名单 Server Action 和文档。不新增字段、RPC、索引，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 
 Phase 2R-Z 新增 `0022_remove_external_access_and_restricted_viewer.sql`；该迁移将历史 `restricted` 内容回写为 `private`，收紧四类内容表 visibility constraint 和 public read policy，并删除旧访问申请 / 授权表与授权函数。不修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 

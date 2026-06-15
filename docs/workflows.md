@@ -455,6 +455,62 @@ public attachment 维护：
 - 本流程不新增 migration、数据库字段、RLS、Storage policy、public zip、AI 摘要、OCR、向量搜索、全文搜索、PDF 在线预览、支付或外部授权。
 - 本流程不修改 Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
 
+## Project AI Draft Form Copilot Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 在 Project 新建 / 编辑表单中，用 AI 根据当前草稿补全研究项目字段。
+
+步骤：
+
+1. 打开 `/dashboard/projects/new` 或 `/dashboard/projects/[id]/edit`。
+2. 先填写已有草稿字段，例如标题、简介、研究背景、研究问题、研究方法、标签、状态或可见性。
+3. 点击“根据当前表单生成建议”。
+4. Server Action 校验当前用户是管理员。
+5. Server Action 只接收 Project 表单白名单字段，不接受任意 prompt。
+6. AI 返回 summary / background / research question / methodology 草稿、标签建议、研究流程、阶段计划、公开准备度、敏感风险和下一步建议。
+7. 管理员人工复核后，可以复制建议，或采用到浏览器表单字段。
+8. 采用建议只更新当前浏览器表单，不提交表单。
+9. 确认内容安全后，管理员手动点击保存。
+
+输入白名单：
+
+- `title`
+- `summary`
+- `background`
+- `research_question`
+- `methodology`
+- `tags`
+- `status`
+- `visibility`
+- `milestones`
+- `progress`
+- `start_date`
+- `end_date`
+
+验证要求：
+
+- 未配置 AI API key 时，Project 新建 / 编辑表单不崩溃，AI 按钮禁用并提示尚未配置。
+- 配置 AI API key 后，AI 建议能基于当前草稿生成。
+- 采用建议不会自动保存数据库。
+- AI 不会自动修改 `visibility`。
+- 公开页面没有 AI 按钮或 AI 输出。
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+
+边界：
+
+- 不自动保存数据库，不自动创建 Project，不自动公开内容。
+- 不读取 Documents、Storage object、Storage path、file path、owner_id、raw relation rows、private file metadata 或 signed URL。
+- 不修改 Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
+- 不新增 migration，不修改 RLS 或 Storage policy。
+- 不恢复 access request、viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09
