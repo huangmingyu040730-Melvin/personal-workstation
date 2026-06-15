@@ -3,8 +3,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AlertTriangle, Check, Clipboard, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { generateKnowledgeAiDraftAction, generatePublicationAiDraftAction, generateSkillAiDraftAction } from "@/actions/ai-draft-form-copilot";
+import { AiDraftModeSelector, aiDraftModeSteps, getAiDraftModeActionLabel } from "@/components/forms/ai-draft-mode-controls";
 import { publicationTypes, skillStatuses } from "@/lib/content-options";
-import type { KnowledgeAiDraftResult, KnowledgeAiDraftState, PublicationAiDraftResult, PublicationAiDraftState, SkillAiDraftResult, SkillAiDraftState } from "@/lib/ai-draft-form-copilot";
+import type { AiDraftMode, KnowledgeAiDraftResult, KnowledgeAiDraftState, PublicationAiDraftResult, PublicationAiDraftState, SkillAiDraftResult, SkillAiDraftState } from "@/lib/ai-draft-form-copilot";
 import { cn } from "@/lib/utils";
 
 type AssistantState<TResult> = {
@@ -33,27 +34,6 @@ const visibilityValues = ["public", "private", "unlisted"] as const;
 const publicationTypeValues = publicationTypes.map((item) => item.value);
 const skillStatusValues = skillStatuses.map((item) => item.value);
 
-const publicationSteps = [
-  { title: "读取成果草稿", description: "收集标题、类型、摘要和标签" },
-  { title: "定位公开表达", description: "判断成果摘要与 abstract 方向" },
-  { title: "生成结构化建议", description: "整理标题、摘要、标签和结构建议" },
-  { title: "复核敏感边界", description: "检查业绩暗示、未验证数据和公开风险" }
-] as const;
-
-const knowledgeSteps = [
-  { title: "读取知识草稿", description: "收集标题、分类、摘要和正文" },
-  { title: "组织内容结构", description: "梳理大纲、主题边界和标签方向" },
-  { title: "生成笔记建议", description: "补全摘要、正文草稿和分类建议" },
-  { title: "复核公开边界", description: "检查内部资料、客户信息和未验证结论" }
-] as const;
-
-const skillSteps = [
-  { title: "读取 Skill 草稿", description: "收集名称、描述、平台和输入输出说明" },
-  { title: "梳理工作流", description: "判断复用场景、步骤和版本提示" },
-  { title: "生成说明建议", description: "补全简介、输入、输出和使用指南" },
-  { title: "复核发布风险", description: "检查 secret、内部流程和不可公开提示词" }
-] as const;
-
 export function PublicationAiDraftAssistant(props: AssistantProps) {
   return (
     <AiDraftAssistantShell<PublicationAiDraftResult>
@@ -62,10 +42,10 @@ export function PublicationAiDraftAssistant(props: AssistantProps) {
       description="根据当前成果草稿补全摘要、Abstract、标签和公开表达。"
       missingFormMessage="未找到当前 Publication 表单，请刷新页面后重试。"
       safeNote="只读取当前成果表单草稿；不自动保存、不自动公开，不读取 Documents、Storage 或附件链接。"
-      generationSteps={publicationSteps}
-      generate={(form) =>
+      generate={(form, mode) =>
         generatePublicationAiDraftAction({
           assetType: "publication",
+          mode,
           draft: {
             title: readFormValue(form, "title"),
             publication_type: normalizeAllowed(readFormValue(form, "publication_type"), publicationTypeValues),
@@ -78,7 +58,7 @@ export function PublicationAiDraftAssistant(props: AssistantProps) {
           }
         }) as Promise<PublicationAiDraftState>
       }
-      renderResult={(result, actions) => <PublicationAiDraftResultView result={result} actions={actions} />}
+      renderResult={(result, actions, mode) => <PublicationAiDraftResultView result={result} actions={actions} mode={mode} />}
     />
   );
 }
@@ -91,10 +71,10 @@ export function KnowledgeAiDraftAssistant(props: AssistantProps) {
       description="根据当前知识草稿补全摘要、大纲、正文建议和标签。"
       missingFormMessage="未找到当前 Knowledge 表单，请刷新页面后重试。"
       safeNote="只读取当前知识表单草稿；不自动保存、不自动公开，不读取 Documents、Storage 或文件正文。"
-      generationSteps={knowledgeSteps}
-      generate={(form) =>
+      generate={(form, mode) =>
         generateKnowledgeAiDraftAction({
           assetType: "knowledge",
+          mode,
           draft: {
             title: readFormValue(form, "title"),
             category: readFormValue(form, "category"),
@@ -106,7 +86,7 @@ export function KnowledgeAiDraftAssistant(props: AssistantProps) {
           }
         }) as Promise<KnowledgeAiDraftState>
       }
-      renderResult={(result, actions) => <KnowledgeAiDraftResultView result={result} actions={actions} />}
+      renderResult={(result, actions, mode) => <KnowledgeAiDraftResultView result={result} actions={actions} mode={mode} />}
     />
   );
 }
@@ -119,10 +99,10 @@ export function SkillAiDraftAssistant(props: AssistantProps) {
       description="根据当前 Skill 草稿补全说明、输入输出、指南和工作流步骤。"
       missingFormMessage="未找到当前 Skill 表单，请刷新页面后重试。"
       safeNote="只读取当前 Skill 表单草稿；不自动保存、不自动公开，不读取 Skill package、Documents、Storage 或上传代码。"
-      generationSteps={skillSteps}
-      generate={(form) =>
+      generate={(form, mode) =>
         generateSkillAiDraftAction({
           assetType: "skill",
+          mode,
           draft: {
             name: readFormValue(form, "name"),
             description: readFormValue(form, "description"),
@@ -138,7 +118,7 @@ export function SkillAiDraftAssistant(props: AssistantProps) {
           }
         }) as Promise<SkillAiDraftState>
       }
-      renderResult={(result, actions) => <SkillAiDraftResultView result={result} actions={actions} />}
+      renderResult={(result, actions, mode) => <SkillAiDraftResultView result={result} actions={actions} mode={mode} />}
     />
   );
 }
@@ -152,7 +132,6 @@ function AiDraftAssistantShell<TResult>({
   description,
   missingFormMessage,
   safeNote,
-  generationSteps,
   generate,
   renderResult
 }: AssistantProps & {
@@ -160,15 +139,16 @@ function AiDraftAssistantShell<TResult>({
   description: string;
   missingFormMessage: string;
   safeNote: string;
-  generationSteps: ReadonlyArray<{ title: string; description: string }>;
-  generate: (form: HTMLFormElement) => Promise<AssistantState<TResult>>;
-  renderResult: (result: TResult, actions: AssistantActions) => ReactNode;
+  generate: (form: HTMLFormElement, mode: AiDraftMode) => Promise<AssistantState<TResult>>;
+  renderResult: (result: TResult, actions: AssistantActions, mode: AiDraftMode) => ReactNode;
 }) {
   const [state, setState] = useState<AssistantState<TResult>>({ status: "idle" });
+  const [mode, setMode] = useState<AiDraftMode>("complete_missing");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [appliedKey, setAppliedKey] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const generationSteps = aiDraftModeSteps[mode];
 
   useEffect(() => {
     if (!isGenerating) {
@@ -196,7 +176,7 @@ function AiDraftAssistantShell<TResult>({
     setIsGenerating(true);
 
     try {
-      const nextState = await generate(form);
+      const nextState = await generate(form, mode);
       setState(nextState);
     } finally {
       setIsGenerating(false);
@@ -266,6 +246,8 @@ function AiDraftAssistantShell<TResult>({
           </div>
         ) : null}
 
+        <AiDraftModeSelector value={mode} onChange={setMode} disabled={isGenerating} />
+
         <button
           type="button"
           onClick={handleGenerate}
@@ -273,7 +255,7 @@ function AiDraftAssistantShell<TResult>({
           className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0"
         >
           {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
-          {isGenerating ? "正在生成建议" : "根据当前表单生成建议"}
+          {getAiDraftModeActionLabel(mode, isGenerating)}
         </button>
         <p className="text-xs leading-5 text-slate-500">采用建议只更新浏览器字段；仍需手动保存。</p>
 
@@ -290,7 +272,7 @@ function AiDraftAssistantShell<TResult>({
           </div>
         ) : null}
 
-        {state.result ? renderResult(state.result, actions) : null}
+        {state.result ? renderResult(state.result, actions, mode) : null}
 
         {state.rawText ? (
           <DraftBlock
@@ -307,9 +289,9 @@ function AiDraftAssistantShell<TResult>({
   );
 }
 
-function PublicationAiDraftResultView({ result, actions }: { result: PublicationAiDraftResult; actions: AssistantActions }) {
-  return (
-    <div className="mt-5 space-y-4">
+function PublicationAiDraftResultView({ result, actions, mode }: { result: PublicationAiDraftResult; actions: AssistantActions; mode: AiDraftMode }) {
+  const draftBlocks = (
+    <>
       <DraftListBlock
         title="标题优化建议"
         items={result.title_suggestions}
@@ -342,16 +324,42 @@ function PublicationAiDraftResultView({ result, actions }: { result: Publication
         onCopy={() => actions.onCopy("publication-tags", result.tag_suggestions)}
         onApply={() => actions.onApply("publication-tags", "tags", result.tag_suggestions)}
       />
-      <DraftListBlock title="公开站点定位" items={result.publication_positioning} copied={actions.copiedKey === "publication-positioning"} onCopy={() => actions.onCopy("publication-positioning", result.publication_positioning)} />
-      <DraftListBlock title="结构建议" items={result.structure_suggestions} copied={actions.copiedKey === "publication-structure"} onCopy={() => actions.onCopy("publication-structure", result.structure_suggestions)} />
-      <RiskAndNextBlocks prefix="publication" result={result} actions={actions} />
+      <DraftListBlock
+        title="公开站点定位"
+        items={result.publication_positioning}
+        copied={actions.copiedKey === "publication-positioning"}
+        onCopy={() => actions.onCopy("publication-positioning", result.publication_positioning)}
+      />
+      <DraftListBlock
+        title="结构建议"
+        items={result.structure_suggestions}
+        copied={actions.copiedKey === "publication-structure"}
+        onCopy={() => actions.onCopy("publication-structure", result.structure_suggestions)}
+      />
+    </>
+  );
+  const riskBlocks = <RiskAndNextBlocks prefix="publication" result={result} actions={actions} />;
+
+  return (
+    <div className="mt-5 space-y-4">
+      {mode === "public_safety_check" ? (
+        <>
+          {riskBlocks}
+          {draftBlocks}
+        </>
+      ) : (
+        <>
+          {draftBlocks}
+          {riskBlocks}
+        </>
+      )}
     </div>
   );
 }
 
-function KnowledgeAiDraftResultView({ result, actions }: { result: KnowledgeAiDraftResult; actions: AssistantActions }) {
-  return (
-    <div className="mt-5 space-y-4">
+function KnowledgeAiDraftResultView({ result, actions, mode }: { result: KnowledgeAiDraftResult; actions: AssistantActions; mode: AiDraftMode }) {
+  const draftBlocks = (
+    <>
       <DraftListBlock
         title="标题优化建议"
         items={result.title_suggestions}
@@ -368,7 +376,12 @@ function KnowledgeAiDraftResultView({ result, actions }: { result: KnowledgeAiDr
         onCopy={() => actions.onCopy("knowledge-excerpt", result.excerpt_draft)}
         onApply={() => actions.onApply("knowledge-excerpt", "excerpt", result.excerpt_draft)}
       />
-      <DraftListBlock title="正文大纲" items={result.content_outline} copied={actions.copiedKey === "knowledge-outline"} onCopy={() => actions.onCopy("knowledge-outline", result.content_outline)} />
+      <DraftListBlock
+        title="正文大纲"
+        items={result.content_outline}
+        copied={actions.copiedKey === "knowledge-outline"}
+        onCopy={() => actions.onCopy("knowledge-outline", result.content_outline)}
+      />
       <DraftBlock
         title="Markdown 正文草稿"
         value={result.content_draft}
@@ -393,14 +406,30 @@ function KnowledgeAiDraftResultView({ result, actions }: { result: KnowledgeAiDr
         onCopy={() => actions.onCopy("knowledge-category", result.category_suggestions)}
         onApply={() => actions.onApply("knowledge-category", "category", result.category_suggestions)}
       />
-      <RiskAndNextBlocks prefix="knowledge" result={result} actions={actions} />
+    </>
+  );
+  const riskBlocks = <RiskAndNextBlocks prefix="knowledge" result={result} actions={actions} />;
+
+  return (
+    <div className="mt-5 space-y-4">
+      {mode === "public_safety_check" ? (
+        <>
+          {riskBlocks}
+          {draftBlocks}
+        </>
+      ) : (
+        <>
+          {draftBlocks}
+          {riskBlocks}
+        </>
+      )}
     </div>
   );
 }
 
-function SkillAiDraftResultView({ result, actions }: { result: SkillAiDraftResult; actions: AssistantActions }) {
-  return (
-    <div className="mt-5 space-y-4">
+function SkillAiDraftResultView({ result, actions, mode }: { result: SkillAiDraftResult; actions: AssistantActions; mode: AiDraftMode }) {
+  const draftBlocks = (
+    <>
       <DraftListBlock
         title="名称优化建议"
         items={result.name_suggestions}
@@ -417,14 +446,77 @@ function SkillAiDraftResultView({ result, actions }: { result: SkillAiDraftResul
         onCopy={() => actions.onCopy("skill-description", result.description_draft)}
         onApply={() => actions.onApply("skill-description", "description", result.description_draft)}
       />
-      <DraftBlock title="详细说明草稿" value={result.content_draft} copied={actions.copiedKey === "skill-content"} applied={actions.appliedKey === "skill-content"} onCopy={() => actions.onCopy("skill-content", result.content_draft)} onApply={() => actions.onApply("skill-content", "content", result.content_draft)} />
-      <DraftBlock title="输入说明草稿" value={result.input_description_draft} copied={actions.copiedKey === "skill-input"} applied={actions.appliedKey === "skill-input"} onCopy={() => actions.onCopy("skill-input", result.input_description_draft)} onApply={() => actions.onApply("skill-input", "input_description", result.input_description_draft)} />
-      <DraftBlock title="输出说明草稿" value={result.output_description_draft} copied={actions.copiedKey === "skill-output"} applied={actions.appliedKey === "skill-output"} onCopy={() => actions.onCopy("skill-output", result.output_description_draft)} onApply={() => actions.onApply("skill-output", "output_description", result.output_description_draft)} />
-      <DraftBlock title="使用指南草稿" value={result.usage_guide_draft} copied={actions.copiedKey === "skill-usage"} applied={actions.appliedKey === "skill-usage"} onCopy={() => actions.onCopy("skill-usage", result.usage_guide_draft)} onApply={() => actions.onApply("skill-usage", "usage_guide", result.usage_guide_draft)} />
-      <DraftListBlock title="平台建议" items={result.platform_suggestions} copied={actions.copiedKey === "skill-platforms"} applied={actions.appliedKey === "skill-platforms"} onCopy={() => actions.onCopy("skill-platforms", result.platform_suggestions)} onApply={() => actions.onApply("skill-platforms", "platforms", result.platform_suggestions)} />
-      <DraftBlock title="版本号建议" value={result.current_version_suggestion} copied={actions.copiedKey === "skill-version"} applied={actions.appliedKey === "skill-version"} onCopy={() => actions.onCopy("skill-version", result.current_version_suggestion)} onApply={() => actions.onApply("skill-version", "current_version", result.current_version_suggestion)} />
-      <DraftListBlock title="工作流步骤" items={result.workflow_steps} copied={actions.copiedKey === "skill-workflow"} onCopy={() => actions.onCopy("skill-workflow", result.workflow_steps)} />
-      <RiskAndNextBlocks prefix="skill" result={result} actions={actions} />
+      <DraftBlock
+        title="详细说明草稿"
+        value={result.content_draft}
+        copied={actions.copiedKey === "skill-content"}
+        applied={actions.appliedKey === "skill-content"}
+        onCopy={() => actions.onCopy("skill-content", result.content_draft)}
+        onApply={() => actions.onApply("skill-content", "content", result.content_draft)}
+      />
+      <DraftBlock
+        title="输入说明草稿"
+        value={result.input_description_draft}
+        copied={actions.copiedKey === "skill-input"}
+        applied={actions.appliedKey === "skill-input"}
+        onCopy={() => actions.onCopy("skill-input", result.input_description_draft)}
+        onApply={() => actions.onApply("skill-input", "input_description", result.input_description_draft)}
+      />
+      <DraftBlock
+        title="输出说明草稿"
+        value={result.output_description_draft}
+        copied={actions.copiedKey === "skill-output"}
+        applied={actions.appliedKey === "skill-output"}
+        onCopy={() => actions.onCopy("skill-output", result.output_description_draft)}
+        onApply={() => actions.onApply("skill-output", "output_description", result.output_description_draft)}
+      />
+      <DraftBlock
+        title="使用指南草稿"
+        value={result.usage_guide_draft}
+        copied={actions.copiedKey === "skill-usage"}
+        applied={actions.appliedKey === "skill-usage"}
+        onCopy={() => actions.onCopy("skill-usage", result.usage_guide_draft)}
+        onApply={() => actions.onApply("skill-usage", "usage_guide", result.usage_guide_draft)}
+      />
+      <DraftListBlock
+        title="平台建议"
+        items={result.platform_suggestions}
+        copied={actions.copiedKey === "skill-platforms"}
+        applied={actions.appliedKey === "skill-platforms"}
+        onCopy={() => actions.onCopy("skill-platforms", result.platform_suggestions)}
+        onApply={() => actions.onApply("skill-platforms", "platforms", result.platform_suggestions)}
+      />
+      <DraftBlock
+        title="版本号建议"
+        value={result.current_version_suggestion}
+        copied={actions.copiedKey === "skill-version"}
+        applied={actions.appliedKey === "skill-version"}
+        onCopy={() => actions.onCopy("skill-version", result.current_version_suggestion)}
+        onApply={() => actions.onApply("skill-version", "current_version", result.current_version_suggestion)}
+      />
+      <DraftListBlock
+        title="工作流步骤"
+        items={result.workflow_steps}
+        copied={actions.copiedKey === "skill-workflow"}
+        onCopy={() => actions.onCopy("skill-workflow", result.workflow_steps)}
+      />
+    </>
+  );
+  const riskBlocks = <RiskAndNextBlocks prefix="skill" result={result} actions={actions} />;
+
+  return (
+    <div className="mt-5 space-y-4">
+      {mode === "public_safety_check" ? (
+        <>
+          {riskBlocks}
+          {draftBlocks}
+        </>
+      ) : (
+        <>
+          {draftBlocks}
+          {riskBlocks}
+        </>
+      )}
     </div>
   );
 }
@@ -440,9 +532,25 @@ function RiskAndNextBlocks({
 }) {
   return (
     <>
-      <DraftListBlock title="公开准备度提示" items={result.public_readiness_notes} copied={actions.copiedKey === `${prefix}-readiness`} onCopy={() => actions.onCopy(`${prefix}-readiness`, result.public_readiness_notes)} />
-      <DraftListBlock title="敏感信息风险" items={result.sensitive_risks} copied={actions.copiedKey === `${prefix}-risks`} tone="rose" onCopy={() => actions.onCopy(`${prefix}-risks`, result.sensitive_risks)} />
-      <DraftListBlock title="下一步完善建议" items={result.next_steps} copied={actions.copiedKey === `${prefix}-next`} onCopy={() => actions.onCopy(`${prefix}-next`, result.next_steps)} />
+      <DraftListBlock
+        title="公开准备度提示"
+        items={result.public_readiness_notes}
+        copied={actions.copiedKey === `${prefix}-readiness`}
+        onCopy={() => actions.onCopy(`${prefix}-readiness`, result.public_readiness_notes)}
+      />
+      <DraftListBlock
+        title="敏感信息风险"
+        items={result.sensitive_risks}
+        copied={actions.copiedKey === `${prefix}-risks`}
+        tone="rose"
+        onCopy={() => actions.onCopy(`${prefix}-risks`, result.sensitive_risks)}
+      />
+      <DraftListBlock
+        title="下一步完善建议"
+        items={result.next_steps}
+        copied={actions.copiedKey === `${prefix}-next`}
+        onCopy={() => actions.onCopy(`${prefix}-next`, result.next_steps)}
+      />
     </>
   );
 }
@@ -455,7 +563,10 @@ function GenerationProgress({ activeStep, steps }: { activeStep: number; steps: 
         <p className="text-[11px] font-medium text-blue-700">{activeStep + 1}/{steps.length}</p>
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-100">
-        <div className="h-full rounded-full bg-blue-600 transition-all duration-500" style={{ width: `${((activeStep + 1) / steps.length) * 100}%` }} />
+        <div
+          className="h-full rounded-full bg-blue-600 transition-all duration-500"
+          style={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
+        />
       </div>
       <ol className="mt-3 space-y-2">
         {steps.map((step, index) => (
@@ -572,7 +683,11 @@ function ActionButtons({
         {copied ? "已复制" : "复制"}
       </button>
       {onApply ? (
-        <button type="button" onClick={onApply} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700">
+        <button
+          type="button"
+          onClick={onApply}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700"
+        >
           {applied ? <Check size={14} /> : <Wand2 size={14} />}
           {applied ? "已采用" : "采用到表单"}
         </button>

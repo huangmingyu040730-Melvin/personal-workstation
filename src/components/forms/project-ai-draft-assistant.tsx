@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Check, Clipboard, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { generateProjectAiDraftAction } from "@/actions/ai-draft-form-copilot";
-import type { ProjectAiDraftResult, ProjectAiDraftState } from "@/lib/ai-draft-form-copilot";
+import type { AiDraftMode, ProjectAiDraftResult, ProjectAiDraftState } from "@/lib/ai-draft-form-copilot";
+import { AiDraftModeSelector, aiDraftModeSteps, getAiDraftModeActionLabel } from "@/components/forms/ai-draft-mode-controls";
 import { cn } from "@/lib/utils";
 
 type ProjectAiDraftAssistantProps = {
@@ -14,20 +15,16 @@ type ProjectAiDraftAssistantProps = {
 };
 
 const initialState: ProjectAiDraftState = { status: "idle" };
-const generationSteps = [
-  { title: "读取当前草稿", description: "收集标题、简介和研究字段" },
-  { title: "组织补全方向", description: "判断缺失字段与可优化内容" },
-  { title: "生成结构化建议", description: "整理摘要、方法、标签和阶段计划" },
-  { title: "复核公开边界", description: "补充 public 风险和下一步建议" }
-] as const;
 
 export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, formId }: ProjectAiDraftAssistantProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<ProjectAiDraftState>(initialState);
+  const [mode, setMode] = useState<AiDraftMode>("complete_missing");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [appliedKey, setAppliedKey] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const generationSteps = aiDraftModeSteps[mode];
 
   useEffect(() => {
     if (!isGenerating) {
@@ -39,7 +36,7 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
     }, 1200);
 
     return () => window.clearInterval(intervalId);
-  }, [isGenerating]);
+  }, [generationSteps.length, isGenerating]);
 
   async function handleGenerate() {
     const form = getTargetForm(rootRef.current, formId);
@@ -69,7 +66,7 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
     setIsGenerating(true);
 
     try {
-      const nextState = await generateProjectAiDraftAction({ assetType: "project", draft });
+      const nextState = await generateProjectAiDraftAction({ assetType: "project", mode, draft });
       setState(nextState);
     } finally {
       setIsGenerating(false);
@@ -138,6 +135,8 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
           </div>
         ) : null}
 
+        <AiDraftModeSelector value={mode} onChange={setMode} disabled={isGenerating} />
+
         <button
           type="button"
           onClick={handleGenerate}
@@ -145,11 +144,11 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
           className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0"
         >
           {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
-          {isGenerating ? "正在生成建议" : "根据当前表单生成建议"}
+          {getAiDraftModeActionLabel(mode, isGenerating)}
         </button>
         <p className="text-xs leading-5 text-slate-500">采用建议只更新浏览器字段；仍需手动保存。</p>
 
-        {isGenerating ? <GenerationProgress activeStep={activeStep} /> : null}
+        {isGenerating ? <GenerationProgress activeStep={activeStep} steps={generationSteps} /> : null}
 
         {state.message ? (
           <div
@@ -165,6 +164,7 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
         {state.result ? (
           <ProjectAiDraftResultView
             result={state.result}
+            mode={mode}
             copiedKey={copiedKey}
             appliedKey={appliedKey}
             onCopy={copyText}
@@ -187,21 +187,21 @@ export function ProjectAiDraftAssistant({ isConfigured, providerLabel, model, fo
   );
 }
 
-function GenerationProgress({ activeStep }: { activeStep: number }) {
+function GenerationProgress({ activeStep, steps }: { activeStep: number; steps: ReadonlyArray<{ title: string; description: string }> }) {
   return (
     <div className="rounded-2xl border border-blue-100 bg-slate-50 p-3" aria-live="polite">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold text-slate-950">生成进度</p>
-        <p className="text-[11px] font-medium text-blue-700">{activeStep + 1}/{generationSteps.length}</p>
+        <p className="text-[11px] font-medium text-blue-700">{activeStep + 1}/{steps.length}</p>
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-100">
         <div
           className="h-full rounded-full bg-blue-600 transition-all duration-500"
-          style={{ width: `${((activeStep + 1) / generationSteps.length) * 100}%` }}
+          style={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
         />
       </div>
       <ol className="mt-3 space-y-2">
-        {generationSteps.map((step, index) => (
+        {steps.map((step, index) => (
           <li key={step.title} className="flex gap-2">
             <span
               className={cn(
@@ -226,6 +226,38 @@ function GenerationProgress({ activeStep }: { activeStep: number }) {
 
 function ProjectAiDraftResultView({
   result,
+  mode,
+  copiedKey,
+  appliedKey,
+  onCopy,
+  onApply
+}: {
+  result: ProjectAiDraftResult;
+  mode: AiDraftMode;
+  copiedKey: string | null;
+  appliedKey: string | null;
+  onCopy: (key: string, value: string | string[]) => void;
+  onApply: (key: string, fieldName: string, value: string | string[]) => void;
+}) {
+  if (mode === "public_safety_check") {
+    return (
+      <div className="mt-5 space-y-4">
+        <ProjectRiskBlocks result={result} copiedKey={copiedKey} onCopy={onCopy} />
+        <ProjectDraftBlocks result={result} copiedKey={copiedKey} appliedKey={appliedKey} onCopy={onCopy} onApply={onApply} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-5 space-y-4">
+      <ProjectDraftBlocks result={result} copiedKey={copiedKey} appliedKey={appliedKey} onCopy={onCopy} onApply={onApply} />
+      <ProjectRiskBlocks result={result} copiedKey={copiedKey} onCopy={onCopy} />
+    </div>
+  );
+}
+
+function ProjectDraftBlocks({
+  result,
   copiedKey,
   appliedKey,
   onCopy,
@@ -238,7 +270,7 @@ function ProjectAiDraftResultView({
   onApply: (key: string, fieldName: string, value: string | string[]) => void;
 }) {
   return (
-    <div className="mt-5 space-y-4">
+    <>
       <DraftBlock
         title="简介建议"
         value={result.summary_draft}
@@ -293,6 +325,21 @@ function ProjectAiDraftResultView({
         onCopy={() => onCopy("milestones", result.milestone_suggestions)}
         onApply={() => onApply("milestones", "milestones", result.milestone_suggestions)}
       />
+    </>
+  );
+}
+
+function ProjectRiskBlocks({
+  result,
+  copiedKey,
+  onCopy
+}: {
+  result: ProjectAiDraftResult;
+  copiedKey: string | null;
+  onCopy: (key: string, value: string | string[]) => void;
+}) {
+  return (
+    <>
       <DraftListBlock
         title="公开准备度提示"
         items={result.public_readiness_notes}
@@ -312,7 +359,7 @@ function ProjectAiDraftResultView({
         copied={copiedKey === "next_steps"}
         onCopy={() => onCopy("next_steps", result.next_steps)}
       />
-    </div>
+    </>
   );
 }
 

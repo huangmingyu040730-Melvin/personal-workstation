@@ -1,6 +1,6 @@
 # Current Status
 
-日期：2026-06-15
+日期：2026-06-16
 
 ## Product Positioning
 
@@ -21,7 +21,7 @@ Phase 2R-G-1 将当前稳定版本收口为 v1.0 final QA / release notes。PR #
 
 Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenance-playbook.md` 作为日常维护手册，暂时跳过 public content sprint，后续真实内容由管理员在后台逐步手动补充和完善，不继续大改框架或页面主结构。
 
-Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草稿补全助手。Phase 3A-S 继续把同一方向扩展到 Publication、Knowledge 和 Skill 新建 / 编辑表单。#118 的详情页事后点评式 AI 已关闭且不合并；当前 AI 只读取当前表单白名单字段，帮助补全草稿、标签、结构、公开准备度和敏感风险，不自动保存、不自动公开、不读取 Documents 或 Storage。
+Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草稿补全助手。Phase 3A-S 继续把同一方向扩展到 Publication、Knowledge 和 Skill 新建 / 编辑表单。Phase 3A-T 为四类表单助手增加补全空字段、优化已有内容、公开风险检查三种模式。#118 的详情页事后点评式 AI 已关闭且不合并；当前 AI 只读取当前表单白名单字段，帮助补全草稿、优化表达、检查公开准备度和敏感风险，不自动保存、不自动公开、不读取 Documents 或 Storage。
 
 ## Completed Capabilities
 
@@ -87,7 +87,7 @@ Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草�
 - Skill 后台详情页能力包 / 工作流包：集中展示用途、平台、版本、状态、使用说明、私密资料、版本记录和相关资产搜索入口。
 - Publication 后台详情页成果中枢：集中展示成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Project / Publication / Knowledge / Skill 后台详情页提供公开发布准备度 checklist，基于 visibility、slug、标题、摘要、标签 / 分类、正文 / 说明、关系和 public 附件计数等已有字段提示公开运营状态。
-- Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
+- Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
 - 文档包整体迁移 / 同步关联工具。
 - Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
@@ -109,7 +109,7 @@ Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草�
 
 后台仍只允许管理员访问。后台写入继续通过 Server Actions 验证管理员身份，并依赖 Supabase RLS 作为数据库权限边界。
 
-Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar、Career 和 Profile；Market Brief 已弃用并移除产品入口；访问申请 / Access Grants / Viewer 外部授权已在 Phase 2R-Z 退役，不恢复；Phase 2R-G-2 起 v1.0 维护以 playbook、手动内容补充、安全巡检和小 bug 修复为主，不主动扩展新的公开内容 sprint、首页精选区或求职自动化功能。Phase 3A-R / 3A-S 的 AI 只作为管理员后台表单草稿助手，不改变公开站点或权限模型。
+Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar、Career 和 Profile；Market Brief 已弃用并移除产品入口；访问申请 / Access Grants / Viewer 外部授权已在 Phase 2R-Z 退役，不恢复；Phase 2R-G-2 起 v1.0 维护以 playbook、手动内容补充、安全巡检和小 bug 修复为主，不主动扩展新的公开内容 sprint、首页精选区或求职自动化功能。Phase 3A-R / 3A-S / 3A-T 的 AI 只作为管理员后台表单草稿助手，不改变公开站点或权限模型。
 
 ### Workspace Search
 

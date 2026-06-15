@@ -48,7 +48,7 @@ export async function generateProjectAiDraftAction(input: unknown): Promise<Proj
     };
   }
 
-  const prompt = buildProjectAiDraftPrompt(parsed.data.draft);
+  const prompt = buildProjectAiDraftPrompt(parsed.data.draft, parsed.data.mode);
   return requestAiDraft({
     aiConfig,
     prompt,
@@ -86,7 +86,7 @@ export async function generatePublicationAiDraftAction(input: unknown): Promise<
 
   return requestAiDraft({
     aiConfig,
-    prompt: buildPublicationAiDraftPrompt(parsed.data.draft),
+    prompt: buildPublicationAiDraftPrompt(parsed.data.draft, parsed.data.mode),
     logLabel: "Publication AI draft copilot request error",
     systemRole: "你是管理员后台的中文学术成果表单草稿助手。",
     normalize: normalizePublicationAiDraftResult
@@ -121,7 +121,7 @@ export async function generateKnowledgeAiDraftAction(input: unknown): Promise<Kn
 
   return requestAiDraft({
     aiConfig,
-    prompt: buildKnowledgeAiDraftPrompt(parsed.data.draft),
+    prompt: buildKnowledgeAiDraftPrompt(parsed.data.draft, parsed.data.mode),
     logLabel: "Knowledge AI draft copilot request error",
     systemRole: "你是管理员后台的中文知识笔记表单草稿助手。",
     normalize: normalizeKnowledgeAiDraftResult
@@ -156,7 +156,7 @@ export async function generateSkillAiDraftAction(input: unknown): Promise<SkillA
 
   return requestAiDraft({
     aiConfig,
-    prompt: buildSkillAiDraftPrompt(parsed.data.draft),
+    prompt: buildSkillAiDraftPrompt(parsed.data.draft, parsed.data.mode),
     logLabel: "Skill AI draft copilot request error",
     systemRole: "你是管理员后台的中文 Skill 表单草稿助手。",
     normalize: normalizeSkillAiDraftResult

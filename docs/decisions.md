@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-06-16 - Add Modes To AI Draft Form Copilot
+
+类型：decision
+
+决策：
+
+- Phase 3A-T 在 Project、Publication、Knowledge 和 Skill 新建 / 编辑表单的既有 AI Draft Form Copilot 中加入三种生成模式。
+- `complete_missing` 是默认模式，用于补全空字段并轻微优化已有内容。
+- `improve_existing` 用于保留管理员原意，优化语言、结构、清晰度和公开表达。
+- `public_safety_check` 用于公开前人工复核，优先输出 `public_readiness_notes`、`sensitive_risks` 和 `next_steps`；正文草稿字段允许为空。
+- 生成模式只作为 Server Action 结构化 request 的枚举字段传入 prompt，不允许客户端提交自由 prompt。
+- 切换模式不改动当前表单，不保存数据库，不自动公开，不自动修改 `visibility`。
+- 继续关闭并不合并 #118 的详情页事后点评式 AI Content Copilot，不恢复详情页 AI。
+
+原因：
+
+- 3A-R / 3A-S 已证明表单内草稿助手方向更贴近管理员实际创建和编辑内容的工作流。
+- 管理员在不同阶段的需求不同：新建时需要补缺，已有草稿需要润色，发布前需要风险检查。
+- 用模式枚举复用既有表单助手、白名单字段、Server Action 和输出结构，可以提升可用性，同时避免扩展数据库、权限或新的公开 AI 面。
+
+影响：
+
+- 新增共享 `AiDraftModeSelector`，四类资产表单右侧 AI 面板共用模式控件、按钮文案和生成进度文案。
+- 扩展 `src/lib/ai-draft-form-copilot.ts` 的 request schema 与 prompt builder，加入 `mode` 默认值和 mode-specific prompt section。
+- 扩展 `src/actions/ai-draft-form-copilot.ts`，把已校验的 `mode` 传入对应 prompt builder。
+- 公开风险检查模式在结果区优先展示风险和整改建议；普通补全 / 优化模式仍先展示可采用字段，再展示风险提示。
+- 不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、`/public-files/[id]/download`、公开页面、外部访问退役边界或首页结构。
+- 不读取 Documents 文件正文、Storage object、Skill package、uploaded code、zip 内容、Storage path、file path、owner_id、raw relation rows、private file metadata 或 signed URL。
+
 ## 2026-06-15 - Extend AI Draft Form Copilot Per Asset Form
 
 类型：decision
