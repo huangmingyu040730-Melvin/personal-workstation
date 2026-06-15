@@ -8,7 +8,7 @@
 - 对内管理全部项目、知识、成果、文件、日历与自动化。
 - 公开站点只展示 public 内容；外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权已在 Phase 2R-Z 退役，不恢复。
 
-当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.0 维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
+当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.0 维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，后台 AI 内容助手边界详见 `docs/ai-content-copilot.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
 
 ## 技术栈
 
@@ -52,6 +52,7 @@
 - Phase 2R-G-1 v1.0 final QA / release notes：新增 v1.0 发布说明和最终验收清单；#115 已关闭不合并，首页保持当前 `main` 主结构，不继续推进 2R-F-2 首页精选区改版
 - Phase 2R-G-2 v1.0 maintenance playbook：新增稳定维护手册，记录日常 public 内容、Documents、公开附件、安全检查、部署验收和故障排查流程；暂时跳过 public content sprint，后续内容由管理员手动逐步补充
 - Phase 2R-Z 移除外部访问申请与 viewer 授权：删除 `/access-request`、viewer login/callback、后台 Access Requests / Access Grants、restricted 外部授权代码；新增 0022 迁移将 restricted 回写 private、收紧 public read policy 并删除旧授权表 / 函数；不改 Documents、Storage policy、public 文件下载 route 或核心后台内容管理
+- Phase 3A Admin AI Content Copilot：四类后台详情页新增 AI 内容助手，复用 OpenAI-compatible / DeepSeek 配置，只基于安全白名单字段生成整理建议；不自动保存、不自动公开、不读取 Documents / Storage、不修改 RLS / Storage policy / public download route
 
 ## 本地启动
 
@@ -105,7 +106,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 不要提交 `.env.local`，不要在前端项目中放入 `service_role` key。
 
-如需使用 AI JD 简历优化助手，推荐只在服务端环境配置通用 AI Provider：
+如需使用 AI JD 简历优化助手或后台 AI 内容助手，推荐只在服务端环境配置通用 AI Provider：
 
 ```text
 AI_PROVIDER=deepseek
@@ -114,7 +115,7 @@ AI_BASE_URL=https://api.deepseek.com
 AI_MODEL=deepseek-v4-flash
 ```
 
-AI 调用兼容 OpenAI-compatible Provider。`AI_PROVIDER=deepseek` 时默认使用 `AI_BASE_URL=https://api.deepseek.com` 和 `AI_MODEL=deepseek-v4-flash`。旧配置仍可继续使用：
+AI 调用兼容 OpenAI-compatible Provider。`AI_PROVIDER=deepseek` 时默认使用 `AI_BASE_URL=https://api.deepseek.com` 和 `AI_MODEL=deepseek-v4-flash`。Phase 3A 的后台 AI 内容助手复用同一套服务端配置。旧配置仍可继续使用：
 
 ```text
 OPENAI_API_KEY=your_openai_api_key

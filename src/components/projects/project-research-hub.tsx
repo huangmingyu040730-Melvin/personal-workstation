@@ -15,6 +15,7 @@ import { AdminEmptyState } from "@/components/admin-ui";
 import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { AiContentCopilotPanel } from "@/components/dashboard/ai-content-copilot-panel";
 import {
   buildProjectReadinessItems,
   projectPublicHref,
@@ -31,6 +32,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
 import type { AssetLinksForAsset, AssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import type { ProjectRelatedAssets } from "@/lib/queries/projects";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import { statusLabel, visibilityLabel } from "@/lib/utils";
 
 type ProjectResearchHubProps = {
@@ -91,6 +93,7 @@ export function ProjectResearchHub({
     assetLinks,
     publicAttachmentCount
   });
+  const aiConfig = getAiProviderConfig();
 
   return (
     <>
@@ -181,6 +184,14 @@ export function ProjectResearchHub({
             documentsHref={documentsHref}
           />
           <PublicReadinessCard items={readinessItems} publicHref={projectPublicHref(project)} />
+          <AiContentCopilotPanel
+            assetType="project"
+            assetId={project.id}
+            assetLabel="Project / 研究项目"
+            isConfigured={aiConfig.isConfigured}
+            providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+            model={aiConfig.model}
+          />
           <ProjectMetadataCard project={project} />
           <ProjectMilestonesCard milestones={project.milestones} />
         </aside>

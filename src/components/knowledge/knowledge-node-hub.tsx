@@ -15,6 +15,7 @@ import { AdminEmptyState } from "@/components/admin-ui";
 import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { AiContentCopilotPanel } from "@/components/dashboard/ai-content-copilot-panel";
 import {
   buildKnowledgeReadinessItems,
   knowledgePublicHref,
@@ -28,6 +29,7 @@ import type { KnowledgeNoteRecord, ProjectRecord, PublicationRecord } from "@/li
 import { buildRelatedDocumentUploadHref } from "@/lib/document-upload-hrefs";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import type { AssetLinksForAsset, AssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import { visibilityLabel } from "@/lib/utils";
 
@@ -88,6 +90,7 @@ export function KnowledgeNodeHub({
     relatedProject,
     assetLinks
   });
+  const aiConfig = getAiProviderConfig();
 
   return (
     <>
@@ -183,6 +186,14 @@ export function KnowledgeNodeHub({
             searchHref={searchHref}
           />
           <PublicReadinessCard items={readinessItems} publicHref={knowledgePublicHref(note)} />
+          <AiContentCopilotPanel
+            assetType="knowledge"
+            assetId={note.id}
+            assetLabel="Knowledge / 知识节点"
+            isConfigured={aiConfig.isConfigured}
+            providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+            model={aiConfig.model}
+          />
           <KnowledgeProjectCard note={note} project={relatedProject} />
           <KnowledgeMetadataCard note={note} />
           <KnowledgeAssetSearchCard note={note} />

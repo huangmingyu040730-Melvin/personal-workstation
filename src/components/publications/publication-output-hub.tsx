@@ -16,6 +16,7 @@ import { AdminEmptyState, AdminSecurityNote } from "@/components/admin-ui";
 import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { AiContentCopilotPanel } from "@/components/dashboard/ai-content-copilot-panel";
 import {
   buildPublicationReadinessItems,
   publicationPublicHref,
@@ -29,6 +30,7 @@ import type { KnowledgeNoteRecord, ProjectRecord, PublicationRecord } from "@/li
 import { buildRelatedDocumentUploadHref } from "@/lib/document-upload-hrefs";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import type { AssetLinksForAsset, AssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import { visibilityLabel } from "@/lib/utils";
 
@@ -92,6 +94,7 @@ export function PublicationOutputHub({
     assetLinks,
     publicAttachmentCount
   });
+  const aiConfig = getAiProviderConfig();
 
   return (
     <>
@@ -187,6 +190,14 @@ export function PublicationOutputHub({
             searchHref={searchHref}
           />
           <PublicReadinessCard items={readinessItems} publicHref={publicationPublicHref(publication)} />
+          <AiContentCopilotPanel
+            assetType="publication"
+            assetId={publication.id}
+            assetLabel="Publication / 学术成果"
+            isConfigured={aiConfig.isConfigured}
+            providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+            model={aiConfig.model}
+          />
           <PublicationProjectCard publication={publication} project={relatedProject} />
           <PublicationMetadataCard publication={publication} />
           <PublicationAssetSearchCard publication={publication} relatedProject={relatedProject} />

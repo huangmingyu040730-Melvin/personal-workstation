@@ -16,6 +16,7 @@ import { AdminEmptyState, AdminFormSection, AdminSecurityNote } from "@/componen
 import { AssetLinksPanel } from "@/components/asset-links/asset-links-panel";
 import { Badge, StatusBadge, VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
+import { AiContentCopilotPanel } from "@/components/dashboard/ai-content-copilot-panel";
 import {
   buildSkillReadinessItems,
   PublicReadinessCard,
@@ -29,6 +30,7 @@ import type { SkillRecord, SkillVersionRecord } from "@/lib/content-types";
 import { buildRelatedDocumentUploadHref } from "@/lib/document-upload-hrefs";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { MarkdownPreview } from "@/lib/markdown";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import type { AssetLinksForAsset, AssetLinkTargetOptions } from "@/lib/queries/asset-links";
 import { statusLabel, visibilityLabel } from "@/lib/utils";
 
@@ -89,6 +91,7 @@ export function SkillCapabilityHub({
   const documentsHref = buildDocumentsHref(skill.id);
   const skillSearchHref = buildSearchHref(skill.name, "all");
   const readinessItems = buildSkillReadinessItems({ skill });
+  const aiConfig = getAiProviderConfig();
 
   return (
     <>
@@ -181,6 +184,14 @@ export function SkillCapabilityHub({
             searchHref={skillSearchHref}
           />
           <PublicReadinessCard items={readinessItems} publicHref={skillPublicHref(skill)} />
+          <AiContentCopilotPanel
+            assetType="skill"
+            assetId={skill.id}
+            assetLabel="Skill / 工作流"
+            isConfigured={aiConfig.isConfigured}
+            providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+            model={aiConfig.model}
+          />
           <SkillPlatformVersionCard skill={skill} />
           <SkillVersionsCard versions={versions} createVersionAction={createVersionAction} />
           <SkillMetadataCard skill={skill} />

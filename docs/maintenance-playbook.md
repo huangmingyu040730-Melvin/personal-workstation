@@ -23,6 +23,7 @@
 8. 不恢复 Market Brief。
 9. 不为了内容运营新增数据库字段、migration、RLS 或 Storage policy。
 10. 不大改首页、About、公开列表、公开详情或后台主结构。
+11. 后台 AI 内容助手只生成建议，不自动保存、不自动公开、不读取 Documents / Storage。
 
 暂时跳过 public content sprint。已有 public 内容可以继续在线展示，后续新内容由管理员在后台逐步手动补充、整理和发布。
 
@@ -41,6 +42,8 @@
 9. 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
 
 发布前不要自动公开内容，也不要因为 checklist 缺项而绕过人工判断。Checklist 只是提示，不阻止保存。
+
+如使用 AI 内容助手，先生成建议，再由管理员人工复核和手动复制到编辑页。AI 输出不能直接作为事实依据，也不会自动保存。
 
 ## 新增附件流程
 
@@ -133,6 +136,7 @@ npm run start
 - Supabase service role key。
 - Vercel env value。
 - private Documents。
+- AI 按钮或 AI 输出出现在公开页面。
 
 推荐检查范围：
 
@@ -161,6 +165,7 @@ npm run start
 - 全文搜索。
 - PDF 在线预览。
 - 支付 / 会员 / 外部授权访问。
+- 公开 AI 聊天或访客 AI 功能。
 
 如未来确实需要其中某项能力，应作为独立新阶段重新提出，并重新评估权限、安全和运维成本。
 

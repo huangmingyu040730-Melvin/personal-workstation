@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-06-15 - Add Admin-Only AI Content Copilot
+
+类型：decision
+
+决策：
+
+- Phase 3A 在 Project / Publication / Knowledge / Skill 后台详情页新增 AI Content Copilot。
+- AI 生成必须通过 Server Action；Server Action 先验证管理员身份，再按 `asset_type + asset_id` 读取安全白名单字段。
+- 客户端只提交资产类型和资产 ID，不提交任意 prompt 或完整资产内容。
+- AI 输出只展示给管理员参考，不保存数据库、不自动公开、不修改 `visibility`。
+- 未配置 AI API key 时，后台页面安全降级为“AI 内容助手尚未配置”提示。
+- 不读取 Documents 文件正文，不读取 Storage object，不生成 signed URL。
+- 不修改 RLS、Storage policy、Documents、`/public-files/[id]/download` 或公开页面。
+
+原因：
+
+- v1.0 进入稳定维护后，管理员需要轻量辅助来整理公开摘要、标签、内容结构和 public readiness 风险，而不是新的公开访客功能。
+- 复用既有 OpenAI-compatible / DeepSeek Provider 配置可以避免重复环境变量和重复 AI client 约定。
+
+影响：
+
+- 新增 `src/actions/ai-content-copilot.ts`、`src/lib/ai-content-copilot.ts` 和 `src/components/dashboard/ai-content-copilot-panel.tsx`。
+- 新增 `docs/ai-content-copilot.md`。
+- 公开页面、Documents、public attachments、安全下载、sitemap、robots 和外部访问退役边界保持不变。
+
 ## 2026-06-15 - Enter v1 Maintenance With A Playbook
 
 类型：decision

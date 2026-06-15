@@ -455,6 +455,45 @@ public attachment 维护：
 - 本流程不新增 migration、数据库字段、RLS、Storage policy、public zip、AI 摘要、OCR、向量搜索、全文搜索、PDF 在线预览、支付或外部授权。
 - 本流程不修改 Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
 
+## Admin AI Content Copilot Workflow
+
+日期：2026-06-15
+
+类型：workflow
+
+用途：
+
+- 在管理员后台使用 AI 内容助手整理 Project / Publication / Knowledge / Skill 的公开摘要、标签、结构和风险提示。
+
+步骤：
+
+1. 管理员登录后台。
+2. 打开 `/dashboard/projects/[id]`、`/dashboard/publications/[id]`、`/dashboard/knowledge/[id]` 或 `/dashboard/skills/[id]`。
+3. 在 public readiness checklist 附近找到 AI 内容助手。
+4. 如果显示“AI 内容助手尚未配置”，先在 Vercel server-side 环境中配置 `AI_API_KEY`，或继续使用 `OPENAI_API_KEY`。
+5. 点击“生成 AI 建议”。
+6. Server Action 验证管理员身份，并按资产类型读取安全白名单字段。
+7. 管理员查看标题建议、摘要 / 说明建议、标签建议、公开风险提示、缺失字段和下一步建议。
+8. 管理员人工复制、改写、采纳或忽略建议。
+9. 如需保存任何内容，仍通过既有编辑页手动保存。
+
+安全边界：
+
+- AI 不自动保存、不自动公开、不修改 visibility。
+- AI 不读取 Documents 文件正文，不读取 Storage object，不生成 signed URL。
+- AI 不接受客户端任意 prompt。
+- AI 不开放给公开访客。
+- AI 不修改 Documents、RLS、Storage policy 或 `/public-files/[id]/download`。
+- AI 不恢复 access request、viewer、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 确认未配置 AI 环境变量时后台页面不崩溃并显示安全降级提示。
+- 确认公开页面没有 AI 按钮或 AI 输出。
+
 ## Project Documentation Wrap-up
 
 日期：2026-06-09

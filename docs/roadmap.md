@@ -695,6 +695,24 @@ Phase 2R-Z 已退役：
 - 不修改首页、About、公开列表、公开详情、后台主结构、Documents、RLS、Storage policy 或 public file download route。
 - 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
 
+### Phase 3A - Admin AI Content Copilot
+
+已完成代码实现。管理员后台新增低风险 AI 内容助手：
+
+- Project / Publication / Knowledge / Skill 后台详情页新增 AI Content Copilot 面板。
+- AI 通过 Server Action 调用，先验证管理员身份，再按资产类型和资产 ID 读取安全白名单字段。
+- AI 输出结构化建议：标题建议、摘要 / 说明建议、标签建议、公开准备度提示、敏感风险、缺失字段和下一步建议。
+- 未配置 AI 环境变量时，后台页面仍可打开，并显示“AI 内容助手尚未配置”提示。
+- 新增 `docs/ai-content-copilot.md` 记录功能定位、字段白名单、输出结构、安全边界、环境变量和验收步骤。
+
+边界：
+
+- 不新增 migration，不新增数据库字段，不写入数据库。
+- 不自动保存、不自动公开、不修改 visibility。
+- 不读取 Documents 文件正文、不读取 Storage object、不生成 signed URL。
+- 不修改 Documents 上传 / 删除 / zip 下载、`/public-files/[id]/download`、RLS 或 Storage policy。
+- 不开放给公开访客，不恢复 access request、viewer、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
+
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
 历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。

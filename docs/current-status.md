@@ -21,6 +21,8 @@ Phase 2R-G-1 将当前稳定版本收口为 v1.0 final QA / release notes。PR #
 
 Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenance-playbook.md` 作为日常维护手册，暂时跳过 public content sprint，后续真实内容由管理员在后台逐步手动补充和完善，不继续大改框架或页面主结构。
 
+Phase 3A 在管理员后台新增 AI Content Copilot：Project / Publication / Knowledge / Skill 详情页提供只读 AI 内容整理建议，复用现有 OpenAI-compatible / DeepSeek 配置。AI 不自动保存、不自动公开、不修改 visibility、不读取 Documents 或 Storage，不对公开访客开放。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -42,6 +44,7 @@ Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenan
 - Phase 2R-F-1 后，`/about` 成为正式公开个人简介页，集中展示个人定位、研究方向、公开研究工作站说明、技能 / 工具方向、公开内容导航和保守 Contact / Links；不新增 migration，不恢复外部访问申请或授权。
 - Phase 2R-G-1 后，新增 `docs/v1-release-notes.md`，集中记录 v1.0 版本定位、公开站点能力、后台能力、安全边界、退役功能、当前不做事项和可复制验收清单。
 - Phase 2R-G-2 后，新增 `docs/maintenance-playbook.md`，记录 v1.0 稳定维护阶段的 public 内容发布、public attachment、部署前后检查、安全巡检和故障排查流程；不新增功能，不修改页面主结构。
+- Phase 3A 后，AI Content Copilot 只出现在管理员后台四类资产详情页；公开页面不显示 AI 按钮或 AI 输出，未配置 AI 环境变量时安全降级为提示。
 - 首页区块之间使用清晰 section wrapper、边框和交替背景分隔，并补充克制的 hover / focus micro-interactions。
 - 公开导航包含首页、研究项目、学术成果、知识库、Skill 库和轻量“管理员登录”；不显示后台菜单、文件中心、访问申请或全局关系图谱入口。
 - About 页面 `/about`，用于公开个人简介、研究方向、工作站说明和公开内容导航。
@@ -85,6 +88,7 @@ Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenan
 - Skill 后台详情页能力包 / 工作流包：集中展示用途、平台、版本、状态、使用说明、私密资料、版本记录和相关资产搜索入口。
 - Publication 后台详情页成果中枢：集中展示成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Project / Publication / Knowledge / Skill 后台详情页提供公开发布准备度 checklist，基于 visibility、slug、标题、摘要、标签 / 分类、正文 / 说明、关系和 public 附件计数等已有字段提示公开运营状态。
+- Project / Publication / Knowledge / Skill 后台详情页提供 AI 内容助手，基于服务端重新读取的安全白名单字段生成公开摘要、标签、结构和风险建议；AI 输出只供管理员人工参考，不写入数据库。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
 - 文档包整体迁移 / 同步关联工具。
 - Project / Publication / Knowledge / Skill 后台详情页内嵌关联文件与文档包区域。
@@ -106,7 +110,7 @@ Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenan
 
 后台仍只允许管理员访问。后台写入继续通过 Server Actions 验证管理员身份，并依赖 Supabase RLS 作为数据库权限边界。
 
-Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar、Career 和 Profile；Market Brief 已弃用并移除产品入口；访问申请 / Access Grants / Viewer 外部授权已在 Phase 2R-Z 退役，不恢复；Phase 2R-G-2 起 v1.0 维护以 playbook、手动内容补充、安全巡检和小 bug 修复为主，不主动扩展新的公开内容 sprint、首页精选区或求职自动化功能。
+Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏主入口集中在 Projects、Knowledge、Skills、Publications、Documents、Workspace Search、Calendar、Career 和 Profile；Market Brief 已弃用并移除产品入口；访问申请 / Access Grants / Viewer 外部授权已在 Phase 2R-Z 退役，不恢复；Phase 2R-G-2 起 v1.0 维护以 playbook、手动内容补充、安全巡检和小 bug 修复为主，不主动扩展新的公开内容 sprint、首页精选区或求职自动化功能。Phase 3A 的 AI 只作为后台管理员辅助，不改变公开站点或权限模型。
 
 ### Workspace Search
 
