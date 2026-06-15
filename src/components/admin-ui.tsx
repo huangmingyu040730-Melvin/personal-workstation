@@ -63,9 +63,14 @@ export function AdminFormSurface({
   sidebar?: React.ReactNode;
 }) {
   return (
-    <div className={cn("grid max-w-[1500px] gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start", className)}>
+    <div
+      className={cn(
+        "grid w-full gap-6 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1400px]:items-start 2xl:grid-cols-[minmax(0,1fr)_minmax(400px,460px)]",
+        className
+      )}
+    >
       <div className="min-w-0 space-y-5">{children}</div>
-      {sidebar ? <aside className="hidden space-y-4 xl:sticky xl:top-24 xl:block">{sidebar}</aside> : null}
+      {sidebar ? <aside className="min-w-0 space-y-4 min-[1400px]:sticky min-[1400px]:top-24 min-[1400px]:self-start">{sidebar}</aside> : null}
     </div>
   );
 }
