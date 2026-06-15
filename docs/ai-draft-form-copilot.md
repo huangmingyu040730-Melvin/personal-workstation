@@ -4,32 +4,50 @@
 
 ## 阶段定位
 
-Phase 3A-R 是后台表单 AI 草稿助手，当前只完整支持 Project 新建 / 编辑表单：
+AI Draft Form Copilot 是管理员后台表单内的草稿补全助手，不是公开 AI 聊天，也不是详情页事后点评工具。
+
+阶段状态：
+
+- Phase 3A-R：Project 新建 / 编辑表单已完成。
+- Phase 3A-S：Publication / Knowledge / Skill 新建 / 编辑表单已完成。
+- #118 的详情页事后点评式 AI Content Copilot 已关闭且不合并；后续不要恢复该方向。
+
+支持入口：
 
 - `/dashboard/projects/new`
 - `/dashboard/projects/[id]/edit`
-
-本阶段取代 #118 的详情页事后点评式 AI 方向。#118 不合并，原因是它更像内容创建完成后的点评助手，不能直接提升新建或编辑草稿时的效率。
+- `/dashboard/publications/new`
+- `/dashboard/publications/[id]/edit`
+- `/dashboard/knowledge/new`
+- `/dashboard/knowledge/[id]/edit`
+- `/dashboard/skills/new`
+- `/dashboard/skills/[id]/edit`
 
 ## 解决的问题
 
-管理员在创建或编辑 Project 时，常常已经写了一部分标题、简介、研究背景或研究问题，但还需要补齐摘要、方法、标签、研究流程和阶段计划。
+管理员在创建或编辑研究资产时，常常已经写了一部分标题、摘要、正文或说明，但还需要补齐结构化字段、标签、公开准备度和风险提示。
 
 AI Draft Form Copilot 的目标是：
 
-1. 根据当前表单草稿补全未填写字段。
+1. 根据当前浏览器表单草稿补全未填写字段。
 2. 优化已有字段表达。
-3. 生成标签建议。
-4. 生成研究流程 / 实验流程。
-5. 生成阶段计划。
-6. 给出 public / private 风险提示。
-7. 给出下一步完善建议。
+3. 生成标签、结构和下一步建议。
+4. 给出 public / private 风险提示。
+5. 让管理员可以复制建议，或采用到浏览器表单字段。
+
+采用建议只更新浏览器表单：
+
+- 不自动提交表单。
+- 不自动保存数据库。
+- 不自动创建内容。
+- 不自动修改 `visibility`。
+- 不自动公开内容。
 
 ## 输入字段白名单
 
 客户端只提交结构化白名单字段，不提交任意 prompt。
 
-Project 当前允许输入：
+### Project
 
 - `title`
 - `summary`
@@ -44,24 +62,52 @@ Project 当前允许输入：
 - `start_date`
 - `end_date`
 
-这些字段来自当前浏览器表单草稿，不要求 Project 已经保存到数据库。
+### Publication
 
-AI 不读取：
+- `title`
+- `publication_type`
+- `summary`
+- `abstract`
+- `tags`
+- `visibility`
+- `published_on`
+- `project_id`
 
-- Documents。
-- Storage object。
-- `storage_path`。
-- `file_path`。
-- `owner_id`。
-- raw relation rows。
-- private file metadata。
-- signed URL。
-- API key。
-- Supabase service role key。
+不读取 `file_path`、`cover_url`、Documents、Storage、signed URL、raw relation rows、owner_id 或 private attachment metadata。
+
+### Knowledge
+
+- `title`
+- `category`
+- `excerpt`
+- `content`
+- `tags`
+- `visibility`
+- `project_id`
+
+不读取 Documents、Storage object、raw relation rows、owner_id 或 private attachment metadata。
+
+### Skill
+
+- `name`
+- `description`
+- `category`
+- `content`
+- `input_description`
+- `output_description`
+- `usage_guide`
+- `platforms`
+- `current_version`
+- `visibility`
+- `status`
+
+不读取 Skill package、Documents、uploaded code、zip 内容、Storage object、signed URL 或 raw attachment metadata。
 
 ## 输出结构
 
-AI 必须返回 JSON object，结构如下：
+AI 必须返回 JSON object，不使用 Markdown 代码围栏。
+
+### Project
 
 ```json
 {
@@ -78,39 +124,103 @@ AI 必须返回 JSON object，结构如下：
 }
 ```
 
-含义：
+### Publication
 
-- `summary_draft`：根据标题和已填信息生成或优化简介。
-- `background_draft`：补充研究背景建议。
-- `research_question_draft`：优化研究问题。
-- `methodology_draft`：补充研究方法 / 分析路径。
-- `tag_suggestions`：标签建议。
-- `research_flow_steps`：研究流程 / 实验流程。
-- `milestone_suggestions`：阶段任务或研究推进计划。
-- `public_readiness_notes`：公开准备度提示。
-- `sensitive_risks`：敏感信息风险。
-- `next_steps`：下一步完善建议。
+```json
+{
+  "title_suggestions": [],
+  "summary_draft": "",
+  "abstract_draft": "",
+  "tag_suggestions": [],
+  "publication_positioning": [],
+  "structure_suggestions": [],
+  "public_readiness_notes": [],
+  "sensitive_risks": [],
+  "next_steps": []
+}
+```
+
+### Knowledge
+
+```json
+{
+  "title_suggestions": [],
+  "excerpt_draft": "",
+  "content_outline": [],
+  "content_draft": "",
+  "tag_suggestions": [],
+  "category_suggestions": [],
+  "public_readiness_notes": [],
+  "sensitive_risks": [],
+  "next_steps": []
+}
+```
+
+### Skill
+
+```json
+{
+  "name_suggestions": [],
+  "description_draft": "",
+  "content_draft": "",
+  "input_description_draft": "",
+  "output_description_draft": "",
+  "usage_guide_draft": "",
+  "platform_suggestions": [],
+  "current_version_suggestion": "",
+  "workflow_steps": [],
+  "public_readiness_notes": [],
+  "sensitive_risks": [],
+  "next_steps": []
+}
+```
 
 如果模型返回非 JSON 文本，页面只展示原始文本并提示人工复核，不自动写入表单。
 
 ## 采用建议到表单
 
-Project 表单内支持：
+Project 支持采用：
 
-- 复制建议。
-- 将 summary / background / research_question / methodology 建议采用到对应表单字段。
-- 将标签建议采用到 `tags` 字段。
-- 将阶段计划采用到 `milestones` 字段。
+- `summary`
+- `background`
+- `research_question`
+- `methodology`
+- `tags`
+- `milestones`
 
-采用建议只更新浏览器中的表单字段：
+Publication 支持采用：
 
-- 不自动提交表单。
-- 不自动保存数据库。
-- 不自动创建 Project。
-- 不自动修改 `visibility`。
-- 不自动公开内容。
+- `title`
+- `summary`
+- `abstract`
+- `tags`
 
-管理员仍需人工复核后点击保存。
+Knowledge 支持采用：
+
+- `title`
+- `excerpt`
+- `content`
+- `tags`
+- `category`，仅在建议值能匹配当前表单 select option 时写回。
+
+Skill 支持采用：
+
+- `name`
+- `description`
+- `content`
+- `input_description`
+- `output_description`
+- `usage_guide`
+- `platforms`，只写回当前表单已有 checkbox 平台。
+- `current_version`，仅来自 `current_version_suggestion` 且由管理员点击采用。
+
+所有模块都不自动修改：
+
+- `visibility`
+- 关联 Project。
+- Documents / attachment。
+- `is_featured`。
+- `status`。
 
 ## Prompt 边界
 
@@ -123,6 +233,7 @@ Prompt 要求模型：
 - 信息不足时只生成建议草稿或待补充方向。
 - 涉及客户、内部资料、未脱敏数据或产品敏感信息时，建议保持 private。
 - 明确 AI 输出仅供管理员人工确认。
+- 不提及 Documents、Storage、signed URL、下载链接、API key 或 service role key。
 
 ## 环境变量
 
@@ -140,7 +251,7 @@ Prompt 要求模型：
 
 未配置 API key 时：
 
-- Project 新建 / 编辑表单仍正常显示。
+- 新建 / 编辑表单仍正常显示。
 - AI 草稿助手显示“尚未配置”。
 - 生成按钮禁用。
 - 页面不崩溃。
@@ -159,7 +270,7 @@ Prompt 要求模型：
 - 不做自动发布。
 - 不自动保存数据库。
 - 不自动改 `visibility`。
-- 不自动创建 Project。
+- 不自动创建内容。
 - 不读取 Documents 文件正文。
 - 不读取 Storage object。
 - 不生成 signed URL。
@@ -176,6 +287,16 @@ Prompt 要求模型：
 - 不恢复 Market Brief。
 - 不重做首页。
 
-## 后续方向
+## 验收
 
-Publication / Knowledge / Skill 表单 AI 草稿助手可以在后续阶段扩展，但本阶段不为了覆盖四类资产增加复杂度。当前优先把 Project 新建 / 编辑表单体验做扎实。
+验证命令：
+
+```bash
+npm run lint
+npm run build
+PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public
+git diff --check
+git diff --cached --check
+```
+
+当前项目没有独立 `typecheck` script；`npm run build` 覆盖 Next.js / TypeScript 构建检查。

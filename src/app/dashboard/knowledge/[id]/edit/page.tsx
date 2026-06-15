@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import { updateKnowledgeAction } from "@/actions/knowledge";
 import { AppShell } from "@/components/app-shell";
 import { AdminFormHelpCard, AdminFormSurface, AdminPageSurface } from "@/components/admin-ui";
+import { KnowledgeAiDraftAssistant } from "@/components/forms/asset-ai-draft-assistant";
 import { KnowledgeForm } from "@/components/forms/knowledge-form";
 import { PageHeader } from "@/components/page-header";
+import { getAiProviderConfig, getAiProviderDisplayName } from "@/lib/ai-provider";
 import { getFormError } from "@/lib/forms";
 import { getKnowledgeNoteById } from "@/lib/queries/knowledge";
 import { getProjectOptions } from "@/lib/queries/projects";
@@ -17,6 +19,7 @@ export default async function EditKnowledgePage({
 }) {
   const [{ id }, query, projects] = await Promise.all([params, searchParams, getProjectOptions()]);
   const note = await getKnowledgeNoteById(id);
+  const aiConfig = getAiProviderConfig();
 
   if (!note) {
     notFound();
@@ -29,6 +32,12 @@ export default async function EditKnowledgePage({
         <AdminFormSurface
           sidebar={
             <>
+              <KnowledgeAiDraftAssistant
+                formId="knowledge-form"
+                isConfigured={aiConfig.isConfigured}
+                providerLabel={getAiProviderDisplayName(aiConfig.provider)}
+                model={aiConfig.model}
+              />
               <AdminFormHelpCard
                 title="编辑知识笔记"
                 description="保存后会刷新知识库、Dashboard 最近笔记和公开内容。"

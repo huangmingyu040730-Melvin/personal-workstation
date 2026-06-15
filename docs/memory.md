@@ -69,6 +69,7 @@
 - Phase 2R-G-1：v1.0 final QA / release notes，新增 `docs/v1-release-notes.md` 并补充最终 QA / 退役路由 smoke；#115 已关闭不合并，不继续推进 Phase 2R-F-2 homepage featured content polish，不重做首页精选区。
 - Phase 2R-G-2：v1.0 maintenance playbook，新增 `docs/maintenance-playbook.md` 记录日常 public 内容、public attachment、部署前后检查、安全巡检和故障排查流程；暂时跳过 public content sprint，后续内容由管理员手动逐步补充。
 - Phase 3A-R：Project AI Draft Form Copilot，Project 新建 / 编辑表单新增 AI 草稿补全助手；#118 的详情页事后点评式 AI 已关闭且不合并，当前 AI 只读取表单草稿白名单字段，不保存数据库、不自动公开、不读取 Documents / Storage。
+- Phase 3A-S：AI Draft Form Copilot 扩展到 Publication / Knowledge / Skill 新建与编辑表单；三类资产各自使用独立字段白名单、输出结构和“采用到表单”行为，不自动保存、不自动修改 visibility、不读取 Documents / Storage。
 
 当前网站包括：
 
@@ -102,7 +103,7 @@
 - Phase 2R-F-1 后，`/about` 是公开个人简介与公开研究工作站说明页；只能展示 public Profile 字段或静态公开文案，不展示 Documents、Storage path、signed URL、owner_id、raw link rows、访问申请、Viewer 登录或 Access Grants。
 - Phase 2R-G-1 后，v1.0 文档收口为当前 `main` 首页结构；不要把 #115 的首页精选区改版作为后续起点，不要重做首页精选区。
 - Phase 2R-G-2 后，v1.0 进入稳定维护 playbook 阶段；当前不做 public content sprint，不补编造内容，不大改页面主结构，后续真实 public 内容由管理员手动逐步补充。
-- Phase 3A-R 后，后台 AI 能力优先服务 Project 表单草稿补全，而不是已保存详情页事后点评；AI 读取当前表单中的 `title`、`summary`、`background`、`research_question`、`methodology`、`tags`、`status`、`visibility` 等白名单字段，输出只供管理员复制或采用到浏览器表单，保存仍由管理员手动触发。
+- Phase 3A-R / 3A-S 后，后台 AI 能力优先服务 Project / Publication / Knowledge / Skill 表单草稿补全，而不是已保存详情页事后点评；AI 读取当前表单中的结构化白名单字段，输出只供管理员复制或采用到浏览器表单，保存仍由管理员手动触发。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
 - robots 阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
 - Documents 上传默认保持 private；只有管理员显式设置 `documents.visibility = 'public'`，且文件关联到 public 资产时，公开页面才可展示安全附件摘要。
@@ -253,6 +254,7 @@ Research Asset Links：
 - Phase 2R-G-1 采用 v1 final QA / release notes 决策：只做检查、文档收口、release notes 和小 bug 修复；不新增功能、不改首页主结构、不恢复外部访问链路。#115 关闭且不合并。
 - Phase 2R-G-2 采用 v1 maintenance playbook 决策：新增稳定维护手册，把日常内容发布、public attachment、安全检查、部署验收和故障排查流程文档化；暂时跳过 public content sprint，后续内容由管理员手动补充，不新增功能、不改页面主结构。
 - Phase 3A-R 采用 AI draft form copilot 决策：关闭并不合并 #118 的详情页事后点评式 AI，改为 Project 新建 / 编辑表单内的草稿补全助手；Server Action 只接受结构化白名单字段并验证管理员身份；AI 输出不写库、不自动修改 visibility、不读取 Documents / Storage。
+- Phase 3A-S 采用 per-asset AI draft form copilot 决策：Publication / Knowledge / Skill 表单沿用 3A-R 的右侧窄栏助手和安全模型，但按各自字段设计输入白名单、输出结构和可采用字段；不机械复制 Project prompt，不新增 migration，不恢复 #118 详情页 AI。
 - Phase 2R-E-1 / 2R-E-2 的访问申请后台与 Access Grants polish 已被 Phase 2R-Z 取代；不要恢复相关页面、actions、queries、forms 或流程文档。
 - Phase 2R-Z 采用 remove external access 决策：新增 0022 migration，将历史 restricted 回写 private，收紧 public read policy，删除旧 `access_requests`、`content_access_grants`、`has_content_access()` 和 `can_request_viewer_login()`；不修改 Documents、Storage policy 或 public 下载 route。
 - 后续数据库变更必须新增 `0023_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
@@ -312,6 +314,7 @@ Research Asset Links：
 - Phase 2R-G-1：不新增 migration；只新增 v1 release notes、文档收口和 smoke QA 断言，不修改首页主结构、RLS、Storage policy、Documents 或 public 下载 route。
 - Phase 2R-G-2：不新增 migration；只新增 v1 maintenance playbook 和最小文档索引更新，不修改首页、About、公开页面、后台主结构、RLS、Storage policy、Documents 或 public 下载 route。
 - Phase 3A-R：不新增 migration；只新增 Project 表单 AI 草稿助手、严格白名单 Server Action 和文档，不修改 RLS、Storage policy、Documents、public 下载 route 或公开页面。
+- Phase 3A-S：不新增 migration；只扩展 Publication / Knowledge / Skill 表单 AI 草稿助手、严格白名单 Server Action 和文档，不修改 RLS、Storage policy、Documents、public 下载 route 或公开页面。
 - Phase 2R-Z：新增 `0022_remove_external_access_and_restricted_viewer.sql`，只退役外部访问链路、回写历史 restricted 为 private、收紧 visibility / public read policy 并删除旧访问申请 / 授权表和函数；不修改 Storage policy、Documents 或 public 下载 route。
 
 规则：

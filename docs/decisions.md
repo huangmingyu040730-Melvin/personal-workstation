@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-06-15 - Extend AI Draft Form Copilot Per Asset Form
+
+类型：decision
+
+决策：
+
+- Phase 3A-S 将 AI Draft Form Copilot 从 Project 表单扩展到 Publication、Knowledge 和 Skill 新建 / 编辑表单。
+- 继续关闭并不合并 #118 的详情页事后点评式 AI Content Copilot，不恢复详情页 AI。
+- 三类资产不机械复制 Project prompt，而是按各自表单字段和使用场景定义独立输入白名单、输出结构和可采用字段。
+- Server Action 继续只接受结构化 draft 字段，先验证管理员身份，不接受客户端自由 prompt，不写数据库，不保存 AI 输出，不读取 Documents / Storage。
+- “采用到表单”只更新浏览器字段，不提交表单，不自动保存，不自动创建内容，不自动修改 `visibility`。
+
+原因：
+
+- Project 表单草稿补全方向已经验证比详情页事后点评更贴近内容创建流程。
+- Publication、Knowledge 和 Skill 是当前研究资产沉淀的另外三类核心入口，适合在管理员写草稿时直接补全摘要、正文、说明、标签、风险提示和下一步建议。
+- 各模块字段语义不同：Publication 关注成果摘要和 public readiness，Knowledge 关注知识大纲和正文草稿，Skill 关注输入 / 输出 / 使用指南和工作流步骤，因此需要 per-asset prompt 与 UI 分组。
+
+影响：
+
+- 新增 `src/components/forms/asset-ai-draft-assistant.tsx` 作为 Publication / Knowledge / Skill 的右侧窄栏 AI 助手。
+- 扩展 `src/actions/ai-draft-form-copilot.ts` 和 `src/lib/ai-draft-form-copilot.ts`，新增三类资产的白名单 schema、prompt、输出 normalizer 和 Server Action。
+- Publication / Knowledge / Skill 新建与编辑页面接入 AI 草稿助手；表单增加稳定 `id` 供助手读取当前浏览器草稿。
+- 不新增 migration，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载、`/public-files/[id]/download`、公开页面、外部访问退役边界或首页结构。
+- 不读取 Documents 文件正文、Storage object、Skill package、uploaded code、zip 内容、Storage path、file path、owner_id、raw relation rows、private file metadata 或 signed URL。
+
 ## 2026-06-15 - Replace Detail AI Copilot With Project Draft Form Copilot
 
 类型：decision

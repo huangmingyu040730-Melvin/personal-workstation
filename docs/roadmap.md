@@ -712,7 +712,27 @@ Phase 2R-Z 已退役：
 - 不读取 Documents、Storage object、Storage path、file path、owner_id、raw relation rows、private file metadata 或 signed URL。
 - 不新增 migration，不新增字段，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public file download route。
 - 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
-- Publication / Knowledge / Skill 表单 AI 留作后续独立阶段，不在本阶段为了覆盖四类资产增加复杂度。
+- Publication / Knowledge / Skill 表单 AI 已由 Phase 3A-S 作为后续独立阶段扩展完成。
+
+### Phase 3A-S - Extend AI Draft Form Copilot To Publication / Knowledge / Skill
+
+已完成代码实现。Phase 3A-S 按照当前表单字段和使用场景，把 AI Draft Form Copilot 从 Project 扩展到 Publication、Knowledge 和 Skill 新建 / 编辑表单。
+
+- `/dashboard/publications/new` 和 `/dashboard/publications/[id]/edit` 新增 Publication AI 草稿助手。
+- `/dashboard/knowledge/new` 和 `/dashboard/knowledge/[id]/edit` 新增 Knowledge AI 草稿助手。
+- `/dashboard/skills/new` 和 `/dashboard/skills/[id]/edit` 新增 Skill AI 草稿助手。
+- Publication 输入白名单包括 `title`、`publication_type`、`summary`、`abstract`、`tags`、`visibility`、`published_on` 和 `project_id`；输出包括标题建议、summary、abstract、标签、成果定位、结构建议、公开准备度、敏感风险和下一步建议。
+- Knowledge 输入白名单包括 `title`、`category`、`excerpt`、`content`、`tags`、`visibility` 和 `project_id`；输出包括标题建议、摘要、正文大纲、Markdown 正文草稿、标签、分类建议、公开准备度、敏感风险和下一步建议。
+- Skill 输入白名单包括 `name`、`description`、`category`、`content`、`input_description`、`output_description`、`usage_guide`、`platforms`、`current_version`、`visibility` 和 `status`；输出包括名称建议、描述、详细说明、输入 / 输出说明、使用指南、平台建议、版本号建议、工作流步骤、公开准备度、敏感风险和下一步建议。
+- 管理员可复制建议，或将可写回字段采用到浏览器表单；采用不会提交表单，仍需手动保存。
+- 未配置 AI API key 时，三类表单正常显示，AI 按钮禁用并显示尚未配置提示。
+
+边界：
+
+- 不自动保存数据库，不自动创建 Publication / Knowledge / Skill，不自动修改 `visibility`，不自动公开内容。
+- 不读取 Documents、Storage object、Skill package、uploaded code、zip 内容、file path、owner_id、raw relation rows、private attachment metadata 或 signed URL。
+- 不新增 migration，不新增字段，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public file download route。
+- 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
 
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
