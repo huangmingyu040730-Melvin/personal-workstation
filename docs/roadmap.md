@@ -734,6 +734,24 @@ Phase 2R-Z 已退役：
 - 不新增 migration，不新增字段，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public file download route。
 - 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
 
+### Phase 3A-T - AI Draft Form Copilot Modes
+
+已完成代码实现。Phase 3A-T 在 Project、Publication、Knowledge 和 Skill 新建 / 编辑表单的既有 AI Draft Form Copilot 中增加模式切换，让管理员按当前写作任务选择不同生成策略。
+
+- 四类表单助手共用三种模式：`complete_missing` 补全空字段、`improve_existing` 优化已有内容、`public_safety_check` 公开风险检查。
+- 默认模式为 `complete_missing`，Server Action schema 为旧调用提供默认值，保持向后兼容。
+- 生成模式只影响 prompt 策略、进度文案、按钮文案和结果区排序；不改变 AI Provider 配置、管理员校验、白名单字段或保存流程。
+- 公开风险检查模式优先展示公开准备度提示、敏感信息风险和下一步整改建议；正文草稿字段可以为空，最终公开判断仍由管理员人工完成。
+- 未配置 AI API key 时，四类表单仍正常显示，模式控件可见，AI 按钮禁用并显示尚未配置提示。
+
+边界：
+
+- 不新增详情页 AI，不恢复 #118 的事后点评式 AI Content Copilot。
+- 不新增 migration，不新增字段，不修改 RLS、Storage policy、Documents 上传 / 删除 / zip 下载或 public file download route。
+- 不读取 Documents、Storage object、Skill package、uploaded code、zip 内容、file path、owner_id、raw relation rows、private attachment metadata 或 signed URL。
+- 不自动保存数据库，不自动创建 Project / Publication / Knowledge / Skill，不自动修改 `visibility`，不自动公开内容。
+- 不恢复 Access Request、Viewer login、Access Grants、restricted 外部授权、`/dashboard/network` 或 Market Brief。
+
 ### Phase 2R-E-1 - Access Request Admin Workflow Polish (retired by 2R-Z)
 
 历史实现，Phase 2R-Z 已移除。当前代码不再保留 `/access-request`、后台访问申请页面、提交 / 审核 actions 或对应流程文档。不要恢复该能力。

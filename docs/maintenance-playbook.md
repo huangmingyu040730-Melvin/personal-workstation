@@ -1,6 +1,6 @@
 # v1.0 Maintenance Playbook
 
-日期：2026-06-15
+日期：2026-06-16
 
 用途：
 
@@ -23,7 +23,7 @@
 8. 不恢复 Market Brief。
 9. 不为了内容运营新增数据库字段、migration、RLS 或 Storage policy。
 10. 不大改首页、About、公开列表、公开详情或后台主结构。
-11. AI 草稿助手只用于管理员新建 / 编辑 Project、Publication、Knowledge 和 Skill 时补全表单草稿，不自动保存、不自动公开、不读取 Documents / Storage。
+11. AI 草稿助手只用于管理员新建 / 编辑 Project、Publication、Knowledge 和 Skill 时补全、优化或检查表单草稿，不自动保存、不自动公开、不读取 Documents / Storage。
 
 暂时跳过 public content sprint。已有 public 内容可以继续在线展示，后续新内容由管理员在后台逐步手动补充、整理和发布。
 
@@ -34,8 +34,8 @@
 1. 在后台新建 Project、Publication、Knowledge 或 Skill。
 2. 初始 `visibility` 先设为 `private`。
 3. 补齐标题、slug、摘要、标签、正文或说明。
-4. 新建或编辑 Project、Publication、Knowledge 或 Skill 时，可以使用表单内 AI 草稿助手根据当前草稿生成摘要、正文、说明、标签、结构、公开准备度和风险提示。
-5. AI 建议只复制或采用到浏览器表单，管理员必须人工复核后手动保存。
+4. 新建或编辑 Project、Publication、Knowledge 或 Skill 时，可以使用表单内 AI 草稿助手根据当前草稿生成摘要、正文、说明、标签、结构、公开准备度和风险提示；可按场景选择补全空字段、优化已有内容或公开风险检查模式。
+5. AI 建议只复制或采用到浏览器表单，公开风险检查也只作为人工复核提示，管理员必须人工复核后手动保存。
 6. 在详情页检查 public readiness checklist。
 7. 确认 public 字段没有敏感信息、内部路径、私人联系信息、未公开客户信息或后台说明。
 8. 确认内容确实适合公开展示后，再把 `visibility` 设为 `public`。
@@ -45,7 +45,7 @@
 
 发布前不要自动公开内容，也不要因为 checklist 缺项而绕过人工判断。Checklist 只是提示，不阻止保存。
 
-AI 草稿助手同样只是提示：不会自动保存数据库，不会自动修改 `visibility`，不会读取 Documents / Storage 或生成下载链接。
+AI 草稿助手同样只是提示：不会自动保存数据库，不会自动修改 `visibility`，不会读取 Documents / Storage 或生成下载链接。公开风险检查模式输出的风险项不能替代管理员发布前判断。
 
 ## 新增附件流程
 
@@ -163,6 +163,7 @@ npm run start
 - public zip 下载。
 - AI 摘要。
 - 详情页事后点评式 AI Content Copilot。
+- 自动公开或自动保存 AI 草稿建议。
 - OCR。
 - 向量搜索。
 - 全文搜索。
