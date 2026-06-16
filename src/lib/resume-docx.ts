@@ -83,6 +83,7 @@ export async function buildResumeDocx({ version, profile, basicItem }: ResumeDoc
     showPhoto: model.profile.showPhoto,
     photoAsset
   });
+  applyResumeTypographyFixes(zip);
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
@@ -167,6 +168,72 @@ function applyResumePhoto(zip: PizZip, { showPhoto, photoAsset }: { showPhoto: b
   zip.file(`word/${mediaTarget}`, photoAsset.buffer);
   updateResumePhotoRelationship(zip, mediaTarget);
   ensureImageContentType(zip, photoAsset.extension, photoAsset.mimeType);
+}
+
+function applyResumeTypographyFixes(zip: PizZip) {
+  const documentFile = zip.file("word/document.xml");
+
+  if (!documentFile) {
+    return;
+  }
+
+  const documentXml = documentFile.asText();
+  const withConsistentEmail = replaceParagraphContaining(documentXml, "{emailRow}", normalizeEmailRowParagraph);
+  const withBoldExperienceRole = replaceSectionBlock(withConsistentEmail, "{#experience}", "{/experience}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
+
+  zip.file("word/document.xml", withBoldExperienceRole);
+}
+
+function normalizeEmailRowParagraph(paragraphXml: string) {
+  const paragraphProperties =
+    '<w:pPr><w:adjustRightInd w:val="0"/><w:snapToGrid w:val="0"/><w:spacing w:after="0" w:line="377" w:lineRule="exact"/><w:textAlignment w:val="center"/><w:rPr><w:rFonts w:ascii="微软雅黑" w:eastAsia="微软雅黑" w:hAnsi="微软雅黑" w:cs="微软雅黑"/></w:rPr></w:pPr>';
+  const runProperties = '<w:rPr><w:rFonts w:ascii="微软雅黑" w:eastAsia="微软雅黑" w:hAnsi="微软雅黑" w:cs="微软雅黑"/><w:b/><w:color w:val="373737"/><w:sz w:val="20"/></w:rPr>';
+  const emailRun = `<w:r>${runProperties}<w:t xml:space="preserve">{emailRow}</w:t></w:r>`;
+
+  return paragraphXml
+    .replace(/<w:pPr>[\s\S]*?<\/w:pPr>/, paragraphProperties)
+    .replace(runContainingPattern("{emailRow}"), emailRun);
+}
+
+function replaceParagraphContaining(xml: string, token: string, replacer: (paragraphXml: string) => string) {
+  const paragraphPattern = new RegExp(`<w:p\\b(?:(?!</w:p>)[\\s\\S])*?${escapeRegExp(token)}(?:(?!</w:p>)[\\s\\S])*?</w:p>`);
+  return xml.replace(paragraphPattern, (paragraphXml) => replacer(paragraphXml));
+}
+
+function replaceSectionBlock(xml: string, startToken: string, endToken: string, replacer: (sectionXml: string) => string) {
+  const startIndex = xml.indexOf(startToken);
+
+  if (startIndex === -1) {
+    return xml;
+  }
+
+  const endIndex = xml.indexOf(endToken, startIndex);
+
+  if (endIndex === -1) {
+    return xml;
+  }
+
+  return `${xml.slice(0, startIndex)}${replacer(xml.slice(startIndex, endIndex))}${xml.slice(endIndex)}`;
+}
+
+function replaceFirstRunContaining(xml: string, token: string, replacer: (runXml: string) => string) {
+  return xml.replace(runContainingPattern(token), (runXml) => replacer(runXml));
+}
+
+function runContainingPattern(token: string) {
+  return new RegExp(`<w:r\\b[^>]*>(?:(?!</w:r>)[\\s\\S])*?${escapeRegExp(token)}(?:(?!</w:r>)[\\s\\S])*?</w:r>`);
+}
+
+function addBoldRunProperty(runXml: string) {
+  if (/<w:b\b/.test(runXml)) {
+    return runXml;
+  }
+
+  if (runXml.includes("<w:rPr>")) {
+    return runXml.replace(/(<w:rPr><w:rFonts\b[^>]*\/>)/, "$1<w:b/>").replace(/<w:rPr>(?![\s\S]*?<w:b\b)/, "<w:rPr><w:b/>");
+  }
+
+  return runXml.replace(/(<w:r\b[^>]*>)/, "$1<w:rPr><w:b/></w:rPr>");
 }
 
 function removeResumePhotoPlaceholder(zip: PizZip) {

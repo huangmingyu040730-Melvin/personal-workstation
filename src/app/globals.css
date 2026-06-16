@@ -757,6 +757,10 @@ select {
   line-height: 1.26;
 }
 
+.resume-entry-role-strong {
+  font-weight: 700;
+}
+
 .resume-entry-summary,
 .resume-detail-line {
   margin-top: 1px;
