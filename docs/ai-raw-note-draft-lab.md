@@ -68,7 +68,7 @@ Server Action 只接受：
 - `/public-files/`
 - 常见 API key 形态
 
-页面同时提示管理员不要粘贴客户敏感信息、API key、未脱敏内部资料、Storage path、signed URL 或私密文件内容。
+页面同时提示管理员不要粘贴客户敏感信息、API key、runner secret、Supabase service role key、未脱敏内部资料、Storage path、signed URL 或私密文件正文。
 
 ## 输出结构
 
@@ -160,14 +160,16 @@ Phase 3B-1 后，结构化草稿结果区增加“带入新建表单”按钮：
 5. 填入后立即清除 `sessionStorage` 中这份 handoff，避免刷新后重复误填。
 6. 管理员仍需人工检查并手动点击保存。
 
+提示条文案应明确这是 AI Draft Lab 带入的浏览器临时草稿；点击“填入表单”只预填当前浏览器表单字段，不自动保存、不自动创建资产、不自动公开内容。
+
 管理员也可以点击“忽略并清除”，清除 `sessionStorage` 且不改动表单。
 
 字段映射：
 
 - Project：`title`、`summary`、`background`、`research_question`、`methodology`、`tags`、`milestones`。
-- Publication：`title`、`summary`、`abstract`、`tags`；`publication_type_suggestion` 只有能匹配现有 option value 或 label 时才填入。
-- Knowledge：`title`、`excerpt`、`content_draft` 到 `content`、`tags`；`category_suggestion` 只有能匹配现有分类 option 时才填入。
-- Skill：`name`、`description`、`content`、`input_description`、`output_description`、`usage_guide`、`platforms`；`category_suggestion` 只有能匹配现有分类 option 时才填入。
+- Publication：`title`、`summary`、`abstract`、`tags`；`publication_type_suggestion` 只有能匹配现有 option value 或 label 时才填入，匹配时允许大小写或多余空格差异。
+- Knowledge：`title`、`excerpt`、`content_draft` 到 `content`、`tags`；`category_suggestion` 只有能匹配现有分类 option 时才填入，匹配时允许大小写或多余空格差异。
+- Skill：`name`、`description`、`content`、`input_description`、`output_description`、`usage_guide`、`platforms`；`category_suggestion` 和 `platforms` 只有能匹配现有选项时才填入，匹配时允许大小写或多余空格差异。
 
 不映射：
 

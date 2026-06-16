@@ -63,9 +63,9 @@ export function writeFormValue(form: HTMLFormElement, name: string, value: strin
 
   const checkboxes = controls.filter((item): item is HTMLInputElement => item instanceof HTMLInputElement && item.type === "checkbox");
   if (checkboxes.length > 0) {
-    const selected = new Set(values.map((item) => item.toLowerCase()));
+    const selected = new Set(values.map(normalizeControlMatchValue));
     checkboxes.forEach((checkbox) => {
-      checkbox.checked = selected.has(checkbox.value.toLowerCase());
+      checkbox.checked = selected.has(normalizeControlMatchValue(checkbox.value));
       dispatchInputEvents(checkbox);
     });
     return true;
@@ -93,7 +93,7 @@ export function appendCheckboxValues(form: HTMLFormElement, name: string, value:
     return false;
   }
 
-  const selected = new Set(values.map((item) => item.toLowerCase()));
+  const selected = new Set(values.map(normalizeControlMatchValue));
   const checkboxes = getNamedControls(form, name).filter(
     (item): item is HTMLInputElement => item instanceof HTMLInputElement && item.type === "checkbox"
   );
@@ -104,7 +104,7 @@ export function appendCheckboxValues(form: HTMLFormElement, name: string, value:
 
   let changed = false;
   checkboxes.forEach((checkbox) => {
-    if (selected.has(checkbox.value.toLowerCase()) && !checkbox.checked) {
+    if (selected.has(normalizeControlMatchValue(checkbox.value)) && !checkbox.checked) {
       checkbox.checked = true;
       dispatchInputEvents(checkbox);
       changed = true;
@@ -129,9 +129,20 @@ export function findSelectOptionValue(select: HTMLSelectElement, values: string[
       return direct.value;
     }
 
+    const normalizedValue = normalizeControlMatchValue(value);
+    const normalizedDirect = options.find((option) => normalizeControlMatchValue(option.value) === normalizedValue);
+    if (normalizedDirect) {
+      return normalizedDirect.value;
+    }
+
     const byLabel = options.find((option) => option.text.trim() === value);
     if (byLabel) {
       return byLabel.value;
+    }
+
+    const normalizedByLabel = options.find((option) => normalizeControlMatchValue(option.text) === normalizedValue);
+    if (normalizedByLabel) {
+      return normalizedByLabel.value;
     }
   }
 
@@ -145,4 +156,8 @@ export function dispatchInputEvents(control: WritableFormControl) {
 
 function normalizeFormValues(value: string | string[]) {
   return (Array.isArray(value) ? value : [value]).map((item) => item.trim()).filter(Boolean);
+}
+
+function normalizeControlMatchValue(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
 }

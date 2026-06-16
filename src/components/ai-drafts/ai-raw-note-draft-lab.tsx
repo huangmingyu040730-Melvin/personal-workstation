@@ -105,7 +105,7 @@ export function AiRawNoteDraftLab({ isConfigured, providerLabel, model }: AiRawN
         </div>
 
         <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-xs leading-5 text-blue-800">
-          不要粘贴客户敏感信息、API key、未脱敏内部资料、Storage path、signed URL 或私密文件内容。
+          不要粘贴客户敏感信息、API key、runner secret、Supabase service role key、Storage path、signed URL 或私密文件正文。
         </div>
 
         {!isConfigured ? (
@@ -173,7 +173,7 @@ export function AiRawNoteDraftLab({ isConfigured, providerLabel, model }: AiRawN
 
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
           <p className="font-semibold text-slate-950">安全边界</p>
-          <p className="mt-1">仅提交目标类型和原始文本；不读取 Documents、Storage、附件、下载链接或数据库记录，不自动创建任何资产。</p>
+          <p className="mt-1">仅提交目标类型和原始文本；生成结果只供复制或带入表单。不读取 Documents / Storage，不自动保存数据库或创建资产。</p>
         </div>
       </section>
 
@@ -283,7 +283,7 @@ function DraftResultView({
         </div>
       </div>
       <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
-        带入新建表单只会保存到当前浏览器的临时 sessionStorage，不会写入数据库，也不会自动保存。
+        带入新建表单只会保存到当前浏览器的临时 sessionStorage；进入新建页后仍需点击“填入表单”，不会自动保存或公开内容。
       </p>
 
       {targetType === "project" ? <ProjectDraftBlocks result={result as RawNoteProjectDraftResult} copiedKey={copiedKey} onCopy={onCopy} /> : null}

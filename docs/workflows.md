@@ -551,14 +551,14 @@ Skill：
 
 1. 打开 `/dashboard/ai-drafts`。
 2. 选择目标草稿类型：Project、Publication、Knowledge 或 Skill。
-3. 粘贴原始文本；不要粘贴客户敏感信息、API key、未脱敏内部资料、Storage path、signed URL 或私密文件内容。
+3. 粘贴原始文本；不要粘贴客户敏感信息、API key、runner secret、Supabase service role key、未脱敏内部资料、Storage path、signed URL 或私密文件正文。
 4. 点击“生成结构化草稿”。
 5. Server Action 校验当前用户是管理员。
 6. Server Action 只接收 `targetType` 和 `rawText`，不接受任意 prompt。
 7. AI 返回目标类型对应的结构化 JSON 草稿。
 8. 管理员人工复核后，可以复制单个字段、复制完整 Markdown，或点击“带入新建表单”。
 9. 点击“带入新建表单”时，页面把当前草稿保存到当前浏览器 `sessionStorage` 并跳转到对应新建页。
-10. 新建页显示“检测到 AI 草稿”提示条；管理员点击“填入表单”后才写入浏览器字段。
+10. 新建页显示“检测到 AI 草稿”提示条；提示条说明这是 AI Draft Lab 带入的浏览器临时草稿，管理员点击“填入表单”后才写入浏览器字段。
 11. 填入后清除对应 `sessionStorage` handoff；管理员继续人工检查并手动保存。
 
 输入白名单：
@@ -576,9 +576,9 @@ Skill：
 Prefill 映射：
 
 - Project：title、summary、background、research_question、methodology、tags、milestones。
-- Publication：title、summary、abstract、tags；publication_type_suggestion 能匹配 option value 或 label 时才填入。
-- Knowledge：title、excerpt、content_draft 到 content、tags；category_suggestion 能匹配 option 时才填入。
-- Skill：name、description、content、input_description、output_description、usage_guide、platforms；category_suggestion 能匹配 option 时才填入。
+- Publication：title、summary、abstract、tags；publication_type_suggestion 能匹配 option value 或 label 时才填入，允许大小写或多余空格差异。
+- Knowledge：title、excerpt、content_draft 到 content、tags；category_suggestion 能匹配 option 时才填入，允许大小写或多余空格差异。
+- Skill：name、description、content、input_description、output_description、usage_guide、platforms；category_suggestion 和 platforms 能匹配现有选项时才填入，允许大小写或多余空格差异。
 - 不映射 public_readiness_notes、sensitive_risks、next_steps、visibility、Project relation、status、Skill package 或 Documents。
 
 验证要求：

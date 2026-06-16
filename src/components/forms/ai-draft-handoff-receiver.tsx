@@ -81,18 +81,18 @@ export function AiDraftHandoffReceiver({ targetType, formId }: AiDraftHandoffRec
             </p>
             <p className="mt-1 text-xs leading-5 text-blue-800">
               {payload
-                ? "你可以将 AI 草稿实验室生成的草稿填入当前表单。填入后请人工检查，只有点击保存按钮后才会写入数据库。"
+                ? "已检测到 AI Draft Lab 带入的临时结构化草稿。你可以填入当前表单后人工检查，也可以忽略并清除。填入只会预填浏览器字段，不会自动保存或公开内容。"
                 : message}
             </p>
           </div>
         </div>
 
         {payload ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             <button
               type="button"
               onClick={handleApply}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 sm:flex-none"
             >
               <Wand2 size={14} />
               填入表单
@@ -100,7 +100,7 @@ export function AiDraftHandoffReceiver({ targetType, formId }: AiDraftHandoffRec
             <button
               type="button"
               onClick={handleDismiss}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-700"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-700 sm:flex-none"
             >
               <Trash2 size={14} />
               忽略并清除
@@ -174,7 +174,7 @@ function applySkillDraft(form: HTMLFormElement, draft: RawNoteSkillDraftResult) 
 
 function applyOptionalSelect(form: HTMLFormElement, name: string, value: string, label: string, notes: string[]) {
   const normalized = value.trim();
-  if (!normalized) {
+  if (!normalized || isUncertainSelectSuggestion(normalized)) {
     return;
   }
 
@@ -182,4 +182,9 @@ function applyOptionalSelect(form: HTMLFormElement, name: string, value: string,
   if (!applied) {
     notes.push(`${label}未匹配当前选项，请人工选择：${normalized}`);
   }
+}
+
+function isUncertainSelectSuggestion(value: string) {
+  const normalized = value.toLowerCase();
+  return normalized.includes("建议人工选择") || normalized.includes("不确定");
 }

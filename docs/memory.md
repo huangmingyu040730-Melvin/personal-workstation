@@ -80,6 +80,7 @@
 - Phase 3B：新增 AI Raw Note Draft Lab `/dashboard/ai-drafts`，把管理员粘贴的原始素材转换为 Project / Publication / Knowledge / Skill 结构化草稿；只输出可复制字段和完整 Markdown，不自动保存、不自动创建资产、不读取 Documents / Storage。
 - Phase 3B-1：AI Draft Lab 结果可通过当前浏览器 `sessionStorage` 带入四类新建表单；新建页先显示确认条，管理员点击“填入表单”后才预填字段并清除 handoff，仍需人工检查和手动保存。
 - v1.1 Asset model clarity polish：明确 Project / Publication / Knowledge / Skill 的资产定义、示例、列表空状态和 AI Draft Lab 目标类型说明；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
+- v1.1 Form consistency and AI prefill polish：复查 AI Draft Lab 到新建表单的 `sessionStorage` handoff、提示条和字段匹配；提示条明确只预填浏览器字段、不自动保存或公开；select / checkbox 匹配允许大小写和多余空格差异；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 
 当前网站包括：
 
@@ -116,6 +117,7 @@
 - Phase 3A-R / 3A-S / 3A-T 后，后台 AI 能力优先服务 Project / Publication / Knowledge / Skill 表单草稿补全，而不是已保存详情页事后点评；AI 读取当前表单中的结构化白名单字段，输出只供管理员复制或采用到浏览器表单，保存仍由管理员手动触发。3A-T 的三种模式只改变生成策略和结果排序，不新增数据库、权限、公开页面或详情页 AI。
 - Phase 3B 后，AI 原始素材转结构化草稿是独立后台页面，不是表单内 copilot；Server Action 只接受 `targetType` 和 `rawText`，不接受任意 prompt，不写数据库，不读取 Documents / Storage，不进入公开导航。
 - Phase 3B-1 后，AI 草稿实验室到新建表单的 prefill 只使用浏览器 `sessionStorage`；不自动提交表单、不保存数据库、不创建资产、不修改 `visibility`，不读取 Documents / Storage。
+- v1.1 Form consistency 后，AI Draft Lab prefill 提示条必须继续说明这是临时草稿；点击“填入表单”只写当前浏览器表单字段，点击“忽略并清除”只清理 handoff。
 - v1.1 后，四类资产定义应保持一致：Project 是持续推进主题；Publication 是阶段成果；Knowledge 是可复用知识；Skill 是可复用流程 / Prompt / 操作手册 / 能力包。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
 - robots 阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
