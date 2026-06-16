@@ -93,7 +93,7 @@ function ResumePaper({ model }: { model: ResumeTemplateModel }) {
           </div>
           <div className={cn("resume-section-body", section.key === "skills" && "resume-section-body-compact")}>
             {section.entries.map((entry) => (
-              <ResumeEntry key={entry.id} entry={entry} />
+              <ResumeEntry key={entry.id} entry={entry} sectionKey={section.key} />
             ))}
           </div>
         </section>
@@ -140,7 +140,7 @@ function ResumeHeader({ model }: { model: ResumeTemplateModel }) {
   );
 }
 
-function ResumeEntry({ entry }: { entry: ResumeTemplateEntry }) {
+function ResumeEntry({ entry, sectionKey }: { entry: ResumeTemplateEntry; sectionKey: ResumeTemplateModel["sections"][number]["key"] }) {
   if (entry.kind === "skill") {
     return (
       <article className="resume-skill-entry">
@@ -157,7 +157,7 @@ function ResumeEntry({ entry }: { entry: ResumeTemplateEntry }) {
         <div className="resume-entry-date">{entry.date}</div>
         <div className="resume-entry-content">
           <div className="resume-entry-org">{entry.title}</div>
-          {entry.subtitle ? <div className="resume-entry-role">{entry.subtitle}</div> : null}
+          {entry.subtitle ? <div className={cn("resume-entry-role", sectionKey === "experience" && "resume-entry-role-strong")}>{entry.subtitle}</div> : null}
           {entry.summary ? <ResumeTextBlock text={entry.summary} paragraphClassName="resume-entry-summary" /> : null}
           {entry.detailLines.map((line) => (
             <ResumeTextBlock key={line} text={line} />

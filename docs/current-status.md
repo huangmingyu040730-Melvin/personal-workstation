@@ -36,6 +36,8 @@ v1.1 已作为 Personal Asset Intranet polish 收口：#125 完成 public downlo
 
 v1.1.2 Resume photo export polish 补齐求职中心的照片链路：basic 个人信息素材可维护 `details.photo_url`，Resume Preview 在 `show_photo = true` 时显示照片或占位，Word 导出会优先使用 basic item 的 `photo_url`、其次使用 Profile `avatar_url`。Word 导出只接受 data URL 或安全 HTTPS 图片 URL，并限制 2 MB、常见图片 MIME type、HTTPS 重定向、Supabase Storage object URL 和私网地址；图片获取失败时不阻断导出。本轮不新增照片上传、裁剪、美颜、Profile avatar upload、Storage policy、public download route 或数据库改动。
 
+v1.1.3 Resume export typography fixes 只修简历预览与 Word 导出的排版细节：邮箱字段与电话、性别、年龄、所在地使用一致的个人信息样式；实习经历的岗位 / 部门行加粗。该小修不改变简历数据结构、照片导出安全逻辑、Storage、public download route 或数据库权限边界。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -105,6 +107,7 @@ v1.1.2 Resume photo export polish 补齐求职中心的照片链路：basic 个�
 - v1.1 Search / Listing / Mobile polish 已打磨后台全局搜索、后台四类资产列表、Documents 文件中心和四类公开列表页的长文本、标签换行、结果摘要和 390px 移动端可读性；本轮不新增数据库、migration、RLS、Storage policy、public download route、AI 搜索、OCR、向量搜索或 Documents 正文读取。
 - v1.1 Final QA docs sync and release notes 已新增 `docs/v1-1-release-notes.md`，并把 README、当前状态、项目记忆、路线图和维护手册同步到 Personal Asset Intranet 稳定使用阶段；本轮只做文档和 QA checklist，不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
 - v1.1.1 Documents collection-first polish 将 `/dashboard/documents` 首页调整为文档包优先：先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；文档包详情页支持继续上传单个文件到当前已有文档包；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现。本轮不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，也不修改 public download route。
+- v1.1.3 Resume export typography fixes 修复简历个人信息区邮箱导出样式与实习经历岗位 / 部门加粗；只涉及网页预览 CSS 和 Word 模板导出前的样式归一化，不改数据库、Storage、public download route 或照片上传 / 导出安全逻辑。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -415,7 +418,7 @@ Phase 3B-1 AI Draft Lab to New Form Prefill 不需要新增 migration；它只�
 
 Phase 2R-Z 新增 `0022_remove_external_access_and_restricted_viewer.sql`；该迁移将历史 `restricted` 内容回写为 `private`，收紧四类内容表 visibility constraint 和 public read policy，并删除旧访问申请 / 授权表与授权函数。不修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 
-v1.1 / v1.1.1 / v1.1.2 polish 不新增 migration。#125、#126、#127、#128、v1.1 final QA、v1.1.1 Documents collection-first polish 和 v1.1.2 Resume photo export polish 只围绕边界、文案、表单预填、搜索 / 列表 / 移动端展示、维护清单、release notes、Documents 首页 / 文档包上传信息架构和 Resume 照片预览 / Word 导出链路打磨；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
+v1.1 / v1.1.1 / v1.1.2 / v1.1.3 polish 不新增 migration。#125、#126、#127、#128、v1.1 final QA、v1.1.1 Documents collection-first polish、v1.1.2 Resume photo export polish 和 v1.1.3 Resume export typography fixes 只围绕边界、文案、表单预填、搜索 / 列表 / 移动端展示、维护清单、release notes、Documents 首页 / 文档包上传信息架构、Resume 照片预览 / Word 导出链路和简历导出排版细节打磨；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
 
 规则：
 
