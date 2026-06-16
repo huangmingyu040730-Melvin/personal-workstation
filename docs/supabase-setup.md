@@ -17,6 +17,7 @@ cp .env.example .env.local
 ```text
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+NEXT_PUBLIC_SITE_URL=https://personal-workstation.vercel.app
 ```
 
 注意：
@@ -24,6 +25,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 - 不要提交 `.env.local`。
 - 不要把 `service_role` key 放入本仓库或前端运行时。
 - publishable key 会配合 RLS 使用，不能绕过数据库策略。
+- `NEXT_PUBLIC_SITE_URL` 只用于 canonical、Open Graph、sitemap 和 robots 的公开站点地址，不是 secret；未设置时应用会回退到当前生产地址。
 
 如需使用 Resume AI JD 分析，需要额外的服务端环境变量：
 

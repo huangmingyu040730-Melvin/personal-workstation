@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const siteUrl = "https://personal-workstation.vercel.app";
+export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://personal-workstation.vercel.app";
 export const siteName = "黄铭语研究工作站";
 export const siteDescription = "公开研究项目、学术成果、知识笔记与 AI 工作流。";
 export const publicOgImage = {

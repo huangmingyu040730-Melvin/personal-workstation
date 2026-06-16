@@ -285,60 +285,11 @@ async function hasDocumentLinkToAsset(
   return Boolean(data?.length);
 }
 
-async function hasAnyPublicAssetAssociation(
-  supabase: SupabaseClient,
-  document: Pick<PublicDocumentDownloadRow, "id" | "related_type" | "related_id">
-) {
-  if (
-    isDocumentRelatedType(document.related_type) &&
-    document.related_id &&
-    await isPublicAsset(supabase, document.related_type, document.related_id)
-  ) {
-    return true;
-  }
-
-  const { data, error } = await supabase
-    .from("document_asset_links")
-    .select("asset_type,asset_id")
-    .eq("document_id", document.id);
-
-  if (error) {
-    console.error("hasAnyPublicAssetAssociation failed", { code: error.code, message: error.message });
-    return false;
-  }
-
-  const seen = new Set<string>();
-
-  for (const link of (data ?? []) as Array<{ asset_type: DocumentRelatedType; asset_id: string }>) {
-    if (!isDocumentRelatedType(link.asset_type) || !link.asset_id) {
-      continue;
-    }
-
-    const key = `${link.asset_type}:${link.asset_id}`;
-
-    if (seen.has(key)) {
-      continue;
-    }
-
-    seen.add(key);
-
-    if (await isPublicAsset(supabase, link.asset_type, link.asset_id)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 async function hasPublicDocumentAssetAssociation(
   supabase: SupabaseClient,
   document: Pick<PublicDocumentDownloadRow, "id" | "related_type" | "related_id">,
-  context: PublicDocumentAssetContext | null
+  context: PublicDocumentAssetContext
 ) {
-  if (!context) {
-    return hasAnyPublicAssetAssociation(supabase, document);
-  }
-
   const assetIsPublic = await isPublicAsset(supabase, context.assetType, context.assetId);
 
   if (!assetIsPublic) {
@@ -365,7 +316,7 @@ function hasSafeStoragePath(storagePath: string | null | undefined): storagePath
 export async function getPublicDocumentDownloadRecord(
   supabase: SupabaseClient,
   documentId: string,
-  context: PublicDocumentAssetContext | null
+  context: PublicDocumentAssetContext
 ): Promise<PublicDocumentDownloadRecord | null> {
   const { data, error } = await supabase
     .from("documents")

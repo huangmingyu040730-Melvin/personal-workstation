@@ -5,7 +5,7 @@
 项目长期定位：
 
 - 对外展示公开研究项目、学术成果、知识笔记与 AI Skill / 工作流。
-- 对内管理全部项目、知识、成果、文件、日历与自动化。
+- 对内管理全部项目、知识、成果、文件、日历、AI 草稿与求职资产。
 - 公开站点只展示 public 内容；外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权已在 Phase 2R-Z 退役，不恢复。
 
 当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.0 维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，AI 表单草稿助手说明详见 `docs/ai-draft-form-copilot.md`，AI 原始素材草稿实验室说明详见 `docs/ai-raw-note-draft-lab.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
@@ -103,7 +103,10 @@ cp .env.example .env.local
 ```text
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+NEXT_PUBLIC_SITE_URL=https://personal-workstation.vercel.app
 ```
+
+`NEXT_PUBLIC_SITE_URL` 用于公开页面 canonical、Open Graph、sitemap 和 robots 中的站点 URL；不是 secret。未设置时默认使用当前生产地址。
 
 不要提交 `.env.local`，不要在前端项目中放入 `service_role` key。
 
@@ -186,8 +189,6 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `/dashboard/resume/versions/[id]/export/docx` 简历 Word 导出
 - `/calendar` 公开日历占位
 - `/profile` 兼容跳转到 `/dashboard/profile`
-- `/settings` 设置
-- `/automations` 自动化占位
 
 旧 `/documents` 路径仍受管理员保护，并兼容重定向到 `/dashboard/documents`。
 

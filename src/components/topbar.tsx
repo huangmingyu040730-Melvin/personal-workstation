@@ -1,4 +1,4 @@
-import { Bell, LogOut, Moon, Plus, Search } from "lucide-react";
+import { LogOut, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { signOutAction } from "@/app/login/actions";
 import { profile, sidebarGroups } from "@/lib/mock-data";
@@ -24,12 +24,6 @@ export function Topbar() {
           <Link href="/dashboard/projects/new" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 hover:shadow-sm" aria-label="新建项目">
             <Plus size={18} />
           </Link>
-          <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 hover:shadow-sm" aria-label="通知占位">
-            <Bell size={18} />
-          </button>
-          <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 hover:shadow-sm" aria-label="主题占位">
-            <Moon size={18} />
-          </button>
           {isSupabaseConfigured ? (
             <form action={signOutAction}>
               <button

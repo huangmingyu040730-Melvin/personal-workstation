@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const baseUrl = normalizeBaseUrl(process.env.PUBLIC_SMOKE_BASE_URL ?? "http://localhost:3000");
-const siteUrl = "https://personal-workstation.vercel.app";
+const siteUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL ?? "https://personal-workstation.vercel.app");
 const siteName = "黄铭语研究工作站";
 const publicRoutes = [
   "/",
@@ -55,6 +55,12 @@ const retiredRoutes = [
   "/dashboard/access-requests",
   "/dashboard/access-grants"
 ];
+const publicDownloadBoundaryRoutes = [
+  "/public-files/codex-public-smoke-missing/download",
+  "/public-files/codex-public-smoke-missing/download?asset_type=project",
+  "/public-files/codex-public-smoke-missing/download?asset_id=codex-public-smoke-asset",
+  "/public-files/codex-public-smoke-missing/download?asset_type=invalid&asset_id=codex-public-smoke-asset"
+];
 
 const results = [];
 
@@ -78,6 +84,11 @@ for (const route of retiredRoutes) {
   const response = await fetchText(route);
   assertRetiredRouteUnavailable(response, route);
   assertNoForbiddenFragments(response.body, route);
+}
+
+for (const route of publicDownloadBoundaryRoutes) {
+  const response = await fetchText(route);
+  assertStatus(response, 404, `${route} requires valid asset context`);
 }
 
 const sitemap = await fetchText("/sitemap.xml");

@@ -1,7 +1,6 @@
 import {
   BarChart3,
   BookOpen,
-  Bot,
   BriefcaseBusiness,
   CalendarDays,
   FileText,
@@ -9,7 +8,6 @@ import {
   FolderOpen,
   Home,
   Library,
-  Settings,
   Search,
   UserRound,
   WandSparkles
@@ -51,8 +49,7 @@ export const sidebarGroups = [
     label: "AI 工作空间",
     items: [
       { label: "AI 草稿", href: "/dashboard/ai-drafts", icon: FlaskConical },
-      { label: "Skill 库", href: "/dashboard/skills", icon: WandSparkles },
-      { label: "自动化", href: "/automations", icon: Bot }
+      { label: "Skill 库", href: "/dashboard/skills", icon: WandSparkles }
     ]
   },
   {
@@ -70,8 +67,7 @@ export const sidebarGroups = [
   {
     label: "系统",
     items: [
-      { label: "个人信息", href: "/dashboard/profile", icon: UserRound },
-      { label: "设置", href: "/settings", icon: Settings }
+      { label: "个人信息", href: "/dashboard/profile", icon: UserRound }
     ]
   }
 ];
