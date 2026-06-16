@@ -1,6 +1,6 @@
 # v1.0 / v1.1 Maintenance Playbook
 
-日期：2026-06-16
+日期：2026-06-17
 
 用途：
 
@@ -28,6 +28,7 @@
 13. 不大改首页、About、公开列表、公开详情或后台主结构。
 14. AI 草稿助手只用于管理员新建 / 编辑 Project、Publication、Knowledge 和 Skill 时补全、优化或检查表单草稿，不自动保存、不自动公开、不读取 Documents / Storage。
 15. AI 草稿实验室只用于把原始素材转换为结构化草稿；可以通过当前浏览器 `sessionStorage` 带入新建表单做人工确认预填，但不自动创建资产、不保存数据库、不提交表单、不读取 Documents / Storage。
+16. Resume 照片当前只通过 basic 个人信息素材 `photo_url` 或 Profile `avatar_url` 引用；不做照片上传、裁剪、美颜、Storage 写入或公开头像系统。
 
 暂时跳过 public content sprint。已有 public 内容可以继续在线展示，后续新内容由管理员在后台逐步手动补充、整理和发布。
 
@@ -48,8 +49,9 @@
 11. Documents 首页默认先展示文档包区域，再展示独立文件；独立文件区域不重复展示已加入文档包的文件。
 12. 文档包详情页的追加上传入口只进入现有单文件上传页，使用 `collection_id` 加入已有文档包，不创建新文档包。
 13. 390px 移动端无横向滚动；长标题、长标签、长文件名、文档包标题、筛选区和底部按钮自然换行。
-14. 每个 PR 运行 `npm run lint`、`npm run build`、运行中站点的 `npm run smoke:public`、`git diff --check` 和暂存后的 `git diff --cached --check`。
-15. 每个 PR 做 stale reference 搜索，确认 Agent CEO、自动化中心、任务中心、Market Brief、access request、viewer、Access Grants 和 restricted 相关词只出现在已暂停 / 已退役 / 不恢复语境中。
+14. Resume 照片导出小修只允许 URL-first 链路：basic `details.photo_url` 优先、Profile `avatar_url` fallback；Word 导出图片获取失败不能阻断导出，且不得读取 Documents / Storage object、Supabase Storage object URL 或生成 signed URL。
+15. 每个 PR 运行 `npm run lint`、`npm run build`、运行中站点的 `npm run smoke:public`、`git diff --check` 和暂存后的 `git diff --cached --check`。
+16. 每个 PR 做 stale reference 搜索，确认 Agent CEO、自动化中心、任务中心、Market Brief、access request、viewer、Access Grants 和 restricted 相关词只出现在已暂停 / 已退役 / 不恢复语境中。
 
 v1.1 之后默认进入稳定使用期：优先录入真实资产，观察 Project / Publication / Knowledge / Skill 分类、AI Draft Lab handoff、搜索、Documents 和移动端体验。只有明确 bug、明显 UX polish、文档同步或安全边界复查进入近期 PR。
 
@@ -149,6 +151,15 @@ npm run start
 6. 普通 `/dashboard/documents/upload` 的单文件上传和批量创建文档包逻辑不受影响。
 7. 个人资料只通过文档包组织，不新增 Profile relation、数据库枚举或 resolver。
 8. 不读取 Documents 正文，不读取 Storage object，不生成 signed URL，不修改 public download route。
+
+涉及 Resume photo export polish 时，额外确认：
+
+1. basic 类型简历素材可以维护“简历照片 URL”。
+2. 照片来源顺序为 basic `details.photo_url`，其次 Profile `avatar_url`。
+3. Preview 在 `show_photo = true` 时显示照片或“照片”占位，`show_photo = false` 时不显示照片区。
+4. Word 导出在照片 URL 可安全获取时嵌入照片；data URL / HTTPS URL 以外的来源降级，不阻断导出。
+5. Word 图片获取限制 2 MB、jpeg / png / webp、HTTPS 重定向、Supabase Storage object URL 和私网 / 保留地址访问。
+6. 不新增照片上传、Profile avatar upload、图片裁剪 / 美颜 / 压缩、Storage policy、public download route 或 signed URL 能力。
 
 ## 每次部署后检查
 

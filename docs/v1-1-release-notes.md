@@ -1,6 +1,6 @@
 # v1.1 Release Notes - Personal Asset Intranet Polish
 
-日期：2026-06-16
+日期：2026-06-17
 
 ## 版本定位
 
@@ -62,9 +62,19 @@ Agent CEO / 自动化扩张线暂停；不新增自动化中心、任务中心�
 - Profile 真实文件关联暂不实现，不新增数据库类型、resolver、Profile 页面或权限边界。
 - 本轮只查询 Documents / document collections metadata 并复用既有上传 action，不读取 Documents 文件正文，不读取 Storage object，不生成 signed URL，也不修改 public download route。
 
+### 6. v1.1.2 Resume photo export polish
+
+- basic 个人信息素材明确支持“简历照片 URL”，字段仍保存为 `details.photo_url`。
+- Resume 照片来源顺序为 basic item `photo_url`，其次为 Profile `avatar_url`。
+- Resume Preview 在 `show_photo = true` 时显示照片或“照片”占位，`show_photo = false` 时不显示照片区域。
+- Word `.docx` 导出在照片 URL 可安全获取时嵌入照片；获取失败不阻断导出。
+- Word 图片获取只接受 data URL 或 HTTPS 图片 URL，并限制 2 MB、jpeg / png / webp MIME type、HTTPS 重定向、Supabase Storage object URL 和私网 / 保留地址访问。
+- 质量检查会在版本显示照片但没有照片 URL 时给出 warning。
+- 本轮不做照片上传、Profile avatar upload、裁剪、美颜、压缩、Storage 写入、signed URL、数据库、RLS、Storage policy 或 public download route 改动。
+
 ## 安全边界
 
-v1.1 / v1.1.1 不包含以下改动：
+v1.1 / v1.1.1 / v1.1.2 不包含以下改动：
 
 - 不新增数据库表。
 - 不新增 migration。
@@ -75,6 +85,7 @@ v1.1 / v1.1.1 不包含以下改动：
 - 不读取 Documents 文件正文。
 - 不读取 Storage object。
 - 不生成新的公开 signed URL 能力。
+- 不新增照片上传、Profile avatar upload、照片裁剪、美颜或压缩系统。
 - 不新增 AI 搜索、OCR、向量搜索或 Documents 问答。
 - 不新增 Agent CEO 页面。
 - 不新增自动化中心、任务中心或复盘中心。

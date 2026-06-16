@@ -41,7 +41,7 @@ export default async function ResumeVersionPreviewPage({ params }: { params: Pro
           <PageHeader
             eyebrow="Resume Preview"
             title={`${version.title} · 简历预览`}
-            description="网页预览用于快速检查内容结构，最终排版以导出的 Word 文件为准。"
+            description="网页预览用于快速检查内容结构；照片来自 basic 素材或 Profile，最终投递排版以导出的 Word 文件为准。"
             action={
               <div className="flex flex-wrap gap-2">
                 <Link href={`/dashboard/resume/versions/${version.id}`} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
@@ -116,7 +116,7 @@ function ResumeHeader({ model }: { model: ResumeTemplateModel }) {
         <div className="resume-photo-box">
           {data.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={data.photoUrl} alt={`${data.name || "候选人"} 简历照片`} className="h-full w-full object-cover" />
+            <img src={data.photoUrl} alt={`${data.name || "候选人"} 简历照片`} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
           ) : (
             <span>照片</span>
           )}

@@ -1,5 +1,6 @@
 import type { ProfileRecord, ResumeItemRecord, ResumeVersionItemRecord, ResumeVersionRecord } from "@/lib/content-types";
 import { detailRecord, getResumeProfileData, normalizeResumeBullets, stringDetail } from "@/lib/resume-display";
+import { normalizeProfileFields } from "@/lib/resume-template-model";
 
 export type ResumeQualityStatus = "excellent" | "ready" | "needs_work" | "incomplete";
 
@@ -53,7 +54,7 @@ export function analyzeResumeVersionQuality({ version, versionItems, profile, ba
   const visibleVersionItems = versionItems.filter((versionItem) => versionItem.is_visible && versionItem.resume_items);
   const bodyVersionItems = visibleVersionItems.filter((versionItem) => versionItem.resume_items?.item_type !== "basic");
   const bodyItems = bodyVersionItems.map((versionItem) => versionItem.resume_items).filter(Boolean) as ResumeItemRecord[];
-  const profileFields = normalizeBooleanRecord(version.profile_fields);
+  const profileFields = normalizeProfileFields(version.profile_fields);
   const profileData = profile ? getResumeProfileData({ profile, basicItem: basicItem ?? null, profileFields, nameFallback: version.title }) : null;
   const targetKeywords = getTargetKeywords(version);
   const allBullets = bodyVersionItems.flatMap((versionItem) => getVisibleItemBullets(versionItem));
@@ -77,6 +78,14 @@ export function analyzeResumeVersionQuality({ version, versionItems, profile, ba
     passed.push("已包含电话或邮箱");
   } else {
     warnings.push("缺少电话或邮箱，投递前建议补充至少一种联系方式。");
+  }
+
+  if (profileFields.show_photo) {
+    if (profileData?.photoUrl?.trim()) {
+      passed.push("已提供简历照片 URL");
+    } else {
+      warnings.push("当前版本显示照片，但个人信息素材或 Profile 未提供照片 URL。");
+    }
   }
 
   const hasEducation = hasSection(bodyVersionItems, ["education"], ["education"]);

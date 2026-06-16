@@ -1,6 +1,6 @@
 # Current Status
 
-日期：2026-06-16
+日期：2026-06-17
 
 ## Product Positioning
 
@@ -33,6 +33,8 @@ Phase 2R-G-2 标记项目进入 v1.0 稳定维护阶段：新增 `docs/maintenan
 Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草稿补全助手。Phase 3A-S 继续把同一方向扩展到 Publication、Knowledge 和 Skill 新建 / 编辑表单。Phase 3A-T 为四类表单助手增加补全空字段、优化已有内容、公开风险检查三种模式。Phase 3B 新增独立后台 AI 草稿实验室 `/dashboard/ai-drafts`，可把原始想法、研究笔记、会议摘录或粗糙文本转换成 Project / Publication / Knowledge / Skill 结构化草稿。Phase 3B-1 允许把实验室结果通过当前浏览器 `sessionStorage` 带入对应新建表单，由管理员确认后预填字段。#118 的详情页事后点评式 AI 已关闭且不合并；当前 AI 只服务管理员后台内容生产效率，不做公开 AI 聊天，不自动保存、不自动创建资产、不自动公开、不读取 Documents 或 Storage。
 
 v1.1 已作为 Personal Asset Intranet polish 收口：#125 完成 public download route 边界和假入口清理，#126 明确四类资产定义，#127 打磨 AI Draft Lab 到新建表单预填链路，#128 打磨搜索、列表和移动端展示。本轮 final QA 只同步文档、维护清单和 release notes，不新增功能。
+
+v1.1.2 Resume photo export polish 补齐求职中心的照片链路：basic 个人信息素材可维护 `details.photo_url`，Resume Preview 在 `show_photo = true` 时显示照片或占位，Word 导出会优先使用 basic item 的 `photo_url`、其次使用 Profile `avatar_url`。Word 导出只接受 data URL 或安全 HTTPS 图片 URL，并限制 2 MB、常见图片 MIME type、HTTPS 重定向、Supabase Storage object URL 和私网地址；图片获取失败时不阻断导出。本轮不新增照片上传、裁剪、美颜、Profile avatar upload、Storage policy、public download route 或数据库改动。
 
 ## Completed Capabilities
 
@@ -121,6 +123,7 @@ v1.1 已作为 Personal Asset Intranet polish 收口：#125 完成 public downlo
 - AI JD 分析完成后自动保存为 JD 分析记录，并在求职中心继续维护投递状态。
 - Resume Word `.docx` 即时导出。
 - Resume Preview 与 Word 导出共用 20260523 风格模板模型。
+- v1.1.2 后，Resume 照片来源优先为 basic 素材的 `details.photo_url`，其次为 Profile `avatar_url`；网页预览和 Word 导出都尊重 `show_photo`，Word 图片获取失败时安全降级为无真实照片 / 占位导出。
 - 管理后台 UI 已优化。
 - 后台新建 / 编辑 / 上传 / 授权页已调整为更平衡的工作台布局。
 
@@ -412,7 +415,7 @@ Phase 3B-1 AI Draft Lab to New Form Prefill 不需要新增 migration；它只�
 
 Phase 2R-Z 新增 `0022_remove_external_access_and_restricted_viewer.sql`；该迁移将历史 `restricted` 内容回写为 `private`，收紧四类内容表 visibility constraint 和 public read policy，并删除旧访问申请 / 授权表与授权函数。不修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 
-v1.1 / v1.1.1 polish 不新增 migration。#125、#126、#127、#128、v1.1 final QA 和 v1.1.1 Documents collection-first polish 只围绕边界、文案、表单预填、搜索 / 列表 / 移动端展示、维护清单、release notes 和 Documents 首页 / 文档包上传信息架构打磨；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
+v1.1 / v1.1.1 / v1.1.2 polish 不新增 migration。#125、#126、#127、#128、v1.1 final QA、v1.1.1 Documents collection-first polish 和 v1.1.2 Resume photo export polish 只围绕边界、文案、表单预填、搜索 / 列表 / 移动端展示、维护清单、release notes、Documents 首页 / 文档包上传信息架构和 Resume 照片预览 / Word 导出链路打磨；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
 
 规则：
 

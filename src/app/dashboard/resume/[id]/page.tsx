@@ -165,7 +165,7 @@ function TokenBlock({ label, items }: { label: string; items: string[] }) {
 
 function getDetailEntries(details: Record<string, unknown>) {
   const labelMap: Record<string, string> = {
-    photo_url: "照片 URL",
+    photo_url: "简历照片 URL",
     gender: "性别",
     age: "年龄",
     phone: "电话",

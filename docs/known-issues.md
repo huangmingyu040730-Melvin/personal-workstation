@@ -1,5 +1,24 @@
 # Known Issues
 
+## 2026-06-17 - Resume Word photo export gap
+
+状态：已在 v1.1.2 小修中解决。
+
+此前 Resume Preview 已支持 `show_photo` 和 `photo_url`，但 Word `.docx` 导出没有嵌入照片。v1.1.2 已补齐 URL-first 链路：
+
+- basic 个人信息素材的 `details.photo_url` 优先。
+- Profile `avatar_url` 作为 fallback。
+- Preview 和 Word 导出都尊重 `show_photo`。
+- Word 导出只尝试读取 data URL 或安全 HTTPS 图片 URL，并限制 2 MB、图片 MIME type、HTTPS 重定向、Supabase Storage object URL 和私网地址。
+
+当前边界：
+
+- 不新增照片上传 API。
+- 不新增 Profile avatar upload。
+- 不上传照片到 Storage。
+- 不生成 signed URL。
+- 不修改数据库、RLS、Storage policy 或 public download route。
+
 ## 2026-06-15 - Viewer / restricted external access retired
 
 状态：已退役，不再作为待修问题。
