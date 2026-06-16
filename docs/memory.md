@@ -85,7 +85,7 @@
 - v1.1 Final QA docs sync and release notes：新增 `docs/v1-1-release-notes.md`，同步 README、current status、memory、roadmap、maintenance playbook 和 decisions；v1.1 收口为 Personal Asset Intranet polish，后续进入稳定使用、真实资产录入、小 bug 修复和轻量 UX 观察阶段；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 - v1.1.1 Documents collection-first polish：`/dashboard/documents` 首页改为文档包优先，先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；文档包详情页支持继续上传单个文件到当前已有文档包；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现；不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，不修改 `/public-files/[id]/download`。
 - v1.1.2 Resume photo export polish：补齐 basic 个人信息素材 `details.photo_url`、Resume Preview 和 Word `.docx` 导出的照片链路；照片来源优先为 basic item `photo_url`，其次为 Profile `avatar_url`；Word 导出只拉取 data URL 或安全 HTTPS 图片 URL，限制 2 MB、常见图片 MIME type、HTTPS 重定向、Supabase Storage object URL 和私网地址，失败时不阻断导出；不新增照片上传、Profile avatar upload、Storage、migration、RLS 或 public download route 改动。
-- v1.1.3 Resume export typography fixes：只修简历预览与 Word 导出的排版细节，统一邮箱字段与其他个人信息字段的字体 / 段落样式，并让实习经历的岗位 / 部门行加粗；追加 Resume export section order and icons fix 后，Word 导出会隐藏空固定 section 标题 / 图标，项目经历固定在实习经历之后、在校经历之前，并使用专属深灰项目板图标；不改变简历数据结构、照片上传 / 导出安全逻辑、数据库、Storage、RLS 或 public download route。
+- v1.1.3 Resume export typography fixes：只修简历预览与 Word 导出的排版细节，统一邮箱字段与其他个人信息字段的字体 / 段落样式，并让实习经历的岗位 / 部门行加粗；追加 Resume export section order and icons fix 后，Word 导出会隐藏空固定 section 标题 / 图标，项目经历固定在实习经历之后、在校经历之前；project icon and role typography polish 继续将项目经历图标替换为更简洁的深灰文件夹 / 项目文件图标，并让项目经历角色行、在校经历岗位行加粗；不改变简历数据结构、照片上传 / 导出安全逻辑、数据库、Storage、RLS 或 public download route。
 
 当前网站包括：
 
