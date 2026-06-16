@@ -109,7 +109,7 @@ const visibleFieldKeys = [
   "show_level"
 ];
 
-const defaultSectionOrder = ["education", "experience", "campus", "projects", "research", "skills", "certifications", "awards", "other"];
+const defaultSectionOrder = ["education", "experience", "projects", "campus", "skills", "research", "certifications", "awards", "other"];
 
 function resumePayloadFromForm(formData: FormData) {
   return resumeItemSchema.safeParse({

@@ -36,7 +36,7 @@ v1.1 已作为 Personal Asset Intranet polish 收口：#125 完成 public downlo
 
 v1.1.2 Resume photo export polish 补齐求职中心的照片链路：basic 个人信息素材可维护 `details.photo_url`，Resume Preview 在 `show_photo = true` 时显示照片或占位，Word 导出会优先使用 basic item 的 `photo_url`、其次使用 Profile `avatar_url`。Word 导出只接受 data URL 或安全 HTTPS 图片 URL，并限制 2 MB、常见图片 MIME type、HTTPS 重定向、Supabase Storage object URL 和私网地址；图片获取失败时不阻断导出。本轮不新增照片上传、裁剪、美颜、Profile avatar upload、Storage policy、public download route 或数据库改动。
 
-v1.1.3 Resume export typography fixes 只修简历预览与 Word 导出的排版细节：邮箱字段与电话、性别、年龄、所在地使用一致的个人信息样式；实习经历的岗位 / 部门行加粗。该小修不改变简历数据结构、照片导出安全逻辑、Storage、public download route 或数据库权限边界。
+v1.1.3 Resume export typography fixes 只修简历预览与 Word 导出的排版细节：邮箱字段与电话、性别、年龄、所在地使用一致的个人信息样式；实习经历的岗位 / 部门行加粗。追加 v1.1.3 Resume export section order and icons fix 后，Word 导出会隐藏没有可导出条目的固定 section 标题 / 图标，并把项目经历固定在实习经历之后、在校经历之前；后续 project icon and role typography polish 将项目经历图标替换为更简洁的深灰文件夹 / 项目文件图标，并让项目经历角色行、在校经历岗位行加粗。该小修不改变简历数据结构、照片导出安全逻辑、Storage、public download route 或数据库权限边界。
 
 ## Completed Capabilities
 
@@ -107,7 +107,7 @@ v1.1.3 Resume export typography fixes 只修简历预览与 Word 导出的排版
 - v1.1 Search / Listing / Mobile polish 已打磨后台全局搜索、后台四类资产列表、Documents 文件中心和四类公开列表页的长文本、标签换行、结果摘要和 390px 移动端可读性；本轮不新增数据库、migration、RLS、Storage policy、public download route、AI 搜索、OCR、向量搜索或 Documents 正文读取。
 - v1.1 Final QA docs sync and release notes 已新增 `docs/v1-1-release-notes.md`，并把 README、当前状态、项目记忆、路线图和维护手册同步到 Personal Asset Intranet 稳定使用阶段；本轮只做文档和 QA checklist，不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
 - v1.1.1 Documents collection-first polish 将 `/dashboard/documents` 首页调整为文档包优先：先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；文档包详情页支持继续上传单个文件到当前已有文档包；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现。本轮不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，也不修改 public download route。
-- v1.1.3 Resume export typography fixes 修复简历个人信息区邮箱导出样式与实习经历岗位 / 部门加粗；只涉及网页预览 CSS 和 Word 模板导出前的样式归一化，不改数据库、Storage、public download route 或照片上传 / 导出安全逻辑。
+- v1.1.3 Resume export typography fixes 修复简历个人信息区邮箱导出样式与实习经历岗位 / 部门加粗；追加 section order and icons fix 后，Word 导出不再保留空 section 标题 / 图标，项目经历固定在实习经历之后、在校经历之前；project icon and role typography polish 继续替换为更简洁的深灰项目文件夹图标，并同步加粗项目经历角色行、在校经历岗位行；只涉及网页预览顺序、默认 section order 和 Word 模板导出前 / 渲染后的样式归一化，不改数据库、Storage、public download route 或照片上传 / 导出安全逻辑。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。

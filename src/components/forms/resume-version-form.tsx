@@ -21,8 +21,8 @@ type VersionSection = {
 const versionSections: VersionSection[] = [
   { key: "education", label: "教育经历", description: "学校、专业、学位、核心课程和荣誉。", itemTypes: ["education"] },
   { key: "experience", label: "实习经历", description: "公司、岗位、职责、方法和成果。", itemTypes: ["experience"] },
-  { key: "other", label: "在校经历", description: "学生组织、社团、志愿服务或其他校园经历。", itemTypes: ["other"] },
   { key: "projects", label: "项目经历", description: "投研、量化、AI 工作流等项目经历。", itemTypes: ["project"] },
+  { key: "other", label: "在校经历", description: "学生组织、社团、志愿服务或其他校园经历。", itemTypes: ["other"] },
   { key: "research", label: "研究经历", description: "研究主题、框架、方法和结论。", itemTypes: ["research"] },
   { key: "skills", label: "相关技能", description: "技能、语言能力和 AI 工作流能力。", itemTypes: ["skill", "language"] },
   { key: "certifications", label: "证书", description: "证书、资格或培训记录。", itemTypes: ["certification"] },

@@ -93,7 +93,7 @@ export const resumeVersionSchema = z.object({
   is_featured: z.boolean(),
   notes: optionalText(1200),
   profile_fields: z.record(z.string(), z.boolean()).default({}),
-  section_order: z.array(z.string()).default(["education", "experience", "campus", "projects", "research", "skills", "certifications", "awards", "other"]),
+  section_order: z.array(z.string()).default(["education", "experience", "projects", "campus", "skills", "research", "certifications", "awards", "other"]),
   template_options: jsonRecordSchema,
   items: z.array(resumeVersionItemSchema).default([])
 });

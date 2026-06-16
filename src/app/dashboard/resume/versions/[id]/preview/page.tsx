@@ -141,6 +141,8 @@ function ResumeHeader({ model }: { model: ResumeTemplateModel }) {
 }
 
 function ResumeEntry({ entry, sectionKey }: { entry: ResumeTemplateEntry; sectionKey: ResumeTemplateModel["sections"][number]["key"] }) {
+  const shouldEmphasizeRole = sectionKey === "experience" || sectionKey === "projects" || sectionKey === "campus";
+
   if (entry.kind === "skill") {
     return (
       <article className="resume-skill-entry">
@@ -157,7 +159,7 @@ function ResumeEntry({ entry, sectionKey }: { entry: ResumeTemplateEntry; sectio
         <div className="resume-entry-date">{entry.date}</div>
         <div className="resume-entry-content">
           <div className="resume-entry-org">{entry.title}</div>
-          {entry.subtitle ? <div className={cn("resume-entry-role", sectionKey === "experience" && "resume-entry-role-strong")}>{entry.subtitle}</div> : null}
+          {entry.subtitle ? <div className={cn("resume-entry-role", shouldEmphasizeRole && "resume-entry-role-strong")}>{entry.subtitle}</div> : null}
           {entry.summary ? <ResumeTextBlock text={entry.summary} paragraphClassName="resume-entry-summary" /> : null}
           {entry.detailLines.map((line) => (
             <ResumeTextBlock key={line} text={line} />

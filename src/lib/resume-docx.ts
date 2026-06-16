@@ -22,6 +22,7 @@ type ResumeDocxTemplateData = {
   contactLine: string;
   education: ResumeDocxTemplateEntry[];
   experience: ResumeDocxTemplateEntry[];
+  projects: ResumeDocxTemplateEntry[];
   campus: ResumeDocxTemplateEntry[];
   skills: ResumeDocxTemplateSkillEntry[];
   extraSections: Array<{
@@ -62,6 +63,12 @@ type ResumePhotoAsset = {
 
 const templatePath = path.join(process.cwd(), "src/templates/resume/20260523-resume-template.docx");
 const resumePhotoRelationshipId = "rId6";
+const resumeProjectIconRelationshipId = "rId17";
+const resumeProjectIconSvg = `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M5 8C5 6.89543 5.89543 6 7 6H12.25C12.7804 6 13.2891 6.21071 13.6642 6.58579L15.3284 8.25H23C24.1046 8.25 25 9.14543 25 10.25V22C25 23.1046 24.1046 24 23 24H7C5.89543 24 5 23.1046 5 22V8ZM7 8V22H23V10.25H14.5L12.25 8H7Z" fill="#373737"/>
+<path d="M8.5 14.5H21.5" stroke="#373737" stroke-width="1.55" stroke-linecap="square"/>
+<path d="M8.5 18H18.5" stroke="#373737" stroke-width="1.55" stroke-linecap="square"/>
+</svg>`;
 const maxResumePhotoBytes = 2 * 1024 * 1024;
 const maxResumePhotoRedirects = 3;
 const resumePhotoMimeExtensions = new Map<ResumePhotoMime, ResumePhotoExtension>([
@@ -83,14 +90,16 @@ export async function buildResumeDocx({ version, profile, basicItem }: ResumeDoc
     showPhoto: model.profile.showPhoto,
     photoAsset
   });
-  applyResumeTypographyFixes(zip);
+  applyResumeTemplateFixes(zip);
+  const templateData = buildResumeDocxTemplateData(model);
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
     nullGetter: () => ""
   });
 
-  doc.render(buildResumeDocxTemplateData(model));
+  doc.render(templateData);
+  removeEmptyRenderedSectionHeadings(doc.getZip(), templateData);
 
   return doc.getZip().generate({
     type: "nodebuffer",
@@ -107,7 +116,7 @@ export function getResumeDocxFilename({ version, profile, basicItem }: ResumeDoc
 
 function buildResumeDocxTemplateData(model: ResumeTemplateModel): ResumeDocxTemplateData {
   const sectionMap = new Map(model.sections.map((section) => [section.key, section]));
-  const extraSectionKeys = model.sections.filter((section) => !["education", "experience", "campus", "skills"].includes(section.key));
+  const extraSectionKeys = model.sections.filter((section) => !["education", "experience", "projects", "campus", "skills"].includes(section.key));
 
   return {
     name: model.profile.name || "简历",
@@ -118,6 +127,7 @@ function buildResumeDocxTemplateData(model: ResumeTemplateModel): ResumeDocxTemp
     contactLine: buildContactLine(model.profile),
     education: (sectionMap.get("education")?.entries ?? []).map((entry) => buildEntryData(entry)),
     experience: (sectionMap.get("experience")?.entries ?? []).map((entry) => buildEntryData(entry)),
+    projects: (sectionMap.get("projects")?.entries ?? []).map((entry) => buildEntryData(entry)),
     campus: (sectionMap.get("campus")?.entries ?? []).map((entry) => buildEntryData(entry)),
     skills: (sectionMap.get("skills")?.entries ?? []).map((entry) => buildSkillEntryData(entry)),
     extraSections: extraSectionKeys.map((section) => ({
@@ -170,7 +180,7 @@ function applyResumePhoto(zip: PizZip, { showPhoto, photoAsset }: { showPhoto: b
   ensureImageContentType(zip, photoAsset.extension, photoAsset.mimeType);
 }
 
-function applyResumeTypographyFixes(zip: PizZip) {
+function applyResumeTemplateFixes(zip: PizZip) {
   const documentFile = zip.file("word/document.xml");
 
   if (!documentFile) {
@@ -178,10 +188,132 @@ function applyResumeTypographyFixes(zip: PizZip) {
   }
 
   const documentXml = documentFile.asText();
-  const withConsistentEmail = replaceParagraphContaining(documentXml, "{emailRow}", normalizeEmailRowParagraph);
+  const withProjectSection = insertProjectSection(documentXml);
+  const withConsistentEmail = replaceParagraphContaining(withProjectSection, "{emailRow}", normalizeEmailRowParagraph);
   const withBoldExperienceRole = replaceSectionBlock(withConsistentEmail, "{#experience}", "{/experience}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
+  const withBoldProjectRole = replaceSectionBlock(withBoldExperienceRole, "{#projects}", "{/projects}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
+  const withBoldCampusRole = replaceSectionBlock(withBoldProjectRole, "{#campus}", "{/campus}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
 
-  zip.file("word/document.xml", withBoldExperienceRole);
+  zip.file("word/document.xml", withBoldCampusRole);
+  ensureProjectIcon(zip);
+}
+
+function insertProjectSection(documentXml: string) {
+  if (documentXml.includes("{#projects}")) {
+    return documentXml;
+  }
+
+  const experienceBlock = getSectionTemplateBlock(documentXml, "{#experience}", "{/experience}");
+  const campusBlock = getSectionTemplateBlock(documentXml, "{#campus}", "{/campus}");
+
+  if (!experienceBlock || !campusBlock) {
+    return documentXml;
+  }
+
+  const projectBlock = experienceBlock.xml
+    .replaceAll("实习经历", "项目经历")
+    .replaceAll("{#experience}", "{#projects}")
+    .replaceAll("{/experience}", "{/projects}")
+    .replaceAll('r:embed="rId9"', `r:embed="${resumeProjectIconRelationshipId}"`)
+    .replaceAll('r:embed="rId10"', `r:embed="${resumeProjectIconRelationshipId}"`)
+    .replace(/(<pic:cNvPr id="0" name=")[^"]+(" descr="icon\.png"\/>)/, "$1Project icon$2");
+
+  return `${documentXml.slice(0, campusBlock.start)}${projectBlock}${documentXml.slice(campusBlock.start)}`;
+}
+
+function getSectionTemplateBlock(documentXml: string, startToken: string, endToken: string) {
+  const startTokenIndex = documentXml.indexOf(startToken);
+
+  if (startTokenIndex === -1) {
+    return null;
+  }
+
+  const start = documentXml.lastIndexOf("<w:tbl>", startTokenIndex);
+  const endTokenIndex = documentXml.indexOf(endToken, startTokenIndex);
+
+  if (start === -1 || endTokenIndex === -1) {
+    return null;
+  }
+
+  const endParagraphIndex = documentXml.indexOf("</w:p>", endTokenIndex);
+
+  if (endParagraphIndex === -1) {
+    return null;
+  }
+
+  const end = endParagraphIndex + "</w:p>".length;
+
+  return {
+    start,
+    end,
+    xml: documentXml.slice(start, end)
+  };
+}
+
+function ensureProjectIcon(zip: PizZip) {
+  zip.file("word/media/resume-project-icon.svg", resumeProjectIconSvg);
+  ensureProjectIconRelationship(zip);
+}
+
+function ensureProjectIconRelationship(zip: PizZip) {
+  const relsFile = zip.file("word/_rels/document.xml.rels");
+
+  if (!relsFile) {
+    return;
+  }
+
+  const relsXml = relsFile.asText();
+
+  if (relsXml.includes(`Id="${resumeProjectIconRelationshipId}"`)) {
+    return;
+  }
+
+  zip.file(
+    "word/_rels/document.xml.rels",
+    relsXml.replace("</Relationships>", `<Relationship Id="${resumeProjectIconRelationshipId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/resume-project-icon.svg"/></Relationships>`)
+  );
+}
+
+function removeEmptyRenderedSectionHeadings(zip: PizZip, data: ResumeDocxTemplateData) {
+  const documentFile = zip.file("word/document.xml");
+
+  if (!documentFile) {
+    return;
+  }
+
+  let documentXml = documentFile.asText();
+  const fixedSections: Array<[string, unknown[]]> = [
+    ["教育经历", data.education],
+    ["实习经历", data.experience],
+    ["项目经历", data.projects],
+    ["在校经历", data.campus],
+    ["相关技能", data.skills]
+  ];
+
+  for (const [label, entries] of fixedSections) {
+    if (entries.length === 0) {
+      documentXml = removeSectionHeadingTable(documentXml, label);
+    }
+  }
+
+  zip.file("word/document.xml", documentXml);
+}
+
+function removeSectionHeadingTable(documentXml: string, label: string) {
+  const labelIndex = documentXml.indexOf(label);
+
+  if (labelIndex === -1) {
+    return documentXml;
+  }
+
+  const start = documentXml.lastIndexOf("<w:tbl>", labelIndex);
+  const endIndex = documentXml.indexOf("</w:tbl>", labelIndex);
+
+  if (start === -1 || endIndex === -1) {
+    return documentXml;
+  }
+
+  return `${documentXml.slice(0, start)}${documentXml.slice(endIndex + "</w:tbl>".length)}`;
 }
 
 function normalizeEmailRowParagraph(paragraphXml: string) {
