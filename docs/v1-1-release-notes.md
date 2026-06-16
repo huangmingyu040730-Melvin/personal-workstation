@@ -51,9 +51,18 @@ Agent CEO / 自动化扩张线暂停；不新增自动化中心、任务中心�
 - 优化四类公开列表页的长文本、标签和 390px 移动端可用性。
 - 搜索仍不读取 Documents 文件正文，不读取 Storage object，不做 OCR、AI 搜索或向量搜索。
 
+### 5. v1.1.1 Documents collection-first polish
+
+- `/dashboard/documents` 首页调整为文档包优先，先展示 document collections metadata，再展示独立文件。
+- 独立文件定义为 `collection_id IS NULL`；已加入文档包的文件进入对应文档包详情页维护，不在默认首页重复展开。
+- 文档包卡片展示标题、类型、文件数量、总大小、更新时间、根目录和关联摘要，并跳转现有文档包详情页。
+- 签证、身份、生活、求职、合同等个人资料当前建议先通过文档包组织。
+- Profile 真实文件关联暂不实现，不新增数据库类型、resolver、Profile 页面或权限边界。
+- 本轮只查询 Documents / document collections metadata，不读取 Documents 文件正文，不读取 Storage object，不生成 signed URL，也不修改 public download route。
+
 ## 安全边界
 
-v1.1 不包含以下改动：
+v1.1 / v1.1.1 不包含以下改动：
 
 - 不新增数据库表。
 - 不新增 migration。
