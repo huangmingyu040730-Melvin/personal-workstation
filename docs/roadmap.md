@@ -18,6 +18,8 @@ Notion 可作为草稿、临时研究笔记、日常记录和自动化中间层�
 
 Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口和代码主路径移除。后续路线不再维护 Market Brief、市场素材包、行情探针或相关生成任务。
 
+v1.1 已作为 Personal Asset Intranet polish 收口。后续近期路线不新增大模块，优先稳定使用、真实资产录入、明显 bugfix、轻量 UX polish 和安全边界复查。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -880,6 +882,42 @@ Phase 2R-Z 已退役：
 - 不新增 AI 功能。
 - 不主动扩展求职自动化。
 - 不恢复 Market Brief、外部 runner、市场素材包、行情探针或任何 Market Brief 生成任务。
+
+### v1.1 - Personal Asset Intranet Polish
+
+已完成并进入稳定使用阶段：
+
+- #125 Boundary polish：收紧 public attachment download route，清理 dashboard 假入口、topbar 占位按钮、旧 Market Brief env，并支持 `NEXT_PUBLIC_SITE_URL`。
+- #126 Asset model clarity：明确 Project / Publication / Knowledge / Skill 的资产角色，并同步到表单、列表空状态、AI Draft Lab 和文档。
+- #127 Form consistency and AI prefill：打磨 AI Draft Lab 到新建表单的浏览器临时 handoff、提示条、字段映射和表单一致性。
+- #128 Search listing and mobile polish：打磨后台搜索、后台列表、Documents 文件中心、公开列表和 390px 移动端长文本展示。
+- Final QA docs sync：新增 `docs/v1-1-release-notes.md`，同步 README、current status、memory、roadmap 和维护检查清单。
+
+边界：
+
+- 不新增数据库、migration、RLS、Storage policy 或 bucket visibility 修改。
+- 不修改 `/public-files/[id]/download`。
+- 不读取 Documents 文件正文或 Storage object。
+- 不新增 AI 搜索、OCR、向量搜索、Documents 问答或公开 AI。
+- 不恢复 Agent CEO、自动化中心、任务中心、Market Brief、Access Grants、Viewer magic link 或 restricted 外部授权。
+
+### Near-term Stable Usage
+
+近期只做：
+
+- 录入真实 Project / Publication / Knowledge / Skill 资产。
+- 观察四类资产分类是否清楚。
+- 使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记，但继续手动检查、手动保存、手动决定 visibility。
+- 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
+- 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
+
+近期不做：
+
+- Agent CEO / 自动化扩张线。
+- 自动化中心、任务中心、复盘中心。
+- Notion / 飞书 / Gmail 集成。
+- 新的公开 AI、访客 AI、AI 搜索、OCR 或向量搜索。
+- 外部访问申请、Access Grants、Viewer login/callback 或 restricted 外部访问恢复。
 
 ### Research Asset Curation
 

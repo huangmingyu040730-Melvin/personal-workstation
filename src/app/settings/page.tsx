@@ -7,36 +7,27 @@ export default function SettingsPage() {
     <AppShell>
       <PageHeader
         eyebrow="Settings"
-        title="设置"
-        description="展示权限选项、主题设置和未来集成占位，不写入任何真实密钥或环境变量。"
+        title="设置（占位已暂停）"
+        description="当前没有独立 dashboard settings 模块。本页是早期占位，不作为主导航入口维护。"
       />
       <div className="grid gap-5 xl:grid-cols-3">
         <Card>
-          <CardHeader title="权限选项" />
-          {["公开内容默认需确认", "私密项目仅本人可见", "链接可见内容可分享"].map((item) => (
-            <label key={item} className="mb-4 flex items-center justify-between rounded-2xl bg-slate-50 p-4 last:mb-0">
-              <span className="text-sm font-medium text-slate-700">{item}</span>
-              <input type="checkbox" className="h-5 w-5 accent-blue-600" defaultChecked />
-            </label>
-          ))}
+          <CardHeader
+            title="当前真实入口"
+            description="公开资料在 Profile 维护，文件边界在 Documents 维护，站点 URL 和 AI Provider 通过环境变量配置。"
+          />
         </Card>
         <Card>
-          <CardHeader title="主题设置" />
-          <div className="grid gap-3">
-            {["浅色专业", "深蓝工作台", "系统跟随"].map((theme, index) => (
-              <button key={theme} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-700">
-                {index === 0 ? "✓ " : ""}{theme}
-              </button>
-            ))}
-          </div>
+          <CardHeader
+            title="本阶段不做"
+            description="不新增主题切换系统、通知系统、外部集成配置面板或自动化配置中心。"
+          />
         </Card>
         <Card>
-          <CardHeader title="未来集成" />
-          <div className="space-y-3">
-            {["Supabase 数据库", "GitHub Actions 自动化", "Notion 知识同步", "文件对象存储"].map((item) => (
-              <div key={item} className="rounded-2xl bg-blue-50 p-4 text-sm font-medium text-blue-800">{item}</div>
-            ))}
-          </div>
+          <CardHeader
+            title="维护边界"
+            description="v1.1 后默认只做 bugfix、明显 UX polish、文档同步和安全边界复查。"
+          />
         </Card>
       </div>
     </AppShell>

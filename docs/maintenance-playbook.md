@@ -1,10 +1,10 @@
-# v1.0 Maintenance Playbook
+# v1.0 / v1.1 Maintenance Playbook
 
 日期：2026-06-16
 
 用途：
 
-- 记录 v1.0 稳定维护阶段的日常内容维护、附件公开、安全检查、部署验收和故障排查流程。
+- 记录 v1.0 / v1.1 稳定维护阶段的日常内容维护、附件公开、安全检查、部署验收和故障排查流程。
 - 帮助后续管理员优先补真实内容，而不是继续扩展复杂功能。
 
 ## 日常维护原则
@@ -27,6 +27,26 @@
 12. AI 草稿实验室只用于把原始素材转换为结构化草稿；可以通过当前浏览器 `sessionStorage` 带入新建表单做人工确认预填，但不自动创建资产、不保存数据库、不提交表单、不读取 Documents / Storage。
 
 暂时跳过 public content sprint。已有 public 内容可以继续在线展示，后续新内容由管理员在后台逐步手动补充、整理和发布。
+
+## v1.1 Personal Asset Intranet maintenance checklist
+
+每个后续小 PR 默认复查：
+
+1. 公开页面只展示 `public` 内容。
+2. private / unlisted / 历史 restricted 内容不进入公开列表、详情、sitemap 或 metadata。
+3. Documents 不读取文件正文，不输出 Storage path、Storage bucket、owner_id、signed URL 或 raw link rows。
+4. public attachment 下载必须带当前 asset context；缺少或非法 `asset_type` / `asset_id` 返回 404。
+5. public attachment 继续要求 document public、bucket 为 `workspace-files`、当前 asset public 且 document 关联当前 asset。
+6. Sidebar 不恢复“自动化”或“设置”假入口。
+7. Topbar 不恢复通知或主题假按钮。
+8. AI Draft Lab 不读取 Documents / Storage，不自动保存数据库，不自动创建资产，不自动修改 visibility。
+9. AI Draft Lab 到新建表单 prefill 只使用浏览器临时 handoff；点击“填入表单”才写入字段，点击“忽略并清除”只清理 handoff。
+10. 后台搜索保持 metadata-only，不升级为 AI 搜索、OCR、向量搜索或 Documents 正文读取。
+11. 390px 移动端无横向滚动；长标题、长标签、长文件名和底部按钮自然换行。
+12. 每个 PR 运行 `npm run lint`、`npm run build`、运行中站点的 `npm run smoke:public`、`git diff --check` 和暂存后的 `git diff --cached --check`。
+13. 每个 PR 做 stale reference 搜索，确认 Agent CEO、自动化中心、任务中心、Market Brief、access request、viewer、Access Grants 和 restricted 相关词只出现在已暂停 / 已退役 / 不恢复语境中。
+
+v1.1 之后默认进入稳定使用期：优先录入真实资产，观察 Project / Publication / Knowledge / Skill 分类、AI Draft Lab handoff、搜索、Documents 和移动端体验。只有明确 bug、明显 UX polish、文档同步或安全边界复查进入近期 PR。
 
 ## 新增 public 内容流程
 

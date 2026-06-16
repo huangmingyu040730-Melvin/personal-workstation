@@ -10,7 +10,7 @@
 - Agent CEO / 自动化扩张线暂停；不新增自动化中心、任务中心或外部集成主线。
 - 公开站点只展示 public 内容；外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权已在 Phase 2R-Z 退役，不恢复。
 
-当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.0 维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，AI 表单草稿助手说明详见 `docs/ai-draft-form-copilot.md`，AI 原始素材草稿实验室说明详见 `docs/ai-raw-note-draft-lab.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
+当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.1 polish 收尾说明详见 `docs/v1-1-release-notes.md`，维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，AI 表单草稿助手说明详见 `docs/ai-draft-form-copilot.md`，AI 原始素材草稿实验室说明详见 `docs/ai-raw-note-draft-lab.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
 
 ## 资产模型
 
@@ -19,7 +19,7 @@
 - Knowledge：沉淀可复用的笔记、框架、概念解释、方法论和个人学习记录。
 - Skill：沉淀可复用的流程、Prompt 模板、操作手册、自动化方法和能力包。
 
-v1.1 Asset model clarity polish 只打磨这些既有资产模块的定义、helper text、空状态和 AI Draft Lab 目标类型说明；不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
+v1.1 polish 已围绕边界、资产模型、AI Draft Lab 预填、搜索、列表和移动端可用性完成收口；它是 Personal Asset Intranet 的使用体验打磨，不是功能扩张，不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
 
 ## 技术栈
 
@@ -205,7 +205,7 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 
 ## 产品路线图
 
-当前产品方向为“黄铭语的公开研究工作站与私密数字资产后台”。详细状态见 `docs/current-status.md`，路线图见 `docs/roadmap.md`。
+当前产品方向为“黄铭语的个人长期资产沉淀主基地 / Personal Asset Intranet”。详细状态见 `docs/current-status.md`，v1.1 收口说明见 `docs/v1-1-release-notes.md`，路线图见 `docs/roadmap.md`。
 
 长期访问层级：
 
@@ -213,11 +213,15 @@ Phase 2C 已在生产 Supabase 项目执行 `supabase/migrations/0003_publicatio
 - `unlisted`：不公开列出，当前仍保持后台管理和保守公开边界。
 - `private`：仅管理员本人在后台查看和管理。
 
-下一阶段优先级：
+近期维护重点：
 
-- Phase 2O 以后主线：研究资产沉淀、公开展示质量、文件 / 知识管理和求职闭环维护。
-- Phase 2P-A 起 Documents 升级为 Project / Publication / Knowledge / Skill 的统一私密附件底座。
-- Phase 2P-B 起 Project、Publication、Knowledge、Skill 后台详情页内嵌关联文件 / 文档包区域，并继续复用统一 Documents 上传页。
+- 稳定使用现有 Projects、Publications、Knowledge、Skills、Documents、AI Draft Lab 和 Career 能力。
+- 持续录入真实资产，观察资产分类、搜索、Documents 和移动端体验。
+- 只做明确 bugfix、明显 UX polish、文档同步和安全边界复查。
+- 不主动推进 Agent CEO、自动化中心、任务中心、Market Brief、Notion / 飞书 / Gmail 集成或新的外部授权访问链路。
+
+既有能力现状补充：
+
 - Phase 2P-C 起新建 Project、Publication、Knowledge、Skill 时可选择“保存并上传附件”，创建成功后跳转到统一 Documents 上传页并预选当前对象。
 - Phase 2P-D 起 Documents 从上传底座进一步扩展为可维护的私密附件管理系统，支持编辑文件 / 文档包 metadata、调整关联对象和按文档包状态筛选。
 - Phase 2P-E-1 起 Documents 列表和文档包详情页支持批量选择文件、批量移动关联对象和批量解除关联。

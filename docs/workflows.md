@@ -455,6 +455,44 @@ public attachment 维护：
 - 本流程不新增 migration、数据库字段、RLS、Storage policy、public zip、AI 摘要、OCR、向量搜索、全文搜索、PDF 在线预览、支付或外部授权。
 - 本流程不修改 Documents 上传 / 删除 / zip 下载或 `/public-files/[id]/download`。
 
+## v1.1 Final QA Docs Sync Workflow
+
+日期：2026-06-16
+
+类型：workflow
+
+用途：
+
+- 在 v1.1 polish 收尾阶段，同步 release notes、当前状态、记忆、路线图和维护 checklist。
+
+步骤：
+
+1. 从最新 `main` 创建独立分支。
+2. 确认本轮只做文档、QA checklist 和 release notes，不修改业务代码。
+3. 新增或更新 `docs/v1-1-release-notes.md`，记录 v1.1 是 Personal Asset Intranet polish，不是功能扩张。
+4. 同步 README、`docs/current-status.md`、`docs/memory.md`、`docs/roadmap.md` 和 `docs/maintenance-playbook.md`。
+5. 如需解释旧历史条目，更新 `docs/decisions.md`，明确 Market Brief、Access Grants、Viewer、restricted、Agent CEO 或自动化扩张相关旧记录只是历史或已退役 / 已暂停语境。
+6. 运行 stale reference 搜索，覆盖 Agent CEO、CEO Workbench、自动化中心、任务中心、Market Brief、access request、viewer login、Access Grants、restricted、`/automations`、`/settings`、`/access-request`、`/viewer/login`、`/viewer/callback`、`/dashboard/access-requests` 和 `/dashboard/access-grants`。
+7. 对搜索结果分类：当前功能 / 推荐路线 / 导航入口需要修正文案；历史、退役、暂停、不恢复语境可以保留。
+8. 确认 diff 不包含数据库、migration、RLS、Storage policy、bucket visibility、Documents 文件读取或 `/public-files/[id]/download` 改动。
+
+验证要求：
+
+- 运行 `npm run lint`。
+- 运行 `npm run build`。
+- 启动本地服务后运行 `PUBLIC_SMOKE_BASE_URL=http://localhost:3000 npm run smoke:public`。
+- 运行 `git diff --check`。
+- 暂存后运行 `git diff --cached --check`。
+- 复跑 stale reference 搜索并在 PR 中说明结果。
+
+边界：
+
+- 不新增数据库表、migration、RLS、Storage policy 或 bucket visibility 修改。
+- 不读取 Documents 文件正文，不读取 Storage object，不生成新的公开 signed URL 能力。
+- 不新增 AI 搜索、OCR、向量搜索、Documents 问答、公开 AI 或访客 AI。
+- 不新增 Agent CEO 页面、自动化中心、任务中心、复盘中心、Notion / 飞书 / Gmail 集成。
+- 不恢复 Market Brief、Access Request、Viewer login/callback、Access Grants、restricted 外部访问、sidebar 假入口或 topbar 占位按钮。
+
 ## AI Draft Form Copilot Workflow
 
 日期：2026-06-16

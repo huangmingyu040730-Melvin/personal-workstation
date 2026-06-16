@@ -82,6 +82,7 @@
 - v1.1 Asset model clarity polish：明确 Project / Publication / Knowledge / Skill 的资产定义、示例、列表空状态和 AI Draft Lab 目标类型说明；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 - v1.1 Form consistency and AI prefill polish：复查 AI Draft Lab 到新建表单的 `sessionStorage` handoff、提示条和字段匹配；提示条明确只预填浏览器字段、不自动保存或公开；select / checkbox 匹配允许大小写和多余空格差异；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 - v1.1 Search listing and mobile polish：打磨后台全局搜索、后台资产列表、Documents 文件中心和公开列表页在资产增多后的可检索性、可读性和 390px 移动端可用性；只做 metadata 搜索匹配、结果摘要、长标题 / 长标签换行和小屏 Documents 卡片展示，不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`，不新增 AI 搜索、OCR、向量搜索或 Documents 正文读取。
+- v1.1 Final QA docs sync and release notes：新增 `docs/v1-1-release-notes.md`，同步 README、current status、memory、roadmap、maintenance playbook 和 decisions；v1.1 收口为 Personal Asset Intranet polish，后续进入稳定使用、真实资产录入、小 bug 修复和轻量 UX 观察阶段；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 
 当前网站包括：
 
@@ -120,6 +121,7 @@
 - Phase 3B-1 后，AI 草稿实验室到新建表单的 prefill 只使用浏览器 `sessionStorage`；不自动提交表单、不保存数据库、不创建资产、不修改 `visibility`，不读取 Documents / Storage。
 - v1.1 Form consistency 后，AI Draft Lab prefill 提示条必须继续说明这是临时草稿；点击“填入表单”只写当前浏览器表单字段，点击“忽略并清除”只清理 handoff。
 - v1.1 Search listing 后，后台全局搜索仍是 metadata-only：可以优化文件名分隔符匹配、结果摘要截断、类型展示和移动端换行，但不得升级为全文索引、AI 搜索、OCR、向量搜索或 Documents 文件正文读取。
+- v1.1 Final QA 后，项目进入 Personal Asset Intranet 稳定使用阶段：优先录入真实资产、观察四类资产分类、AI Draft Lab handoff、搜索、Documents 和 390px 移动端；后续 PR 默认只做 bugfix、明显 UX polish、文档同步和安全边界复查。
 - v1.1 后，四类资产定义应保持一致：Project 是持续推进主题；Publication 是阶段成果；Knowledge 是可复用知识；Skill 是可复用流程 / Prompt / 操作手册 / 能力包。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
 - robots 阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
@@ -336,6 +338,7 @@ Research Asset Links：
 - Phase 3A-R：不新增 migration；只新增 Project 表单 AI 草稿助手、严格白名单 Server Action 和文档，不修改 RLS、Storage policy、Documents、public 下载 route 或公开页面。
 - Phase 3A-S：不新增 migration；只扩展 Publication / Knowledge / Skill 表单 AI 草稿助手、严格白名单 Server Action 和文档，不修改 RLS、Storage policy、Documents、public 下载 route 或公开页面。
 - Phase 2R-Z：新增 `0022_remove_external_access_and_restricted_viewer.sql`，只退役外部访问链路、回写历史 restricted 为 private、收紧 visibility / public read policy 并删除旧访问申请 / 授权表和函数；不修改 Storage policy、Documents 或 public 下载 route。
+- v1.1 Personal Asset Intranet polish 不新增 migration。#125 至 #128 以及 final QA docs sync 只调整边界校验、文案、表单预填、搜索 / 列表 / 移动端展示和维护文档；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
 
 规则：
 
@@ -357,6 +360,7 @@ Research Asset Links：
 - 公开详情与附件维护：四类公开详情页只展示 public 记录；Project / Publication 可显示 public related content 与显式 public 文件附件，管理员先在文件详情页或文件中心批量工具将文件显式设为 public，并确认该文件通过专用 link row 或 legacy primary relation 关联到对应 public Project / Publication；公开详情页只显示安全附件摘要，下载点击 `/public-files/[id]/download`，服务端再校验 public 文件、public 资产和关联存在后短时签名；Knowledge / Skill 公开详情不展示 Documents。
 - 公开 SEO 与分享维护：页面 metadata 通过 `src/lib/site.ts` 统一站点名、canonical、OG / Twitter card 和公开安全图片；sitemap 只收录 public 内容和公开静态入口，查询失败时降级；robots 阻止 dashboard、API、viewer、public-files 等路径；robots / sitemap 不作为权限边界。
 - 公开发布前 QA：启动本地服务后运行 `npm run smoke:public`，巡检公开入口、fallback、metadata、sitemap、robots 和敏感字段；结合浏览器 390px 冒烟确认首页、列表页、详情或 fallback、公开附件 metadata 无横向溢出。
+- v1.1 稳定维护：每次 PR 复查 public-only、Documents private、public attachment 资产上下文、AI Draft Lab 不读 Documents / Storage、prefill 不自动保存 / 创建 / 公开、metadata-only 搜索、sidebar 无自动化 / 设置假入口、topbar 无通知 / 主题假按钮和 390px 无横向滚动。
 - 外部访问链路退役维护：不要恢复 `/access-request`、`/viewer/*`、`/dashboard/access-requests`、`/dashboard/access-grants`、访问申请 / 授权 actions、queries、forms、validations 或流程文档；fallback 不显示申请 / viewer 入口。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
 - Knowledge 知识节点维护：进入 `/dashboard/knowledge/[id]` 先查看摘要、正文、分类、标签和关联 Project；整理知识资料时使用页面内上传知识资料 / 文件夹或 Knowledge Documents 筛选入口；查找相关资产时查看同项目 Publications，并用搜索入口查找 Project / Publication / Skill。
@@ -371,18 +375,23 @@ Research Asset Links：
 
 建议顺序：
 
-1. Phase 2P / 2Q / 2R-A-4A / 2R-A-4B / 2R-C-1 / 2R-C-2 / 2R-D-1 / 2R-Z 相关真实环境验收：确认 `0018_document_collections_and_folder_uploads.sql`、`0019_research_asset_links.sql`、`0020_document_asset_links.sql`、`0021_public_attachment_service_role_grants.sql` 和 `0022_remove_external_access_and_restricted_viewer.sql` 已在目标 Supabase 环境执行，验证多文件 / 文件夹上传、文档包详情、四类内容详情页附件区域、create-and-upload flow、多资产关联添加 / 移除 / 清空、文件 visibility 设置、public Project / Publication 详情页公开附件展示和 `/public-files/[id]/download` 安全下载、公开四类详情页统一布局与 390px 移动端堆叠、未公开 fallback 不含申请 / viewer 入口、后台不含 access requests / grants 菜单、公开 metadata / OG / Twitter card、`/sitemap.xml` 只收 public 内容、`/robots.txt` 阻止 dashboard / API / viewer / access-request / public-files、`npm run smoke:public` 发布前巡检、Knowledge / Skill 不展示 Documents、RelatedDocumentsPanel 分组与关联 chips、文档包关联同步、受确认保护的删除流程、zip 临时下载、`/dashboard/search` metadata 搜索、type 筛选与关键词高亮，以及四类后台详情页的中枢展示、显式资产关系和 public readiness checklist。
-2. 研究资产内容维护：补齐 Projects、Publications、Knowledge、Skills 的公开质量与附件关联。
-3. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
+1. 进入稳定使用期：持续录入真实 Project / Publication / Knowledge / Skill，先 private 沉淀，再人工判断是否 public。
+2. 观察四类资产分类是否够清楚，必要时只做小范围 helper text、空状态或文档修正。
+3. 继续使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记；handoff 只作为浏览器预填，保存和公开仍由管理员手动完成。
+4. 持续观察 `/dashboard/search`、Documents 文件中心和 390px 移动端在真实资产增长后的可用性。
+5. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
+6. 每轮 PR 继续运行 lint、build、public smoke、diff check 和 stale reference 搜索。
 
 暂不主动推进：
 
 - Market Brief / 市场简报恢复。
+- Agent CEO / 自动化扩张线。
+- 自动化中心、任务中心或复盘中心。
 - 新的求职自动化。
 - 公开文件中心或公开 zip 下载。
 - 外部访问申请、Access Grants、Viewer magic link 或 restricted 外部授权恢复。
 - OCR、文件内容索引、AI 文件总结。
-- Google Calendar、提醒系统、Notion 同步。
+- Google Calendar、提醒系统、Notion / 飞书 / Gmail 同步。
 - #118 详情页事后点评式 AI 方向；当前 AI 主线改为 Project 表单草稿补全助手。
 
 ## Stale Or Superseded Notes
@@ -401,3 +410,4 @@ Research Asset Links：
 - “Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计”已过时。Phase 2Q-B-1 已新增 `research_asset_links` 管理员后台显式关系底座，但 Documents 仍保持独立附件关系模型。
 - “Skill 当前没有 Project / Knowledge / Publication 显式关联字段，只能搜索相关资产”已过时。Skill 仍不新增单独外键字段，但可通过 `research_asset_links` 建立显式关系。
 - “后台存在独立全局研究资产关系视图页面”已过时。Phase 2Q-B-4 已移除该模块；显式关系仍在四类资产详情页维护。
+- “Agent CEO / 自动化扩张是当前主线”已过时。v1.1 后当前主线是 Personal Asset Intranet 稳定使用和已有资产模块 polish；自动化扩张、任务中心、复盘中心和外部集成不进入近期路线。
