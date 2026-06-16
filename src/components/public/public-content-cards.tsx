@@ -23,7 +23,7 @@ function TagList({ tags, tone = "slate", limit = 4 }: { tags: string[]; tone?: "
   return (
     <div className="mt-4 flex flex-wrap gap-2">
       {visibleTags.map((tag) => (
-        <span key={tag} className={`max-w-full truncate rounded-full px-2.5 py-1 text-xs ring-1 ring-inset ${toneClass}`}>
+        <span key={tag} className={`max-w-full rounded-full px-2.5 py-1 text-xs leading-5 ring-1 ring-inset [overflow-wrap:anywhere] ${toneClass}`}>
           {tag}
         </span>
       ))}
@@ -46,8 +46,8 @@ export function PublicProjectCard({ project }: { project: ProjectRecord }) {
             <FolderKanban size={18} />
           </div>
         </div>
-        <h2 className="line-clamp-2 text-lg font-semibold leading-7 text-navy-950">{project.title}</h2>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{project.summary}</p>
+        <h2 className="line-clamp-2 text-lg font-semibold leading-7 text-navy-950 [overflow-wrap:anywhere]">{project.title}</h2>
+        <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">{project.summary}</p>
         <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
           <div className="mb-2 flex justify-between text-sm leading-6">
             <span className="text-slate-500">公开进度</span>
@@ -56,8 +56,8 @@ export function PublicProjectCard({ project }: { project: ProjectRecord }) {
           <Progress value={project.progress} />
         </div>
         <TagList tags={project.tags} tone="blue" />
-        <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-          <span className="text-xs text-slate-500">更新于 {formatRelative(project.updated_at)}</span>
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+          <span className="min-w-0 text-xs text-slate-500 [overflow-wrap:anywhere]">更新于 {formatRelative(project.updated_at)}</span>
           <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-blue-700">查看详情 <ArrowRight className="transition group-hover:translate-x-1" size={15} /></span>
         </div>
       </Card>
@@ -78,15 +78,15 @@ export function PublicPublicationCard({ publication }: { publication: Publicatio
             <FileText size={18} />
           </div>
           <div className="min-w-0">
-            <h2 className="line-clamp-2 text-lg font-semibold leading-7 text-navy-950">{publication.title}</h2>
-            <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-slate-500">
+            <h2 className="line-clamp-2 text-lg font-semibold leading-7 text-navy-950 [overflow-wrap:anywhere]">{publication.title}</h2>
+            <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm leading-6 text-slate-500">
               <CalendarDays size={14} />
               {formatDate(publication.published_on)} · 更新于 {formatRelative(publication.updated_at)}
             </p>
           </div>
         </div>
-        <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{publication.summary}</p>
-        {publication.abstract ? <p className="mt-2 line-clamp-2 border-l-2 border-blue-100 pl-3 text-sm leading-6 text-slate-500">{publication.abstract}</p> : null}
+        <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">{publication.summary}</p>
+        {publication.abstract ? <p className="mt-2 line-clamp-2 border-l-2 border-blue-100 pl-3 text-sm leading-6 text-slate-500 [overflow-wrap:anywhere]">{publication.abstract}</p> : null}
         <TagList tags={publication.tags} tone="blue" />
         <div className="mt-auto flex items-center justify-end border-t border-slate-100 pt-4">
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">查看成果 <ArrowRight className="transition group-hover:translate-x-1" size={15} /></span>
@@ -111,14 +111,14 @@ export function PublicSkillCard({ skill }: { skill: SkillRecord }) {
               <Bot size={22} />
             </div>
             <div className="min-w-0">
-              <h2 className="line-clamp-2 text-lg font-semibold leading-7 text-navy-950">{skill.name}</h2>
-              <p className="mt-1 text-sm text-slate-500">{skill.category}</p>
+              <h2 className="line-clamp-2 text-lg font-semibold leading-7 text-navy-950 [overflow-wrap:anywhere]">{skill.name}</h2>
+              <p className="mt-1 text-sm text-slate-500 [overflow-wrap:anywhere]">{skill.category}</p>
             </div>
           </div>
-          <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">{skill.description}</p>
+          <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">{skill.description}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             {skill.platforms.slice(0, 4).map((platform) => (
-              <span key={platform} className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              <span key={platform} className="inline-flex max-w-full items-start gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium leading-5 text-blue-700 [overflow-wrap:anywhere]">
                 <Layers3 size={12} />
                 {platform}
               </span>
@@ -126,8 +126,8 @@ export function PublicSkillCard({ skill }: { skill: SkillRecord }) {
             {skill.platforms.length > 4 ? <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500">+{skill.platforms.length - 4}</span> : null}
           </div>
         </div>
-        <div className="relative mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-          <span className="truncate text-xs text-slate-500">{skill.current_version ?? "未设版本"} · {formatRelative(skill.updated_at)}</span>
+        <div className="relative mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+          <span className="min-w-0 text-xs text-slate-500 [overflow-wrap:anywhere]">{skill.current_version ?? "未设版本"} · {formatRelative(skill.updated_at)}</span>
           <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-blue-700">详情 <ArrowRight className="transition group-hover:translate-x-1" size={15} /></span>
         </div>
       </Card>
@@ -144,11 +144,11 @@ export function PublicKnowledgeCard({ note }: { note: KnowledgeNoteRecord }) {
             <BookOpen size={18} />
           </div>
           <div className="min-w-0">
-            <h2 className="line-clamp-2 text-lg font-semibold leading-7 text-navy-950">{note.title}</h2>
-            <p className="mt-1 text-sm text-slate-500">{note.category} · 更新于 {formatRelative(note.updated_at)}</p>
+            <h2 className="line-clamp-2 text-lg font-semibold leading-7 text-navy-950 [overflow-wrap:anywhere]">{note.title}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500 [overflow-wrap:anywhere]">{note.category} · 更新于 {formatRelative(note.updated_at)}</p>
           </div>
         </div>
-        {note.excerpt ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
+        {note.excerpt ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">{note.excerpt}</p> : null}
         <TagList tags={note.tags} tone="blue" />
         <div className="mt-auto flex items-center justify-end border-t border-slate-100 pt-4">
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700">阅读 <ArrowRight className="transition group-hover:translate-x-1" size={15} /></span>

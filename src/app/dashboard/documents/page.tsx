@@ -102,23 +102,23 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
       <AdminSecurityNote>文件中心只面向管理员后台。文件默认私密；只有显式设为公开且关联到公开内容的文件，才会通过公开页面的安全下载路由提供下载。</AdminSecurityNote>
       <AdminSection>
       <form className="flex flex-wrap gap-3">
-        <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="category" defaultValue={category} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 sm:w-auto">
           <option value="all">全部分类</option>
           {documentCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
-        <select name="related_type" defaultValue={relatedType} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="related_type" defaultValue={relatedType} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 sm:w-auto">
           <option value="all">全部关联</option>
           {documentRelatedTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           <option value="unlinked">未关联文件</option>
         </select>
-        <select name="collection" defaultValue={collection} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="collection" defaultValue={collection} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 sm:w-auto">
           <option value="all">全部文档包状态</option>
           <option value="with_collection">已加入文档包</option>
           <option value="without_collection">未加入文档包</option>
         </select>
-        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
+        <button className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 sm:w-auto">筛选</button>
         {relatedId && relatedType !== "all" && relatedType !== "unlinked" ? (
-          <Link href={`/dashboard/documents?category=${category}&related_type=${relatedType}&collection=${collection}`} className="inline-flex h-10 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-700">
+          <Link href={`/dashboard/documents?category=${category}&related_type=${relatedType}&collection=${collection}`} className="inline-flex h-10 w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-700 sm:w-auto">
             清除具体对象
           </Link>
         ) : null}

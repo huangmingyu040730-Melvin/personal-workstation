@@ -70,15 +70,15 @@ export default async function PublicSkillsPage({ searchParams }: { searchParams:
         <PublicListingControls count={skills.length} active={hasActiveFilters} clearHref="/skills" label="公开 Skill">
           <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_220px_auto]">
             {platform !== "all" ? <input type="hidden" name="platform" value={platform} /> : null}
-            <label className="relative">
+            <label className="relative min-w-0">
               <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
               <input name="q" defaultValue={q} placeholder="搜索 Skill 名称、说明、平台..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-navy-950 outline-none transition focus:border-blue-300" />
             </label>
-            <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
+            <select name="status" defaultValue={status} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
               <option value="all">全部状态</option>
               {skillStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
-            <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
+            <select name="category" defaultValue={category} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
               <option value="all">全部分类</option>
               {categories.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>

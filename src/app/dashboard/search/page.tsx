@@ -40,13 +40,13 @@ export default async function DashboardSearchPage({ searchParams }: { searchPara
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
             </label>
-            <div className="flex gap-2">
-              <button className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+              <button className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-navy-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800 sm:flex-none">
                 <Search size={16} />
                 搜索
               </button>
               {hasQuery ? (
-                <Link href="/dashboard/search" className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700">
+                <Link href="/dashboard/search" className="inline-flex h-12 flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 sm:flex-none">
                   清空
                 </Link>
               ) : null}

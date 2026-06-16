@@ -105,6 +105,15 @@ npm run build
 npm run start
 ```
 
+涉及搜索、列表或移动端 polish 时，额外在 390px 宽度检查：
+
+1. `/dashboard/search` 搜索框、筛选 chips、结果卡片和长摘要。
+2. `/dashboard/projects`、`/dashboard/publications`、`/dashboard/knowledge`、`/dashboard/skills` 的长标题、长标签和 visibility / status badge。
+3. `/dashboard/documents` 的筛选区、批量工具栏、小屏文件卡片和长文件名。
+4. `/projects`、`/publications`、`/knowledge`、`/skills` 的搜索 / 筛选控件、公开卡片和长标签。
+
+搜索和列表维护只允许基于现有 metadata 与 public 查询做展示优化；不要新增 AI 搜索、OCR、向量搜索、Documents 正文读取、数据库字段、RLS、Storage policy 或 public download route 改动。
+
 ## 每次部署后检查
 
 部署后至少检查：

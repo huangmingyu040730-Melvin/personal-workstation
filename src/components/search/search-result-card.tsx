@@ -16,10 +16,10 @@ export function SearchResultCard({ item, query }: { item: WorkspaceSearchItem; q
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <Badge className="bg-blue-50 text-blue-700 ring-blue-100">{item.typeLabel}</Badge>
           </div>
-          <h3 className="line-clamp-2 text-base font-semibold text-slate-950 group-hover:text-blue-800">
+          <h3 className="line-clamp-2 text-base font-semibold text-slate-950 [overflow-wrap:anywhere] group-hover:text-blue-800">
             <HighlightedText text={item.title} query={query} />
           </h3>
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">
             <HighlightedText text={item.description} query={query} />
           </p>
         </div>
@@ -29,7 +29,7 @@ export function SearchResultCard({ item, query }: { item: WorkspaceSearchItem; q
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {item.metadata.map((value, index) => (
-          <span key={`${value}-${index}`} className="max-w-full truncate rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+          <span key={`${value}-${index}`} className="max-w-full rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium leading-5 text-slate-600 [overflow-wrap:anywhere]">
             {value}
           </span>
         ))}

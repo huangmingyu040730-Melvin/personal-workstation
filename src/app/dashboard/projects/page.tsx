@@ -34,19 +34,19 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
       <PublicContentGuidance />
       <AdminSection>
       <form className="flex flex-wrap gap-3">
-        <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="status" defaultValue={status} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 sm:w-auto">
           <option value="all">全部状态</option>
           {projectStatuses.map((item) => (
             <option key={item.value} value={item.value}>{item.label}</option>
           ))}
         </select>
-        <select name="visibility" defaultValue={visibility} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="visibility" defaultValue={visibility} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 sm:w-auto">
           <option value="all">全部权限</option>
           {visibilityOptions.map((item) => (
             <option key={item.value} value={item.value}>{item.label}</option>
           ))}
         </select>
-        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
+        <button className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 sm:w-auto">筛选</button>
       </form>
       </AdminSection>
       {projects.length === 0 ? (
@@ -56,11 +56,11 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
           {projects.map((project) => (
               <AdminContentCard key={project.id} href={`/dashboard/projects/${project.id}`} className="h-full hover:border-blue-200">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-950">{project.title}</h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{project.summary}</p>
+                  <div className="min-w-0">
+                    <h2 className="line-clamp-2 text-lg font-semibold text-slate-950 [overflow-wrap:anywhere]">{project.title}</h2>
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">{project.summary}</p>
                   </div>
-                  <StatusBadge status={project.status} />
+                  <span className="shrink-0"><StatusBadge status={project.status} /></span>
                 </div>
                 <div className="mt-5">
                   <div className="mb-2 flex justify-between text-sm">
@@ -71,11 +71,11 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2">
                   {project.tags.map((tag) => (
-                    <span key={tag} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{tag}</span>
+                    <span key={tag} className="max-w-full rounded-full bg-slate-100 px-2.5 py-1 text-xs leading-5 text-slate-600 [overflow-wrap:anywhere]">{tag}</span>
                   ))}
                 </div>
-                <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <span className="text-xs text-slate-500">更新于 {formatRelative(project.updated_at)}</span>
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
+                  <span className="min-w-0 text-xs text-slate-500 [overflow-wrap:anywhere]">更新于 {formatRelative(project.updated_at)}</span>
                   <VisibilityBadge visibility={project.visibility} />
                 </div>
               </AdminContentCard>

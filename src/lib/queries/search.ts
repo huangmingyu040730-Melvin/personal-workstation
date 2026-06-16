@@ -13,6 +13,7 @@ import type { Visibility } from "@/lib/types";
 
 export const WORKSPACE_SEARCH_MIN_QUERY_LENGTH = 2;
 const WORKSPACE_SEARCH_LIMIT = 8;
+const WORKSPACE_SEARCH_DESCRIPTION_LIMIT = 220;
 
 export type WorkspaceSearchGroupKey = "projects" | "publications" | "knowledge" | "skills" | "documents" | "collections";
 export type WorkspaceSearchType = "all" | WorkspaceSearchGroupKey;
@@ -204,13 +205,14 @@ function getEmptySearchResults(query: string): WorkspaceSearchResults {
 function getDatabaseSearchQuery(query: string) {
   return query
     .replace(/[,%(){}]/g, " ")
-    .replace(/[%_*]/g, " ")
+    .replace(/[%*]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 function buildIlikeOr(fields: string[], query: string) {
-  const pattern = `%${query}%`;
+  const flexibleQuery = query.replace(/[\s_-]+/g, "%");
+  const pattern = `%${flexibleQuery}%`;
   return fields.map((field) => `${field}.ilike.${pattern}`).join(",");
 }
 
@@ -219,7 +221,11 @@ function compactMetadata(values: Array<string | null | undefined>) {
 }
 
 function summarize(values: Array<string | null | undefined>, fallback: string) {
-  return values.find((value) => value?.trim())?.trim() ?? fallback;
+  const summary = values.find((value) => value?.trim())?.trim() ?? fallback;
+
+  return summary.length > WORKSPACE_SEARCH_DESCRIPTION_LIMIT
+    ? `${summary.slice(0, WORKSPACE_SEARCH_DESCRIPTION_LIMIT).trimEnd()}...`
+    : summary;
 }
 
 function tagSummary(label: string, values: string[] | null | undefined) {

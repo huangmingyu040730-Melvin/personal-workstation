@@ -68,11 +68,11 @@ export default async function PublicKnowledgePage({ searchParams }: { searchPara
         <PublicListingControls count={notes.length} active={hasActiveFilters} clearHref="/knowledge" label="公开知识笔记">
           <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_auto]">
             {tag !== "all" ? <input type="hidden" name="tag" value={tag} /> : null}
-            <label className="relative">
+            <label className="relative min-w-0">
               <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
               <input name="q" defaultValue={q} placeholder="搜索标题、摘要、正文或标签..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-navy-950 outline-none transition focus:border-blue-300" />
             </label>
-            <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
+            <select name="category" defaultValue={category} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
               <option value="all">全部分类</option>
               {categories.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>

@@ -30,16 +30,16 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
       <PublicContentGuidance variant="publication" />
       <AdminSection>
       <form className="grid gap-3 lg:grid-cols-[0.35fr_0.35fr_1fr_auto]">
-        <select name="type" defaultValue={publicationType} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="type" defaultValue={publicationType} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
           <option value="all">全部类型</option>
           {publicationTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
         </select>
-        <select name="visibility" defaultValue={visibility} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="visibility" defaultValue={visibility} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
           <option value="all">全部权限</option>
           {visibilityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
-        <input name="q" defaultValue={q} placeholder="搜索标题、简介、摘要或标签..." className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100" />
-        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
+        <input name="q" defaultValue={q} placeholder="搜索标题、简介、摘要或标签..." className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100" />
+        <button className="h-10 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
       </form>
       </AdminSection>
       <Card>
@@ -49,18 +49,18 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
         ) : (
           <div className="space-y-3">
             {publications.map((publication) => (
-              <Link key={publication.id} href={`/dashboard/publications/${publication.id}`} className="admin-card-motion flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-white">
-                <div className="flex gap-3">
+              <Link key={publication.id} href={`/dashboard/publications/${publication.id}`} className="admin-card-motion flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-white sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 gap-3">
                   <FileText className="mt-1 shrink-0 text-blue-700" size={18} />
-                  <div>
-                    <p className="font-medium text-slate-900">{publication.title}</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                  <div className="min-w-0">
+                    <p className="line-clamp-2 font-medium text-slate-900 [overflow-wrap:anywhere]">{publication.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-500 [overflow-wrap:anywhere]">
                       {getPublicationTypeLabel(publication.publication_type)} · {formatDate(publication.published_on)} · 更新于 {formatRelative(publication.updated_at)}
                     </p>
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{publication.summary}</p>
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">{publication.summary}</p>
                   </div>
                 </div>
-                <VisibilityBadge visibility={publication.visibility} />
+                <span className="shrink-0 self-start"><VisibilityBadge visibility={publication.visibility} /></span>
               </Link>
             ))}
           </div>

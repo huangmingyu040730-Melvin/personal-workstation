@@ -84,15 +84,15 @@ export default async function PublicPublicationsPage({ searchParams }: { searchP
         <PublicListingControls count={publications.length} active={hasActiveFilters} clearHref="/publications" label="公开成果">
           <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_auto]">
             {tag !== "all" ? <input type="hidden" name="tag" value={tag} /> : null}
-            <label className="relative">
+            <label className="relative min-w-0">
               <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
               <input name="q" defaultValue={q} placeholder="搜索成果标题、简介、摘要或标签..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-navy-950 outline-none transition focus:border-blue-300" />
             </label>
-            <select name="type" defaultValue={type} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
+            <select name="type" defaultValue={type} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
               <option value="all">全部类型</option>
               {publicationTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
-            <select name="sort" defaultValue={sort} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
+            <select name="sort" defaultValue={sort} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
               <option value="newest">发表时间新到旧</option>
               <option value="oldest">发表时间旧到新</option>
               <option value="updated">最近更新优先</option>

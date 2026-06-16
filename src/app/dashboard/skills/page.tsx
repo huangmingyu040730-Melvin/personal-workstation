@@ -28,15 +28,15 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
       <PublicContentGuidance />
       <AdminSection>
       <form className="flex flex-wrap gap-3">
-        <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="status" defaultValue={status} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 sm:w-auto">
           <option value="all">全部状态</option>
           {skillStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
-        <select name="visibility" defaultValue={visibility} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="visibility" defaultValue={visibility} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 sm:w-auto">
           <option value="all">全部权限</option>
           {visibilityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
-        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
+        <button className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 sm:w-auto">筛选</button>
       </form>
       </AdminSection>
       {skills.length === 0 ? (
@@ -48,28 +48,28 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
                 <div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-gradient-to-br from-blue-100 to-violet-100" />
                 <div className="relative">
                   <div className="mb-5 flex items-start justify-between gap-4">
-                    <div className="flex gap-3">
+                    <div className="flex min-w-0 gap-3">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-navy-900 text-white">
                         <Bot size={22} />
                       </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-slate-950">{skill.name}</h2>
-                        <p className="mt-1 text-sm text-slate-500">{skill.category}</p>
+                      <div className="min-w-0">
+                        <h2 className="line-clamp-2 text-lg font-semibold text-slate-950 [overflow-wrap:anywhere]">{skill.name}</h2>
+                        <p className="mt-1 text-sm text-slate-500 [overflow-wrap:anywhere]">{skill.category}</p>
                       </div>
                     </div>
-                    <StatusBadge status={skill.status} />
+                    <span className="shrink-0"><StatusBadge status={skill.status} /></span>
                   </div>
-                  <p className="text-sm leading-6 text-slate-600">{skill.description}</p>
+                  <p className="line-clamp-3 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">{skill.description}</p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     {skill.platforms.map((platform) => (
-                      <span key={platform} className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                      <span key={platform} className="inline-flex max-w-full items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium leading-5 text-blue-700 [overflow-wrap:anywhere]">
                         <Layers3 size={12} />
                         {platform}
                       </span>
                     ))}
                   </div>
-                  <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                    <span className="text-xs text-slate-500">{skill.current_version ?? "未设版本"} · {formatRelative(skill.updated_at)}</span>
+                  <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
+                    <span className="min-w-0 text-xs text-slate-500 [overflow-wrap:anywhere]">{skill.current_version ?? "未设版本"} · {formatRelative(skill.updated_at)}</span>
                     <VisibilityBadge visibility={skill.visibility} />
                   </div>
                 </div>

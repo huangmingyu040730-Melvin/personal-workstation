@@ -81,6 +81,7 @@
 - Phase 3B-1：AI Draft Lab 结果可通过当前浏览器 `sessionStorage` 带入四类新建表单；新建页先显示确认条，管理员点击“填入表单”后才预填字段并清除 handoff，仍需人工检查和手动保存。
 - v1.1 Asset model clarity polish：明确 Project / Publication / Knowledge / Skill 的资产定义、示例、列表空状态和 AI Draft Lab 目标类型说明；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 - v1.1 Form consistency and AI prefill polish：复查 AI Draft Lab 到新建表单的 `sessionStorage` handoff、提示条和字段匹配；提示条明确只预填浏览器字段、不自动保存或公开；select / checkbox 匹配允许大小写和多余空格差异；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
+- v1.1 Search listing and mobile polish：打磨后台全局搜索、后台资产列表、Documents 文件中心和公开列表页在资产增多后的可检索性、可读性和 390px 移动端可用性；只做 metadata 搜索匹配、结果摘要、长标题 / 长标签换行和小屏 Documents 卡片展示，不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`，不新增 AI 搜索、OCR、向量搜索或 Documents 正文读取。
 
 当前网站包括：
 
@@ -118,6 +119,7 @@
 - Phase 3B 后，AI 原始素材转结构化草稿是独立后台页面，不是表单内 copilot；Server Action 只接受 `targetType` 和 `rawText`，不接受任意 prompt，不写数据库，不读取 Documents / Storage，不进入公开导航。
 - Phase 3B-1 后，AI 草稿实验室到新建表单的 prefill 只使用浏览器 `sessionStorage`；不自动提交表单、不保存数据库、不创建资产、不修改 `visibility`，不读取 Documents / Storage。
 - v1.1 Form consistency 后，AI Draft Lab prefill 提示条必须继续说明这是临时草稿；点击“填入表单”只写当前浏览器表单字段，点击“忽略并清除”只清理 handoff。
+- v1.1 Search listing 后，后台全局搜索仍是 metadata-only：可以优化文件名分隔符匹配、结果摘要截断、类型展示和移动端换行，但不得升级为全文索引、AI 搜索、OCR、向量搜索或 Documents 文件正文读取。
 - v1.1 后，四类资产定义应保持一致：Project 是持续推进主题；Publication 是阶段成果；Knowledge 是可复用知识；Skill 是可复用流程 / Prompt / 操作手册 / 能力包。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
 - robots 阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
