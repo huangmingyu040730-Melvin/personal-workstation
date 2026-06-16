@@ -65,11 +65,9 @@ const templatePath = path.join(process.cwd(), "src/templates/resume/20260523-res
 const resumePhotoRelationshipId = "rId6";
 const resumeProjectIconRelationshipId = "rId17";
 const resumeProjectIconSvg = `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M6 6C4.89543 6 4 6.89543 4 8V22C4 23.1046 4.89543 24 6 24H24C25.1046 24 26 23.1046 26 22V8C26 6.89543 25.1046 6 24 6H6ZM6 8H24V12H6V8ZM6 14V22H13V14H6ZM15 14V22H24V14H15Z" fill="#373737"/>
-<path d="M8 10H12" stroke="#373737" stroke-width="1.5" stroke-linecap="square"/>
-<path d="M17 10H22" stroke="#373737" stroke-width="1.5" stroke-linecap="square"/>
-<path d="M8 17H11" stroke="#373737" stroke-width="1.5" stroke-linecap="square"/>
-<path d="M17 17H21" stroke="#373737" stroke-width="1.5" stroke-linecap="square"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M5 8C5 6.89543 5.89543 6 7 6H12.25C12.7804 6 13.2891 6.21071 13.6642 6.58579L15.3284 8.25H23C24.1046 8.25 25 9.14543 25 10.25V22C25 23.1046 24.1046 24 23 24H7C5.89543 24 5 23.1046 5 22V8ZM7 8V22H23V10.25H14.5L12.25 8H7Z" fill="#373737"/>
+<path d="M8.5 14.5H21.5" stroke="#373737" stroke-width="1.55" stroke-linecap="square"/>
+<path d="M8.5 18H18.5" stroke="#373737" stroke-width="1.55" stroke-linecap="square"/>
 </svg>`;
 const maxResumePhotoBytes = 2 * 1024 * 1024;
 const maxResumePhotoRedirects = 3;
@@ -193,8 +191,10 @@ function applyResumeTemplateFixes(zip: PizZip) {
   const withProjectSection = insertProjectSection(documentXml);
   const withConsistentEmail = replaceParagraphContaining(withProjectSection, "{emailRow}", normalizeEmailRowParagraph);
   const withBoldExperienceRole = replaceSectionBlock(withConsistentEmail, "{#experience}", "{/experience}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
+  const withBoldProjectRole = replaceSectionBlock(withBoldExperienceRole, "{#projects}", "{/projects}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
+  const withBoldCampusRole = replaceSectionBlock(withBoldProjectRole, "{#campus}", "{/campus}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
 
-  zip.file("word/document.xml", withBoldExperienceRole);
+  zip.file("word/document.xml", withBoldCampusRole);
   ensureProjectIcon(zip);
 }
 
