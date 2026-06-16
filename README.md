@@ -39,6 +39,7 @@ v1.1 polish 已围绕边界、资产模型、AI Draft Lab 预填、搜索、列�
 - Career Center / 求职中心导航整合
 - Resume Word `.docx` 即时导出
 - Resume Preview 与 Word 导出共用 20260523 风格模板
+- Resume 照片 URL 链路：basic 个人信息素材 `photo_url` 优先，Profile `avatar_url` fallback；Preview 和 Word 导出都尊重 `show_photo`，但不提供照片上传或 Storage 写入
 - Supabase Storage 私密文件上传与下载
 - Documents 文件 metadata、文档包 metadata、多资产关联和列表筛选维护能力
 - Documents 批量添加 / 移除多资产关联，并保留 legacy primary relation 兼容能力

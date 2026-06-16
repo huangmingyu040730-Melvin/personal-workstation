@@ -1,6 +1,6 @@
 # Project Memory
 
-日期：2026-06-16
+日期：2026-06-17
 
 ## Current State
 
@@ -84,6 +84,7 @@
 - v1.1 Search listing and mobile polish：打磨后台全局搜索、后台资产列表、Documents 文件中心和公开列表页在资产增多后的可检索性、可读性和 390px 移动端可用性；只做 metadata 搜索匹配、结果摘要、长标题 / 长标签换行和小屏 Documents 卡片展示，不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`，不新增 AI 搜索、OCR、向量搜索或 Documents 正文读取。
 - v1.1 Final QA docs sync and release notes：新增 `docs/v1-1-release-notes.md`，同步 README、current status、memory、roadmap、maintenance playbook 和 decisions；v1.1 收口为 Personal Asset Intranet polish，后续进入稳定使用、真实资产录入、小 bug 修复和轻量 UX 观察阶段；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 - v1.1.1 Documents collection-first polish：`/dashboard/documents` 首页改为文档包优先，先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；文档包详情页支持继续上传单个文件到当前已有文档包；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现；不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，不修改 `/public-files/[id]/download`。
+- v1.1.2 Resume photo export polish：补齐 basic 个人信息素材 `details.photo_url`、Resume Preview 和 Word `.docx` 导出的照片链路；照片来源优先为 basic item `photo_url`，其次为 Profile `avatar_url`；Word 导出只拉取 data URL 或安全 HTTPS 图片 URL，限制 2 MB、常见图片 MIME type、HTTPS 重定向、Supabase Storage object URL 和私网地址，失败时不阻断导出；不新增照片上传、Profile avatar upload、Storage、migration、RLS 或 public download route 改动。
 
 当前网站包括：
 
@@ -247,6 +248,7 @@ Research Asset Links：
 - Phase 2R-Z 取代旧 restricted / Viewer 路线：外部访问申请、Viewer magic link、Access Grants 和 restricted 外部授权已退役，不再作为 Phase 2I / hotfix 继续修复。
 - Phase 2F / 2G 只优化公开站点运营体验、SEO 和 UI，不扩展权限系统。
 - Resume 模块采用统一素材库、版本组合、浏览器预览 / 打印、Word 即时导出、AI JD 建议和 JD 分析历史；AI 输出只作为建议，不自动写回素材或版本。
+- Resume 照片链路采用 URL-first 小修：basic 个人信息素材的 `details.photo_url` 优先于 Profile `avatar_url`；`show_photo` 控制网页预览和 Word 导出是否显示照片区域。当前只支持管理员手动维护 URL，不上传照片到 Storage，不裁剪 / 压缩 / 美颜，不生成 signed URL。
 - Career Center 已进入稳定维护状态；后续只做 bugfix、文案修正和 broken link 修复，不主动扩展面试记录、提醒、邮件、Notion 同步或自动投递。
 - Market Brief / 市场简报已因数据可靠性不足弃用并从产品入口和代码主路径移除；历史迁移 0013-0017 暂作 unused legacy data，不在当前路线继续维护。
 - Phase 2P-A / 2P-B / 2P-C 将 Documents 扩展为统一私密附件底座，并把附件查看、预填上传、新建后上传串到 Project / Publication / Knowledge / Skill 后台流程中。

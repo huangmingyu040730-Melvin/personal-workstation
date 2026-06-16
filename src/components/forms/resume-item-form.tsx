@@ -140,7 +140,13 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
       <AdminFormSection title="个人信息字段" description="这些字段只用于简历版本选择和打印预览，不会自动公开到 About。">
         <div className="grid gap-5 md:grid-cols-2">
           <DetailInput label="姓名" name="name" details={details} fallback={item?.title} />
-          <DetailInput label="照片 URL" name="photo_url" details={details} placeholder="可选，后续支持头像或照片引用" />
+          <DetailInput
+            label="简历照片 URL"
+            name="photo_url"
+            details={details}
+            placeholder="https://example.com/photo.jpg"
+            hint="用于网页预览和 Word 导出；建议使用可访问的 HTTPS 图片地址。不会作为公开站头像或自动公开。"
+          />
           <DetailInput label="求职 / 研究方向" name="direction" details={details} placeholder="例如 投资研究 / 量化分析" />
           <DetailInput label="性别" name="gender" details={details} />
           <DetailInput label="年龄" name="age" details={details} />
@@ -256,9 +262,9 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
   );
 }
 
-function DetailInput({ label, name, details, fallback, placeholder }: { label: string; name: string; details: Record<string, string | string[]>; fallback?: string | null; placeholder?: string }) {
+function DetailInput({ label, name, details, fallback, placeholder, hint }: { label: string; name: string; details: Record<string, string | string[]>; fallback?: string | null; placeholder?: string; hint?: string }) {
   return (
-    <Field label={label}>
+    <Field label={label} hint={hint}>
       <TextInput name={`detail_${name}`} defaultValue={stringDetail(details, name) || fallback || ""} placeholder={placeholder} />
     </Field>
   );

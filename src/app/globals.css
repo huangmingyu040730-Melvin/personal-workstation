@@ -527,6 +527,8 @@ select {
 .resume-paper-wrap {
   display: flex;
   justify-content: center;
+  max-width: 100%;
+  overflow-x: hidden;
   padding: 10px 0 40px;
 }
 
@@ -584,6 +586,13 @@ select {
   background: #f8fafc;
   color: #9ca3af;
   font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.resume-photo-box img {
+  display: block;
 }
 
 .resume-header-main {
@@ -900,6 +909,7 @@ select {
   }
 
   .resume-print-section,
+  .resume-print-header,
   .resume-entry,
   .resume-skill-entry {
     break-inside: avoid;

@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-06-17 - Resume Photo URL Supports Preview And Word Export
+
+类型：decision
+
+决策：
+
+- v1.1.2 补齐 Resume 照片链路，但仍保持小范围 polish。
+- basic 个人信息素材继续使用 `details.photo_url` 作为简历照片 URL 字段；Profile `avatar_url` 只作为 fallback。
+- Resume Preview 和 Word `.docx` 导出都尊重 `resume_versions.profile_fields.show_photo`。
+- `show_photo = true` 且有照片 URL 时，网页预览展示照片，Word 导出尝试嵌入照片。
+- `show_photo = true` 但没有照片 URL 时，网页预览显示“照片”占位，Word 导出保留模板占位。
+- `show_photo = false` 时，网页预览不显示照片区域，Word 导出移除模板照片占位。
+- Word 导出只接受 data URL 或 HTTPS 图片 URL；HTTPS 图片获取会限制 2 MB、常见图片 MIME type、HTTPS 重定向、Supabase Storage object URL 和私网 / 保留地址访问。
+- 照片获取失败不阻断 Word 导出，只记录安全日志并降级为无真实照片版本。
+- 不新增照片上传、Profile avatar upload、裁剪、美颜、压缩、Storage 写入、signed URL、数据库表、migration、RLS 或 Storage policy 改动。
+
+原因：
+
+- 既有 Resume 模板模型已经包含 `showPhoto` 和 `photoUrl`，网页预览也已有照片展示骨架，但 Word 导出只导出文字数据，导致“个人信息素材 -> 简历预览 -> Word 导出”链路不一致。
+- 先支持 URL 可以满足真实投递前的小修需求，同时避免引入照片上传、私密文件复用、图片处理和 Storage 权限边界。
+- Word 文件仍是管理员即时导出的本地文件，不保存到站内资产库，不生成分享链接。
+
+影响：
+
+- `src/components/forms/resume-item-form.tsx` 的 basic 个人信息字段明确为“简历照片 URL”。
+- `src/lib/resume-quality.ts` 在显示照片但没有 URL 时给出 warning，不阻断导出。
+- `src/lib/resume-docx.ts` 负责安全拉取并嵌入照片；失败时继续导出。
+- 2026-06-10 “第一版不导出照片”的限制已被本决策 supersede；即时导出、不保存 Word 文件、不上传 Storage 和不创建公开简历页的边界继续有效。
+
 ## 2026-06-16 - Close v1.1 As Personal Asset Intranet Polish
 
 类型：decision
