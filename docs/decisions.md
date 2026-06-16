@@ -1,5 +1,35 @@
 # Decisions
 
+## 2026-06-16 - Close v1.1 As Personal Asset Intranet Polish
+
+类型：decision
+
+决策：
+
+- v1.1 收口为 Personal Asset Intranet polish，不作为功能扩张版本。
+- 当前项目定位为“个人长期资产沉淀主基地 / Personal Asset Intranet”。
+- Agent CEO / 自动化扩张线暂停；不新增自动化中心、任务中心、复盘中心、runner 或外部集成主线。
+- #125 至 #128 已分别完成边界 polish、资产模型 clarity、表单一致性与 AI prefill、搜索 / 列表 / 移动端 polish。
+- 本轮 final QA 只新增 `docs/v1-1-release-notes.md`，并同步 README、current status、memory、roadmap、maintenance playbook 和 decisions。
+- 后续近期路线是稳定使用、真实资产录入、明显 bugfix、轻量 UX polish、文档同步和安全边界复查。
+- 历史 decisions 中涉及 Market Brief、Access Requests、Access Grants、Viewer login、restricted 外部授权、自动化扩张或 Agent CEO 的旧阶段描述，只作为历史记录；当前路线以 Phase 2N-Z、Phase 2R-Z 和本 v1.1 收口决策为准。
+- 不新增数据库表，不新增 migration，不修改 RLS，不修改 Storage policy，不修改 Supabase bucket visibility，不修改 `/public-files/[id]/download`。
+- 不读取 Documents 文件正文，不读取 Storage object，不生成新的公开 signed URL 能力。
+- 不恢复 Market Brief、外部访问申请、Viewer magic link、Access Grants、restricted 外部访问、sidebar 假入口或 topbar 占位按钮。
+
+原因：
+
+- 前几轮 v1.1 polish 已把核心资产沉淀链路、公开边界、AI Draft Lab handoff、搜索和移动端体验补齐到可稳定使用状态。
+- 继续扩展 Agent CEO、自动化或外部集成会稀释当前“个人长期资产沉淀主基地”的产品重心。
+- 需要通过 release notes 和维护清单把后续默认工作方式固定为小步维护，避免历史阶段文档被误读为当前路线。
+
+影响：
+
+- `docs/v1-1-release-notes.md` 成为 v1.1 收口说明入口。
+- 后续 PR 先判断是否属于稳定使用、小修、文档同步或安全边界复查；超出范围的大功能应重新开独立阶段。
+- 旧的 Agent CEO、Market Brief、Access Grants、Viewer 和 restricted 相关文本若保留，应明确处于暂停、退役、历史或不恢复语境。
+- 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询或后台 CRUD。
+
 ## 2026-06-16 - Add AI Draft Lab To New Form Prefill
 
 类型：decision

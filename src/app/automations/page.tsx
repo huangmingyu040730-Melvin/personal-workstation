@@ -1,26 +1,36 @@
 import { Bot } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { Card } from "@/components/card";
+import { Card, CardHeader } from "@/components/card";
 import { PageHeader } from "@/components/page-header";
-import { skills } from "@/lib/mock-data";
 
 export default function AutomationsPage() {
   return (
     <AppShell>
       <PageHeader
         eyebrow="Automation"
-        title="自动化"
-        description="AI 工作空间中的自动化占位页面，后续可连接 GitHub Actions、定时任务和通知流。"
+        title="自动化（已暂停）"
+        description="Agent CEO / 自动化扩张线已暂停。本页是早期占位，不作为当前产品入口维护。"
       />
       <div className="grid gap-5 lg:grid-cols-3">
-        {skills.map((skill) => (
-          <Card key={skill.id}>
-            <Bot className="text-blue-700" size={26} />
-            <h2 className="mt-5 text-lg font-semibold text-slate-950">{skill.name}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{skill.description}</p>
-            <p className="mt-5 text-xs font-medium text-slate-500">自动化状态：{skill.status}</p>
-          </Card>
-        ))}
+        <Card>
+          <Bot className="text-blue-700" size={26} />
+          <CardHeader
+            title="当前处理方式"
+            description="可复用流程、Prompt、操作手册和能力包继续沉淀到 Skill 库。"
+          />
+        </Card>
+        <Card>
+          <CardHeader
+            title="本阶段不做"
+            description="不新增自动化中心、任务中心、runner、通知流或外部集成主线。"
+          />
+        </Card>
+        <Card>
+          <CardHeader
+            title="维护边界"
+            description="后续只做既有资产模块的 bugfix、明显 UX polish 和文档同步。"
+          />
+        </Card>
       </div>
     </AppShell>
   );

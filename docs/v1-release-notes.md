@@ -14,6 +14,8 @@ v1.0 将个人数字化工作台收口为：
 
 v1.0 不合并 PR #115，不推进 Phase 2R-F-2 homepage featured content polish，首页保持当前 `main` 的主结构。
 
+v1.1 的 Personal Asset Intranet polish 收口说明见 `docs/v1-1-release-notes.md`。
+
 ## 公开站点能力
 
 - 首页 `/`：公开研究工作站入口，展示站点定位、研究方向、公开内容预览和公开导航。
