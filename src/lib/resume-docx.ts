@@ -193,8 +193,9 @@ function applyResumeTemplateFixes(zip: PizZip) {
   const withBoldExperienceRole = replaceSectionBlock(withConsistentEmail, "{#experience}", "{/experience}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
   const withBoldProjectRole = replaceSectionBlock(withBoldExperienceRole, "{#projects}", "{/projects}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
   const withBoldCampusRole = replaceSectionBlock(withBoldProjectRole, "{#campus}", "{/campus}", (sectionXml) => replaceFirstRunContaining(sectionXml, "{subtitle}", addBoldRunProperty));
+  const withSkillsBulletTypography = replaceSectionBlock(withBoldCampusRole, "{#skills}", "{/skills}", normalizeSkillsBulletParagraphs);
 
-  zip.file("word/document.xml", withBoldCampusRole);
+  zip.file("word/document.xml", withSkillsBulletTypography);
   ensureProjectIcon(zip);
 }
 
@@ -366,6 +367,46 @@ function addBoldRunProperty(runXml: string) {
   }
 
   return runXml.replace(/(<w:r\b[^>]*>)/, "$1<w:rPr><w:b/></w:rPr>");
+}
+
+function normalizeSkillsBulletParagraphs(sectionXml: string) {
+  return sectionXml.replace(/<w:p\b(?:(?!<\/w:p>)[\s\S])*?<\/w:p>/g, (paragraphXml) => {
+    if (!paragraphXml.includes("<w:numPr>")) {
+      return paragraphXml;
+    }
+
+    return normalizeParagraphMarkRunProperties(paragraphXml);
+  });
+}
+
+function normalizeParagraphMarkRunProperties(paragraphXml: string) {
+  return paragraphXml.replace(/<w:pPr>[\s\S]*?<\/w:pPr>/, (paragraphPropertiesXml) => {
+    if (!paragraphPropertiesXml.includes("<w:rPr>")) {
+      return paragraphPropertiesXml.replace("</w:pPr>", `<w:rPr>${resumeBodyFontRunProperties()}</w:rPr></w:pPr>`);
+    }
+
+    return paragraphPropertiesXml.replace(/<w:rPr>([\s\S]*?)<\/w:rPr>/, (_runPropertiesXml, runPropertiesBody: string) => {
+      let normalized = runPropertiesBody;
+
+      if (!/<w:rFonts\b/.test(normalized)) {
+        normalized = `${resumeBodyFontRunFonts()}${normalized}`;
+      }
+
+      if (!/<w:sz\b/.test(normalized)) {
+        normalized = `${normalized}<w:sz w:val="20"/>`;
+      }
+
+      return `<w:rPr>${normalized}</w:rPr>`;
+    });
+  });
+}
+
+function resumeBodyFontRunProperties() {
+  return `${resumeBodyFontRunFonts()}<w:color w:val="000000" w:themeColor="text1"/><w:sz w:val="20"/>`;
+}
+
+function resumeBodyFontRunFonts() {
+  return '<w:rFonts w:ascii="微软雅黑" w:eastAsia="微软雅黑" w:hAnsi="微软雅黑" w:cs="微软雅黑"/>';
 }
 
 function removeResumePhotoPlaceholder(zip: PizZip) {
