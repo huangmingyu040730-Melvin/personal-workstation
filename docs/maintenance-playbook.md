@@ -19,14 +19,15 @@
 4. public attachment 只用于 public Project / Publication。
 5. Knowledge / Skill 公开详情页不展示 Documents。
 6. Documents 首页保持文档包优先；独立文件只展示 `collection_id IS NULL` 的文件。
-7. 个人资料当前优先通过文档包组织，不新增 Profile 真实文件关联。
-8. 不恢复 access request、viewer、grants 或 restricted 外部授权。
-9. 不恢复 `/dashboard/network`。
-10. 不恢复 Market Brief。
-11. 不为了内容运营新增数据库字段、migration、RLS 或 Storage policy。
-12. 不大改首页、About、公开列表、公开详情或后台主结构。
-13. AI 草稿助手只用于管理员新建 / 编辑 Project、Publication、Knowledge 和 Skill 时补全、优化或检查表单草稿，不自动保存、不自动公开、不读取 Documents / Storage。
-14. AI 草稿实验室只用于把原始素材转换为结构化草稿；可以通过当前浏览器 `sessionStorage` 带入新建表单做人工确认预填，但不自动创建资产、不保存数据库、不提交表单、不读取 Documents / Storage。
+7. 已有文档包可从详情页继续追加单个文件；文件仍默认 private。
+8. 个人资料当前优先通过文档包组织，不新增 Profile 真实文件关联。
+9. 不恢复 access request、viewer、grants 或 restricted 外部授权。
+10. 不恢复 `/dashboard/network`。
+11. 不恢复 Market Brief。
+12. 不为了内容运营新增数据库字段、migration、RLS 或 Storage policy。
+13. 不大改首页、About、公开列表、公开详情或后台主结构。
+14. AI 草稿助手只用于管理员新建 / 编辑 Project、Publication、Knowledge 和 Skill 时补全、优化或检查表单草稿，不自动保存、不自动公开、不读取 Documents / Storage。
+15. AI 草稿实验室只用于把原始素材转换为结构化草稿；可以通过当前浏览器 `sessionStorage` 带入新建表单做人工确认预填，但不自动创建资产、不保存数据库、不提交表单、不读取 Documents / Storage。
 
 暂时跳过 public content sprint。已有 public 内容可以继续在线展示，后续新内容由管理员在后台逐步手动补充、整理和发布。
 
@@ -45,9 +46,10 @@
 9. AI Draft Lab 到新建表单 prefill 只使用浏览器临时 handoff；点击“填入表单”才写入字段，点击“忽略并清除”只清理 handoff。
 10. 后台搜索保持 metadata-only，不升级为 AI 搜索、OCR、向量搜索或 Documents 正文读取。
 11. Documents 首页默认先展示文档包区域，再展示独立文件；独立文件区域不重复展示已加入文档包的文件。
-12. 390px 移动端无横向滚动；长标题、长标签、长文件名、文档包标题、筛选区和底部按钮自然换行。
-13. 每个 PR 运行 `npm run lint`、`npm run build`、运行中站点的 `npm run smoke:public`、`git diff --check` 和暂存后的 `git diff --cached --check`。
-14. 每个 PR 做 stale reference 搜索，确认 Agent CEO、自动化中心、任务中心、Market Brief、access request、viewer、Access Grants 和 restricted 相关词只出现在已暂停 / 已退役 / 不恢复语境中。
+12. 文档包详情页的追加上传入口只进入现有单文件上传页，使用 `collection_id` 加入已有文档包，不创建新文档包。
+13. 390px 移动端无横向滚动；长标题、长标签、长文件名、文档包标题、筛选区和底部按钮自然换行。
+14. 每个 PR 运行 `npm run lint`、`npm run build`、运行中站点的 `npm run smoke:public`、`git diff --check` 和暂存后的 `git diff --cached --check`。
+15. 每个 PR 做 stale reference 搜索，确认 Agent CEO、自动化中心、任务中心、Market Brief、access request、viewer、Access Grants 和 restricted 相关词只出现在已暂停 / 已退役 / 不恢复语境中。
 
 v1.1 之后默认进入稳定使用期：优先录入真实资产，观察 Project / Publication / Knowledge / Skill 分类、AI Draft Lab handoff、搜索、Documents 和移动端体验。只有明确 bug、明显 UX polish、文档同步或安全边界复查进入近期 PR。
 
@@ -142,8 +144,11 @@ npm run start
 1. `/dashboard/documents` 默认先显示文档包。
 2. 文档包卡片点击进入现有 `/dashboard/documents/collections/[id]`。
 3. 独立文件区域只显示未加入文档包的文件。
-4. 个人资料只通过文档包组织，不新增 Profile relation、数据库枚举或 resolver。
-5. 不读取 Documents 正文，不读取 Storage object，不生成 signed URL，不修改 public download route。
+4. 文档包详情页显示“上传文件到此文档包”，并跳转到现有上传页的单文件模式。
+5. 上传页验证 `collection_id` 后显示“本次上传会加入文档包”提示，并通过 hidden `collection_id` 写入已有文档包。
+6. 普通 `/dashboard/documents/upload` 的单文件上传和批量创建文档包逻辑不受影响。
+7. 个人资料只通过文档包组织，不新增 Profile relation、数据库枚举或 resolver。
+8. 不读取 Documents 正文，不读取 Storage object，不生成 signed URL，不修改 public download route。
 
 ## 每次部署后检查
 

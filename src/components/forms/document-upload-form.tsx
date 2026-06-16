@@ -58,6 +58,9 @@ export type DocumentUploadInitialValues = {
   category?: DocumentCategory;
   collectionType?: DocumentCollectionType;
   relatedKey?: string;
+  collectionId?: string;
+  collectionTitle?: string;
+  returnTo?: string;
   prefillWarning?: string;
 };
 
@@ -189,7 +192,8 @@ export function DocumentUploadForm({
   const router = useRouter();
   const [message, setMessage] = useState(error ?? "");
   const [phase, setPhase] = useState<UploadPhase>("idle");
-  const [mode, setMode] = useState<UploadMode>(initialValues?.mode ?? "single");
+  const uploadToExistingCollection = Boolean(initialValues?.collectionId);
+  const [mode, setMode] = useState<UploadMode>(uploadToExistingCollection ? "single" : initialValues?.mode ?? "single");
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [failures, setFailures] = useState<UploadFailure[]>([]);
   const [collectionLink, setCollectionLink] = useState<string | null>(null);
@@ -225,6 +229,7 @@ export function DocumentUploadForm({
     metadata.set("category", String(formData.get("category") ?? ""));
     metadata.set("related_type", relatedType);
     metadata.set("related_id", relatedId);
+    metadata.set("collection_id", String(formData.get("collection_id") ?? ""));
     metadata.set("asset_relation_type", String(formData.get("asset_relation_type") ?? "related"));
     metadata.set("asset_note", String(formData.get("asset_note") ?? ""));
     appendAssetLinks(metadata, assetLinks);
@@ -267,7 +272,7 @@ export function DocumentUploadForm({
       return;
     }
 
-    router.push(`/dashboard/documents/${finalized.documentId}`);
+    router.push(initialValues?.returnTo ?? `/dashboard/documents/${finalized.documentId}`);
     router.refresh();
   }
 
@@ -435,11 +440,22 @@ export function DocumentUploadForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
+      {initialValues?.collectionId && mode === "single" ? (
+        <input type="hidden" name="collection_id" value={initialValues.collectionId} />
+      ) : null}
       <ErrorNotice message={message} />
 
       {initialValues?.prefillWarning ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
           {initialValues.prefillWarning}
+        </div>
+      ) : null}
+
+      {initialValues?.collectionId ? (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
+          本次上传会加入文档包：
+          <span className="font-semibold text-blue-950 [overflow-wrap:anywhere]">{initialValues.collectionTitle ?? "当前文档包"}</span>
+          。文件仍默认私密，不会自动公开；上传成功后可在文档包详情页查看。
         </div>
       ) : null}
 
@@ -449,28 +465,37 @@ export function DocumentUploadForm({
         </Link>
       ) : null}
 
-      <AdminFormSection title="上传模式" description="单文件流程保持兼容；多文件和文件夹会创建一个默认私密的文档包。">
-        <div className="grid gap-3 md:grid-cols-2">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => setMode("single")}
-            className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${mode === "single" ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-200 bg-white text-slate-700 hover:border-blue-200"}`}
-          >
-            <span className="block font-semibold">单文件上传</span>
-            <span className="mt-1 block text-xs leading-5">保留原有 prepare 到 Storage upload 再 finalize 的流程。</span>
-          </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => setMode("batch")}
-            className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${mode === "batch" ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-200 bg-white text-slate-700 hover:border-blue-200"}`}
-          >
-            <span className="block font-semibold">多文件 / 文件夹上传</span>
-            <span className="mt-1 block text-xs leading-5">创建 document collection，并保存文件相对路径。</span>
-          </button>
-        </div>
-      </AdminFormSection>
+      {uploadToExistingCollection ? (
+        <AdminFormSection title="上传模式" description="当前入口用于给已有文档包补充单个文件。">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <span className="block font-semibold">单文件上传到已有文档包</span>
+            <span className="mt-1 block text-xs leading-5">不会新建文档包；文件会继承当前文档包的已有关系，并可叠加下方额外关联。</span>
+          </div>
+        </AdminFormSection>
+      ) : (
+        <AdminFormSection title="上传模式" description="单文件流程保持兼容；多文件和文件夹会创建一个默认私密的文档包。">
+          <div className="grid gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setMode("single")}
+              className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${mode === "single" ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-200 bg-white text-slate-700 hover:border-blue-200"}`}
+            >
+              <span className="block font-semibold">单文件上传</span>
+              <span className="mt-1 block text-xs leading-5">保留原有 prepare 到 Storage upload 再 finalize 的流程。</span>
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setMode("batch")}
+              className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${mode === "batch" ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-200 bg-white text-slate-700 hover:border-blue-200"}`}
+            >
+              <span className="block font-semibold">多文件 / 文件夹上传</span>
+              <span className="mt-1 block text-xs leading-5">创建 document collection，并保存文件相对路径。</span>
+            </button>
+          </div>
+        </AdminFormSection>
+      )}
 
       <AdminFormSection title="文件选择" description="浏览器会直接上传到私密 workspace-files bucket，文件二进制不经过 Vercel Function。如果 20-50MB 文件失败，请确认生产 Supabase 已执行 0018，workspace-files.file_size_limit 为 52428800。">
         {mode === "single" ? (
@@ -609,7 +634,7 @@ export function DocumentUploadForm({
         >
           {phaseLabel(phase, mode)}
         </button>
-        <Link href="/dashboard/documents" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
+        <Link href={initialValues?.returnTo ?? "/dashboard/documents"} className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">
           取消
         </Link>
       </div>

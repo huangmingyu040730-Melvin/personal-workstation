@@ -83,7 +83,7 @@
 - v1.1 Form consistency and AI prefill polish：复查 AI Draft Lab 到新建表单的 `sessionStorage` handoff、提示条和字段匹配；提示条明确只预填浏览器字段、不自动保存或公开；select / checkbox 匹配允许大小写和多余空格差异；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 - v1.1 Search listing and mobile polish：打磨后台全局搜索、后台资产列表、Documents 文件中心和公开列表页在资产增多后的可检索性、可读性和 390px 移动端可用性；只做 metadata 搜索匹配、结果摘要、长标题 / 长标签换行和小屏 Documents 卡片展示，不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`，不新增 AI 搜索、OCR、向量搜索或 Documents 正文读取。
 - v1.1 Final QA docs sync and release notes：新增 `docs/v1-1-release-notes.md`，同步 README、current status、memory、roadmap、maintenance playbook 和 decisions；v1.1 收口为 Personal Asset Intranet polish，后续进入稳定使用、真实资产录入、小 bug 修复和轻量 UX 观察阶段；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
-- v1.1.1 Documents collection-first polish：`/dashboard/documents` 首页改为文档包优先，先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现；不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，不修改 `/public-files/[id]/download`。
+- v1.1.1 Documents collection-first polish：`/dashboard/documents` 首页改为文档包优先，先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；文档包详情页支持继续上传单个文件到当前已有文档包；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现；不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，不修改 `/public-files/[id]/download`。
 
 当前网站包括：
 
@@ -124,6 +124,7 @@
 - v1.1 Search listing 后，后台全局搜索仍是 metadata-only：可以优化文件名分隔符匹配、结果摘要截断、类型展示和移动端换行，但不得升级为全文索引、AI 搜索、OCR、向量搜索或 Documents 文件正文读取。
 - v1.1 Final QA 后，项目进入 Personal Asset Intranet 稳定使用阶段：优先录入真实资产、观察四类资产分类、AI Draft Lab handoff、搜索、Documents 和 390px 移动端；后续 PR 默认只做 bugfix、明显 UX polish、文档同步和安全边界复查。
 - v1.1.1 后，文件中心首页默认不再展开全部文件；先用文档包组织成组资料，再在独立文件区域处理未入包文件。独立文件定义为 `documents.collection_id IS NULL`。
+- 文档包详情页的“上传文件到此文档包”只复用现有 `/dashboard/documents/upload` 单文件上传页，通过 query 预填并验证 `collection_id`；表单提交 hidden `collection_id` 后由既有 action 写入 `documents.collection_id`、继承文档包关联并刷新统计。
 - Profile 真实文件关联暂不实现；签证、身份、生活、求职、合同等个人资料当前建议通过文档包维护，避免扩展 DocumentRelatedType、resolver、Profile 页面和权限边界。
 - v1.1 后，四类资产定义应保持一致：Project 是持续推进主题；Publication 是阶段成果；Knowledge 是可复用知识；Skill 是可复用流程 / Prompt / 操作手册 / 能力包。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
@@ -151,6 +152,7 @@ Documents / Storage：
 - Documents 是 Project / Publication / Knowledge / Skill 的统一默认私密附件底座；Phase 2R-A-4A 起支持单个文件显式 public 后在相关公开内容页展示。
 - `/dashboard/documents` 首页现在以文档包为第一层入口；文档包卡片只读取 metadata 和关联摘要，点击进入 `/dashboard/documents/collections/[id]` 查看包内文件。
 - 首页独立文件区域只展示 `collection_id IS NULL` 的文件；已加入文档包的文件不在默认独立文件区域重复出现。
+- 已有文档包可以从详情页继续追加单个文件；上传成功后默认回到文档包详情页，文件仍默认 private，不自动公开。
 - 上传继续采用两阶段浏览器直传 Supabase Storage；文件二进制不经过 Vercel Function。
 - `document_collections` 表示一次上传批次、文件夹、附件包或 Skill 包。
 - `documents.collection_id`、`original_name`、`relative_path`、`folder_path` 保存多文件 / 文件夹上传 metadata。

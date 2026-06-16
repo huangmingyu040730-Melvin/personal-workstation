@@ -102,7 +102,7 @@ v1.1 已作为 Personal Asset Intranet polish 收口：#125 完成 public downlo
 - v1.1 Form consistency and AI prefill polish 已复查 AI Draft Lab 到四类新建表单的浏览器临时 handoff：提示条明确只做浏览器预填、不自动保存或公开；select / checkbox 字段匹配允许大小写和多余空格差异；本轮不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
 - v1.1 Search / Listing / Mobile polish 已打磨后台全局搜索、后台四类资产列表、Documents 文件中心和四类公开列表页的长文本、标签换行、结果摘要和 390px 移动端可读性；本轮不新增数据库、migration、RLS、Storage policy、public download route、AI 搜索、OCR、向量搜索或 Documents 正文读取。
 - v1.1 Final QA docs sync and release notes 已新增 `docs/v1-1-release-notes.md`，并把 README、当前状态、项目记忆、路线图和维护手册同步到 Personal Asset Intranet 稳定使用阶段；本轮只做文档和 QA checklist，不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
-- v1.1.1 Documents collection-first polish 将 `/dashboard/documents` 首页调整为文档包优先：先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现。本轮不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，也不修改 public download route。
+- v1.1.1 Documents collection-first polish 将 `/dashboard/documents` 首页调整为文档包优先：先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；文档包详情页支持继续上传单个文件到当前已有文档包；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现。本轮不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，也不修改 public download route。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -271,6 +271,7 @@ Phase 2O-A 后，后台产品进入稳定维护阶段。Dashboard 和侧边栏�
 - Project / Publication / Knowledge / Skill 新建表单支持“保存并上传附件”操作：对象先创建成功，再跳转统一上传页并预选新对象。
 - `/dashboard/documents` 首页现在以文档包为主入口，卡片展示文档包标题、类型、文件数、总大小、更新时间、根目录和关联摘要；点击卡片进入现有文档包详情页。
 - 文件中心首页的独立文件区域只展示 `collection_id IS NULL` 的文件；已加入文档包的文件在对应文档包详情页维护，避免默认首页重复展开全部文件。
+- 文档包详情页的“上传文件到此文档包”入口会跳转到现有单文件上传页并传入 `collection_id`；上传页验证文档包可读后显示提示、提交 hidden `collection_id`，上传成功后返回该文档包详情页。
 - 个人生活、签证、身份、求职、合同等资料当前建议通过文档包组织；Profile 真实文件关联涉及类型、resolver、页面和权限边界，暂不实现。
 - 文件详情页支持编辑文件显示名称、分类、visibility 和 legacy primary relation，并可查看全部关联 chips、添加关联或移除 link-table 关联。
 - 文档包详情页支持编辑文档包名称、描述、类型和 legacy primary relation，并可查看全部关联 chips、添加 / 移除文档包关联，可选择同步到包内文件。
@@ -411,7 +412,7 @@ Phase 3B-1 AI Draft Lab to New Form Prefill 不需要新增 migration；它只�
 
 Phase 2R-Z 新增 `0022_remove_external_access_and_restricted_viewer.sql`；该迁移将历史 `restricted` 内容回写为 `private`，收紧四类内容表 visibility constraint 和 public read policy，并删除旧访问申请 / 授权表与授权函数。不修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 
-v1.1 / v1.1.1 polish 不新增 migration。#125、#126、#127、#128、v1.1 final QA 和 v1.1.1 Documents collection-first polish 只围绕边界、文案、表单预填、搜索 / 列表 / 移动端展示、维护清单、release notes 和 Documents 首页信息架构打磨；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
+v1.1 / v1.1.1 polish 不新增 migration。#125、#126、#127、#128、v1.1 final QA 和 v1.1.1 Documents collection-first polish 只围绕边界、文案、表单预填、搜索 / 列表 / 移动端展示、维护清单、release notes 和 Documents 首页 / 文档包上传信息架构打磨；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
 
 规则：
 
@@ -437,7 +438,7 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 
 - 研究资产沉淀：继续维护 Projects、Publications、Knowledge 和 Skills 的内容质量与关联关系；Project 后台详情页可作为单个研究项目的中枢入口，Knowledge 后台详情页可作为单个知识节点入口，Skill 后台详情页可作为能力包 / 工作流包入口，Publication 后台详情页可作为成果中枢入口，先整理研究框架、成果摘要、正文摘要、使用说明、平台版本、私密附件、显式资产关系和相关搜索入口。
 - 公开展示：Phase 2R-A-1 起把公开首页作为“黄铭语研究工作站”入口维护，首屏 H1 为“个人研究工作站”，清晰展示研究方向、公开 Projects、Publications、Knowledge 和 Skills；Phase 2R-A-2 只强化 hero 的金融 / 量化 / 研究视觉氛围和标题字体质感；Phase 2R-A-3 只把四个公开列表页打磨为正式内容索引并增加轻量筛选，不改变公开内容查询或权限边界；Phase 2R-C-1 起统一公开 SEO、分享卡片、sitemap 和 robots，让公开站点可被安全索引和分享；Phase 2R-C-2 起用 `npm run smoke:public` 和浏览器冒烟作为公开发布前 QA，复查公开路由、fallback、sitemap、robots、metadata 和移动端边界；Phase 2R-D-1 起后台详情页提供 public readiness checklist 和公开内容运营文档，帮助管理员持续整理可公开内容；Phase 2R-F-1 起 `/about` 作为正式公开个人简介页维护；Phase 2R-Z 起移除访问申请、Access Grants、Viewer magic link 和 restricted 外部授权，公开导航保留轻量“管理员登录”入口但不显示后台菜单、文件中心、访问申请或全局关系图谱入口，公开页面继续只读展示 public 内容。
-- 文件 / 知识管理：Documents 作为可维护的统一默认私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills，也可承载签证、身份、生活、求职、合同等个人私密资料；公开站点只在 Project / Publication 详情页展示显式 public 且关联当前 public 资产的安全附件摘要，Knowledge / Skill 公开详情不展示 Documents。文件中心首页优先进入文档包列表，未加入文档包的文件才显示在独立文件区域。需要调整单个文件时使用文件详情页添加 / 移除多资产关联；需要整理多个文件或个人资料时优先使用文档包；需要调整整个资料包时使用文档包详情页的关联管理和可选同步到包内文件；legacy primary relation 仅作为兼容字段处理。需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。Profile 真实文件关联作为未来可能方向，当前不实现。
+- 文件 / 知识管理：Documents 作为可维护的统一默认私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills，也可承载签证、身份、生活、求职、合同等个人私密资料；公开站点只在 Project / Publication 详情页展示显式 public 且关联当前 public 资产的安全附件摘要，Knowledge / Skill 公开详情不展示 Documents。文件中心首页优先进入文档包列表，未加入文档包的文件才显示在独立文件区域。需要调整单个文件时使用文件详情页添加 / 移除多资产关联；需要整理多个文件或个人资料时优先使用文档包；需要补充已有资料包时从文档包详情页上传单个文件到当前文档包；需要调整整个资料包时使用文档包详情页的关联管理和可选同步到包内文件；legacy primary relation 仅作为兼容字段处理。需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。Profile 真实文件关联作为未来可能方向，当前不实现。
 - v1.1 维护：继续观察四类资产分类是否清楚、AI Draft Lab 预填是否顺手、搜索和 Documents 是否适合真实资产增长、390px 移动端是否稳定；后续默认只做明确 bugfix、轻量 UX polish、文档同步和安全边界复查。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
