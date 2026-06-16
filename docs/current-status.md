@@ -97,6 +97,7 @@ Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草�
 - Publication 后台详情页成果中枢：集中展示成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Project / Publication / Knowledge / Skill 后台详情页提供公开发布准备度 checklist，基于 visibility、slug、标题、摘要、标签 / 分类、正文 / 说明、关系和 public 附件计数等已有字段提示公开运营状态。
 - v1.1 Asset model clarity polish 已明确 Project / Publication / Knowledge / Skill 的资产定义，并同步到新建 / 编辑表单、列表空状态和 AI Draft Lab 目标类型说明；本轮不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
+- v1.1 Form consistency and AI prefill polish 已复查 AI Draft Lab 到四类新建表单的浏览器临时 handoff：提示条明确只做浏览器预填、不自动保存或公开；select / checkbox 字段匹配允许大小写和多余空格差异；本轮不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
