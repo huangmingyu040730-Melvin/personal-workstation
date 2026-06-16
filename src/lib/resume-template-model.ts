@@ -31,7 +31,8 @@ export type ResumeTemplateModel = {
   sections: ResumeTemplateSection[];
 };
 
-export const defaultResumeSectionOrder: ResumeTemplateSectionKey[] = ["education", "experience", "campus", "projects", "research", "skills", "certifications", "awards", "other"];
+export const defaultResumeSectionOrder: ResumeTemplateSectionKey[] = ["education", "experience", "projects", "campus", "skills", "research", "certifications", "awards", "other"];
+const fixedResumeSectionOrder: ResumeTemplateSectionKey[] = ["education", "experience", "projects", "campus", "skills"];
 
 export const resumeSectionMeta: Record<ResumeTemplateSectionKey, { label: string; icon: string }> = {
   education: { label: "教育经历", icon: "▣" },
@@ -304,12 +305,16 @@ function mapToPrintSection(versionItem: ResumeVersionItemRecord): ResumeTemplate
 }
 
 function normalizeSectionOrder(value: unknown): ResumeTemplateSectionKey[] {
-  if (!Array.isArray(value)) {
-    return defaultResumeSectionOrder;
-  }
+  const source = Array.isArray(value) ? value : defaultResumeSectionOrder;
+  const cleaned = source.filter((item): item is ResumeTemplateSectionKey => typeof item === "string" && defaultResumeSectionOrder.includes(item as ResumeTemplateSectionKey));
+  const baseOrder = cleaned.length > 0 ? cleaned : defaultResumeSectionOrder;
+  const ordered = [
+    ...fixedResumeSectionOrder.filter((item) => baseOrder.includes(item)),
+    ...baseOrder.filter((item) => !fixedResumeSectionOrder.includes(item)),
+    ...defaultResumeSectionOrder.filter((item) => !baseOrder.includes(item))
+  ];
 
-  const cleaned = value.filter((item): item is ResumeTemplateSectionKey => typeof item === "string" && defaultResumeSectionOrder.includes(item as ResumeTemplateSectionKey));
-  return cleaned.length > 0 ? [...cleaned, ...defaultResumeSectionOrder.filter((item) => !cleaned.includes(item))] : defaultResumeSectionOrder;
+  return Array.from(new Set(ordered));
 }
 
 function visibleRecord(versionItem: ResumeVersionItemRecord) {
