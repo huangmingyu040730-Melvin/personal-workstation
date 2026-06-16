@@ -78,7 +78,7 @@ export function DocumentBulkActionsForm({
                 <Link2 size={15} />
                 添加关联
               </summary>
-              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,640px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+              <div className="fixed left-4 right-4 top-20 z-20 max-h-[72vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:max-h-none sm:w-[min(92vw,640px)]">
                 <form action={addDocumentAssetLinksAction} className="space-y-3">
                   <input type="hidden" name="return_to" value={returnTo} />
                   {hiddenSelectedInputs}
@@ -102,7 +102,7 @@ export function DocumentBulkActionsForm({
                 <Unlink size={15} />
                 移除关联
               </summary>
-              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,520px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+              <div className="fixed left-4 right-4 top-20 z-20 max-h-[72vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:max-h-none sm:w-[min(92vw,520px)]">
                 <form action={bulkRemoveDocumentAssetLinksAction} className="space-y-3">
                   <input type="hidden" name="return_to" value={returnTo} />
                   {hiddenSelectedInputs}
@@ -129,7 +129,7 @@ export function DocumentBulkActionsForm({
                 <Eye size={15} />
                 设置公开性
               </summary>
-              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,460px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+              <div className="fixed left-4 right-4 top-20 z-20 max-h-[72vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:max-h-none sm:w-[min(92vw,460px)]">
                 <form action={bulkUpdateDocumentVisibilityAction} className="space-y-3">
                   <input type="hidden" name="return_to" value={returnTo} />
                   {hiddenSelectedInputs}
@@ -164,7 +164,7 @@ export function DocumentBulkActionsForm({
                 <Trash2 size={15} />
                 删除
               </summary>
-              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,420px)] rounded-2xl border border-rose-100 bg-white p-4 shadow-xl">
+              <div className="fixed left-4 right-4 top-20 z-20 max-h-[72vh] overflow-y-auto rounded-2xl border border-rose-100 bg-white p-4 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:max-h-none sm:w-[min(92vw,420px)]">
                 <form action={bulkDeleteDocumentsAction} className="space-y-3">
                   <input type="hidden" name="return_to" value={returnTo} />
                   {hiddenSelectedInputs}
@@ -185,7 +185,7 @@ export function DocumentBulkActionsForm({
               <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-500 hover:border-blue-200 hover:text-blue-700">
                 高级主关联
               </summary>
-              <div className="absolute right-0 z-20 mt-2 w-[min(92vw,520px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+              <div className="fixed left-4 right-4 top-20 z-20 max-h-[72vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:max-h-none sm:w-[min(92vw,520px)]">
                 <form action={bulkUpdateDocumentRelationsAction} className="space-y-3">
                   <input type="hidden" name="return_to" value={returnTo} />
                   {hiddenSelectedInputs}
@@ -206,7 +206,82 @@ export function DocumentBulkActionsForm({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="space-y-3 p-4 md:hidden">
+        <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+          <label className="inline-flex items-center gap-2 font-medium">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              aria-label="选择全部文件"
+              className="size-4 rounded border-slate-300 text-blue-700 focus:ring-blue-300"
+            />
+            全选
+          </label>
+          <span>{documents.length} 个文件</span>
+        </div>
+
+        {documents.map((document) => (
+          <article key={document.id} className="rounded-2xl border border-slate-100 bg-white p-4 text-sm shadow-sm">
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={selectedIds.has(document.id)}
+                onChange={() => toggleDocument(document.id)}
+                aria-label={`选择文件：${document.name}`}
+                className="mt-1 size-4 shrink-0 rounded border-slate-300 text-blue-700 focus:ring-blue-300"
+              />
+              <div className="min-w-0 flex-1">
+                <Link href={`/dashboard/documents/${document.id}`} className="flex min-w-0 gap-2 font-medium text-slate-900 hover:text-blue-700">
+                  <FileText className="mt-0.5 shrink-0 text-blue-700" size={16} />
+                  <span className="min-w-0 [overflow-wrap:anywhere]">
+                    {document.name}
+                  </span>
+                </Link>
+                {document.relative_path ? (
+                  <p className="mt-1 text-xs leading-5 text-slate-400 [overflow-wrap:anywhere]">{document.relative_path}</p>
+                ) : null}
+              </div>
+              {mode === "documents" ? <DocumentVisibilityBadge visibility={document.visibility} /> : null}
+            </div>
+
+            <div className="mt-4 grid gap-2 text-xs leading-5 text-slate-500">
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <span className="font-medium text-slate-700">{getDocumentCategoryLabel(document.category)}</span>
+                <span>{formatFileSize(document.file_size)}</span>
+                <span>{formatDateTime(document.created_at)}</span>
+              </div>
+              <div className="min-w-0 [overflow-wrap:anywhere]">
+                <span className="font-medium text-slate-700">{mode === "documents" ? "文档包：" : "相对路径："}</span>
+                {mode === "documents" ? (
+                  document.collection ? (
+                    <Link href={`/dashboard/documents/collections/${document.collection.id}`} className="text-blue-700 hover:text-blue-900">
+                      {document.collection.title}
+                    </Link>
+                  ) : (
+                    <span>未加入文档包</span>
+                  )
+                ) : (
+                  <span>{document.relative_path ?? document.original_name ?? document.name}</span>
+                )}
+              </div>
+              <div className="space-y-1">
+                <span className="font-medium text-slate-700">关联对象</span>
+                <DocumentRelationChips relations={document.relations} compact />
+              </div>
+            </div>
+
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <Link href={`/dashboard/documents/${document.id}/download`} className="inline-flex items-center gap-1 font-medium text-blue-700">
+                <Download size={14} />
+                下载
+              </Link>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <div className={cn("grid min-w-[1120px] gap-3 border-b border-slate-100 bg-white px-5 py-3 text-sm font-medium text-slate-500", gridClass)}>
           <label className="flex items-center justify-center">
             <input

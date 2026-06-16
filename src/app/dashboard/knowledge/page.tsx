@@ -29,12 +29,12 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
       <PublicContentGuidance />
       <AdminSection>
       <form className="grid gap-3 md:grid-cols-[0.45fr_1fr_auto]">
-        <select name="category" defaultValue={category} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
+        <select name="category" defaultValue={category} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100">
           <option value="all">全部分类</option>
           {knowledgeCategories.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
-        <input name="q" defaultValue={q} placeholder="搜索标题、摘要或正文..." className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100" />
-        <button className="rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
+        <input name="q" defaultValue={q} placeholder="搜索标题、摘要或正文..." className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100" />
+        <button className="h-10 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700">筛选</button>
       </form>
       </AdminSection>
       <Card>
@@ -44,16 +44,16 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
         ) : (
           <div className="space-y-3">
             {notes.map((note) => (
-              <Link key={note.id} href={`/dashboard/knowledge/${note.id}`} className="admin-card-motion flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-white">
-                <div className="flex gap-3">
-                  <BookOpen className="mt-1 text-emerald-600" size={18} />
-                  <div>
-                    <p className="font-medium text-slate-900">{note.title}</p>
-                    <p className="mt-1 text-sm text-slate-500">{note.category} · {formatRelative(note.updated_at)}</p>
-                    {note.excerpt ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{note.excerpt}</p> : null}
+              <Link key={note.id} href={`/dashboard/knowledge/${note.id}`} className="admin-card-motion flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-white sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 gap-3">
+                  <BookOpen className="mt-1 shrink-0 text-emerald-600" size={18} />
+                  <div className="min-w-0">
+                    <p className="line-clamp-2 font-medium text-slate-900 [overflow-wrap:anywhere]">{note.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-500 [overflow-wrap:anywhere]">{note.category} · {formatRelative(note.updated_at)}</p>
+                    {note.excerpt ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">{note.excerpt}</p> : null}
                   </div>
                 </div>
-                <VisibilityBadge visibility={note.visibility} />
+                <span className="shrink-0 self-start"><VisibilityBadge visibility={note.visibility} /></span>
               </Link>
             ))}
           </div>

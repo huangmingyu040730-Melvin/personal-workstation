@@ -23,12 +23,12 @@ export function DocumentRelationChips({
           href={relation.href}
           title={relation.note ?? undefined}
           className={[
-            "inline-flex max-w-full items-center gap-1 rounded-full border border-blue-100 bg-blue-50 font-medium text-blue-800 hover:border-blue-200 hover:bg-blue-100",
+            "inline-flex max-w-full items-start gap-1 rounded-full border border-blue-100 bg-blue-50 font-medium leading-5 text-blue-800 hover:border-blue-200 hover:bg-blue-100",
             compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs"
           ].join(" ")}
         >
           <span className="shrink-0 text-blue-500">{getDocumentRelatedTypeLabel(relation.asset_type)}</span>
-          <span className="truncate">{relation.title}</span>
+          <span className="min-w-0 [overflow-wrap:anywhere]">{relation.title}</span>
           <span className="shrink-0 text-blue-400">· {relation.relation_label}</span>
         </Link>
       ))}

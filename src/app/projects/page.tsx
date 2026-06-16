@@ -69,17 +69,17 @@ export default async function PublicProjectsPage({ searchParams }: { searchParam
         <PublicListingControls count={projects.length} active={hasActiveFilters} clearHref="/projects" label="公开项目">
           <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_160px_auto]">
             {tag !== "all" ? <input type="hidden" name="tag" value={tag} /> : null}
-            <label className="relative">
+            <label className="relative min-w-0">
               <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={16} />
               <input name="q" defaultValue={q} placeholder="搜索项目标题、简介、标签..." className="h-10 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-navy-950 outline-none transition focus:border-blue-300" />
             </label>
-            <select name="status" defaultValue={status} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
+            <select name="status" defaultValue={status} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
               <option value="all">全部状态</option>
               {projectStatuses.map((item) => (
                 <option key={item.value} value={item.value}>{item.label}</option>
               ))}
             </select>
-            <select name="featured" defaultValue={featured} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
+            <select name="featured" defaultValue={featured} className="h-10 min-w-0 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-navy-950">
               <option value="all">全部内容</option>
               <option value="featured">仅看精选</option>
             </select>

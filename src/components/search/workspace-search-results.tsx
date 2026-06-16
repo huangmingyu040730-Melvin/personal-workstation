@@ -48,8 +48,8 @@ export function WorkspaceSearchResults({ results, selectedType }: WorkspaceSearc
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-4">
-        <Badge className="bg-white text-blue-700 ring-blue-200">Search Results</Badge>
-        <p className="text-sm leading-6 text-blue-900">
+        <Badge className="shrink-0 bg-white text-blue-700 ring-blue-200">Search Results</Badge>
+        <p className="min-w-0 text-sm leading-6 text-blue-900 [overflow-wrap:anywhere]">
           共找到 <span className="font-semibold">{results.totalCount}</span> 条后台研究资产 metadata 命中结果。
           {selectedType === "all" ? null : (
             <>
@@ -69,13 +69,13 @@ export function WorkspaceSearchResults({ results, selectedType }: WorkspaceSearc
               href={buildTypeHref(results.query, filter.type)}
               aria-current={isActive ? "page" : undefined}
               className={[
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition",
+                "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition",
                 isActive
                   ? "border-blue-200 bg-blue-700 text-white shadow-sm"
                   : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-700"
               ].join(" ")}
             >
-              <span>{filter.label}</span>
+              <span className="min-w-0 [overflow-wrap:anywhere]">{filter.label}</span>
               <span className={isActive ? "text-blue-100" : "text-slate-400"}>{filter.count}</span>
             </Link>
           );
