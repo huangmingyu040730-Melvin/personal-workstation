@@ -9,13 +9,9 @@ function notFoundResponse() {
   return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
 
-function getAssetContext(request: NextRequest): PublicDocumentAssetContext | null | false {
+function getAssetContext(request: NextRequest): PublicDocumentAssetContext | false {
   const assetType = request.nextUrl.searchParams.get("asset_type");
   const assetId = request.nextUrl.searchParams.get("asset_id");
-
-  if (!assetType && !assetId) {
-    return null;
-  }
 
   if (!isDocumentRelatedType(assetType) || !assetId) {
     return false;
