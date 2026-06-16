@@ -6,6 +6,7 @@ import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { PublicContentGuidance } from "@/components/dashboard/public-content-guidance";
 import { PageHeader } from "@/components/page-header";
+import { assetModelDefinitions } from "@/lib/asset-model";
 import { getPublicationTypeLabel, publicationTypes, visibilityOptions } from "@/lib/content-options";
 import { formatDate, formatRelative } from "@/lib/format";
 import { getPublications } from "@/lib/queries/publications";
@@ -23,7 +24,7 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
       <PageHeader
         eyebrow="Publications"
         title="学术成果"
-        description="从 Supabase 读取真实成果数据，管理研究报告、论文、策略报告与发布权限。"
+        description={assetModelDefinitions.publication.definition}
         action={<Link href="/dashboard/publications/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800"><Plus size={16} />新建成果</Link>}
       />
       <PublicContentGuidance variant="publication" />
@@ -44,7 +45,7 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
       <Card>
         <CardHeader title="成果列表" description="默认按发布日期与更新时间排序" />
         {publications.length === 0 ? (
-          <AdminEmptyState title="还没有学术成果" description="创建第一条成果后，Dashboard 与公开首页会读取真实数据。" action={<Link href="/dashboard/publications/new" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建成果</Link>} />
+          <AdminEmptyState title="还没有学术成果" description={assetModelDefinitions.publication.emptyStateDescription} action={<Link href="/dashboard/publications/new" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建成果</Link>} />
         ) : (
           <div className="space-y-3">
             {publications.map((publication) => (

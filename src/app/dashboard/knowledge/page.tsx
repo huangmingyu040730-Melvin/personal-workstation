@@ -6,6 +6,7 @@ import { VisibilityBadge } from "@/components/badge";
 import { Card, CardHeader } from "@/components/card";
 import { PublicContentGuidance } from "@/components/dashboard/public-content-guidance";
 import { PageHeader } from "@/components/page-header";
+import { assetModelDefinitions } from "@/lib/asset-model";
 import { knowledgeCategories } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
 import { getKnowledgeNotes } from "@/lib/queries/knowledge";
@@ -22,7 +23,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
       <PageHeader
         eyebrow="Knowledge Base"
         title="知识库"
-        description="从 Supabase 读取真实笔记，沉淀研究、工具方法与会议知识。"
+        description={assetModelDefinitions.knowledge.definition}
         action={<Link href="/dashboard/knowledge/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800"><Plus size={16} />新建笔记</Link>}
       />
       <PublicContentGuidance />
@@ -39,7 +40,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
       <Card>
         <CardHeader title="笔记列表" description="默认按最近更新时间排序" />
         {notes.length === 0 ? (
-          <AdminEmptyState title="还没有知识笔记" description="创建第一条笔记后，Dashboard 会展示最近更新。" action={<Link href="/dashboard/knowledge/new" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建笔记</Link>} />
+          <AdminEmptyState title="还没有知识笔记" description={assetModelDefinitions.knowledge.emptyStateDescription} action={<Link href="/dashboard/knowledge/new" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建笔记</Link>} />
         ) : (
           <div className="space-y-3">
             {notes.map((note) => (

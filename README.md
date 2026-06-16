@@ -1,14 +1,25 @@
 # 黄铭语个人数字工作站
 
-黄铭语的公开研究工作站与私密数字资产后台。
+黄铭语的个人长期资产沉淀主基地（Personal Asset Intranet），同时保留公开研究工作站与私密数字资产后台边界。
 
 项目长期定位：
 
+- 当前重点是 Personal Asset Intranet polish：打磨既有资产模块的清晰度、可信度和使用体验。
 - 对外展示公开研究项目、学术成果、知识笔记与 AI Skill / 工作流。
 - 对内管理全部项目、知识、成果、文件、日历、AI 草稿与求职资产。
+- Agent CEO / 自动化扩张线暂停；不新增自动化中心、任务中心或外部集成主线。
 - 公开站点只展示 public 内容；外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权已在 Phase 2R-Z 退役，不恢复。
 
 当前项目状态详见 `docs/current-status.md`，v1.0 收口说明详见 `docs/v1-release-notes.md`，v1.0 维护手册详见 `docs/maintenance-playbook.md`，公开内容运营指南详见 `docs/public-content-operations.md`，AI 表单草稿助手说明详见 `docs/ai-draft-form-copilot.md`，AI 原始素材草稿实验室说明详见 `docs/ai-raw-note-draft-lab.md`，后续阶段规划详见 `docs/roadmap.md`，已知问题详见 `docs/known-issues.md`。
+
+## 资产模型
+
+- Project：沉淀持续推进的研究、业务、开发或个人项目主题，例如全指指增竞品分析、个人数字化工作台开发或长期研究主题。
+- Publication：沉淀已经形成阶段性成果的报告、文章、展示材料、公开研究或作品集内容。
+- Knowledge：沉淀可复用的笔记、框架、概念解释、方法论和个人学习记录。
+- Skill：沉淀可复用的流程、Prompt 模板、操作手册、自动化方法和能力包。
+
+v1.1 Asset model clarity polish 只打磨这些既有资产模块的定义、helper text、空状态和 AI Draft Lab 目标类型说明；不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
 
 ## 技术栈
 

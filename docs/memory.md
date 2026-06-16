@@ -6,7 +6,7 @@
 
 项目定位：
 
-> 黄铭语的公开研究工作站与私密数字资产后台。
+> 黄铭语的个人长期资产沉淀主基地 / Personal Asset Intranet。
 
 当前主线已经从功能扩张收口到稳定维护：
 
@@ -14,6 +14,12 @@
 - 公开展示：公开首页、About、公开列表与详情页、SEO、sitemap、robots。
 - 文件 / 知识管理：Documents 作为统一私密附件底座，服务 Project / Publication / Knowledge / Skill。
 - 求职闭环维护：Career Center、Resume、AI JD 分析历史、投递看板。
+
+当前战略方向：
+
+- 暂停 Agent CEO / 自动化扩张线。
+- 只打磨已有资产模块的边界、定义、文案和使用体验。
+- Project / Publication / Knowledge / Skill 分别承担持续项目、阶段成果、可复用知识、可复用流程能力四类资产角色。
 
 已完成阶段：
 
@@ -73,6 +79,7 @@
 - Phase 3A-T：AI Draft Form Copilot 支持补全空字段、优化已有内容、公开风险检查三种模式；四类资产表单共用模式控件和生成进度文案，公开风险检查优先展示 public readiness、sensitive risks 和 next steps，但仍只作为人工复核提示。
 - Phase 3B：新增 AI Raw Note Draft Lab `/dashboard/ai-drafts`，把管理员粘贴的原始素材转换为 Project / Publication / Knowledge / Skill 结构化草稿；只输出可复制字段和完整 Markdown，不自动保存、不自动创建资产、不读取 Documents / Storage。
 - Phase 3B-1：AI Draft Lab 结果可通过当前浏览器 `sessionStorage` 带入四类新建表单；新建页先显示确认条，管理员点击“填入表单”后才预填字段并清除 handoff，仍需人工检查和手动保存。
+- v1.1 Asset model clarity polish：明确 Project / Publication / Knowledge / Skill 的资产定义、示例、列表空状态和 AI Draft Lab 目标类型说明；不新增数据库、migration、RLS、Storage policy，不修改 `/public-files/[id]/download`。
 
 当前网站包括：
 
@@ -109,6 +116,7 @@
 - Phase 3A-R / 3A-S / 3A-T 后，后台 AI 能力优先服务 Project / Publication / Knowledge / Skill 表单草稿补全，而不是已保存详情页事后点评；AI 读取当前表单中的结构化白名单字段，输出只供管理员复制或采用到浏览器表单，保存仍由管理员手动触发。3A-T 的三种模式只改变生成策略和结果排序，不新增数据库、权限、公开页面或详情页 AI。
 - Phase 3B 后，AI 原始素材转结构化草稿是独立后台页面，不是表单内 copilot；Server Action 只接受 `targetType` 和 `rawText`，不接受任意 prompt，不写数据库，不读取 Documents / Storage，不进入公开导航。
 - Phase 3B-1 后，AI 草稿实验室到新建表单的 prefill 只使用浏览器 `sessionStorage`；不自动提交表单、不保存数据库、不创建资产、不修改 `visibility`，不读取 Documents / Storage。
+- v1.1 后，四类资产定义应保持一致：Project 是持续推进主题；Publication 是阶段成果；Knowledge 是可复用知识；Skill 是可复用流程 / Prompt / 操作手册 / 能力包。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
 - robots 阻止 dashboard、login、access-request、viewer、api、documents、public-files、admin、storage 和 signed 等路径；robots 不是安全边界。
 - Documents 上传默认保持 private；只有管理员显式设置 `documents.visibility = 'public'`，且文件关联到 public 资产时，公开页面才可展示安全附件摘要。
