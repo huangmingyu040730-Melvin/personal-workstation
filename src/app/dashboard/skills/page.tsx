@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { StatusBadge, VisibilityBadge } from "@/components/badge";
 import { PublicContentGuidance } from "@/components/dashboard/public-content-guidance";
 import { PageHeader } from "@/components/page-header";
+import { assetModelDefinitions } from "@/lib/asset-model";
 import { skillStatuses, visibilityOptions } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
 import { getSkills } from "@/lib/queries/skills";
@@ -21,7 +22,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
       <PageHeader
         eyebrow="Skills Library"
         title="Skill 库"
-        description="从 Supabase 读取真实 Skill，管理研究、写作、自动化和知识工作流能力。"
+        description={assetModelDefinitions.skill.definition}
         action={<Link href="/dashboard/skills/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800"><Plus size={16} />新建 Skill</Link>}
       />
       <PublicContentGuidance />
@@ -39,7 +40,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
       </form>
       </AdminSection>
       {skills.length === 0 ? (
-        <AdminEmptyState title="还没有 Skill" description="创建第一个 Skill 后，Dashboard 和公开首页会读取真实更新。" action={<Link href="/dashboard/skills/new" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建 Skill</Link>} />
+        <AdminEmptyState title="还没有 Skill" description={assetModelDefinitions.skill.emptyStateDescription} action={<Link href="/dashboard/skills/new" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建 Skill</Link>} />
       ) : (
         <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
           {skills.map((skill) => (

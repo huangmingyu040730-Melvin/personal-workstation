@@ -6,6 +6,7 @@ import { StatusBadge, VisibilityBadge } from "@/components/badge";
 import { PublicContentGuidance } from "@/components/dashboard/public-content-guidance";
 import { PageHeader } from "@/components/page-header";
 import { Progress } from "@/components/progress";
+import { assetModelDefinitions } from "@/lib/asset-model";
 import { projectStatuses, visibilityOptions } from "@/lib/content-options";
 import { formatRelative } from "@/lib/format";
 import { getProjects } from "@/lib/queries/projects";
@@ -22,7 +23,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
       <PageHeader
         eyebrow="Research Projects"
         title="研究项目"
-        description="从 Supabase 读取真实项目数据，管理研究主题、进度、里程碑和公开权限。"
+        description={assetModelDefinitions.project.definition}
         action={
           <Link href="/dashboard/projects/new" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
             <Plus size={16} />
@@ -49,7 +50,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
       </form>
       </AdminSection>
       {projects.length === 0 ? (
-        <AdminEmptyState title="还没有研究项目" description="创建第一个项目后，Dashboard 和公开首页会开始读取真实数据。" action={<Link href="/dashboard/projects/new" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建项目</Link>} />
+        <AdminEmptyState title="还没有研究项目" description={assetModelDefinitions.project.emptyStateDescription} action={<Link href="/dashboard/projects/new" className="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">新建项目</Link>} />
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => (

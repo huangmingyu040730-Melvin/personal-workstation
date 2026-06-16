@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
 import type { SkillRecord } from "@/lib/content-types";
 import { skillCategories, skillPlatforms, skillStatuses, visibilityOptions } from "@/lib/content-options";
+import { AssetModelDefinitionNote } from "./asset-model-definition-note";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
@@ -17,6 +18,7 @@ export function SkillForm({
   return (
     <form id="skill-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
+      <AssetModelDefinitionNote assetType="skill" />
       <AdminFormSection title="基本信息" description="定义 Skill 名称、分类、状态、平台与简短描述。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Skill 名称">

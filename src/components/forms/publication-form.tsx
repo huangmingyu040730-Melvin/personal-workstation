@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
 import type { ProjectRecord, PublicationRecord } from "@/lib/content-types";
 import { publicationTypes, visibilityOptions } from "@/lib/content-options";
+import { AssetModelDefinitionNote } from "./asset-model-definition-note";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
@@ -19,6 +20,7 @@ export function PublicationForm({
   return (
     <form id="publication-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
+      <AssetModelDefinitionNote assetType="publication" />
       <AdminFormSection title="基本信息" description="成果标题、slug 与类型决定后台列表和公开详情的基础展示。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="成果标题">

@@ -6,7 +6,7 @@
 
 本项目当前定位为：
 
-> 黄铭语的公开研究工作站与私密数字资产后台。
+> 黄铭语的个人长期资产沉淀主基地 / Personal Asset Intranet。
 
 当前网站包括：
 
@@ -14,6 +14,15 @@
 2. 管理员本人使用的私密后台。
 3. 私密文件中心。
 4. 研究资产沉淀、公开展示、文件 / 知识管理和求职闭环维护。
+
+当前阶段从 Agent CEO / 自动化扩张线收口，优先打磨已有资产模块的清晰度和可信度，不新增自动化中心、任务中心或外部集成主线。
+
+四类核心资产角色：
+
+- Project：持续推进的研究、业务、开发或个人项目主题。
+- Publication：已经形成阶段性成果的报告、文章、展示材料、公开研究或作品集内容。
+- Knowledge：可复用的笔记、框架、概念解释、方法论和个人学习记录。
+- Skill：可复用的流程、Prompt 模板、操作手册、自动化方法和能力包。
 
 Phase 2R-Z 已移除外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权链路。公开站点只展示 `public` 内容；未公开 slug 只显示安全 fallback，不确认 private、unlisted 或历史 restricted 内容是否存在。
 
@@ -87,6 +96,7 @@ Phase 3A-R 将 AI 能力调整为后台 Project 新建 / 编辑表单中的草�
 - Skill 后台详情页能力包 / 工作流包：集中展示用途、平台、版本、状态、使用说明、私密资料、版本记录和相关资产搜索入口。
 - Publication 后台详情页成果中枢：集中展示成果摘要、abstract、关联 Project、私密材料、同项目 Knowledge 和搜索入口。
 - Project / Publication / Knowledge / Skill 后台详情页提供公开发布准备度 checklist，基于 visibility、slug、标题、摘要、标签 / 分类、正文 / 说明、关系和 public 附件计数等已有字段提示公开运营状态。
+- v1.1 Asset model clarity polish 已明确 Project / Publication / Knowledge / Skill 的资产定义，并同步到新建 / 编辑表单、列表空状态和 AI Draft Lab 目标类型说明；本轮不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。

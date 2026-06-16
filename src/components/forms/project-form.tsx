@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
 import type { ProjectRecord } from "@/lib/content-types";
 import { projectStatuses, visibilityOptions } from "@/lib/content-options";
+import { AssetModelDefinitionNote } from "./asset-model-definition-note";
 import { Field, Select, Textarea, TextInput, Checkbox, ErrorNotice } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
@@ -17,6 +18,7 @@ export function ProjectForm({
   return (
     <form id="project-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
+      <AssetModelDefinitionNote assetType="project" />
       <AdminFormSection title="基本信息" description="用于列表、详情页和公开卡片展示的核心信息。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="项目标题">

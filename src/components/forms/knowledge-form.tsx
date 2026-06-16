@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
 import type { KnowledgeNoteRecord } from "@/lib/content-types";
 import { knowledgeCategories, visibilityOptions } from "@/lib/content-options";
+import { AssetModelDefinitionNote } from "./asset-model-definition-note";
 import { Checkbox, ErrorNotice, Field, Select, Textarea, TextInput } from "./form-fields";
 import { SubmitButton } from "./submit-button";
 
@@ -19,6 +20,7 @@ export function KnowledgeForm({
   return (
     <form id="knowledge-form" action={action} className="space-y-5">
       <ErrorNotice message={error} />
+      <AssetModelDefinitionNote assetType="knowledge" />
       <AdminFormSection title="基本信息" description="标题、slug、分类和关联项目用于组织知识库内容。">
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="标题">

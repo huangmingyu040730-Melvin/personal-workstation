@@ -15,6 +15,7 @@ import {
   type RawNoteSkillDraftResult
 } from "@/lib/ai-raw-note-draft-lab";
 import { getAiDraftHandoffNewFormPath, saveAiDraftHandoff } from "@/lib/ai-draft-handoff";
+import { assetModelDefinitions } from "@/lib/asset-model";
 import { cn } from "@/lib/utils";
 
 type AiRawNoteDraftLabProps = {
@@ -28,10 +29,10 @@ const targetOptions: Array<{
   label: string;
   description: string;
 }> = [
-  { value: "project", label: "Project / 研究项目", description: "研究主题、问题、方法与阶段计划" },
-  { value: "publication", label: "Publication / 学术成果", description: "报告摘要、abstract 与结构建议" },
-  { value: "knowledge", label: "Knowledge / 知识笔记", description: "知识摘要、正文大纲与 Markdown 初稿" },
-  { value: "skill", label: "Skill / 工作流", description: "工作流说明、输入输出与使用指南" }
+  { value: "project", label: assetModelDefinitions.project.title, description: assetModelDefinitions.project.aiDraftDescription },
+  { value: "publication", label: assetModelDefinitions.publication.title, description: assetModelDefinitions.publication.aiDraftDescription },
+  { value: "knowledge", label: assetModelDefinitions.knowledge.title, description: assetModelDefinitions.knowledge.aiDraftDescription },
+  { value: "skill", label: assetModelDefinitions.skill.title, description: assetModelDefinitions.skill.aiDraftDescription }
 ];
 
 const initialState: AiRawNoteDraftState = { status: "idle" };

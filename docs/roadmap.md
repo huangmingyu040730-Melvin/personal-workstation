@@ -4,13 +4,15 @@
 
 黄铭语个人数字工作站当前定位为：
 
-> 黄铭语的公开研究工作站与私密数字资产后台。
+> 黄铭语的个人长期资产沉淀主基地 / Personal Asset Intranet。
 
 网站同时承担：
 
 - 对外公开展示研究方向、公开项目、学术成果、知识笔记和 AI Skill / 工作流。
 - 对内管理全部项目、知识、成果、统一私密附件、日程、公开内容运营和求职闭环。
 - 维护求职中心 / Resume / AI JD / 投递看板的闭环，但后续只做 bugfix 和必要文案修正。
+
+当前路线暂停 Agent CEO / 自动化扩张线，优先做已有资产模块的边界、定义、文案和体验 polish。Skill 仍可沉淀可复用流程、Prompt 模板和自动化方法，但不新增自动化中心、任务中心、runner 或外部集成主线。
 
 Notion 可作为草稿、临时研究笔记、日常记录和自动化中间层，但正式公开门户、权限系统、私密资产库和统一浏览体验继续由个人网站承担。
 
@@ -883,10 +885,12 @@ Phase 2R-Z 已退役：
 
 后续主要投入应集中在已有研究资产质量：
 
-- Projects：补齐研究背景、问题、方法和进度；用 Project 后台详情页作为单项目研究资产中枢，继续整理私密附件、project_id 关系、显式资产关系和相关搜索。
-- Publications：沉淀报告、论文草稿、策略分析和阅读综述；用显式资产关系记录成果引用、产出或来源于哪些 Knowledge / Project / Skill。
-- Knowledge：维护研究方法、工具笔记和知识文章；用 Knowledge 后台详情页作为单知识节点中枢，继续整理摘要、正文、关联 Project、私密资料、显式资产关系和相关资产搜索。
-- Skills：整理可公开复用的 AI / Codex 工作流说明；用显式资产关系记录 Skill 使用、支持或产出的研究资产。
+- Projects：沉淀持续推进的研究、业务、开发或个人项目主题；继续补齐研究背景、问题、方法、进度、私密附件、显式关系和相关搜索。
+- Publications：沉淀已经形成阶段性成果的报告、文章、展示材料、公开研究或作品集内容；用显式资产关系记录成果引用、产出或来源。
+- Knowledge：沉淀可复用的笔记、框架、概念解释、方法论和个人学习记录；继续整理摘要、正文、关联 Project、私密资料和相关资产搜索。
+- Skills：沉淀可复用的流程、Prompt 模板、操作手册、自动化方法和能力包；用显式资产关系记录 Skill 使用、支持或产出的研究资产。
+
+v1.1 Asset model clarity polish 只更新上述资产模型说明、后台 helper text、空状态和 AI Draft Lab 目标类型说明；不新增数据库、migration、RLS、Storage policy，不修改 public download route。
 
 ### Public Display And Private Asset Management
 
