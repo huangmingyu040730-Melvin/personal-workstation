@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import type { DocumentCategory, DocumentCollectionType, DocumentRelatedType } from "@/lib/content-types";
 import { documentCategories, documentCollectionTypes, documentRelatedTypes } from "@/lib/content-options";
 import { getFormError } from "@/lib/forms";
+import { getDocumentCollectionById } from "@/lib/queries/documents";
 import { getKnowledgeNoteOptions } from "@/lib/queries/knowledge";
 import { getPublicationOptions } from "@/lib/queries/publications";
 import { getProjectOptions } from "@/lib/queries/projects";
@@ -20,7 +21,7 @@ export default async function UploadDocumentPage({ searchParams }: { searchParam
     getKnowledgeNoteOptions(),
     getSkills()
   ]);
-  const initialValues = getDocumentUploadInitialValues(params, {
+  const initialValues = await getDocumentUploadInitialValues(params, {
     projects,
     publications,
     knowledgeNotes,
@@ -71,7 +72,7 @@ function getFirstParam(params: UploadSearchParams, key: string) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function getDocumentUploadInitialValues(
+async function getDocumentUploadInitialValues(
   params: UploadSearchParams,
   options: {
     projects: Array<{ id: string; title: string }>;
@@ -79,12 +80,14 @@ function getDocumentUploadInitialValues(
     knowledgeNotes: Array<{ id: string; title: string }>;
     skills: Array<{ id: string; name: string }>;
   }
-): DocumentUploadInitialValues {
+): Promise<DocumentUploadInitialValues> {
   const rawMode = getFirstParam(params, "mode");
   const rawCategory = getFirstParam(params, "category");
   const rawCollectionType = getFirstParam(params, "collection_type");
   const rawRelatedType = getFirstParam(params, "related_type");
   const rawRelatedId = getFirstParam(params, "related_id");
+  const rawCollectionId = getFirstParam(params, "collection_id");
+  const rawReturnTo = getFirstParam(params, "return_to");
   const category = documentCategories.some((item) => item.value === rawCategory)
     ? (rawCategory as DocumentCategory)
     : "research_material";
@@ -95,7 +98,10 @@ function getDocumentUploadInitialValues(
     ? (rawRelatedType as DocumentRelatedType)
     : null;
   let relatedKey = "";
-  let prefillWarning: string | undefined;
+  const prefillWarnings: string[] = [];
+  let collectionId: string | undefined;
+  let collectionTitle: string | undefined;
+  let returnTo: string | undefined;
 
   if (relatedType && rawRelatedId) {
     const exists =
@@ -110,17 +116,70 @@ function getDocumentUploadInitialValues(
     if (exists) {
       relatedKey = `${relatedType}:${rawRelatedId}`;
     } else {
-      prefillWarning = "关联对象预填失败：query params 中的 related_type / related_id 不存在或当前账号无权读取，已保留为不关联对象。";
+      prefillWarnings.push("关联对象预填失败：query params 中的 related_type / related_id 不存在或当前账号无权读取，已保留为不关联对象。");
     }
   } else if (rawRelatedType || rawRelatedId) {
-    prefillWarning = "关联对象预填失败：related_type 和 related_id 需要同时存在且有效，已保留为不关联对象。";
+    prefillWarnings.push("关联对象预填失败：related_type 和 related_id 需要同时存在且有效，已保留为不关联对象。");
+  }
+
+  if (rawCollectionId) {
+    if (isUuid(rawCollectionId)) {
+      const collection = await getDocumentCollectionById(rawCollectionId);
+
+      if (collection) {
+        collectionId = collection.id;
+        collectionTitle = collection.title;
+        returnTo = getSafeDashboardReturnTo(rawReturnTo) ?? `/dashboard/documents/collections/${collection.id}`;
+      } else {
+        prefillWarnings.push("文档包预填失败：collection_id 不存在或当前账号无权读取，已保留为普通单文件上传。");
+      }
+    } else {
+      prefillWarnings.push("文档包预填失败：collection_id 格式无效，已保留为普通单文件上传。");
+    }
   }
 
   return {
-    mode: rawMode === "batch" ? "batch" : "single",
+    mode: rawCollectionId || rawMode !== "batch" ? "single" : "batch",
     category,
     collectionType,
     relatedKey,
-    prefillWarning
+    collectionId,
+    collectionTitle,
+    returnTo,
+    prefillWarning: prefillWarnings.join(" ")
   };
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function getSafeDashboardReturnTo(value: string | undefined) {
+  if (!value) {
+    return undefined;
+  }
+
+  const candidate = value.trim();
+
+  if (
+    !candidate.startsWith("/") ||
+    candidate.startsWith("//") ||
+    candidate.includes("\\") ||
+    /^[a-z][a-z0-9+.-]*:/i.test(candidate)
+  ) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(candidate, "http://localhost");
+    const isDashboardPath = url.pathname === "/dashboard" || url.pathname.startsWith("/dashboard/");
+
+    if (url.origin !== "http://localhost" || !isDashboardPath) {
+      return undefined;
+    }
+
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return undefined;
+  }
 }

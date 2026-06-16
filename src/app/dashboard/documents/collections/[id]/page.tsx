@@ -78,9 +78,9 @@ export default async function DocumentCollectionDetailPage({
           title={collection.title}
           description="一次上传批次、文件夹或附件包。文件仍保存在 private bucket 中；显式公开的包内文件会由公开内容页的安全下载路由访问。"
           action={
-            <Link href="/dashboard/documents/upload" className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
+            <Link href={getCollectionUploadHref(collection.id)} className="inline-flex items-center gap-2 rounded-2xl bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-800">
               <Upload size={18} />
-              继续上传
+              上传文件到此文档包
             </Link>
           }
         />
@@ -155,7 +155,7 @@ export default async function DocumentCollectionDetailPage({
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
           <Card className="min-w-0 overflow-hidden p-0">
             <div className="border-b border-slate-100 px-5 py-4">
-              <CardHeader title="文件列表" description="文件夹上传会保留每个文件的 relative_path。" />
+              <CardHeader title="文件列表" description="文件夹上传会保留每个文件的 relative_path。后续补充材料可以继续上传到当前文档包，适合签证资料、求职材料、研究附件包等持续补充场景。" />
             </div>
             {documents.length === 0 ? (
               <div className="p-5">
@@ -307,6 +307,17 @@ function RemovableCollectionRelations({
 
 function getSingleQueryValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function getCollectionUploadHref(collectionId: string) {
+  const returnTo = `/dashboard/documents/collections/${collectionId}`;
+  const params = new URLSearchParams({
+    mode: "single",
+    collection_id: collectionId,
+    return_to: returnTo
+  });
+
+  return `/dashboard/documents/upload?${params.toString()}`;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {

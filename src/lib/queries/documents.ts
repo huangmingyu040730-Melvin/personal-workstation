@@ -162,10 +162,16 @@ function hasRelation(
     return true;
   }
 
-  return item.relations.some((relation) => (
-    relation.asset_type === relatedType &&
-    (!relatedId || relation.asset_id === relatedId)
-  ));
+  return (
+    (
+      item.related_type === relatedType &&
+      (!relatedId || item.related_id === relatedId)
+    ) ||
+    item.relations.some((relation) => (
+      relation.asset_type === relatedType &&
+      (!relatedId || relation.asset_id === relatedId)
+    ))
+  );
 }
 
 function filterByRelation<T extends DocumentWithRelation | DocumentCollectionWithRelation>(
@@ -293,6 +299,54 @@ export async function getDocumentCollectionById(id: string) {
 
   const [collection] = await resolveCollectionRelations([data as DocumentCollectionRecord]);
   return collection ?? null;
+}
+
+export async function getDocumentCollections(filters?: { category?: string; relatedType?: string; relatedId?: string; collection?: string }) {
+  const supabase = await createClient();
+
+  if (!supabase || filters?.collection === "without_collection") {
+    return [];
+  }
+
+  let collectionIdsByCategory: string[] | null = null;
+
+  if (filters?.category && filters.category !== "all") {
+    const { data: categoryRows, error: categoryError } = await supabase
+      .from("documents")
+      .select("collection_id")
+      .eq("category", filters.category)
+      .not("collection_id", "is", null);
+
+    if (categoryError) {
+      console.error("getDocumentCollections category filter failed", { code: categoryError.code, message: categoryError.message });
+      return [];
+    }
+
+    collectionIdsByCategory = Array.from(new Set((categoryRows ?? []).map((row) => row.collection_id).filter(Boolean) as string[]));
+
+    if (collectionIdsByCategory.length === 0) {
+      return [];
+    }
+  }
+
+  let query = supabase
+    .from("document_collections")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (collectionIdsByCategory) {
+    query = query.in("id", collectionIdsByCategory);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("getDocumentCollections failed", { code: error.code, message: error.message });
+    return [];
+  }
+
+  const collections = await resolveCollectionRelations((data ?? []) as DocumentCollectionRecord[]);
+  return filterByRelation(collections, filters?.relatedType, filters?.relatedId);
 }
 
 export async function getDocumentCollectionsByRelated(relatedType: DocumentRelatedType, relatedId: string) {
