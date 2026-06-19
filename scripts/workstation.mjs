@@ -608,8 +608,8 @@ function printCollectionList(items) {
     return;
   }
 
-  printRows(["name", "type", "file_count", "total_size", "updated_at"], items.map((item) => [
-    item.name,
+  printRows(["title", "type", "file_count", "total_size", "updated_at"], items.map((item) => [
+    item.title,
     item.collection_type ?? item.type,
     item.file_count,
     item.total_size,
