@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-06-20 - Keep Workstation API CLI As Design Only
+
+类型：decision
+
+决策：
+
+- v1.1.4 只新增 `docs/workstation-cli-design.md`，为后续 Workstation Admin API MVP 和 Workstation CLI MVP 做设计准备。
+- 推荐架构为 User / Codex -> Workstation CLI -> Workstation Admin API -> existing server-side validation -> Supabase Auth / RLS / Storage。
+- CLI 只负责解析命令、读取本地文件、调用 API 和展示结果；不直接连接 Supabase，不保存 Supabase service role key，不写数据库，不生成 signed URL。
+- 第一版只规划 `workstation health`、Project / Knowledge / Skill 的 list/create、`collection list` 和 `document upload`。
+- 第一版权限只规划 `read_assets`、`create_assets` 和 `upload_documents`。
+- 第一版不开放删除、visibility 管理、用户管理、private Documents 正文读取、批量更新、公开发布、创建新文档包或权限修改。
+- 文件上传设计为 upload-intent -> CLI 上传 -> finalize；只能上传到已有文档包，文件默认 private。
+- 本轮不新增 API route、CLI 可执行文件、npm bin、token 生成页面、真实 token、数据库表、migration、RLS、Storage policy、bucket visibility、public download route、MCP server 或 Agent CEO。
+
+原因：
+
+- 用户希望未来 Codex 可以像操作飞书 CLI 一样，通过命令操作个人数字工作站，但安全边界比速度更重要。
+- 现有后台写入已经依赖 Server Actions、管理员校验、业务 validation、RLS 和 Storage 私密边界；CLI 不应绕过这套系统。
+- 先冻结设计可以把命令范围、token capability、operation logs 和文件上传失败处理想清楚，再进入 v1.2.0 Admin API MVP。
+
+影响：
+
+- `docs/workstation-cli-design.md` 是后续 v1.2.0 / v1.2.1 的设计入口。
+- 后续实现前必须先决定 token 数据模型、撤销机制、operation logs、rate limit、API capability list 和 upload-intent / finalize 机制。
+- 任何后续 CLI / MCP / agent workbench 都必须走 Workstation Admin API，不得直接持有 service role key 或绕过网站后端。
+- 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询或后台 CRUD。
+
 ## 2026-06-17 - Resume Photo URL Supports Preview And Word Export
 
 类型：decision

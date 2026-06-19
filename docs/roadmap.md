@@ -20,6 +20,8 @@ Market Brief / 市场简报模块已在 Phase 2N-Z 后弃用并从产品入口�
 
 v1.1 已作为 Personal Asset Intranet polish 收口。后续近期路线不新增大模块，优先稳定使用、真实资产录入、明显 bugfix、轻量 UX polish 和安全边界复查。
 
+v1.1.4 新增 Workstation API/CLI design，先为未来 Codex 通过受控 CLI / Admin API 操作个人工作站做方案冻结。本阶段仍不实现真实 API、CLI、token、migration、RLS 或 Storage policy；后续如果继续推进，应先进入 v1.2.0 Workstation Admin API MVP。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -901,6 +903,44 @@ Phase 2R-Z 已退役：
 - 不新增 AI 搜索、OCR、向量搜索、Documents 问答或公开 AI。
 - 不恢复 Agent CEO、自动化中心、任务中心、Market Brief、Access Grants、Viewer magic link 或 restricted 外部授权。
 
+### v1.1.4 - Workstation API/CLI Design
+
+已完成设计文档：
+
+- 新增 `docs/workstation-cli-design.md`。
+- 明确推荐架构：User / Codex -> Workstation CLI -> Workstation Admin API -> existing server-side validation -> Supabase Auth / RLS / Storage。
+- 设计第一版 CLI 命令：`workstation health`、Project / Knowledge / Skill 的 list/create、`workstation collection list`、`workstation document upload`。
+- 设计第一版 Admin API route 草案：health、projects、knowledge、skills、document-collections、documents upload-intent 和 finalize。
+- 设计统一响应格式、error code、token capability、operation logs 和文件上传失败处理。
+- 明确第一版只考虑 `read_assets`、`create_assets`、`upload_documents`，不开放删除、公开发布、visibility 管理、用户管理、private Documents 正文读取、批量更新或创建新文档包。
+
+边界：
+
+- 不新增 API route。
+- 不新增 CLI 可执行文件或 npm bin。
+- 不新增 token 生成页面或真实 token。
+- 不新增数据库表或 migration。
+- 不修改 RLS、Storage policy、bucket visibility 或 public download route。
+- 不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
+- 不恢复 Market Brief、外部访问申请、Viewer、Access Grants、restricted 外部授权、自动化中心、MCP server 或 Agent CEO。
+
+### v1.2.x - Workstation Admin API And CLI Preparation
+
+建议后续版本路线：
+
+- v1.2.0 Workstation Admin API MVP：实现受控 Admin API、token 校验、health、低风险资产 list/create、document upload-intent / finalize。
+- v1.2.1 Workstation CLI MVP：实现薄层 CLI，负责命令解析、本地文件读取、调用 Admin API 和展示结果。
+- v1.2.2 Operation logs and permission hardening：落地 operation logs、rate limit、token rotate / revoke、capability hardening 和审计视图。
+- v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
+
+进入 v1.2.0 前必须先确认：
+
+- token 只保存 hash，明文只在创建时显示一次。
+- token capability 首版只允许 `read_assets`、`create_assets` 和 `upload_documents`。
+- CLI 永远不保存 Supabase service role key，不直连 Supabase。
+- 文件上传只能到已有文档包，默认 private。
+- operation logs 不记录 secret、signed URL、Storage path 或大段 Documents 正文。
+
 ### Near-term Stable Usage
 
 近期只做：
@@ -910,12 +950,14 @@ Phase 2R-Z 已退役：
 - 使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记，但继续手动检查、手动保存、手动决定 visibility。
 - 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
 - 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
+- 如推进 v1.2.0，先按 `docs/workstation-cli-design.md` 做 Admin API / token / operation log / upload-intent 的最小实现设计评审。
 
 近期不做：
 
 - Agent CEO / 自动化扩张线。
 - 自动化中心、任务中心、复盘中心。
 - Notion / 飞书 / Gmail 集成。
+- 未经 Admin API 边界评审的完整 Workstation CLI、MCP server 或 Agent CEO Workbench。
 - 新的公开 AI、访客 AI、AI 搜索、OCR 或向量搜索。
 - 外部访问申请、Access Grants、Viewer login/callback 或 restricted 外部访问恢复。
 

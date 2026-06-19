@@ -38,6 +38,8 @@ v1.1.2 Resume photo export polish 补齐求职中心的照片链路：basic 个�
 
 v1.1.3 Resume export typography fixes 只修简历预览与 Word 导出的排版细节：邮箱字段与电话、性别、年龄、所在地使用一致的个人信息样式；实习经历的岗位 / 部门行加粗。追加 v1.1.3 Resume export section order and icons fix 后，Word 导出会隐藏没有可导出条目的固定 section 标题 / 图标，并把项目经历固定在实习经历之后、在校经历之前；后续 project icon and role typography polish 将项目经历图标替换为更简洁的深灰文件夹 / 项目文件图标，并让项目经历角色行、在校经历岗位行加粗。该小修不改变简历数据结构、照片导出安全逻辑、Storage、public download route 或数据库权限边界。
 
+v1.1.4 Workstation API/CLI design 新增 `docs/workstation-cli-design.md`，为后续 Workstation Admin API MVP 和 Workstation CLI MVP 设计安全边界、首版命令、API route 草案、统一响应、token capability、operation logs 和文件上传流程。当前仍是设计阶段：不新增真实 API route、CLI、npm bin、token、数据库表、migration、RLS、Storage policy、bucket visibility 或外部写入能力；Codex 未来也不应直接持有 Supabase service role key 或绕过现有后台 server-side validation。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -108,6 +110,7 @@ v1.1.3 Resume export typography fixes 只修简历预览与 Word 导出的排版
 - v1.1 Final QA docs sync and release notes 已新增 `docs/v1-1-release-notes.md`，并把 README、当前状态、项目记忆、路线图和维护手册同步到 Personal Asset Intranet 稳定使用阶段；本轮只做文档和 QA checklist，不新增数据库、migration、RLS、Storage policy，也不修改 public download route。
 - v1.1.1 Documents collection-first polish 将 `/dashboard/documents` 首页调整为文档包优先：先展示 document collections metadata，再展示 `collection_id IS NULL` 的独立文件；文档包详情页支持继续上传单个文件到当前已有文档包；个人资料建议先通过文档包组织，Profile 真实文件关联暂不实现。本轮不新增数据库、migration、RLS、Storage policy，不读取 Documents 正文或 Storage object，也不修改 public download route。
 - v1.1.3 Resume export typography fixes 修复简历个人信息区邮箱导出样式与实习经历岗位 / 部门加粗；追加 section order and icons fix 后，Word 导出不再保留空 section 标题 / 图标，项目经历固定在实习经历之后、在校经历之前；project icon and role typography polish 继续替换为更简洁的深灰项目文件夹图标，并同步加粗项目经历角色行、在校经历岗位行；只涉及网页预览顺序、默认 section order 和 Word 模板导出前 / 渲染后的样式归一化，不改数据库、Storage、public download route 或照片上传 / 导出安全逻辑。
+- v1.1.4 Workstation API/CLI design 只新增设计文档和状态同步，建议未来通过 Workstation CLI -> Workstation Admin API -> 现有 server-side validation -> Supabase Auth / RLS / Storage 的路径提供受控操作。第一版规划 health、Project / Knowledge / Skill list/create、collection list 和 document upload，但本轮不实现任何真实 API、CLI、token、migration 或外部写入能力。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -418,7 +421,7 @@ Phase 3B-1 AI Draft Lab to New Form Prefill 不需要新增 migration；它只�
 
 Phase 2R-Z 新增 `0022_remove_external_access_and_restricted_viewer.sql`；该迁移将历史 `restricted` 内容回写为 `private`，收紧四类内容表 visibility constraint 和 public read policy，并删除旧访问申请 / 授权表与授权函数。不修改 Storage policy、Documents 上传 / 删除 / zip 下载或 public 文件下载 route。
 
-v1.1 / v1.1.1 / v1.1.2 / v1.1.3 polish 不新增 migration。#125、#126、#127、#128、v1.1 final QA、v1.1.1 Documents collection-first polish、v1.1.2 Resume photo export polish 和 v1.1.3 Resume export typography fixes 只围绕边界、文案、表单预填、搜索 / 列表 / 移动端展示、维护清单、release notes、Documents 首页 / 文档包上传信息架构、Resume 照片预览 / Word 导出链路和简历导出排版细节打磨；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
+v1.1 / v1.1.1 / v1.1.2 / v1.1.3 / v1.1.4 polish 不新增 migration。#125、#126、#127、#128、v1.1 final QA、v1.1.1 Documents collection-first polish、v1.1.2 Resume photo export polish、v1.1.3 Resume export typography fixes 和 v1.1.4 Workstation API/CLI design 只围绕边界、文案、表单预填、搜索 / 列表 / 移动端展示、维护清单、release notes、Documents 首页 / 文档包上传信息架构、Resume 照片预览 / Word 导出链路、简历导出排版细节和未来受控 API/CLI 方案设计打磨；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取、public 文件下载 route，也不新增真实 Admin API、CLI、token 或外部写入能力。
 
 规则：
 
@@ -446,6 +449,7 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 - 公开展示：Phase 2R-A-1 起把公开首页作为“黄铭语研究工作站”入口维护，首屏 H1 为“个人研究工作站”，清晰展示研究方向、公开 Projects、Publications、Knowledge 和 Skills；Phase 2R-A-2 只强化 hero 的金融 / 量化 / 研究视觉氛围和标题字体质感；Phase 2R-A-3 只把四个公开列表页打磨为正式内容索引并增加轻量筛选，不改变公开内容查询或权限边界；Phase 2R-C-1 起统一公开 SEO、分享卡片、sitemap 和 robots，让公开站点可被安全索引和分享；Phase 2R-C-2 起用 `npm run smoke:public` 和浏览器冒烟作为公开发布前 QA，复查公开路由、fallback、sitemap、robots、metadata 和移动端边界；Phase 2R-D-1 起后台详情页提供 public readiness checklist 和公开内容运营文档，帮助管理员持续整理可公开内容；Phase 2R-F-1 起 `/about` 作为正式公开个人简介页维护；Phase 2R-Z 起移除访问申请、Access Grants、Viewer magic link 和 restricted 外部授权，公开导航保留轻量“管理员登录”入口但不显示后台菜单、文件中心、访问申请或全局关系图谱入口，公开页面继续只读展示 public 内容。
 - 文件 / 知识管理：Documents 作为可维护的统一默认私密附件管理系统，服务 Projects、Publications、Knowledge 和 Skills，也可承载签证、身份、生活、求职、合同等个人私密资料；公开站点只在 Project / Publication 详情页展示显式 public 且关联当前 public 资产的安全附件摘要，Knowledge / Skill 公开详情不展示 Documents。文件中心首页优先进入文档包列表，未加入文档包的文件才显示在独立文件区域。需要调整单个文件时使用文件详情页添加 / 移除多资产关联；需要整理多个文件或个人资料时优先使用文档包；需要补充已有资料包时从文档包详情页上传单个文件到当前文档包；需要调整整个资料包时使用文档包详情页的关联管理和可选同步到包内文件；legacy primary relation 仅作为兼容字段处理。需要清理文件资产时使用批量删除或“删除整个文档包及文件”危险操作，需要本地备份或交付资料时使用 zip 临时下载；需要跨模块查找研究资产时使用 `/dashboard/search?q=关键词` 搜索 metadata，再用 `type` 筛选定位到 Documents、Knowledge、Projects 等类型。Profile 真实文件关联作为未来可能方向，当前不实现。
 - v1.1 维护：继续观察四类资产分类是否清楚、AI Draft Lab 预填是否顺手、搜索和 Documents 是否适合真实资产增长、390px 移动端是否稳定；后续默认只做明确 bugfix、轻量 UX polish、文档同步和安全边界复查。
+- v1.1.4 后可进入 Workstation Admin API MVP 准备：先按 `docs/workstation-cli-design.md` 评审 token capability、operation logs、upload-intent / finalize 和 API 版本兼容策略；实现前仍不得让 CLI 直连 Supabase、持有 service role key、创建 signed URL 或绕过现有后台业务校验。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
 
