@@ -88,6 +88,7 @@
 - v1.1.3 Resume export typography fixes：只修简历预览与 Word 导出的排版细节，统一邮箱字段与其他个人信息字段的字体 / 段落样式，并让实习经历的岗位 / 部门行加粗；追加 Resume export section order and icons fix 后，Word 导出会隐藏空固定 section 标题 / 图标，项目经历固定在实习经历之后、在校经历之前；project icon and role typography polish 继续将项目经历图标替换为更简洁的深灰文件夹 / 项目文件图标，并让项目经历角色行、在校经历岗位行加粗；不改变简历数据结构、照片上传 / 导出安全逻辑、数据库、Storage、RLS 或 public download route。
 - v1.1.4 Workstation API/CLI design：新增 `docs/workstation-cli-design.md`，只做 Workstation Admin API / CLI 的架构、安全边界、命令、API route 草案、token capability、operation logs 和文件上传流程设计；当前不新增真实 API route、CLI、npm bin、token、migration、RLS、Storage policy、bucket visibility 或外部写入能力。
 - v1.2.0 Workstation Admin API MVP：新增 health、Project / Knowledge / Skill list/create、Document Collections metadata list 这些受控 `/api/workstation/*` route；第一版使用服务端 `WORKSTATION_API_TOKEN` 静态 token 和 `read_assets` / `create_assets` capability，不做 CLI、文件上传、token 管理页面、operation_logs 落库、migration、RLS、Storage policy 或 public download route 改动。
+- v1.2.1 Workstation CLI MVP：新增本地 `npm run workstation -- ...` 薄层 CLI，支持 health、Project / Knowledge / Skill list/create 和 Document Collections metadata list；CLI 只读取本地 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`、调用 Admin API 和展示结果，不直连 Supabase、不保存 service role key、不上传文件、不删除 / 更新 / 公开发布资产。
 
 当前网站包括：
 
@@ -131,6 +132,7 @@
 - 文档包详情页的“上传文件到此文档包”只复用现有 `/dashboard/documents/upload` 单文件上传页，通过 query 预填并验证 `collection_id`；表单提交 hidden `collection_id` 后由既有 action 写入 `documents.collection_id`、继承文档包关联并刷新统计。
 - v1.1.4 后，Workstation API / CLI 仍处于设计阶段；未来 CLI 必须走 Workstation Admin API，再复用现有 server-side validation、Supabase Auth / RLS / Storage，不能直连 Supabase、保存 service role key、创建 signed URL、读取 Documents 正文或绕过后台业务逻辑。
 - v1.2.0 后，Workstation Admin API 是静态 token 保护的服务端入口；Codex / CLI 未来只能持有 Workstation token，不能持有 Supabase key。API 只返回安全 metadata，Project / Knowledge / Skill 创建默认 private，并拒绝 public / unlisted visibility 与 owner_id / user_id / created_by 等非白名单字段。
+- v1.2.1 后，Workstation CLI 是本地薄层入口；运行方式为 `npm run workstation -- <command>`。CLI 默认 API URL 是 `https://personal-workstation.vercel.app`，也可用 `WORKSTATION_API_URL=http://localhost:3000` 本地测试；token 只从 `WORKSTATION_API_TOKEN` 读取，不支持 `--token` 参数，避免进入 shell history。
 - Profile 真实文件关联暂不实现；签证、身份、生活、求职、合同等个人资料当前建议通过文档包维护，避免扩展 DocumentRelatedType、resolver、Profile 页面和权限边界。
 - v1.1 后，四类资产定义应保持一致：Project 是持续推进主题；Publication 是阶段成果；Knowledge 是可复用知识；Skill 是可复用流程 / Prompt / 操作手册 / 能力包。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
@@ -252,6 +254,7 @@ Research Asset Links：
 - Documents 上传采用浏览器直传 Supabase Storage 的两阶段流程，文件二进制不经过 Vercel Function。
 - v1.1.4 采用 Workstation API/CLI 设计阶段决策：先新增 `docs/workstation-cli-design.md` 设计受控 CLI / Admin API，不在本轮实现 API、CLI、token 或 migration；未来 CLI 只解析命令、读取本地文件、调用 Admin API 和展示结果，真正业务校验仍在网站后端，且第一版只规划 `read_assets`、`create_assets`、`upload_documents` 三类低风险 capability。
 - v1.2.0 采用 static-token Admin API MVP 决策：先用 `WORKSTATION_API_TOKEN` 和服务端 capability 常量实现低风险 read/create API，不新增 token 表、撤销页面或 operation_logs 表；`upload_documents`、delete、public publish、visibility manage、bulk update 和 private Documents 正文读取继续关闭。
+- v1.2.1 采用 thin CLI MVP 决策：先实现无新增依赖的 Node CLI 脚本和 npm script，只调用既有 Admin API；创建命令不发送 visibility，拒绝 public / unlisted visibility 与 owner/user 字段；`--content-file` / `--usage-file` 只读取用户显式传入的本地文本，不读取 Documents 或 Storage。
 - Phase 2R-Z 取代旧 restricted / Viewer 路线：外部访问申请、Viewer magic link、Access Grants 和 restricted 外部授权已退役，不再作为 Phase 2I / hotfix 继续修复。
 - Phase 2F / 2G 只优化公开站点运营体验、SEO 和 UI，不扩展权限系统。
 - Resume 模块采用统一素材库、版本组合、浏览器预览 / 打印、Word 即时导出、AI JD 建议和 JD 分析历史；AI 输出只作为建议，不自动写回素材或版本。
@@ -357,6 +360,7 @@ Research Asset Links：
 - v1.1 Personal Asset Intranet polish 不新增 migration。#125 至 #128 以及 final QA docs sync 只调整边界校验、文案、表单预填、搜索 / 列表 / 移动端展示和维护文档；不修改数据库 schema、RLS、Storage policy、bucket visibility、Documents 文件读取或 public 文件下载 route。
 - v1.1.4 Workstation API/CLI design 不新增 migration；只新增设计文档并同步状态，未新增 API route、CLI、npm bin、token、数据库表、RLS、Storage policy、bucket visibility、public download route 或外部写入能力。
 - v1.2.0 Workstation Admin API MVP 不新增 migration；只新增受静态 token 保护的 API route、helper 和文档更新，不新增 token 表、operation_logs 表、RLS、Storage policy、bucket visibility 或 public download route 改动。
+- v1.2.1 Workstation CLI MVP 不新增 migration；只新增本地 CLI 脚本、npm script、使用文档和环境变量占位，不新增 token 表、operation_logs 表、RLS、Storage policy、bucket visibility、文件上传 API 或 public download route 改动。
 
 规则：
 
@@ -378,6 +382,7 @@ Research Asset Links：
 - 公开详情与附件维护：四类公开详情页只展示 public 记录；Project / Publication 可显示 public related content 与显式 public 文件附件，管理员先在文件详情页或文件中心批量工具将文件显式设为 public，并确认该文件通过专用 link row 或 legacy primary relation 关联到对应 public Project / Publication；公开详情页只显示安全附件摘要，下载点击 `/public-files/[id]/download`，服务端再校验 public 文件、public 资产和关联存在后短时签名；Knowledge / Skill 公开详情不展示 Documents。
 - 公开 SEO 与分享维护：页面 metadata 通过 `src/lib/site.ts` 统一站点名、canonical、OG / Twitter card 和公开安全图片；sitemap 只收录 public 内容和公开静态入口，查询失败时降级；robots 阻止 dashboard、API、viewer、public-files 等路径；robots / sitemap 不作为权限边界。
 - 公开发布前 QA：启动本地服务后运行 `npm run smoke:public`，巡检公开入口、fallback、metadata、sitemap、robots 和敏感字段；结合浏览器 390px 冒烟确认首页、列表页、详情或 fallback、公开附件 metadata 无横向溢出。
+- Workstation CLI 本地使用：设置 `WORKSTATION_API_TOKEN`，可选设置 `WORKSTATION_API_URL`；运行 `npm run workstation -- health` 检查 API 和 capability；用 `project|knowledge|skill list/create` 只操作 metadata 和 private 草稿；用 `collection list` 只查看文档包 metadata。不要把 token 发给聊天窗口、写入 GitHub、贴到命令参数或日志里。
 - v1.1 稳定维护：每次 PR 复查 public-only、Documents private、public attachment 资产上下文、AI Draft Lab 不读 Documents / Storage、prefill 不自动保存 / 创建 / 公开、metadata-only 搜索、sidebar 无自动化 / 设置假入口、topbar 无通知 / 主题假按钮和 390px 无横向滚动。
 - 外部访问链路退役维护：不要恢复 `/access-request`、`/viewer/*`、`/dashboard/access-requests`、`/dashboard/access-grants`、访问申请 / 授权 actions、queries、forms、validations 或流程文档；fallback 不显示申请 / viewer 入口。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
@@ -397,7 +402,7 @@ Research Asset Links：
 2. 观察四类资产分类是否够清楚，必要时只做小范围 helper text、空状态或文档修正。
 3. 继续使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记；handoff 只作为浏览器预填，保存和公开仍由管理员手动完成。
 4. 持续观察 `/dashboard/search`、Documents 文件中心和 390px 移动端在真实资产增长后的可用性。
-5. Workstation Admin API MVP 可进入小范围验证：只用静态 token 调用 health、metadata list 和 private create；下一步优先考虑 CLI 薄层或 operation logs / permission hardening，文件上传需单独 PR 安全审查。
+5. Workstation CLI MVP 可进入小范围验证：先用静态 token 跑 health、metadata list 和 private create；下一步优先观察命令 ergonomics、生产网络稳定性和错误提示，再考虑 operation logs / permission hardening，文件上传需单独 PR 安全审查。
 6. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
 7. 每轮 PR 继续运行 lint、build、public smoke、diff check 和 stale reference 搜索。
 
@@ -405,7 +410,7 @@ Research Asset Links：
 
 - Market Brief / 市场简报恢复。
 - Agent CEO / 自动化扩张线。
-- 直接实现完整 Workstation CLI、MCP server 或 Agent CEO Workbench。
+- 继续扩展完整 Workstation CLI 高风险能力、MCP server 或 Agent CEO Workbench。
 - 自动化中心、任务中心或复盘中心。
 - 新的求职自动化。
 - 公开文件中心或公开 zip 下载。
