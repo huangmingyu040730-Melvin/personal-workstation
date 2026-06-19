@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-06-20 - Add Static Token Workstation Admin API MVP
+
+类型：decision
+
+决策：
+
+- v1.2.0 新增第一批低风险 `/api/workstation/*` Admin API route。
+- 第一批 route 包括 `/api/workstation/health`、`/api/workstation/projects`、`/api/workstation/knowledge`、`/api/workstation/skills` 和 `/api/workstation/document-collections`。
+- 认证第一版使用服务端环境变量 `WORKSTATION_API_TOKEN` 静态 token，请求使用 `Authorization: Bearer <token>`。
+- 第一版 capability 只开放 `read_assets` 和 `create_assets`；`upload_documents` 留到后续文件上传 PR。
+- Project / Knowledge / Skill list 只返回安全 metadata；Document Collections list 只返回 collection metadata 和统计，不返回 Storage path、signed URL 或 Documents 正文。
+- Project / Knowledge / Skill create 复用现有 Zod schema 做最终校验，默认 `visibility = private`，拒绝 `public` / `unlisted` visibility 和非白名单字段。
+- 本轮不新增 CLI、文件上传 API、token 表、token 管理页面、operation_logs 表、migration、RLS、Storage policy、bucket visibility、public download route、MCP server 或 Agent CEO。
+
+原因：
+
+- v1.1.4 已完成设计文档，本阶段需要先跑通低风险 read/create API，让未来 CLI / Codex 有受控入口。
+- 静态 token 可以避免过早引入 token 数据模型、撤销 UI、operation logs 表和 migration，同时仍能把 Codex 与 Supabase key 隔离。
+- 文件上传涉及 Storage path、上传授权、finalize、collection stats 和失败清理，应单独 PR 做安全审查。
+
+影响：
+
+- `.env.example` 只新增 `WORKSTATION_API_TOKEN=your_workstation_api_token` 占位，不提交真实 token。
+- 后续 CLI 只能持有 Workstation token，不能直接连接 Supabase 或持有 service role key。
+- 后续 v1.2.1 可先做 CLI 薄层；v1.2.2 再做 operation logs / permission hardening；文件上传需单独设计 upload-intent / finalize。
+- 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询或后台网页 CRUD。
+
 ## 2026-06-20 - Keep Workstation API CLI As Design Only
 
 类型：decision

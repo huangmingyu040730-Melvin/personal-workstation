@@ -22,6 +22,8 @@ v1.1 已作为 Personal Asset Intranet polish 收口。后续近期路线不新�
 
 v1.1.4 新增 Workstation API/CLI design，先为未来 Codex 通过受控 CLI / Admin API 操作个人工作站做方案冻结。本阶段仍不实现真实 API、CLI、token、migration、RLS 或 Storage policy；后续如果继续推进，应先进入 v1.2.0 Workstation Admin API MVP。
 
+v1.2.0 已开始实现 Workstation Admin API MVP：第一批只包括 health、Project / Knowledge / Skill list/create 和 Document Collections metadata list。它使用服务端 `WORKSTATION_API_TOKEN` 静态 token，不实现 CLI、文件上传、token 管理页面、operation_logs 表、migration、RLS 或 Storage policy。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -928,18 +930,20 @@ Phase 2R-Z 已退役：
 
 建议后续版本路线：
 
-- v1.2.0 Workstation Admin API MVP：实现受控 Admin API、token 校验、health、低风险资产 list/create、document upload-intent / finalize。
-- v1.2.1 Workstation CLI MVP：实现薄层 CLI，负责命令解析、本地文件读取、调用 Admin API 和展示结果。
+- v1.2.0 Workstation Admin API MVP：已实现受控 Admin API、静态 token 校验、health、Project / Knowledge / Skill list/create、Document Collections metadata list。
+- v1.2.1 Workstation CLI MVP：实现薄层 CLI，负责命令解析、调用 Admin API 和展示结果；先不做文件上传。
 - v1.2.2 Operation logs and permission hardening：落地 operation logs、rate limit、token rotate / revoke、capability hardening 和审计视图。
+- v1.2.x 文件上传 PR：单独设计并实现 upload-intent / finalize 和 `upload_documents` capability。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
 
-进入 v1.2.0 前必须先确认：
+v1.2.0 当前边界：
 
-- token 只保存 hash，明文只在创建时显示一次。
-- token capability 首版只允许 `read_assets`、`create_assets` 和 `upload_documents`。
+- token 第一版只来自服务端环境变量 `WORKSTATION_API_TOKEN`，不新增 token 表或管理页面。
+- token capability 首版只允许 `read_assets` 和 `create_assets`。
 - CLI 永远不保存 Supabase service role key，不直连 Supabase。
-- 文件上传只能到已有文档包，默认 private。
-- operation logs 不记录 secret、signed URL、Storage path 或大段 Documents 正文。
+- 创建 Project / Knowledge / Skill 默认 private，不允许 API 创建 public 内容。
+- 不实现文件上传、删除、更新、公开发布、visibility 管理、用户管理、bulk update、private Documents 正文读取、signed URL 生成或 Storage object 读取。
+- operation logs 暂不落库，后续 v1.2.2 再设计实现。
 
 ### Near-term Stable Usage
 
@@ -950,7 +954,7 @@ Phase 2R-Z 已退役：
 - 使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记，但继续手动检查、手动保存、手动决定 visibility。
 - 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
 - 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
-- 如推进 v1.2.0，先按 `docs/workstation-cli-design.md` 做 Admin API / token / operation log / upload-intent 的最小实现设计评审。
+- 如继续推进 Workstation API / CLI，优先做 CLI 薄层、operation logs / permission hardening，或单独评审 document upload-intent / finalize。
 
 近期不做：
 
