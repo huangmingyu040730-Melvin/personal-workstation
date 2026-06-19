@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-06-20 - Add Thin Workstation CLI MVP
+
+类型：decision
+
+决策：
+
+- v1.2.1 新增本地 Workstation CLI MVP，入口为 `npm run workstation -- ...`。
+- CLI 使用无新增依赖的 Node 脚本 `scripts/workstation.mjs`，不引入 `tsx` 或新的 CLI framework。
+- CLI 从本地环境变量读取 `WORKSTATION_API_URL` 和 `WORKSTATION_API_TOKEN`；默认 API URL 为 `https://personal-workstation.vercel.app`。
+- CLI 不支持 `--token` 参数，避免 token 进入 shell history。
+- 第一版命令包括 health、Project / Knowledge / Skill list/create，以及 Document Collections list。
+- CLI 只调用既有 Workstation Admin API，不直接连接 Supabase，不读取或保存 service role key，不读取 Storage object，不生成 signed URL。
+- create 命令不发送 public / unlisted visibility；传入 public / unlisted 会被 CLI 层拒绝，owner / user / created_by 等越界字段也会被拒绝。
+- `--content-file` 和 `--usage-file` 只读取用户显式传入的本地文本文件，不读取 Documents 正文或 Skill package。
+- 本轮不实现 document upload、upload-intent / finalize、delete、update、public publish、visibility manage、operation logs 落库、migration、RLS、Storage policy、bucket visibility、public download route、MCP server 或 Agent CEO。
+
+原因：
+
+- #137 已提供受控 Admin API，v1.2.1 需要让 Codex / 用户可通过稳定命令调用这些低风险 API。
+- 当前用户本地访问 Vercel 可能不稳定，CLI 应保持薄层、可配置、可用本地 `WORKSTATION_API_URL=http://localhost:3000` smoke。
+- 先用原生 Node 脚本避免新增依赖和升级主依赖，降低 v1.2.1 的维护和发布风险。
+
+影响：
+
+- `.env.example` 新增 `WORKSTATION_API_URL` 占位，仍不保存真实 token。
+- 新增 `docs/workstation-cli-usage.md` 作为本地使用入口。
+- 后续可在不改变 CLI 安全边界的前提下打磨命令输出、operation logs / permission hardening，文件上传仍需单独 PR 评审 upload-intent / finalize。
+- 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询或后台网页 CRUD。
+
 ## 2026-06-20 - Add Static Token Workstation Admin API MVP
 
 类型：decision

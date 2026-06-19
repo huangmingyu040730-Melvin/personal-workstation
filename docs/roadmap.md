@@ -22,7 +22,9 @@ v1.1 已作为 Personal Asset Intranet polish 收口。后续近期路线不新�
 
 v1.1.4 新增 Workstation API/CLI design，先为未来 Codex 通过受控 CLI / Admin API 操作个人工作站做方案冻结。本阶段仍不实现真实 API、CLI、token、migration、RLS 或 Storage policy；后续如果继续推进，应先进入 v1.2.0 Workstation Admin API MVP。
 
-v1.2.0 已开始实现 Workstation Admin API MVP：第一批只包括 health、Project / Knowledge / Skill list/create 和 Document Collections metadata list。它使用服务端 `WORKSTATION_API_TOKEN` 静态 token，不实现 CLI、文件上传、token 管理页面、operation_logs 表、migration、RLS 或 Storage policy。
+v1.2.0 已完成 Workstation Admin API MVP：第一批只包括 health、Project / Knowledge / Skill list/create 和 Document Collections metadata list。它使用服务端 `WORKSTATION_API_TOKEN` 静态 token，不实现文件上传、token 管理页面、operation_logs 表、migration、RLS 或 Storage policy。
+
+v1.2.1 已实现 Workstation CLI MVP：新增 `npm run workstation -- ...` 本地薄层入口，支持 health、Project / Knowledge / Skill list/create 和 Collection list。CLI 只调用 Admin API，不直接连接 Supabase，不读取或保存 service role key，不支持 upload、delete、update、public publish 或 visibility manage。
 
 ## Access Layers
 
@@ -931,7 +933,7 @@ Phase 2R-Z 已退役：
 建议后续版本路线：
 
 - v1.2.0 Workstation Admin API MVP：已实现受控 Admin API、静态 token 校验、health、Project / Knowledge / Skill list/create、Document Collections metadata list。
-- v1.2.1 Workstation CLI MVP：实现薄层 CLI，负责命令解析、调用 Admin API 和展示结果；先不做文件上传。
+- v1.2.1 Workstation CLI MVP：已实现薄层 CLI，负责命令解析、读取本地环境变量、调用 Admin API 和展示结果；先不做文件上传。
 - v1.2.2 Operation logs and permission hardening：落地 operation logs、rate limit、token rotate / revoke、capability hardening 和审计视图。
 - v1.2.x 文件上传 PR：单独设计并实现 upload-intent / finalize 和 `upload_documents` capability。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
@@ -945,6 +947,14 @@ v1.2.0 当前边界：
 - 不实现文件上传、删除、更新、公开发布、visibility 管理、用户管理、bulk update、private Documents 正文读取、signed URL 生成或 Storage object 读取。
 - operation logs 暂不落库，后续 v1.2.2 再设计实现。
 
+v1.2.1 当前边界：
+
+- CLI 默认读取 `WORKSTATION_API_URL` 和 `WORKSTATION_API_TOKEN`，默认 API URL 为生产站点。
+- CLI 不支持 `--token` 参数，不把 token 写入代码、文档示例、请求日志或错误输出。
+- CLI create 命令不发送 public / unlisted visibility，且拒绝 owner / user / created_by 等越界字段。
+- CLI 的 `--content-file` 与 `--usage-file` 只读取用户显式传入的本地文本文件，不读取 Documents、Storage object、Skill package 或 private 文件正文。
+- 不新增依赖、不新增 migration、不新增 RLS / Storage policy / public download route 改动。
+
 ### Near-term Stable Usage
 
 近期只做：
@@ -955,13 +965,14 @@ v1.2.0 当前边界：
 - 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
 - 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
 - 如继续推进 Workstation API / CLI，优先做 CLI 薄层、operation logs / permission hardening，或单独评审 document upload-intent / finalize。
+- Workstation CLI 薄层已完成后，优先做本地 / 生产可达性观察、命令文案小修、operation logs / permission hardening，或单独评审 document upload-intent / finalize。
 
 近期不做：
 
 - Agent CEO / 自动化扩张线。
 - 自动化中心、任务中心、复盘中心。
 - Notion / 飞书 / Gmail 集成。
-- 未经 Admin API 边界评审的完整 Workstation CLI、MCP server 或 Agent CEO Workbench。
+- 未经 Admin API 边界评审的 Workstation CLI 高风险扩展、MCP server 或 Agent CEO Workbench。
 - 新的公开 AI、访客 AI、AI 搜索、OCR 或向量搜索。
 - 外部访问申请、Access Grants、Viewer login/callback 或 restricted 外部访问恢复。
 
