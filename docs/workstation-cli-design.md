@@ -2,9 +2,9 @@
 
 日期：2026-06-20
 
-版本：v1.1.4 Workstation API/CLI design
+版本：v1.1.4 Workstation API/CLI design；v1.2.0 Workstation Admin API MVP 已开始落地
 
-状态：设计阶段。本文档只用于为后续 Workstation Admin API MVP 和 Workstation CLI MVP 做准备；本轮不实现 API route、CLI、token、migration、RLS 或 Storage policy。
+状态：v1.1.4 完成设计；v1.2.0 已新增第一批低风险 Workstation Admin API route。当前仍不实现 CLI、文件上传、token 管理页面、token 表、operation_logs 表、migration、RLS 或 Storage policy。
 
 ## 1. 为什么要做 Workstation API / CLI
 
@@ -66,7 +66,7 @@ Supabase Auth / RLS / Storage
 | `workstation skill list` | 查询 Skill metadata 列表 | `read_assets` | Skill package 只展示 metadata |
 | `workstation skill create` | 创建 Skill 草稿或 private 记录 | `create_assets` | 不安装、不解析、不执行 Skill 包 |
 | `workstation collection list` | 查询 Document Collection metadata | `read_assets` | 不列出 Storage path，不读文件正文 |
-| `workstation document upload` | 上传本地文件到已有文档包 | `upload_documents` | 只能目标已有 collection，默认 private |
+| `workstation document upload` | 上传本地文件到已有文档包 | `upload_documents` | v1.2.0 暂不实现；后续单独 PR 做 upload-intent / finalize |
 
 第一版 create 命令建议支持 `--json` 或 `--from-file` 读取结构化输入，同时保留常用 flags：
 
@@ -122,10 +122,10 @@ workstation document upload --collection-id "<id>" --file ./paper.pdf --category
 | `GET` | `/api/workstation/skills` | 查询 Skill metadata | `q`、`category`、`platform`、`visibility`、`limit`、`cursor` | Skill 列表与分页 | `read_assets` | 不返回 Skill package 文件正文 |
 | `POST` | `/api/workstation/skills` | 创建 Skill | name、slug、description、category、platforms、usage fields、visibility | 新 Skill 摘要 | `create_assets` | 不执行、不安装、不解析上传包 |
 | `GET` | `/api/workstation/document-collections` | 查询文档包 metadata | `q`、`related_type`、`related_id`、`limit`、`cursor` | 文档包列表与统计 | `read_assets` | 不返回 Storage path、bucket、signed URL |
-| `POST` | `/api/workstation/documents/upload-intent` | 为已有文档包生成受控上传意图 | collection_id、file name、mime、size、category、checksum 可选 | upload id、受控上传信息、finalize payload 摘要 | `upload_documents` | 只允许已有 collection；默认 private；后端生成 ASCII-safe object key |
-| `POST` | `/api/workstation/documents/finalize` | 上传完成后写入 documents metadata | upload id、文件校验摘要、finalize payload | 新 Document 安全摘要 | `upload_documents` | 重新校验 token、collection、文件约束和上传状态；写 operation log |
+| `POST` | `/api/workstation/documents/upload-intent` | 为已有文档包生成受控上传意图 | collection_id、file name、mime、size、category、checksum 可选 | upload id、受控上传信息、finalize payload 摘要 | `upload_documents` | v1.2.0 暂不实现；后续单独 PR 做安全审查 |
+| `POST` | `/api/workstation/documents/finalize` | 上传完成后写入 documents metadata | upload id、文件校验摘要、finalize payload | 新 Document 安全摘要 | `upload_documents` | v1.2.0 暂不实现；后续单独 PR 做安全审查 |
 
-第一版不新增真实 API route。本节只是后续 v1.2.0 的设计草案。
+v1.2.0 已新增 health、Project / Knowledge / Skill list/create、Document Collections list 这些第一批真实 API route。Documents upload-intent / finalize 仍是后续阶段，不在 v1.2.0 中实现。
 
 ## 6. CLI 命令设计
 
@@ -207,12 +207,17 @@ CLI 应保持薄层：
 
 第一版 token 只用于 Workstation Admin API，不是 Supabase key，也不是管理员登录密码。
 
-建议第一版权限：
+v1.2.0 当前权限：
 
 | Capability | 含义 | 适用命令 |
 | --- | --- | --- |
 | `read_assets` | 读取资产 metadata 和文档包 metadata | list / health |
 | `create_assets` | 创建 Project / Knowledge / Skill 草稿或 private 记录 | create |
+
+后续文件上传阶段再开放：
+
+| Capability | 含义 | 适用命令 |
+| --- | --- | --- |
 | `upload_documents` | 上传文件到已有文档包 | document upload |
 
 第一版不开放：
@@ -233,7 +238,7 @@ token 存储与生命周期：
 - token 泄露后的风险是被调用允许范围内的 Admin API；因此第一版只给低风险 capability，并提供撤销机制。
 - 后续应支持 token rotate、单 token 禁用、按 capability 缩权和使用日志查询。
 
-后续 v1.2.0 如果实现 token，建议只保存 token hash，不保存明文 token；服务端只在创建时显示一次明文，并提示用户本地保存。
+v1.2.0 先使用服务端环境变量 `WORKSTATION_API_TOKEN` 作为静态 token，不新增 token 表或管理页面。后续如果实现数据库 token，应只保存 token hash，不保存明文 token；服务端只在创建时显示一次明文，并提示用户本地保存。
 
 ## 9. 操作日志设计
 
@@ -336,26 +341,28 @@ workstation task create
 | 版本 | 范围 | 明确不做 |
 | --- | --- | --- |
 | v1.1.4 Workstation API/CLI design | 新增本文档，同步状态与路线；做可行性和安全边界设计 | 不新增 API route、CLI、token、migration、RLS、Storage policy |
-| v1.2.0 Workstation Admin API MVP | 实现最小 Admin API、token 校验、health、低风险资产读写、upload-intent / finalize | 不实现完整 CLI，不开放删除、公开、权限管理 |
-| v1.2.1 Workstation CLI MVP | 实现 CLI 薄层、health、list、create、document upload | 不直接连接 Supabase，不保存 service role key |
+| v1.2.0 Workstation Admin API MVP | 实现最小 Admin API、静态 token 校验、health、Project / Knowledge / Skill list/create、Document Collections list | 不实现 CLI、文件上传、删除、公开、权限管理 |
+| v1.2.1 Workstation CLI MVP | 实现 CLI 薄层、health、list、create | 不直接连接 Supabase，不保存 service role key，不实现文件上传 |
 | v1.2.2 Operation logs and permission hardening | 落地 operation logs、rate limit、token rotate / revoke、审计视图 | 不扩展高风险 capability |
+| v1.2.x 后续文件上传 PR | 单独实现 upload-intent / finalize 与 `upload_documents` capability | 不绕过 Storage 安全边界，不开放公开或批量删除 |
 | v1.3.x MCP Server / Agent CEO Workbench exploration | 探索 MCP server 或更高层 agent workbench | 不绕过 Admin API，不恢复已退役 access / viewer / Market Brief |
 
 进入 v1.2.0 前建议先确认：
 
+后续进入 v1.2.1 / v1.2.2 / 文件上传阶段前建议继续确认：
+
 - token 数据模型与撤销流程。
 - operation log 是否复用 `activity_logs` 还是新增专用表。
-- Admin API 是否复用现有 Server Actions 的内部 helper，还是把业务逻辑抽到共享 server-only service。
 - 文件上传采用哪种短期上传授权机制。
 - rate limit 与 request id 方案。
 
 ## 13. 本轮确认未做事项
 
-v1.1.4 只提交设计文档和轻量状态文档同步。本轮确认不做：
+v1.2.0 已实现第一批低风险 Admin API route。本轮确认仍不做：
 
 - 不新增数据库表。
 - 不新增 migration。
-- 不新增 API route。
+- 不新增文件上传 API。
 - 不新增 CLI 可执行文件。
 - 不新增 npm bin。
 - 不新增 token 生成页面。
@@ -367,6 +374,7 @@ v1.1.4 只提交设计文档和轻量状态文档同步。本轮确认不做：
 - 不读取 Documents 正文。
 - 不读取 Storage objects。
 - 不生成 signed URL。
+- 不开放删除、公开发布、visibility 管理、用户管理或批量更新。
 - 不新增 Agent CEO。
 - 不新增 MCP server。
 - 不新增 Notion / 飞书 / Gmail 集成。
