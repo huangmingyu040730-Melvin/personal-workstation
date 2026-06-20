@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档，不新增真实 upload 命令。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -15,6 +15,10 @@ CLI 是薄层：只解析命令、读取本地环境变量、调用 Workstation 
 v1.2.6 后，Project / Knowledge / Skill 支持按 id 或 slug 查看安全字段；update 仍只调用既有 PATCH by id route，CLI 在收到 `--slug` 且没有 `--id` 时会先通过 show API 解析真实 id，再执行 update。`--id` 和 `--slug` 互斥。
 
 v1.2.7 后，Project update 可维护 `progress` 和 `start_date`：`--progress` 必须是 0-100 整数，`--start-date` / `--start_date` 必须是有效 `YYYY-MM-DD` 日期。本轮不新增 `current_stage` 字段；阶段描述继续写入 `summary` / `background` / `methodology`，或沉淀为关联 Knowledge。
+
+过时信息保护：如果旧线程、旧截图或历史版本段落声称 Workstation CLI “只支持 list/create”或“不能 update Project 字段”，应视为 v1.2.1 时期的旧边界。当前能力以 `scripts/workstation.mjs --help`、本文件、`.codex/skills/workstation/SKILL.md` 和 v1.2.7 之后的记录为准。
+
+v1.2.8 后，document upload 仍是设计阶段。设计文档位于 `docs/workstation-document-upload-design.md`，规划未来 `document upload -> upload-intent -> controlled upload -> finalize`，但当前 CLI 不存在 `document upload` 命令，也不会上传文件、读取 Documents 正文、生成 Storage path、创建 public link 或修改 visibility。
 
 v1.2.3 后，Workstation API 成功 / 失败响应都会包含 `requestId`。CLI 人类可读错误输出会显示该 requestId，便于到后台 `/dashboard/developer/workstation-logs` 查看最近审计摘要。成功输出默认不额外显示 requestId；`--json` 会原样输出 API JSON。
 
@@ -245,6 +249,30 @@ npm run workstation -- collection list --json
 
 Collection list 只展示 metadata，不返回 Storage path、signed URL，不读取 Documents 正文，也不上传文件。
 
+## Future Document Upload Design Only
+
+v1.2.8 设计了未来命令，但当前不可使用：
+
+```bash
+npm run workstation -- document upload \
+  --collection-id "..." \
+  --file "./report.pdf" \
+  --title "因子投资学习材料" \
+  --category "research_material"
+```
+
+未来第一版范围：
+
+- 只上传单个本地文件。
+- 只上传到已有 document collection。
+- 默认 `visibility = "private"`。
+- 由服务端生成 ASCII-safe Storage path。
+- 写入 `documents` metadata。
+- 刷新 collection `file_count` / `total_size`。
+- 记录 `documents.upload_intent` / `documents.finalize` operation logs。
+
+未来第一版仍不支持批量上传、目录上传、自动创建 collection、public 文件、visibility 修改、文件删除、Documents 正文读取、OCR、向量索引、自动摘要、zip 或 signed public URL。该设计需要后续单独 PR 实现 `POST /api/workstation/documents/upload-intent`、受控上传和 `POST /api/workstation/documents/finalize`。
+
 ## Codex Skill Wrapper
 
 项目内 Codex skill 文档位于：
@@ -266,6 +294,7 @@ Collection list 只展示 metadata，不返回 Storage path、signed URL，不�
 - 只允许 Project / Knowledge / Skill 白名单 update。
 - Project update 白名单包含 `progress` 和 `start_date`，但不包含 `current_stage`。
 - 查询和 update 可使用 id 或 slug；slug update 只由 CLI 本地解析到 id 后调用既有 update-by-id API。
+- document upload 目前只是 v1.2.8 设计，不可调用；未来必须新增独立 `upload_documents` capability，并只允许上传到已有 collection、默认 private、服务端生成 Storage path。
 - 不 delete，不 public publish，不修改 visibility。
 - 不操作 Supabase、token、用户权限、Feishu / Lark、Notion、Gmail、MCP server 或 Agent CEO。
 
@@ -353,7 +382,7 @@ CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm ru
 
 ## Boundaries
 
-v1.2.7 CLI / API / Codex skill wrapper 仍明确不支持：
+v1.2.8 CLI / API / Codex skill wrapper 仍明确不支持真实上传；document upload 当前仅有设计文档。当前不支持：
 
 - document upload。
 - upload-intent / finalize。

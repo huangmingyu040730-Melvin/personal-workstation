@@ -1,5 +1,35 @@
 # Decisions
 
+## 2026-06-20 - Add Workstation Document Upload Design
+
+类型：decision
+
+决策：
+
+- v1.2.8 新增 `docs/workstation-document-upload-design.md`，只设计未来 Workstation document upload，不实现真实上传能力。
+- 未来目标命令为 `npm run workstation -- document upload --collection-id ... --file ... --title ... --category ...`。
+- 未来 API 设计为 `POST /api/workstation/documents/upload-intent` 和 `POST /api/workstation/documents/finalize`，中间保留受控上传步骤。
+- 新增未来 capability 设计 `upload_documents`：只允许上传文件到已有 document collection，不隐含 create/update/delete/public publish/visibility manage 或 Documents 正文读取能力。
+- `upload-intent` 负责校验 token、capability、已有 collection、文件大小、MIME type、扩展名和 metadata，并由服务端生成 `upload_id` 与 ASCII-safe `storage_path`。
+- CLI 不决定最终 Storage path；原始中文文件名只保存在 `documents` metadata 中，不作为 path 核心。
+- `finalize` 必须重新校验 `upload_id`、collection、服务端生成的 `storage_path`、上传结果和幂等状态，然后写入默认 private 的 `documents` metadata，并刷新 collection `file_count` / `total_size`。
+- 第一版建议只支持单文件、已有 collection、默认 private、PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG，大小建议 10 MB，最多可在实现 PR 中评审到 20 MB。
+- 第一版明确不支持批量上传、目录上传、自动创建 collection、public 文件、visibility 修改、删除、文件正文读取、OCR、向量索引、自动摘要、zip 和 signed public URL。
+- operation logs action 设计为 `documents.upload_intent` 和 `documents.finalize`；request_summary 只记录 collection_id、filename_ext、mime_type、size_bytes、category，不记录 token、Authorization、service role key、signed URL、完整 Storage path、Documents 正文、文件内容或本地路径。
+- 失败处理要求 `finalize` 幂等或安全拒绝重复提交；upload-intent 成功但上传失败不写 metadata；上传成功但 finalize 失败产生的 orphan object 后续由清理任务处理，不自动公开、不自动删除用户已有文件。
+- 本轮不新增 API route、CLI upload 命令、migration、RLS、Storage policy、bucket visibility、public download route、真实 upload-intent / finalize、signed URL、OCR、vector、AI summary、delete、public publish、visibility manage、token、service role key 或 `.env.local` 写入。
+
+原因：
+
+- v1.2.0 到 v1.2.7 已让 Workstation API / CLI 支持低风险 metadata list/create/update/show，并具备 requestId、operation logs、rate limit 和 dataAccess diagnostics；文件上传是下一类明显高风险能力，需要先单独冻结安全设计。
+- Documents / Storage 涉及 private bucket、Storage path、metadata、collection stats、public attachment 边界和失败清理，不能和普通 Project / Knowledge / Skill metadata update 混在同一实现 PR。
+
+影响：
+
+- 后续文件上传 PR 必须以本文为边界，先实现 upload-intent / controlled upload / finalize 的最小闭环，再独立验证 Storage、RLS、operation logs 和失败清理。
+- 当前 Workstation CLI / Codex skill wrapper 仍不能上传文件；用户如果需要上传，继续走后台 Documents 上传页。
+- 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询、后台网页 CRUD 或 CLI 当前命令。
+
 ## 2026-06-20 - Add Workstation Project Progress And Date Update
 
 类型：decision
