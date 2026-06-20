@@ -154,10 +154,20 @@ async function runAssetCommand(assetType, action, args) {
 }
 
 async function runCollectionCommand(action, args) {
-  if (action !== "list") {
-    throw new CliError(`Unknown collection command: ${action ?? ""}`.trim());
+  if (action === "list") {
+    await runCollectionList(args);
+    return;
   }
 
+  if (action === "show") {
+    await runCollectionShow(args);
+    return;
+  }
+
+  throw new CliError(`Unknown collection command: ${action ?? ""}`.trim());
+}
+
+async function runCollectionList(args) {
   const options = parseOptions(args, {
     q: "q",
     "related-type": "relatedType",
@@ -186,6 +196,28 @@ async function runCollectionCommand(action, args) {
   }
 
   printCollectionList(response.body?.data?.items ?? []);
+}
+
+async function runCollectionShow(args) {
+  const options = parseOptions(args, {
+    id: "id"
+  });
+  const collectionId = options.id?.trim();
+
+  if (!collectionId) {
+    throw new CliError("Missing required option: --id.");
+  }
+
+  const response = await requestWorkstationApi("GET", `/api/workstation/document-collections/${encodeURIComponent(collectionId)}`, {
+    jsonOutput: options.json
+  });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  printCollectionShown(response.body?.data ?? {});
 }
 
 async function runDocumentCommand(action, args) {
@@ -1038,8 +1070,8 @@ function getFriendlyApiHints(error, context) {
   }
 
   if (isDocumentUploadContext(context) && (/document collection not found/i.test(message) || (code === "NOT_FOUND" && /collection/i.test(message)))) {
-    hints.push("Hint: Collection not found. Run:");
-    hints.push("npm run workstation -- collection list --limit 10");
+    hints.push("Hint: Collection not found. Use:");
+    hints.push('npm run workstation -- collection list --q "keyword"');
   }
 
   if (isDocumentUploadContext(context) && isDocumentUploadTypeError(message)) {
@@ -1131,6 +1163,25 @@ function printCollectionList(items) {
     item.total_size,
     item.updated_at
   ]));
+}
+
+function printCollectionShown(data) {
+  console.log("Document collection:");
+
+  for (const field of [
+    "id",
+    "title",
+    "collection_type",
+    "related_type",
+    "related_id",
+    "file_count",
+    "total_size",
+    "visibility",
+    "updated_at",
+    "created_at"
+  ]) {
+    console.log(`- ${field}: ${formatDetail(data[field])}`);
+  }
 }
 
 function printRows(headers, rows) {
@@ -1329,6 +1380,7 @@ Usage:
   npm run workstation -- skill create --name text --slug slug --description text --category text [--platforms codex,github] [--usage text | --usage-file path]
   npm run workstation -- skill update (--id id | --slug slug) [--name text] [--description text] [--category text] [--platforms codex,github] [--status available] [--usage text | --usage-file path]
   npm run workstation -- collection list [--q text] [--related-type project] [--related-id id] [--limit 20] [--page 1] [--cursor 0] [--json]
+  npm run workstation -- collection show --id id [--json]
   npm run workstation -- document upload --collection-id id --file path --title text --category research_material [--json]
 
 Environment:

@@ -937,3 +937,47 @@ export async function listWorkstationDocumentCollections(params: WorkstationList
     }
   };
 }
+
+export async function showWorkstationDocumentCollection(id: string) {
+  const collectionId = id.trim();
+
+  if (!UUID_PATTERN.test(collectionId)) {
+    return {
+      ok: false as const,
+      error: {
+        code: "VALIDATION_ERROR" as const,
+        message: "Invalid document collection id.",
+        status: 400
+      }
+    };
+  }
+
+  const supabaseResult = getSupabase();
+
+  if (!supabaseResult.ok) {
+    return supabaseResult;
+  }
+
+  const { data, error } = await supabaseResult.data
+    .from("document_collections")
+    .select("id,title,description,collection_type,related_type,related_id,file_count,total_size,visibility,updated_at,created_at")
+    .eq("id", collectionId)
+    .maybeSingle();
+
+  if (error) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: error.message || "Failed to read document collection.",
+        status: 500
+      }
+    };
+  }
+
+  if (!data) {
+    return notFoundError("Document collection not found.");
+  }
+
+  return { ok: true as const, data };
+}

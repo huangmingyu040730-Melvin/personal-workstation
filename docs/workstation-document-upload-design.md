@@ -2,9 +2,9 @@
 
 日期：2026-06-21
 
-状态：v1.2.8 完成安全设计；v1.2.9 已实现后端 API MVP；v1.2.10 已实现 server-side controlled upload route 和 CLI `document upload` 单文件 MVP；v1.2.11 已完成上传前摘要、三步进度、友好错误提示、operation logs 验收说明和 Codex skill 同步。当前已有 `upload-intent` / `upload` / `finalize` route、`upload_documents` capability、受控 path 生成、private Storage object 上传、Storage object existence check、默认 private metadata 写入、collection stats 重算和 operation logs。本文件继续作为后续批量 / 目录 / 清理任务 / 更高风险文件能力的边界说明。
+状态：v1.2.8 完成安全设计；v1.2.9 已实现后端 API MVP；v1.2.10 已实现 server-side controlled upload route 和 CLI `document upload` 单文件 MVP；v1.2.11 已完成上传前摘要、三步进度、友好错误提示、operation logs 验收说明和 Codex skill 同步；v1.2.12 已完成上传前 collection resolution polish，新增只读 `collection show` API / CLI 和 `document_collections.show` operation log action。当前已有 `upload-intent` / `upload` / `finalize` route、`upload_documents` capability、受控 path 生成、private Storage object 上传、Storage object existence check、默认 private metadata 写入、collection stats 重算和 operation logs。本文件继续作为后续批量 / 目录 / 清理任务 / 更高风险文件能力的边界说明。
 
-v1.2.11 明确仍不做：不批量上传、不上传目录、不自动创建 collection、不创建 public 文件、不修改 visibility、不删除文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route，不新增 OCR / vector / AI summary / public publish / visibility manage。
+v1.2.12 明确仍不做：不批量上传、不上传目录、不自动创建 collection、不做 collection create / update / delete、不创建 public 文件、不修改 visibility、不删除文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route，不新增 OCR / vector / AI summary / public publish / visibility manage。
 
 ## Why Document Upload
 
@@ -292,12 +292,21 @@ workstation-uploads/collections/{collection_id}/uploads/{upload_id}/file.pdf
 新增 action 设计：
 
 ```text
+document_collections.show
 documents.upload_intent
 documents.upload
 documents.finalize
 ```
 
-`request_summary` 只记录：
+`document_collections.show` 的 `request_summary` 只记录：
+
+```json
+{
+  "collection_id": "..."
+}
+```
+
+`documents.*` upload 链路的 `request_summary` 只记录：
 
 ```json
 {
@@ -369,7 +378,10 @@ npm run workstation -- document upload \
 
 CLI 负责：
 
-- 上传前先由用户或 Codex 通过 `collection list` 获取真实 collection id；CLI 不猜 id、不自动创建 collection。
+- 上传前先由用户或 Codex 通过 `collection list --q "关键词"` 获取候选 collection id。
+- 多个候选时不猜 id，先让用户确认。
+- 可以通过 `collection show --id "..."` 再确认目标文档包安全 metadata。
+- CLI 不猜 id、不自动创建 collection。
 - 检查本地文件存在。
 - 确认目标是普通文件，不是目录。
 - 读取文件大小。
@@ -422,6 +434,12 @@ v1.2.11 新增：
 - CLI 常见错误友好 hint 和错误消息轻量脱敏。
 - 文档化 operation logs 验收方式，避免用打印 token、读取 `.env.local` 或直连数据库绕过后台。
 - Codex skill 同步上传前 collection id、文件类型和默认 private 安全边界。
+
+v1.2.12 新增：
+
+- 只读 collection show API / CLI，用于上传前确认目标 document collection。
+- `document_collections.show` operation log action，request summary 只记录 `collection_id`。
+- 不新增 migration；`workstation_operation_logs` 没有 action constraint，应用层只更新可筛选 action 常量。
 
 后续实现仍可能需要：
 
@@ -503,6 +521,36 @@ v1.2.10 只把 server-side controlled upload route 和 CLI 单文件上传闭环
 - 不修改 public download route。
 - 不新增 OCR / vector / AI summary。
 - 不新增 public publish / visibility manage。
+- 不让 CLI 直连 Supabase。
+- 不让 CLI 读取或保存 service role key。
+- 不写入 token / service role key / `.env.local`。
+
+## Explicit Non-Goals For v1.2.12 Collection Resolution Polish
+
+v1.2.12 只增强上传前 collection 查找、展示和确认流程，仍严格不做：
+
+- 不做 collection create。
+- 不做 collection update。
+- 不做 collection delete。
+- 不自动创建 collection。
+- 不猜 collection id。
+- 不批量上传。
+- 不上传目录。
+- 不创建 public 文件。
+- 不修改 visibility。
+- 不删除文件。
+- 不读取 Documents 正文。
+- 不读取 Storage object body。
+- 不解析 PDF / Word / Excel 内容。
+- 不生成 public link。
+- 不生成 signed URL 或 signed public URL。
+- 不新增 OCR / vector / AI summary。
+- 不新增 upload/delete/public publish/visibility manage。
+- 不修改 RLS。
+- 不修改 Storage policy。
+- 不修改 bucket visibility。
+- 不修改 public download route。
+- 不新增 MCP server、Agent CEO、Notion、飞书或 Gmail 集成。
 - 不让 CLI 直连 Supabase。
 - 不让 CLI 读取或保存 service role key。
 - 不写入 token / service role key / `.env.local`。

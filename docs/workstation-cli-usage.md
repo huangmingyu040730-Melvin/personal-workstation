@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档；v1.2.9 新增后端 `upload-intent` / `finalize` API MVP；v1.2.10 新增 server-side controlled upload route 和 CLI `document upload` 单文件上传闭环；v1.2.11 打磨上传前安全摘要、三步进度、常见错误提示、operation logs 验收文档和 Codex skill 边界。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档；v1.2.9 新增后端 `upload-intent` / `finalize` API MVP；v1.2.10 新增 server-side controlled upload route 和 CLI `document upload` 单文件上传闭环；v1.2.11 打磨上传前安全摘要、三步进度、常见错误提示、operation logs 验收文档和 Codex skill 边界；v1.2.12 新增只读 `collection show --id` 和上传前 collection resolution 流程。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -19,6 +19,8 @@ v1.2.7 后，Project update 可维护 `progress` 和 `start_date`：`--progress`
 过时信息保护：如果旧线程、旧截图或历史版本段落声称 Workstation CLI “只支持 list/create”或“不能 update Project 字段”，应视为 v1.2.1 时期的旧边界。当前能力以 `scripts/workstation.mjs --help`、本文件、`.codex/skills/workstation/SKILL.md` 和 v1.2.7 之后的记录为准。
 
 v1.2.11 后，document upload 已有 CLI MVP 和 UX / safety polish：`document upload` 只上传单个本地普通文件到已有 document collection。CLI 调用 `upload-intent` 获取服务端生成的 `upload_id` / `storage_path`，通过 server-side controlled upload route 写入 private `workspace-files` bucket，再调用 `finalize` 写入默认 private metadata 并刷新 collection stats。非 `--json` 模式会显示上传前安全摘要和 1/3、2/3、3/3 进度；`--json` 仍只输出最终 JSON。CLI 不会生成 Storage path、创建 public link、生成 signed URL、读取 Documents 正文、读取 Storage object body、创建 collection、删除文件或修改 visibility。
+
+v1.2.12 后，上传前可以先用 `collection list --q "关键词"` 搜索候选，再用 `collection show --id ...` 确认目标文档包安全 metadata。多个候选时不要猜 collection id，应让用户确认；CLI 和 Codex 都不得自动创建 collection。
 
 v1.2.3 后，Workstation API 成功 / 失败响应都会包含 `requestId`。CLI 人类可读错误输出会显示该 requestId，便于到后台 `/dashboard/developer/workstation-logs` 查看最近审计摘要。成功输出默认不额外显示 requestId；`--json` 会原样输出 API JSON。
 
@@ -244,20 +246,39 @@ npm run workstation -- skill update \
 ```bash
 npm run workstation -- collection list
 npm run workstation -- collection list --q "resume" --related-type project --related-id "project-id"
+npm run workstation -- collection show --id "collection-id"
 npm run workstation -- collection list --json
 ```
 
 Collection list 展示安全 metadata 和完整 `id`，便于复制到 `document upload --collection-id`。它不返回 Storage path、signed URL，不读取 Documents 正文，也不上传文件。
 
-上传前应先运行 `collection list` 找到真实 collection id，不要猜测 id，也不要为了上传自动创建 collection。人类可读输出列至少包括：
+上传前应先运行 `collection list --q "关键词"` 找到候选 collection id，必要时再运行 `collection show --id "..."` 确认目标文档包。不要猜测 id，也不要为了上传自动创建 collection。人类可读 `collection list` 输出列至少包括：
 
 ```text
 id | title | type | file_count | total_size | updated_at
 ```
 
+`collection show` 是只读查询，只返回安全 metadata：
+
+```text
+Document collection:
+- id: ...
+- title: ...
+- collection_type: ...
+- related_type: ...
+- related_id: ...
+- file_count: ...
+- total_size: ...
+- visibility: ...
+- updated_at: ...
+- created_at: ...
+```
+
+`collection show` 需要 Workstation token 和 `read_assets` capability；它不读取 Documents 正文，不读取 Storage object，不生成 signed URL，不返回 public download link，也不暴露 Storage credential。
+
 ## Document Upload
 
-v1.2.10 起 CLI 支持把单个本地文件上传到已有 document collection；v1.2.11 起非 JSON 输出会先展示安全摘要和三步进度。上传前先用 `collection list` 复制真实 id：
+v1.2.10 起 CLI 支持把单个本地文件上传到已有 document collection；v1.2.11 起非 JSON 输出会先展示安全摘要和三步进度；v1.2.12 起上传前推荐先用 `collection list --q` 和 `collection show --id` 确认真实 id：
 
 ```bash
 npm run workstation -- document upload \
@@ -456,7 +477,7 @@ CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm ru
 上传目标 collection id 不存在或复制错误。先运行：
 
 ```bash
-npm run workstation -- collection list --limit 10
+npm run workstation -- collection list --q "keyword"
 ```
 
 `VALIDATION_ERROR`
@@ -479,8 +500,11 @@ Document upload 的常见本地错误：
 
 ## Boundaries
 
-v1.2.11 CLI / Codex skill wrapper 只支持单文件 document upload 到已有文档包，并只打磨 UX / safety 输出。当前不支持：
+v1.2.12 CLI / Codex skill wrapper 只支持单文件 document upload 到已有文档包，并只增强上传前 collection resolution、UX / safety 输出。当前不支持：
 
+- collection create。
+- collection update。
+- collection delete。
 - 批量 document upload。
 - 目录 upload。
 - 自动创建 collection。

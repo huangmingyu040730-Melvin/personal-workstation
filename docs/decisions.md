@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-06-21 - Add Workstation Collection Resolution Polish
+
+类型：decision
+
+决策：
+
+- v1.2.12 只增强上传前 collection 查找与确认体验，不扩展 document upload 能力边界。
+- 新增只读 `GET /api/workstation/document-collections/[id]`，需要 Workstation token 和 `read_assets` capability，返回安全 metadata：`id`、`title`、`collection_type`、`related_type`、`related_id`、`file_count`、`total_size`、`visibility`、`updated_at`、`created_at`。
+- CLI 新增 `npm run workstation -- collection show --id ...`；`collection list --q`、`--related-type`、`--related-id` 继续作为上传前候选搜索入口，人类可读 list 输出保留完整 id。
+- Codex 上传前应先用 `collection list --q "关键词"` 搜索候选；多个候选时不得猜测，应让用户确认；只有一个明确候选时可使用该 id，并可用 `collection show --id ...` 再确认。
+- 新增 operation log action `document_collections.show`；request summary 只记录 `{ "collection_id": "..." }`，不记录 token、Authorization、service role key、Storage path、Documents 正文、文件内容或 signed URL。
+- 本轮不新增 migration，因为 `workstation_operation_logs` 没有 action constraint；只更新应用层日志筛选常量。
+- 本轮不做 collection create / update / delete，不自动创建 collection，不扩展 upload / delete / public publish / visibility manage，不读取 Documents 正文或 Storage object，不修改 RLS、Storage policy、bucket visibility 或 public download route。
+
+原因：
+
+- v1.2.10 / v1.2.11 已让单文件上传可用，但真实使用时最容易出错的前置步骤是找到正确 document collection id。
+- 增加只读 show 和更明确的搜索流程，可以降低误传到错误文档包的风险，同时不增加写入、公开访问或 Storage 权限面。
+
+影响：
+
+- 用户 / Codex 可先通过 `collection list --q` 缩小候选，再用 `collection show --id` 确认目标文档包 metadata。
+- 后续如需 collection create / update / delete、自动建包、批量 / 目录上传、public publish 或 visibility manage，仍必须单独设计和 PR。
+
 ## 2026-06-21 - Add Workstation Upload UX And Safety Polish
 
 类型：decision
