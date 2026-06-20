@@ -6,6 +6,7 @@ export type WorkstationOperationTargetType =
   | "project"
   | "knowledge"
   | "skill"
+  | "document"
   | "document_collection";
 
 export type WorkstationOperationLogInput = {

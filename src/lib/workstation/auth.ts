@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import { workstationError } from "./api-response";
 
-export const workstationCapabilities = ["read_assets", "create_assets", "update_assets"] as const;
+export const workstationCapabilities = ["read_assets", "create_assets", "update_assets", "upload_documents"] as const;
 
 export type WorkstationCapability = typeof workstationCapabilities[number];
 

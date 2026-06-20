@@ -2,7 +2,9 @@
 
 日期：2026-06-20
 
-状态：v1.2.8 design only。本文只冻结 Workstation document upload 的后续实现设计，不新增真实 API route、CLI 命令、migration、RLS、Storage policy、bucket visibility、public download route，也不上传、读取或解析任何文件。
+状态：v1.2.8 完成安全设计；v1.2.9 已实现后端 API MVP。当前已有 `upload-intent` / `finalize` route、`upload_documents` capability、受控 path 生成、Storage object existence check、默认 private metadata 写入、collection stats 重算和 operation logs；仍没有 CLI `document upload` 命令，也没有真实受控上传器。本文件继续作为后续 CLI upload / controlled upload PR 的边界说明。
+
+v1.2.9 明确仍不做：不新增 CLI upload 命令、不上传文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route，不新增 OCR / vector / AI summary / delete / public publish / visibility manage。
 
 ## Why Document Upload
 
@@ -100,10 +102,16 @@ Workstation CLI
 
 ```json
 {
-  "upload_id": "wup_...",
-  "storage_path": "controlled/path/...",
-  "max_size_bytes": 10485760,
-  "allowed_mime_type": "application/pdf"
+  "ok": true,
+  "data": {
+    "upload_id": "wup_...",
+    "collection_id": "...",
+    "storage_path": "workstation-uploads/collections/.../uploads/.../file.pdf",
+    "max_size_bytes": 10485760,
+    "allowed_mime_type": "application/pdf"
+  },
+  "apiVersion": "v1",
+  "requestId": "wreq_..."
 }
 ```
 
@@ -133,6 +141,8 @@ Workstation CLI
 - 不改变 `workspace-files` bucket private 状态。
 - 不把 service role key、Storage credential、完整 Storage path 或 upload credential 写入日志、PR、文档示例或用户可见错误。
 
+v1.2.9 API MVP 尚未实现这一受控上传步骤。调用方必须先通过后续实现的受控上传器把 object 写入后端返回的 path；`finalize` 在 object 不存在时会拒绝写入 metadata。
+
 ### `POST /api/workstation/documents/finalize`
 
 输入建议：
@@ -145,7 +155,8 @@ Workstation CLI
   "title": "因子投资学习材料",
   "filename": "report.pdf",
   "mime_type": "application/pdf",
-  "size_bytes": 123456
+  "size_bytes": 123456,
+  "category": "research_material"
 }
 ```
 
@@ -153,10 +164,16 @@ Workstation CLI
 
 ```json
 {
-  "id": "...",
-  "title": "...",
-  "visibility": "private",
-  "collection_id": "..."
+  "ok": true,
+  "data": {
+    "id": "...",
+    "title": "...",
+    "visibility": "private",
+    "collection_id": "..."
+  },
+  "message": "Document finalized successfully",
+  "apiVersion": "v1",
+  "requestId": "wreq_..."
 }
 ```
 
@@ -170,6 +187,8 @@ Workstation CLI
 - Storage object 已存在且大小 / MIME type 与 intent 一致，或后端上传流程已确认写入成功。
 - 文件仍写入 `documents.visibility = "private"`。
 - collection stats 刷新成功或失败可明确返回。
+
+v1.2.9 无独立 intent 表，采用 deterministic path MVP：`storage_path` 必须等于后端按 `collection_id + upload_id + extension` 重新计算出的路径。`finalize` 会安全拒绝同一 `storage_path` 已有 document metadata 的重复提交。
 
 ## Capability Design
 
@@ -337,14 +356,18 @@ CLI 不负责：
 
 ## Database / RLS / Storage Impact
 
-本轮只设计，不新增 migration。
+v1.2.8 只设计，不新增 migration。v1.2.9 为 API MVP 新增 `0027_workstation_document_upload_grants.sql`，只补 service_role 对 `documents` select / insert 和 `document_collections` stats update 的最小权限。
 
-后续实现可能需要：
+v1.2.9 已具备：
 
-- `service_role` insert `documents`。
+- `service_role` insert `documents` metadata。
 - `service_role` update `document_collections` stats。
+- `documents.upload_intent` / `documents.finalize` operation logs。
+- private `workspace-files` bucket object existence check，不读取 object body。
+
+后续实现仍可能需要：
+
 - Storage upload policy 或 server-side signed upload design。
-- operation logs action 约束扩展，允许 `documents.upload_intent` 和 `documents.finalize`。
 - upload intent 的短期状态存储方案，可能是数据库表、签名 payload 或只允许短窗口内 finalize 的服务端记录。
 - collection stats 刷新逻辑复用或封装。
 
@@ -375,4 +398,28 @@ CLI 不负责：
 - 不生成 signed URL。
 - 不新增 OCR / vector / AI summary。
 - 不新增 delete / public publish / visibility manage。
+- 不写入 token / service role key / `.env.local`。
+
+## Explicit Non-Goals For v1.2.9 API MVP
+
+v1.2.9 只把后端 API MVP 落地，仍严格不做：
+
+- 不新增 CLI `document upload` 命令。
+- 不实现 controlled upload route 或 CLI-to-Storage 上传器。
+- 不上传文件。
+- 不批量上传。
+- 不上传目录。
+- 不自动创建 collection。
+- 不创建 public 文件。
+- 不修改 visibility。
+- 不删除文件。
+- 不读取 Documents 正文。
+- 不读取 Storage object body。
+- 不生成 signed URL 或 signed public URL。
+- 不修改 RLS。
+- 不修改 Storage policy。
+- 不修改 bucket visibility。
+- 不修改 public download route。
+- 不新增 OCR / vector / AI summary。
+- 不新增 public publish / visibility manage。
 - 不写入 token / service role key / `.env.local`。
