@@ -2,9 +2,9 @@
 
 日期：2026-06-20
 
-版本：v1.1.4 Workstation API/CLI design；v1.2.0 Workstation Admin API MVP；v1.2.1 Workstation CLI MVP；v1.2.2 Workstation diagnostics and CLI query polish
+版本：v1.1.4 Workstation API/CLI design；v1.2.0 Workstation Admin API MVP；v1.2.1 Workstation CLI MVP；v1.2.2 Workstation diagnostics and CLI query polish；v1.2.3 Workstation operation logs and permission hardening
 
-状态：v1.1.4 完成设计；v1.2.0 已新增第一批低风险 Workstation Admin API route；v1.2.1 已新增本地薄层 CLI；v1.2.2 补充 health data access 诊断、CLI health 输出和 Knowledge 按 Project 查询。当前仍不实现文件上传、token 管理页面、token 表、operation_logs 表、migration、RLS 或 Storage policy。
+状态：v1.1.4 完成设计；v1.2.0 已新增第一批低风险 Workstation Admin API route；v1.2.1 已新增本地薄层 CLI；v1.2.2 补充 health data access 诊断、CLI health 输出和 Knowledge 按 Project 查询；v1.2.3 新增 requestId、operation logs、best-effort rate limit 和后台只读日志页。当前仍不实现文件上传、update、delete、public publish、visibility manage、token 管理页面、token 表或 Storage policy。
 
 ## 1. 为什么要做 Workstation API / CLI
 
@@ -141,7 +141,7 @@ workstation document upload --collection-id "<id>" --file ./paper.pdf --category
 | `POST` | `/api/workstation/documents/upload-intent` | 为已有文档包生成受控上传意图 | collection_id、file name、mime、size、category、checksum 可选 | upload id、受控上传信息、finalize payload 摘要 | `upload_documents` | v1.2.0 暂不实现；后续单独 PR 做安全审查 |
 | `POST` | `/api/workstation/documents/finalize` | 上传完成后写入 documents metadata | upload id、文件校验摘要、finalize payload | 新 Document 安全摘要 | `upload_documents` | v1.2.0 暂不实现；后续单独 PR 做安全审查 |
 
-v1.2.0 已新增 health、Project / Knowledge / Skill list/create、Document Collections list 这些第一批真实 API route。v1.2.1 CLI 已调用这些 route。v1.2.2 只增强 health 诊断与 Knowledge list 过滤。Documents upload-intent / finalize 仍是后续阶段，不在 v1.2.0 / v1.2.1 / v1.2.2 中实现。
+v1.2.0 已新增 health、Project / Knowledge / Skill list/create、Document Collections list 这些第一批真实 API route。v1.2.1 CLI 已调用这些 route。v1.2.2 只增强 health 诊断与 Knowledge list 过滤。v1.2.3 为这些 route 增加 requestId、operation logs 和 best-effort rate limit。Documents upload-intent / finalize 仍是后续阶段，不在 v1.2.0 / v1.2.1 / v1.2.2 / v1.2.3 中实现。
 
 ### v1.2.2 data access diagnostics
 
@@ -227,7 +227,7 @@ v1.2.1 实际实现的全局选项先保持更保守：只支持 `--json`，不�
   "ok": true,
   "data": {},
   "message": "Created successfully",
-  "requestId": "req_...",
+  "requestId": "wreq_...",
   "apiVersion": "v1"
 }
 ```
@@ -283,33 +283,41 @@ v1.2.0 先使用服务端环境变量 `WORKSTATION_API_TOKEN` 作为静态 token
 
 ## 9. 操作日志设计
 
-operation logs 用于记录 Codex / CLI 做了什么，和现有 `activity_logs` 的人工后台日志形成互补。第一版设计可以先不建表，但 v1.2.2 应该落地。
+operation logs 用于记录 Codex / CLI 做了什么，和现有 `activity_logs` 的人工后台日志形成互补。v1.2.3 已新增专用表 `workstation_operation_logs`，用于记录 Workstation Admin API 的安全审计摘要。
 
 建议字段：
 
 | 字段 | 说明 |
 | --- | --- |
 | `id` | 日志 ID |
-| `actor_type` | `workstation_cli`、`admin_user`、`system` |
-| `actor_name` | token 显示名或调用来源摘要 |
-| `token_id` | token 记录 ID，不记录明文 token |
-| `action` | `project.create`、`document.upload` 等 |
-| `target_type` | project、knowledge、skill、document、collection |
+| `request_id` | `wreq_...` 请求 ID，响应和日志保持一致 |
+| `actor_type` | 当前为 `workstation_token` |
+| `actor_name` | 预留 token 显示名或调用来源摘要 |
+| `token_hash` | `sha256(token).slice(0, 12)`，不记录明文 token |
+| `action` | `projects.create`、`knowledge.list` 等 |
+| `method` | GET / POST |
+| `route` | `/api/workstation/*` route |
+| `target_type` | system、project、knowledge、skill、document_collection |
 | `target_id` | 目标 ID，可为空 |
 | `request_summary` | 非敏感请求摘要 |
-| `status` | success、failed、blocked |
-| `created_at` | 创建时间 |
-| `ip_hash` | 可选，哈希后的 IP |
-| `user_agent_hash` | 可选，哈希后的 user agent |
+| `status` | success、error |
+| `http_status` | API 响应状态码 |
 | `error_code` | 失败时的 error code |
+| `error_message` | 失败时的截断错误摘要 |
+| `ip_hash` | 哈希后的 IP |
+| `user_agent_hash` | 哈希后的 user agent |
+| `created_at` | 创建时间 |
 
 日志原则：
 
 - 能看到 Codex / CLI 做了什么。
 - 支持排查错误、撤销或人工复盘。
-- 不记录完整 secret、Authorization header、cookie、API key、Supabase key。
-- 不记录大段私密文件正文、Documents 正文、Storage path 或 signed URL。
-- `request_summary` 只存标题、目标类型、目标 id、文件名摘要、大小、category、collection id 等必要信息。
+- 不记录完整 token、Authorization header、cookie、API key、Supabase key、service role key。
+- 不记录大段私密文件正文、Documents 正文、文件内容、Storage path 或 signed URL。
+- `request_summary` 只存标题、slug、category、status、tags_count、has_content / has_usage、过滤条件和 health data access 状态等必要摘要。
+- 后台只读页面为 `/dashboard/developer/workstation-logs`，继承 dashboard admin 保护；页面只展示最近 100 条日志，支持 status、action、target_type 筛选。
+
+v1.2.3 同时新增 best-effort rate limit：同一 `token_hash + ip_hash` 每分钟最多 60 次，POST 创建类每分钟最多 20 次。该限制使用进程内 Map；在 Vercel serverless 环境下不是强一致限流，但可以拦截明显异常调用并记录 `RATE_LIMITED` error log。
 
 ## 10. 文件上传设计
 
@@ -385,30 +393,27 @@ workstation task create
 | v1.2.0 Workstation Admin API MVP | 实现最小 Admin API、静态 token 校验、health、Project / Knowledge / Skill list/create、Document Collections list | 不实现 CLI、文件上传、删除、公开、权限管理 |
 | v1.2.1 Workstation CLI MVP | 已实现 CLI 薄层、health、list、create、collection list | 不直接连接 Supabase，不保存 service role key，不实现文件上传 |
 | v1.2.2 Workstation diagnostics and CLI query polish | 增强 health dataAccess、CLI health、Knowledge `--project-id` 和联调文档 | 不实现 upload、delete、update、public publish、operation logs 或代理依赖 |
-| v1.2.x Operation logs and permission hardening | 后续单独落地 operation logs、rate limit、token rotate / revoke、审计视图 | 不扩展高风险 capability |
+| v1.2.3 Workstation operation logs and permission hardening | 新增 requestId、operation logs、best-effort rate limit、CLI 错误 requestId 和后台日志页 | 不扩展 upload、delete、update、public publish、visibility manage 或 token lifecycle |
+| v1.2.x Token lifecycle / capability hardening | 后续单独评审 token rotate / revoke、更细粒度 capability 和 token 管理 | 不扩展高风险 capability |
 | v1.2.x 后续文件上传 PR | 单独实现 upload-intent / finalize 与 `upload_documents` capability | 不绕过 Storage 安全边界，不开放公开或批量删除 |
 | v1.3.x MCP Server / Agent CEO Workbench exploration | 探索 MCP server 或更高层 agent workbench | 不绕过 Admin API，不恢复已退役 access / viewer / Market Brief |
 
-进入 v1.2.0 前建议先确认：
-
-后续进入 operation logs / permission hardening / 文件上传阶段前建议继续确认：
+后续进入 token lifecycle / 文件上传阶段前建议继续确认：
 
 - token 数据模型与撤销流程。
-- operation log 是否复用 `activity_logs` 还是新增专用表。
 - 文件上传采用哪种短期上传授权机制。
-- rate limit 与 request id 方案。
+- rate limit 是否需要升级为外部存储或平台级强一致限流。
 
 ## 13. 当前确认未做事项
 
-v1.2.1 已实现第一批低风险 Admin API route 与本地薄层 CLI。当前确认仍不做：
+v1.2.3 已实现第一批低风险 Admin API route、本地薄层 CLI、诊断、requestId、operation logs 和 best-effort rate limit。当前确认仍不做：
 
-- 不新增数据库表。
-- 不新增 migration。
 - 不新增文件上传 API。
 - 不新增 npm bin。
 - 不新增 token 生成页面。
 - 不新增真实 token。
-- 不修改 Supabase RLS。
+- 不新增 token 表、token rotate / revoke UI。
+- 不修改既有内容表 Supabase RLS。
 - 不修改 Storage policy。
 - 不修改 bucket visibility。
 - 不修改 public download route。

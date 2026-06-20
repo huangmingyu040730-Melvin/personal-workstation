@@ -555,6 +555,9 @@ function handleApiFailure(status, body, jsonOutput, context = {}) {
     console.error("Workstation API error:");
     console.error(`- code: ${body.error.code ?? "HTTP_ERROR"}`);
     console.error(`- message: ${body.error.message ?? `HTTP ${status}`}`);
+    if (body.requestId) {
+      console.error(`- requestId: ${body.requestId}`);
+    }
     if (shouldPrintServiceRoleGrantHint(body.error.message, context)) {
       console.error("Hint: check Supabase service_role grants for the target table.");
     }

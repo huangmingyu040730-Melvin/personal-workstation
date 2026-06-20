@@ -242,7 +242,6 @@ export async function createWorkstationProject(input: WorkstationProjectCreateIn
     };
   }
 
-  // TODO: v1.2.2 write operation logs after operation_logs migration lands.
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/projects");
 
@@ -368,7 +367,6 @@ export async function createWorkstationKnowledge(input: WorkstationKnowledgeCrea
     };
   }
 
-  // TODO: v1.2.2 write operation logs after operation_logs migration lands.
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/knowledge");
 
@@ -469,7 +467,6 @@ export async function createWorkstationSkill(input: WorkstationSkillCreateInput)
     };
   }
 
-  // TODO: v1.2.2 write operation logs after operation_logs migration lands.
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/skills");
 
