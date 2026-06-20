@@ -19,6 +19,7 @@ const CREATE_FIELD_BLOCKLIST = new Set([
   "createdby"
 ]);
 const TOKEN_FLAG_NAMES = new Set(["token", "api-token", "api_token", "workstation-token", "workstation_token"]);
+const VISIBILITY_FLAG_NAMES = new Set(["visibility"]);
 
 class CliError extends Error {
   constructor(message, exitCode = 1) {
@@ -115,6 +116,11 @@ async function runAssetCommand(assetType, action, args) {
 
   if (action === "create") {
     await runCreate(assetType, args);
+    return;
+  }
+
+  if (action === "update") {
+    await runUpdate(assetType, args);
     return;
   }
 
@@ -285,6 +291,76 @@ async function runCreate(assetType, args) {
   printCreated(assetType, response.body?.data ?? {});
 }
 
+async function runUpdate(assetType, args) {
+  const specs = {
+    project: {
+      id: "id",
+      title: "title",
+      summary: "summary",
+      status: "status",
+      tags: "tags",
+      background: "background",
+      "background-file": "backgroundFile",
+      "background_file": "backgroundFile",
+      "research-question": "researchQuestion",
+      "research_question": "researchQuestion",
+      "research-question-file": "researchQuestionFile",
+      "research_question_file": "researchQuestionFile",
+      methodology: "methodology",
+      "methodology-file": "methodologyFile",
+      "methodology_file": "methodologyFile"
+    },
+    knowledge: {
+      id: "id",
+      title: "title",
+      category: "category",
+      excerpt: "excerpt",
+      content: "content",
+      "content-file": "contentFile",
+      "content_file": "contentFile",
+      tags: "tags",
+      "project-id": "projectId",
+      "project_id": "projectId"
+    },
+    skill: {
+      id: "id",
+      name: "name",
+      description: "description",
+      category: "category",
+      platforms: "platforms",
+      status: "status",
+      content: "content",
+      usage: "usage",
+      "usage-file": "usageFile",
+      "usage_file": "usageFile",
+      "input-description": "inputDescription",
+      "input_description": "inputDescription",
+      "output-description": "outputDescription",
+      "output_description": "outputDescription",
+      "current-version": "currentVersion",
+      "current_version": "currentVersion",
+      "repository-url": "repositoryUrl",
+      "repository_url": "repositoryUrl"
+    }
+  };
+  const options = parseOptions(args, specs[assetType], {
+    rejectOwnerFields: true,
+    rejectVisibility: true
+  });
+  const payload = await buildUpdatePayload(assetType, options);
+  const response = await requestWorkstationApi("PATCH", `/api/workstation/${assetEndpoint(assetType)}/${encodeURIComponent(options.id)}`, {
+    body: payload,
+    jsonOutput: options.json
+  });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  printUpdated(assetType, response.body?.data ?? {}, Object.keys(payload));
+}
+
 function assetEndpoint(assetType) {
   return assetType === "knowledge" ? "knowledge" : `${assetType}s`;
 }
@@ -351,6 +427,65 @@ async function buildCreatePayload(assetType, options) {
   });
 }
 
+async function buildUpdatePayload(assetType, options) {
+  requireOptions(options, ["id"]);
+
+  let payload;
+
+  if (assetType === "project") {
+    validateFilePair(options.background, options.backgroundFile, "background");
+    validateFilePair(options.researchQuestion, options.researchQuestionFile, "research-question");
+    validateFilePair(options.methodology, options.methodologyFile, "methodology");
+
+    payload = stripUndefined({
+      title: options.title,
+      summary: options.summary,
+      status: options.status,
+      tags: options.tags === undefined ? undefined : parseCsv(options.tags),
+      background: options.backgroundFile ? await readTextFile(options.backgroundFile) : options.background,
+      research_question: options.researchQuestionFile ? await readTextFile(options.researchQuestionFile) : options.researchQuestion,
+      methodology: options.methodologyFile ? await readTextFile(options.methodologyFile) : options.methodology
+    });
+  } else if (assetType === "knowledge") {
+    if (options.content && options.contentFile) {
+      throw new CliError("Use either --content or --content-file, not both.");
+    }
+
+    payload = stripUndefined({
+      title: options.title,
+      category: options.category,
+      excerpt: options.excerpt,
+      content: options.contentFile ? await readTextFile(options.contentFile) : options.content,
+      tags: options.tags === undefined ? undefined : parseCsv(options.tags),
+      project_id: options.projectId
+    });
+  } else {
+    if (options.usage && options.usageFile) {
+      throw new CliError("Use either --usage or --usage-file, not both.");
+    }
+
+    payload = stripUndefined({
+      name: options.name,
+      description: options.description,
+      category: options.category,
+      platforms: options.platforms === undefined ? undefined : parseCsv(options.platforms),
+      status: options.status,
+      content: options.content,
+      usage_guide: options.usageFile ? await readTextFile(options.usageFile) : options.usage,
+      input_description: options.inputDescription,
+      output_description: options.outputDescription,
+      current_version: options.currentVersion,
+      repository_url: options.repositoryUrl
+    });
+  }
+
+  if (Object.keys(payload).length === 0) {
+    throw new CliError("At least one update field is required.");
+  }
+
+  return payload;
+}
+
 function parseOptions(args, specs, config = {}) {
   const options = { json: false };
 
@@ -374,6 +509,10 @@ function parseOptions(args, specs, config = {}) {
 
     if (config.rejectOwnerFields && CREATE_FIELD_BLOCKLIST.has(name)) {
       throw new CliError("Owner/user fields are not supported by the Workstation CLI.");
+    }
+
+    if (config.rejectVisibility && VISIBILITY_FLAG_NAMES.has(name)) {
+      throw new CliError("Visibility updates are not supported by the Workstation CLI.");
     }
 
     const target = specs[name];
@@ -447,6 +586,12 @@ function validateCreateVisibility(value) {
   }
 
   throw new CliError("--visibility must be private for create commands.");
+}
+
+function validateFilePair(inlineValue, fileValue, fieldName) {
+  if (inlineValue && fileValue) {
+    throw new CliError(`Use either --${fieldName} or --${fieldName}-file, not both.`);
+  }
 }
 
 function parseCsv(value) {
@@ -661,6 +806,17 @@ function printCreated(assetType, data) {
   console.log(`- visibility: ${data.visibility ?? "private"}`);
 }
 
+function printUpdated(assetType, data, fields) {
+  const label = assetType === "knowledge" ? "knowledge note" : assetType;
+  const title = data.title ?? data.name ?? "(untitled)";
+
+  console.log(`Updated ${label}:`);
+  console.log(`- ${assetType === "skill" ? "name" : "title"}: ${title}`);
+  console.log(`- id: ${data.id ?? "unknown"}`);
+  console.log(`- visibility: ${data.visibility ?? "private"}`);
+  console.log(`- updated_fields: ${fields.length > 0 ? fields.join(", ") : "none"}`);
+}
+
 function printDataAccess(dataAccess) {
   if (!dataAccess) {
     return;
@@ -711,10 +867,13 @@ Usage:
   npm run workstation -- health [--json]
   npm run workstation -- project list [--q text] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- project create --title text --slug slug --summary text [--status in_progress] [--tags a,b]
+  npm run workstation -- project update --id id [--title text] [--summary text] [--status in_progress] [--tags a,b] [--background text | --background-file path] [--research-question text | --research-question-file path] [--methodology text | --methodology-file path]
   npm run workstation -- knowledge list [--q text] [--category text] [--project-id id] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- knowledge create --title text --slug slug --category text [--excerpt text] [--content text | --content-file path] [--tags a,b]
+  npm run workstation -- knowledge update --id id [--title text] [--category text] [--excerpt text] [--content text | --content-file path] [--tags a,b] [--project-id id]
   npm run workstation -- skill list [--q text] [--category text] [--platform codex] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- skill create --name text --slug slug --description text --category text [--platforms codex,github] [--usage text | --usage-file path]
+  npm run workstation -- skill update --id id [--name text] [--description text] [--category text] [--platforms codex,github] [--status available] [--usage text | --usage-file path]
   npm run workstation -- collection list [--q text] [--related-type project] [--related-id id] [--limit 20] [--page 1] [--cursor 0] [--json]
 
 Environment:

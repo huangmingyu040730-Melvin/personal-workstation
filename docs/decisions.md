@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-06-20 - Add Workstation Update API And CLI MVP
+
+类型：decision
+
+决策：
+
+- v1.2.5 新增低风险 Workstation update 能力：`PATCH /api/workstation/projects/[id]`、`PATCH /api/workstation/knowledge/[id]`、`PATCH /api/workstation/skills/[id]`。
+- CLI 新增 `npm run workstation -- project update --id ...`、`knowledge update --id ...`、`skill update --id ...`。
+- 新增 `update_assets` capability，并允许 update route 通过 `update_assets` 或既有 `create_assets` 之一。
+- update 只允许白名单字段：Project 的 title / summary / status / tags / background / research_question / methodology；Knowledge 的 title / category / excerpt / content / tags / project_id；Skill 的 name / description / category / platforms / status / content / usage_guide / input_description / output_description / current_version / repository_url。
+- update route 继续使用 requestId、best-effort rate limit 和 `workstation_operation_logs`，新增 action `projects.update`、`knowledge.update`、`skills.update`。
+- 新增 `0024_workstation_update_service_role_grants.sql`：只让 `workstation_operation_logs.method` 接受 `PATCH`，并给 `service_role` 授予 Projects / Knowledge / Skills 白名单字段的 `update` 权限。
+- operation log request_summary 只记录 id、字段名、tags/platforms 计数和正文/usage presence，不记录完整 content、usage、token、Authorization、service role key、Storage path、signed URL 或 Documents 正文。
+- CLI 继续只读取 `WORKSTATION_API_URL` 和 `WORKSTATION_API_TOKEN`；不支持 `--token`，不读取 `.env.local`，不直连 Supabase，不保存 service role key。
+- 本轮不新增 upload、delete、public publish、visibility manage、Documents 关联更新、Documents 正文读取、Storage object 读取、signed URL、token lifecycle、MCP server、Agent CEO 或外部 app 集成。
+
+原因：
+
+- v1.2.1 到 v1.2.4 已经让 Codex 可通过 CLI 创建和查询 private Project / Knowledge / Skill，但真实维护中需要补充 Project 背景 / 方法、Knowledge 摘要 / 正文 / 关联项目、Skill 使用说明 / 平台等已有资产字段。
+- 先做白名单 update 可解决日常内容维护问题，同时不扩大到文件、公开发布、权限或删除等高风险能力。
+
+影响：
+
+- Codex 可以通过 Workstation CLI 安全补充已有资产 metadata，并用 requestId / operation logs 追踪失败。
+- `visibility` 仍不能通过 Workstation CLI / API 修改；公开发布继续由后台人工流程控制。
+- 部署 v1.2.5 前需要执行 `0024_workstation_update_service_role_grants.sql`；该 migration 不改 RLS、Storage policy、Documents、public download route 或文件数据。
+- 文件上传、token rotate / revoke、MCP / Agent CEO 和外部集成仍需后续独立安全评审。
+
 ## 2026-06-20 - Add Workstation Codex Skill Wrapper
 
 类型：decision

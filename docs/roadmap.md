@@ -30,6 +30,8 @@ v1.2.2 已完成 Workstation diagnostics and CLI query polish；v1.2.3 已完成
 
 v1.2.4 已完成 Workstation Codex Skill wrapper：新增 `.codex/skills/workstation/SKILL.md` 作为 Codex 调用 Workstation CLI 的项目内说明层，明确适用场景、命令入口、环境变量、安全边界、标准流程和错误 requestId 处理。本阶段只做说明包装，不新增任何真实 API / CLI 能力。
 
+v1.2.5 已完成 Workstation update API / CLI MVP：新增 Project / Knowledge / Skill 白名单 update route 与 CLI update 命令，用于安全补充已有资产 metadata。update 继续走 Workstation Admin API、requestId、operation logs 和 rate limit，并通过 `0024_workstation_update_service_role_grants.sql` 补 service_role 白名单 update grant 与 PATCH 日志约束；不开放 visibility update、upload、delete、public publish、Documents / Storage、token lifecycle、MCP 或 Agent CEO。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -941,6 +943,7 @@ Phase 2R-Z 已退役：
 - v1.2.2 Workstation diagnostics and CLI query polish：增强 health data access 诊断、CLI health 输出、Knowledge 按 Project 查询、生产 / 本地 grant checklist 和 Node fetch 代理说明。
 - v1.2.3 Workstation operation logs and permission hardening：已新增 requestId、operation logs、best-effort rate limit、CLI 错误 requestId 输出和后台只读日志页。
 - v1.2.4 Workstation Codex Skill wrapper：已新增 `.codex/skills/workstation/SKILL.md`，指导 Codex 何时和如何调用既有 Workstation CLI，并重申 token、service role、Documents、Storage、upload/delete/update/public publish/visibility manage 等边界。
+- v1.2.5 Workstation update API / CLI MVP：已新增 `project|knowledge|skill update --id ...`，只允许白名单 metadata update，并记录 `projects.update`、`knowledge.update`、`skills.update` operation logs。
 - v1.2.x Token lifecycle / capability hardening：后续再单独评审 token rotate / revoke、capability hardening 和更细粒度授权。
 - v1.2.x 文件上传 PR：单独设计并实现 upload-intent / finalize 和 `upload_documents` capability。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
@@ -981,7 +984,14 @@ v1.2.4 当前边界：
 
 - Skill wrapper 只指导 Codex 使用既有 `npm run workstation -- ...` 命令，不新增命令或 API。
 - Codex 可用 CLI 创建 private Project / Knowledge / Skill、查询 metadata、查询文档包 metadata 和查看 health。
-- Codex 不得用 CLI 或其它方式上传文件、读取 Documents 正文、读取 Storage object、生成 signed URL、删除、更新、公开发布、修改 visibility、批量操作、修改权限、操作 Supabase、操作 service role key、操作 token 或调用外部 app。
+- Codex 不得用 CLI 或其它方式上传文件、读取 Documents 正文、读取 Storage object、生成 signed URL、删除、公开发布、修改 visibility、批量操作、修改权限、操作 Supabase、操作 service role key、操作 token 或调用外部 app。
+
+v1.2.5 当前边界：
+
+- update 只覆盖 Project / Knowledge / Skill 的白名单字段：Project title / summary / status / tags / background / research_question / methodology；Knowledge title / category / excerpt / content / tags / project_id；Skill name / description / category / platforms / status / content / usage_guide / input_description / output_description / current_version / repository_url。
+- update route 需要 `WORKSTATION_API_TOKEN`，要求 `update_assets` 或 `create_assets` capability，受 rate limit 保护，并写入 operation logs。
+- CLI update 继续只读取 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`，不支持 `--token`，不读取 `.env.local`，不直连 Supabase。
+- 不允许 visibility update、owner/user/created_by、Documents 关联、Documents 正文、Storage object、signed URL、upload、delete、public publish、bulk update、token rotate / revoke、MCP server、Agent CEO 或外部 app。
 
 ### Near-term Stable Usage
 
@@ -993,7 +1003,7 @@ v1.2.4 当前边界：
 - 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
 - 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
 - 如继续推进 Workstation API / CLI，优先观察 requestId / logs / rate limit 在生产与本地的可用性，或单独评审 document upload-intent / finalize。
-- Workstation CLI diagnostics 与 operation logs 已完成后，后续如需 token rotate / revoke、文件上传、update/delete/public publish 或 visibility manage，应单独评审安全模型，不和日志 hardening 混在同一轮。
+- Workstation update MVP 完成后，后续如需 token rotate / revoke、文件上传、delete/public publish 或 visibility manage，应单独评审安全模型，不和低风险 metadata update 混在同一轮。
 - Workstation Codex Skill wrapper 完成后，日常“保存到工作台 / 沉淀为 Knowledge / 沉淀为 Skill”请求应优先走 `.codex/skills/workstation/SKILL.md` 描述的 CLI 流程，失败时保留 requestId 便于追踪。
 
 近期不做：

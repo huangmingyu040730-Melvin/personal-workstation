@@ -20,6 +20,10 @@ function arrayCount(value: unknown) {
   return Array.isArray(value) ? value.length : 0;
 }
 
+function fieldNames(input: Record<string, unknown>, allowedFields: string[]) {
+  return allowedFields.filter((field) => Object.prototype.hasOwnProperty.call(input, field));
+}
+
 export function summarizeListRequest(params: WorkstationListParams) {
   return {
     q: params.q,
@@ -55,6 +59,19 @@ export function summarizeProjectCreateRequest(input: unknown) {
   };
 }
 
+export function summarizeProjectUpdateRequest(id: string, input: unknown) {
+  const body = asRecord(input);
+
+  return {
+    id: text(id, 80),
+    fields: fieldNames(body, ["title", "summary", "status", "tags", "background", "research_question", "methodology"]),
+    tags_count: arrayCount(body.tags),
+    has_background: booleanPresence(body.background),
+    has_research_question: booleanPresence(body.research_question),
+    has_methodology: booleanPresence(body.methodology)
+  };
+}
+
 export function summarizeKnowledgeCreateRequest(input: unknown) {
   const body = asRecord(input);
 
@@ -69,6 +86,19 @@ export function summarizeKnowledgeCreateRequest(input: unknown) {
   };
 }
 
+export function summarizeKnowledgeUpdateRequest(id: string, input: unknown) {
+  const body = asRecord(input);
+
+  return {
+    id: text(id, 80),
+    fields: fieldNames(body, ["title", "category", "excerpt", "content", "tags", "project_id"]),
+    tags_count: arrayCount(body.tags),
+    has_excerpt: booleanPresence(body.excerpt),
+    has_content: booleanPresence(body.content),
+    project_id: text(body.project_id, 80)
+  };
+}
+
 export function summarizeSkillCreateRequest(input: unknown) {
   const body = asRecord(input);
 
@@ -80,6 +110,32 @@ export function summarizeSkillCreateRequest(input: unknown) {
     platforms_count: arrayCount(body.platforms),
     has_content: booleanPresence(body.content),
     has_usage: booleanPresence(body.usage) || booleanPresence(body.usage_guide),
+    has_input_description: booleanPresence(body.input_description),
+    has_output_description: booleanPresence(body.output_description)
+  };
+}
+
+export function summarizeSkillUpdateRequest(id: string, input: unknown) {
+  const body = asRecord(input);
+
+  return {
+    id: text(id, 80),
+    fields: fieldNames(body, [
+      "name",
+      "description",
+      "category",
+      "platforms",
+      "status",
+      "content",
+      "usage_guide",
+      "input_description",
+      "output_description",
+      "current_version",
+      "repository_url"
+    ]),
+    platforms_count: arrayCount(body.platforms),
+    has_content: booleanPresence(body.content),
+    has_usage: booleanPresence(body.usage_guide),
     has_input_description: booleanPresence(body.input_description),
     has_output_description: booleanPresence(body.output_description)
   };
