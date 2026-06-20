@@ -934,7 +934,8 @@ Phase 2R-Z 已退役：
 
 - v1.2.0 Workstation Admin API MVP：已实现受控 Admin API、静态 token 校验、health、Project / Knowledge / Skill list/create、Document Collections metadata list。
 - v1.2.1 Workstation CLI MVP：已实现薄层 CLI，负责命令解析、读取本地环境变量、调用 Admin API 和展示结果；先不做文件上传。
-- v1.2.2 Operation logs and permission hardening：落地 operation logs、rate limit、token rotate / revoke、capability hardening 和审计视图。
+- v1.2.2 Workstation diagnostics and CLI query polish：增强 health data access 诊断、CLI health 输出、Knowledge 按 Project 查询、生产 / 本地 grant checklist 和 Node fetch 代理说明。
+- v1.2.x Operation logs and permission hardening：后续再单独落地 operation logs、rate limit、token rotate / revoke、capability hardening 和审计视图。
 - v1.2.x 文件上传 PR：单独设计并实现 upload-intent / finalize 和 `upload_documents` capability。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
 
@@ -955,6 +956,14 @@ v1.2.1 当前边界：
 - CLI 的 `--content-file` 与 `--usage-file` 只读取用户显式传入的本地文本文件，不读取 Documents、Storage object、Skill package 或 private 文件正文。
 - 不新增依赖、不新增 migration、不新增 RLS / Storage policy / public download route 改动。
 
+v1.2.2 当前边界：
+
+- health 只做轻量 `select limit 1` data access 检查，不检查 insert、不插入测试记录、不读取 Documents 正文、不读取 Storage object、不生成 signed URL。
+- CLI health 展示 auth、capabilities 和 dataAccess；`--json` 仍原样输出 API JSON。
+- Knowledge list 支持 `--project-id` / `--project_id`，只作为查询过滤，不新增关联写入或 update 能力。
+- 文档补充 `service_role` grant checklist、本地 fallback 和 Node fetch 代理问题；CLI 仍不保存 service role key，不直连 Supabase，不新增代理依赖。
+- 不新增 upload、delete、update、public publish、visibility manage、token 管理页面、operation logs 落库、RLS / Storage policy / public download route 改动。
+
 ### Near-term Stable Usage
 
 近期只做：
@@ -964,8 +973,8 @@ v1.2.1 当前边界：
 - 使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记，但继续手动检查、手动保存、手动决定 visibility。
 - 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
 - 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
-- 如继续推进 Workstation API / CLI，优先做 CLI 薄层、operation logs / permission hardening，或单独评审 document upload-intent / finalize。
-- Workstation CLI 薄层已完成后，优先做本地 / 生产可达性观察、命令文案小修、operation logs / permission hardening，或单独评审 document upload-intent / finalize。
+- 如继续推进 Workstation API / CLI，优先做本地 / 生产可达性观察、命令文案小修、operation logs / permission hardening，或单独评审 document upload-intent / finalize。
+- Workstation CLI diagnostics 已完成后，后续如需写入审计、rate limit、token rotate / revoke 或文件上传，应单独评审安全模型，不和查询 polish 混在同一轮。
 
 近期不做：
 

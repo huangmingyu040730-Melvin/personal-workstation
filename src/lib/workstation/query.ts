@@ -39,6 +39,7 @@ export type WorkstationListParams = {
   platform: string | null;
   relatedType: DocumentRelatedType | null;
   relatedId: string | null;
+  projectId: string | null;
 };
 
 function getSupabase(): WorkstationQueryResult<WorkstationSupabaseClient> {
@@ -115,6 +116,7 @@ export function parseWorkstationListParams(searchParams: URLSearchParams): Works
   const platform = normalizeSearchTerm(searchParams.get("platform"));
   const relatedTypeParam = searchParams.get("related_type")?.trim() ?? null;
   const relatedId = normalizeSearchTerm(searchParams.get("related_id"));
+  const projectId = normalizeSearchTerm(searchParams.get("project_id"));
 
   if (visibilityParam && visibilityParam !== "all" && !visibilityValues.has(visibilityParam)) {
     return {
@@ -149,7 +151,8 @@ export function parseWorkstationListParams(searchParams: URLSearchParams): Works
       category,
       platform,
       relatedType: relatedTypeParam && relatedTypeParam !== "all" ? relatedTypeParam as DocumentRelatedType : null,
-      relatedId
+      relatedId,
+      projectId
     }
   };
 }
@@ -266,6 +269,10 @@ export async function listWorkstationKnowledge(params: WorkstationListParams) {
 
   if (params.category) {
     query = query.eq("category", params.category);
+  }
+
+  if (params.projectId) {
+    query = query.eq("project_id", params.projectId);
   }
 
   if (search) {

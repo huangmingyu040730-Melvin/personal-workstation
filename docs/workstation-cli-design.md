@@ -2,9 +2,9 @@
 
 日期：2026-06-20
 
-版本：v1.1.4 Workstation API/CLI design；v1.2.0 Workstation Admin API MVP；v1.2.1 Workstation CLI MVP
+版本：v1.1.4 Workstation API/CLI design；v1.2.0 Workstation Admin API MVP；v1.2.1 Workstation CLI MVP；v1.2.2 Workstation diagnostics and CLI query polish
 
-状态：v1.1.4 完成设计；v1.2.0 已新增第一批低风险 Workstation Admin API route；v1.2.1 已新增本地薄层 CLI。当前仍不实现文件上传、token 管理页面、token 表、operation_logs 表、migration、RLS 或 Storage policy。
+状态：v1.1.4 完成设计；v1.2.0 已新增第一批低风险 Workstation Admin API route；v1.2.1 已新增本地薄层 CLI；v1.2.2 补充 health data access 诊断、CLI health 输出和 Knowledge 按 Project 查询。当前仍不实现文件上传、token 管理页面、token 表、operation_logs 表、migration、RLS 或 Storage policy。
 
 ## 1. 为什么要做 Workstation API / CLI
 
@@ -58,10 +58,10 @@ Supabase Auth / RLS / Storage
 
 | 命令 | 用途 | 所需权限 | 备注 |
 | --- | --- | --- | --- |
-| `workstation health` | 检查 Admin API 是否可达、当前 token capability、版本兼容性 | token 存在即可 | 不返回敏感环境信息 |
+| `workstation health` | 检查 Admin API 是否可达、当前 token capability、data access select 诊断和版本兼容性 | token 存在即可 | 不返回敏感环境信息 |
 | `workstation project list` | 查询 Project metadata 列表 | `read_assets` | 支持分页、搜索、visibility filter；不读 Documents 正文 |
 | `workstation project create` | 创建 Project 草稿或 private 记录 | `create_assets` | 默认 private，不自动 public |
-| `workstation knowledge list` | 查询 Knowledge metadata 列表 | `read_assets` | 只返回必要字段 |
+| `workstation knowledge list` | 查询 Knowledge metadata 列表 | `read_assets` | v1.2.2 起支持 `--project-id` 过滤；只返回必要字段 |
 | `workstation knowledge create` | 创建 Knowledge 草稿或 private 记录 | `create_assets` | 默认 private |
 | `workstation skill list` | 查询 Skill metadata 列表 | `read_assets` | Skill package 只展示 metadata |
 | `workstation skill create` | 创建 Skill 草稿或 private 记录 | `create_assets` | 不安装、不解析、不执行 Skill 包 |
@@ -75,6 +75,7 @@ npm run workstation -- health
 npm run workstation -- project list
 npm run workstation -- project create --title "..." --slug "..." --summary "..."
 npm run workstation -- knowledge list
+npm run workstation -- knowledge list --project-id "project-id"
 npm run workstation -- knowledge create --title "..." --slug "..." --category "..."
 npm run workstation -- skill list
 npm run workstation -- skill create --name "..." --slug "..." --description "..." --category "workflow"
@@ -129,10 +130,10 @@ workstation document upload --collection-id "<id>" --file ./paper.pdf --category
 
 | Method | Route | 用途 | 输入 | 输出 | 权限 | 风险与控制 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/workstation/health` | 检查 API 可用性、版本、token capability | 无或轻量 query | `apiVersion`、`cliMinVersion`、`capabilities`、server time | token 有效 | 不返回环境变量、数据库 URL 或内部配置 |
+| `GET` | `/api/workstation/health` | 检查 API 可用性、版本、token capability 和 data access select 状态 | 无或轻量 query | `apiVersion`、`auth`、`capabilities`、`dataAccess` | token 有效 | 只做轻量 `select limit 1`；不返回环境变量、数据库 URL、service role key、Storage path 或内部配置 |
 | `GET` | `/api/workstation/projects` | 查询 Project metadata | `q`、`visibility`、`limit`、`cursor` | Project 列表与分页 | `read_assets` | 不返回 private Documents、raw relation rows 或附件正文 |
 | `POST` | `/api/workstation/projects` | 创建 Project | title、slug、summary、status、tags、visibility 等白名单字段 | 新 Project 的安全摘要 | `create_assets` | 默认 private；不允许 public publish；复用 project schema |
-| `GET` | `/api/workstation/knowledge` | 查询 Knowledge metadata | `q`、`category`、`visibility`、`limit`、`cursor` | Knowledge 列表与分页 | `read_assets` | 不读取 Documents 或 Storage |
+| `GET` | `/api/workstation/knowledge` | 查询 Knowledge metadata | `q`、`category`、`project_id`、`visibility`、`limit`、`cursor` | Knowledge 列表与分页，保留 `project_id` | `read_assets` | 不读取 Documents 或 Storage |
 | `POST` | `/api/workstation/knowledge` | 创建 Knowledge | title、slug、category、excerpt、content、tags、project_id、visibility | 新 Knowledge 摘要 | `create_assets` | 默认 private；不自动公开 |
 | `GET` | `/api/workstation/skills` | 查询 Skill metadata | `q`、`category`、`platform`、`visibility`、`limit`、`cursor` | Skill 列表与分页 | `read_assets` | 不返回 Skill package 文件正文 |
 | `POST` | `/api/workstation/skills` | 创建 Skill | name、slug、description、category、platforms、usage fields、visibility | 新 Skill 摘要 | `create_assets` | 不执行、不安装、不解析上传包 |
@@ -140,7 +141,30 @@ workstation document upload --collection-id "<id>" --file ./paper.pdf --category
 | `POST` | `/api/workstation/documents/upload-intent` | 为已有文档包生成受控上传意图 | collection_id、file name、mime、size、category、checksum 可选 | upload id、受控上传信息、finalize payload 摘要 | `upload_documents` | v1.2.0 暂不实现；后续单独 PR 做安全审查 |
 | `POST` | `/api/workstation/documents/finalize` | 上传完成后写入 documents metadata | upload id、文件校验摘要、finalize payload | 新 Document 安全摘要 | `upload_documents` | v1.2.0 暂不实现；后续单独 PR 做安全审查 |
 
-v1.2.0 已新增 health、Project / Knowledge / Skill list/create、Document Collections list 这些第一批真实 API route。v1.2.1 CLI 已调用这些 route。Documents upload-intent / finalize 仍是后续阶段，不在 v1.2.0 / v1.2.1 中实现。
+v1.2.0 已新增 health、Project / Knowledge / Skill list/create、Document Collections list 这些第一批真实 API route。v1.2.1 CLI 已调用这些 route。v1.2.2 只增强 health 诊断与 Knowledge list 过滤。Documents upload-intent / finalize 仍是后续阶段，不在 v1.2.0 / v1.2.1 / v1.2.2 中实现。
+
+### v1.2.2 data access diagnostics
+
+`/api/workstation/health` 在 token 正确时返回 `auth: "ok"`、capabilities 和 `dataAccess`：
+
+- `configured = false` / `status = "unconfigured"`：服务端缺少 `SUPABASE_SERVICE_ROLE_KEY` 或 Supabase URL，CLI 可连接 API 但不能真实读写数据。
+- `configured = true` / `status = "ok"`：health 对 `projects`、`knowledge_notes`、`skills`、`document_collections` 的轻量 `select limit 1` 检查成功。
+- `configured = true` / `status = "degraded"`：至少一个表的 select 检查失败，返回简化后的错误 message。
+
+health 诊断只检查 select，不插入测试记录，不读取 Documents 正文，不读取 Storage object，不生成 signed URL，也不返回 service role key、Supabase URL/key、Authorization header 或 Storage path。因此 `dataAccess.status = "ok"` 不等于 create 的 insert grant 一定可用。
+
+生产 grant checklist：
+
+```sql
+grant select, insert on table public.projects to service_role;
+grant select, insert on table public.knowledge_notes to service_role;
+grant select, insert on table public.skills to service_role;
+grant select on table public.document_collections to service_role;
+```
+
+grant 应通过 Supabase SQL Editor 或 migration 管理，不要把 service role key 发给 Codex 或写入 CLI。本地真实联调需要 `.env.local` 给 Next.js server 配置 `SUPABASE_SERVICE_ROLE_KEY`；CLI 自身仍只读取 `WORKSTATION_API_TOKEN`。
+
+Node.js 的 `fetch` 不一定自动走 macOS 系统代理。访问 Vercel 超时时优先使用 `WORKSTATION_API_URL=http://localhost:3000` 本地 fallback；必要时使用本机临时 proxy shim 排查，但不要把 shim、代理地址、token 或临时文件提交到仓库。本轮不引入代理依赖，不新增 `WORKSTATION_PROXY`。
 
 ## 6. CLI 命令设计
 
@@ -360,13 +384,14 @@ workstation task create
 | v1.1.4 Workstation API/CLI design | 新增本文档，同步状态与路线；做可行性和安全边界设计 | 不新增 API route、CLI、token、migration、RLS、Storage policy |
 | v1.2.0 Workstation Admin API MVP | 实现最小 Admin API、静态 token 校验、health、Project / Knowledge / Skill list/create、Document Collections list | 不实现 CLI、文件上传、删除、公开、权限管理 |
 | v1.2.1 Workstation CLI MVP | 已实现 CLI 薄层、health、list、create、collection list | 不直接连接 Supabase，不保存 service role key，不实现文件上传 |
-| v1.2.2 Operation logs and permission hardening | 落地 operation logs、rate limit、token rotate / revoke、审计视图 | 不扩展高风险 capability |
+| v1.2.2 Workstation diagnostics and CLI query polish | 增强 health dataAccess、CLI health、Knowledge `--project-id` 和联调文档 | 不实现 upload、delete、update、public publish、operation logs 或代理依赖 |
+| v1.2.x Operation logs and permission hardening | 后续单独落地 operation logs、rate limit、token rotate / revoke、审计视图 | 不扩展高风险 capability |
 | v1.2.x 后续文件上传 PR | 单独实现 upload-intent / finalize 与 `upload_documents` capability | 不绕过 Storage 安全边界，不开放公开或批量删除 |
 | v1.3.x MCP Server / Agent CEO Workbench exploration | 探索 MCP server 或更高层 agent workbench | 不绕过 Admin API，不恢复已退役 access / viewer / Market Brief |
 
 进入 v1.2.0 前建议先确认：
 
-后续进入 v1.2.1 / v1.2.2 / 文件上传阶段前建议继续确认：
+后续进入 operation logs / permission hardening / 文件上传阶段前建议继续确认：
 
 - token 数据模型与撤销流程。
 - operation log 是否复用 `activity_logs` 还是新增专用表。

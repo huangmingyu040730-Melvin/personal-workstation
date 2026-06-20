@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -14,25 +14,38 @@ CLI 是薄层：只解析命令、读取本地环境变量、调用 Workstation 
 
 ## Environment
 
-生产 API 默认地址：
+生产模式：
 
 ```bash
 export WORKSTATION_API_URL="https://personal-workstation.vercel.app"
+export WORKSTATION_API_TOKEN="your-local-workstation-token"
+npm run workstation -- health
 ```
 
-如果不设置 `WORKSTATION_API_URL`，CLI 会使用上面的默认值。本地测试可改为：
+如果不设置 `WORKSTATION_API_URL`，CLI 会使用上面的默认生产地址。token 必须从本地环境变量读取，不要把真实 token 写进仓库、GitHub issue / PR、聊天窗口、日志或命令参数。CLI 不支持 `--token`，避免 token 进入 shell history。
+
+本地模式：
 
 ```bash
 export WORKSTATION_API_URL="http://localhost:3000"
-```
-
-token 必须从本地环境变量读取：
-
-```bash
 export WORKSTATION_API_TOKEN="your-local-workstation-token"
+npm run dev
+npm run workstation -- health
 ```
 
-不要把真实 token 写进仓库、GitHub issue / PR、聊天窗口、日志或命令参数。CLI 不支持 `--token`，避免 token 进入 shell history。
+本地真实 list/create 需要 Next.js server 端 `.env.local` 配置 Supabase data access：
+
+```text
+SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
+```
+
+不要提交 `.env.local`，不要截图或打印 service role key，不要把 service role key 发给 Codex 聊天框。service role key 只给本地或 Vercel 的 Next.js server 使用；CLI 只持有 Workstation token，不能直接读取或保存 service role key。
+
+如果本地 server 缺少 `SUPABASE_SERVICE_ROLE_KEY`，Workstation API 仍可验证 token，但真实 list/create 会返回 data access 未配置，例如：
+
+```text
+Workstation API data access is not configured.
+```
 
 ## Health
 
@@ -41,7 +54,36 @@ npm run workstation -- health
 npm run workstation -- health --json
 ```
 
-成功时会显示 API 版本和 capability，例如 `read_assets, create_assets`。
+成功时会显示 API 版本、auth、capability 和 data access 诊断，例如：
+
+```text
+Workstation API is available
+apiVersion: v1
+auth: ok
+capabilities: read_assets, create_assets
+dataAccess: ok
+- projects.select: ok
+- knowledge.select: ok
+- skills.select: ok
+- documentCollections.select: ok
+```
+
+如果服务端未配置 data access：
+
+```text
+dataAccess: unconfigured
+message: Workstation API data access is not configured.
+```
+
+如果某个表的只读检查失败：
+
+```text
+dataAccess: degraded
+- projects.select: error
+  message: permission denied for table projects
+```
+
+`--json` 会原样输出 API JSON，便于脚本检查 `data.dataAccess`。
 
 ## Project
 
@@ -73,6 +115,7 @@ CLI 不发送 public / unlisted visibility。传入 `--visibility public` 或 `-
 ```bash
 npm run workstation -- knowledge list
 npm run workstation -- knowledge list --q "多因子" --category "因子投资" --limit 10
+npm run workstation -- knowledge list --project-id "project-id" --visibility private
 ```
 
 创建 private Knowledge：
@@ -124,6 +167,33 @@ npm run workstation -- collection list --json
 
 Collection list 只展示 metadata，不返回 Storage path、signed URL，不读取 Documents 正文，也不上传文件。
 
+## Production Data Access Checklist
+
+Workstation Admin API 使用 server-side service role client 作为受控 API 的数据访问方式。Codex / CLI 不直接持有 service role key，但 Vercel Production / Preview 或本地 Next.js server 需要配置服务端 data access。
+
+生产 Supabase 应通过 SQL Editor 或 migration 管理以下最小 grant：
+
+```sql
+grant select, insert on table public.projects to service_role;
+grant select, insert on table public.knowledge_notes to service_role;
+grant select, insert on table public.skills to service_role;
+grant select on table public.document_collections to service_role;
+```
+
+当前表使用 UUID 默认值，不需要在本 checklist 中额外授予 sequence 权限。不要在文档、日志或聊天窗口中记录真实 key。`health` 的 `dataAccess` 只做 `select limit 1` 检查，能发现只读表级权限或配置问题，但不能完全证明 `insert` grant 可用。create 失败并出现 `permission denied for table ...` 时，应优先检查对应表的 `service_role` grant。
+
+## Network And Proxy Notes
+
+Node.js 的 `fetch` 不一定自动走 macOS 系统代理。访问 Vercel 生产 API 超时时，优先使用本地 fallback：
+
+```bash
+export WORKSTATION_API_URL="http://localhost:3000"
+npm run dev
+npm run workstation -- health
+```
+
+必要时可以使用本机临时 proxy shim 作为一次性排查 workaround，但不要把 proxy shim、代理地址、token 或 `/tmp` 辅助文件提交到仓库。本轮不引入代理依赖，也不新增 `WORKSTATION_PROXY`。
+
 ## Common Errors
 
 `Missing WORKSTATION_API_TOKEN`
@@ -138,13 +208,21 @@ token 缺失、错误，或服务端 `WORKSTATION_API_TOKEN` 与本地 token 不
 
 CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm run dev` 后使用 `WORKSTATION_API_URL=http://localhost:3000` 测试。
 
+`Workstation API data access is not configured.`
+
+服务端缺少 Supabase service role data access。生产环境检查 Vercel server env；本地环境检查 `.env.local` 是否配置 `SUPABASE_SERVICE_ROLE_KEY`。不要把该 key 交给 CLI 或贴进聊天窗口。
+
+`permission denied for table ...`
+
+服务端能连接 Supabase，但目标表缺少 `service_role` grant。CLI 在 create 权限错误时会附加提示：`Hint: check Supabase service_role grants for the target table.`
+
 `VALIDATION_ERROR`
 
 输入字段不满足 Admin API schema，例如缺少标题、slug 不合法、tags 格式不符合预期，或尝试传入 public / unlisted visibility。
 
 ## Boundaries
 
-v1.2.1 CLI 明确不支持：
+v1.2.2 CLI 仍明确不支持：
 
 - document upload。
 - upload-intent / finalize。
