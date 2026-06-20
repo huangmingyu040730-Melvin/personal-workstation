@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档，不新增真实 upload 命令。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档；v1.2.9 新增后端 `upload-intent` / `finalize` API MVP，但仍不新增 CLI upload 命令或受控上传器。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -18,7 +18,7 @@ v1.2.7 后，Project update 可维护 `progress` 和 `start_date`：`--progress`
 
 过时信息保护：如果旧线程、旧截图或历史版本段落声称 Workstation CLI “只支持 list/create”或“不能 update Project 字段”，应视为 v1.2.1 时期的旧边界。当前能力以 `scripts/workstation.mjs --help`、本文件、`.codex/skills/workstation/SKILL.md` 和 v1.2.7 之后的记录为准。
 
-v1.2.8 后，document upload 仍是设计阶段。设计文档位于 `docs/workstation-document-upload-design.md`，规划未来 `document upload -> upload-intent -> controlled upload -> finalize`，但当前 CLI 不存在 `document upload` 命令，也不会上传文件、读取 Documents 正文、生成 Storage path、创建 public link 或修改 visibility。
+v1.2.9 后，document upload 已有后端 API MVP：`POST /api/workstation/documents/upload-intent` 可返回服务端生成的 `upload_id` / `storage_path`，`POST /api/workstation/documents/finalize` 可在 object 已存在时写入默认 private metadata 并刷新 collection stats。当前 CLI 仍不存在 `document upload` 命令，也不会上传文件、读取 Documents 正文、生成 Storage path、创建 public link、生成 signed URL 或修改 visibility。
 
 v1.2.3 后，Workstation API 成功 / 失败响应都会包含 `requestId`。CLI 人类可读错误输出会显示该 requestId，便于到后台 `/dashboard/developer/workstation-logs` 查看最近审计摘要。成功输出默认不额外显示 requestId；`--json` 会原样输出 API JSON。
 
@@ -78,7 +78,7 @@ npm run workstation -- health --json
 Workstation API is available
 apiVersion: v1
 auth: ok
-capabilities: read_assets, create_assets, update_assets
+capabilities: read_assets, create_assets, update_assets, upload_documents
 dataAccess: ok
 - projects.select: ok
 - knowledge.select: ok
@@ -249,9 +249,9 @@ npm run workstation -- collection list --json
 
 Collection list 只展示 metadata，不返回 Storage path、signed URL，不读取 Documents 正文，也不上传文件。
 
-## Future Document Upload Design Only
+## Document Upload API MVP
 
-v1.2.8 设计了未来命令，但当前不可使用：
+v1.2.8 设计了未来命令，v1.2.9 已实现后端 API MVP，但当前 CLI 命令仍不可使用：
 
 ```bash
 npm run workstation -- document upload \
@@ -261,7 +261,21 @@ npm run workstation -- document upload \
   --category "research_material"
 ```
 
-未来第一版范围：
+后端 API MVP 已具备：
+
+- `POST /api/workstation/documents/upload-intent`。
+- `POST /api/workstation/documents/finalize`。
+- `upload_documents` capability。
+- 10 MB 单文件上限。
+- PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG / JPEG 白名单。
+- 服务端生成 ASCII-safe Storage path。
+- finalize 前检查 private bucket object 是否存在。
+- 默认 `visibility = "private"`。
+- 写入 `documents` metadata。
+- 重算 collection `file_count` / `total_size`。
+- 记录 `documents.upload_intent` / `documents.finalize` operation logs。
+
+未来 CLI 第一版范围：
 
 - 只上传单个本地文件。
 - 只上传到已有 document collection。
@@ -269,9 +283,8 @@ npm run workstation -- document upload \
 - 由服务端生成 ASCII-safe Storage path。
 - 写入 `documents` metadata。
 - 刷新 collection `file_count` / `total_size`。
-- 记录 `documents.upload_intent` / `documents.finalize` operation logs。
 
-未来第一版仍不支持批量上传、目录上传、自动创建 collection、public 文件、visibility 修改、文件删除、Documents 正文读取、OCR、向量索引、自动摘要、zip 或 signed public URL。该设计需要后续单独 PR 实现 `POST /api/workstation/documents/upload-intent`、受控上传和 `POST /api/workstation/documents/finalize`。
+未来 CLI 第一版仍不支持批量上传、目录上传、自动创建 collection、public 文件、visibility 修改、文件删除、Documents 正文读取、OCR、向量索引、自动摘要、zip 或 signed public URL。受控上传器和 CLI `document upload` 需要后续单独 PR 实现。
 
 ## Codex Skill Wrapper
 
@@ -294,7 +307,7 @@ npm run workstation -- document upload \
 - 只允许 Project / Knowledge / Skill 白名单 update。
 - Project update 白名单包含 `progress` 和 `start_date`，但不包含 `current_stage`。
 - 查询和 update 可使用 id 或 slug；slug update 只由 CLI 本地解析到 id 后调用既有 update-by-id API。
-- document upload 目前只是 v1.2.8 设计，不可调用；未来必须新增独立 `upload_documents` capability，并只允许上传到已有 collection、默认 private、服务端生成 Storage path。
+- document upload 后端 API MVP 已有，但 CLI 命令仍不可调用；后续 CLI 必须使用独立 `upload_documents` capability，并只允许上传到已有 collection、默认 private、服务端生成 Storage path。
 - 不 delete，不 public publish，不修改 visibility。
 - 不操作 Supabase、token、用户权限、Feishu / Lark、Notion、Gmail、MCP server 或 Agent CEO。
 
@@ -382,10 +395,10 @@ CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm ru
 
 ## Boundaries
 
-v1.2.8 CLI / API / Codex skill wrapper 仍明确不支持真实上传；document upload 当前仅有设计文档。当前不支持：
+v1.2.9 CLI / Codex skill wrapper 仍明确不支持真实上传；document upload 当前只有后端 API MVP。当前不支持：
 
 - document upload。
-- upload-intent / finalize。
+- CLI 受控上传器。
 - delete。
 - 非白名单 update。
 - current_stage 字段。

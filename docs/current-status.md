@@ -58,6 +58,8 @@ v1.2.7 Workstation project progress/date update 只扩展 Project update 白名�
 
 v1.2.8 Workstation document upload design 新增 `docs/workstation-document-upload-design.md`，只为后续 CLI document upload 设计 upload-intent、受控上传、finalize、private metadata 写入、collection stats 刷新和 operation logs。设计新增未来 capability `upload_documents`，并明确 Storage path 必须由服务端生成、文件默认 private、只上传到已有 document collection、不读取 Documents 正文、不生成 public link。本轮不新增 API route、CLI upload 命令、migration、RLS、Storage policy、bucket visibility、public download route、真实 upload-intent / finalize、signed URL、OCR、向量索引、AI 摘要、delete、public publish 或 visibility manage。
 
+v1.2.9 Workstation Document Upload API MVP 新增后端 `POST /api/workstation/documents/upload-intent` 和 `POST /api/workstation/documents/finalize`。`upload-intent` 使用新的 `upload_documents` capability 校验已有 document collection、文件大小、MIME type、扩展名、title 和 category，并由服务端生成 ASCII-safe `upload_id` / `storage_path`；`finalize` 重新计算受控 path、验证 Storage object 已存在且可检查的 size / MIME metadata 匹配，安全拒绝重复 finalize，写入默认 private 的 `documents` metadata，并重算 collection `file_count` / `total_size`。该轮只实现后端 API MVP 和最小 service_role grants，不实现 CLI upload 命令、不实现受控上传器、不上传文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -138,6 +140,7 @@ v1.2.8 Workstation document upload design 新增 `docs/workstation-document-uplo
 - v1.2.6 Workstation show / ID resolution polish 已新增 Project / Knowledge / Skill show by id or slug，CLI update 可用 slug 解析到 id 后复用既有 update route，list 人类可读输出包含完整 id；仍不开放 Documents / Storage / upload / delete / public publish / visibility manage。
 - v1.2.7 Workstation project progress/date update 已把 Project update 白名单扩展到 `progress` 和 `start_date`，用于维护项目进度百分比和开始日期；不新增 `current_stage`，不开放 Documents / Storage / upload / delete / public publish / visibility manage。
 - v1.2.8 Workstation document upload design 已新增后续文件上传设计文档，规划未来 `document upload` 命令、`upload-intent` / `finalize` API、`upload_documents` capability、服务端生成 ASCII-safe Storage path、默认 private metadata、collection stats 刷新和 operation logs 摘要；本轮仍不实现真实上传，不新增 API / CLI / migration / Storage / RLS / public download 改动。
+- v1.2.9 Workstation Document Upload API MVP 已新增后端 `upload-intent` / `finalize` route、`upload_documents` capability、Workstation 专用 10 MB 文件限制、受控 `workstation-uploads/collections/{collection_id}/uploads/{upload_id}/file.{ext}` path、Storage object existence check、默认 private metadata 写入、collection stats 重算和 `documents.upload_intent` / `documents.finalize` operation logs；CLI 仍没有 `document upload` 命令，真实受控上传器和 CLI upload 后续单独 PR。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。

@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-06-20 - Implement Workstation Document Upload API MVP
+
+类型：decision
+
+决策：
+
+- v1.2.9 新增后端 `POST /api/workstation/documents/upload-intent` 和 `POST /api/workstation/documents/finalize`，作为 Workstation document upload 的 API MVP。
+- 新增静态 token capability `upload_documents`，只授权上传到已有 document collection 的 intent / finalize 流程；不隐含 `create_assets`、`update_assets`、delete、public publish、visibility manage 或 Documents 正文读取。
+- `upload-intent` 校验 token、capability、已有 collection、title、category、10 MB size limit、MIME type 和扩展名，并返回服务端生成的 `upload_id` 与 ASCII-safe `storage_path`。
+- v1.2.9 采用无 intent 表的最小实现：`storage_path` 由 `collection_id + upload_id + extension` 确定，`finalize` 重新计算期望 path 并只接受完全匹配的输入。
+- `finalize` 在写 metadata 前检查 private `workspace-files` bucket 中目标 object 是否存在；如可获得 Storage metadata，会校验 size / MIME 与输入一致；不存在或无法验证时不写入 `documents`。
+- `finalize` 对同一 `storage_path` 已存在 document metadata 的重复提交做安全拒绝，避免创建重复 document 记录。
+- 成功 `finalize` 写入 `documents` metadata：title -> `name`、原始 `filename` -> `original_name`、`mime_type`、`size_bytes` -> `file_size`、`storage_path`、`collection_id`、`visibility = 'private'`、`category`，并继承文档包 legacy `related_type / related_id`。
+- collection stats 通过重新查询该 collection 下全部 documents 的 `file_size` 后写回 `file_count` / `total_size` / `updated_at`，不做手动 `+1`。
+- 新增 `documents.upload_intent` 和 `documents.finalize` operation logs；request_summary 只记录 `collection_id`、`filename_ext`、`mime_type`、`size_bytes`、`category`，不记录 token、Authorization、service role key、signed URL、完整 Storage path、本地路径、Documents 正文或文件内容。
+- 新增 `0027_workstation_document_upload_grants.sql`，只补 service_role 对 `documents` select / insert 和 `document_collections` stats update 的最小权限。
+- 本轮不新增 CLI upload 命令、不实现受控上传器、不上传文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility、public download route、delete、public publish、visibility manage、token、service role key 或 `.env.local`。
+
+原因：
+
+- v1.2.8 已先冻结文件上传安全设计；v1.2.9 先把 API 边界、metadata 写入和审计闭环落地，仍把真实二进制上传能力与 CLI UX 留给独立 PR，降低一次性改动风险。
+- `finalize` 必须避免为不存在的 object 写入 metadata，因此即使 MVP 暂不提供上传器，也要在落库前做 Storage object existence check。
+
+影响：
+
+- 后续 CLI `document upload` 可复用这两个 API，但仍必须单独实现受控上传步骤。
+- 当前 Workstation CLI / Codex skill wrapper 仍不能上传文件；需要文件上传时继续走后台 Documents 上传页。
+- 本决策不改变既有后台 Documents 浏览器直传流程、public attachment 下载路由、RLS、Storage policy、bucket private 状态或公开页面查询。
+
 ## 2026-06-20 - Add Workstation Document Upload Design
 
 类型：decision

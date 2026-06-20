@@ -9,13 +9,16 @@ export const WORKSTATION_LOG_ACTIONS = [
   "knowledge.create",
   "skills.list",
   "skills.create",
-  "document_collections.list"
+  "document_collections.list",
+  "documents.upload_intent",
+  "documents.finalize"
 ] as const;
 export const WORKSTATION_LOG_TARGET_TYPES = [
   "system",
   "project",
   "knowledge",
   "skill",
+  "document",
   "document_collection"
 ] as const;
 

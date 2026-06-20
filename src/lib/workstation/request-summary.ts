@@ -1,5 +1,6 @@
 import type { WorkstationListParams } from "./query";
 import type { WorkstationLookupType } from "./query";
+import { getWorkstationDocumentFilenameExt } from "./document-upload-schemas";
 
 function asRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -50,6 +51,19 @@ export function summarizeShowRequest(lookup: string, lookupType: WorkstationLook
   return {
     lookup: text(lookup, 120),
     lookup_type: lookupType
+  };
+}
+
+export function summarizeDocumentUploadRequest(input: unknown) {
+  const body = asRecord(input);
+  const filename = text(body.filename, 240);
+
+  return {
+    collection_id: text(body.collection_id, 80),
+    filename_ext: filename ? getWorkstationDocumentFilenameExt(filename) : undefined,
+    mime_type: text(body.mime_type, 120),
+    size_bytes: typeof body.size_bytes === "number" ? body.size_bytes : undefined,
+    category: text(body.category, 80)
   };
 }
 
