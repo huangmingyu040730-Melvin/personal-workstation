@@ -54,6 +54,12 @@ export function summarizeShowRequest(lookup: string, lookupType: WorkstationLook
   };
 }
 
+export function summarizeCollectionShowRequest(collectionId: string) {
+  return {
+    collection_id: text(collectionId, 80)
+  };
+}
+
 export function summarizeDocumentUploadRequest(input: unknown) {
   const body = asRecord(input);
   const filename = text(body.filename, 240);

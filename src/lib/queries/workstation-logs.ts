@@ -10,6 +10,7 @@ export const WORKSTATION_LOG_ACTIONS = [
   "skills.list",
   "skills.create",
   "document_collections.list",
+  "document_collections.show",
   "documents.upload_intent",
   "documents.upload",
   "documents.finalize"

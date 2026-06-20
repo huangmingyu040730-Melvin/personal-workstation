@@ -64,6 +64,8 @@ v1.2.10 Workstation controlled uploader / CLI document upload MVP 新增 `POST /
 
 v1.2.11 Workstation upload UX / safety polish 只打磨 CLI 日常使用体验和验收文档：非 `--json` 上传会先显示 basename、size、MIME type、collection id 和 `visibility: private` 的安全摘要，再显示 `1/3 Created upload intent.`、`2/3 Uploaded file to private storage.`、`3/3 Finalized document metadata.`；`--json` 仍保持纯 finalize JSON。CLI 对 0027 grant 缺失、collection 不存在、文件类型不支持和超过 10 MB 增加友好提示，并继续避免输出本地绝对路径、完整 Storage path、token、Authorization header、service role key、signed URL 或文件内容。本轮不新增 migration、API route、RLS、Storage policy、bucket visibility、public download route、CLI logs 命令、delete、public publish 或 visibility manage，不扩展批量 / 目录 / OCR / vector / AI summary / 外部集成。
 
+v1.2.12 Workstation collection resolution polish 只增强上传前查找文档包 ID 的体验：新增只读 `GET /api/workstation/document-collections/[id]` 和 CLI `npm run workstation -- collection show --id ...`，继续支持 `collection list --q` / `--related-type` / `--related-id`，并记录 `document_collections.show` operation log。上传前应先用 `collection list` / `collection show` 确认真实 collection id；Codex 不猜 id、不自动创建 collection。本轮不新增 migration，不做 collection create / update / delete，不扩展 upload / delete / public publish / visibility manage，不读取 Documents 正文或 Storage object，不修改 RLS、Storage policy、bucket visibility 或 public download route。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -147,6 +149,7 @@ v1.2.11 Workstation upload UX / safety polish 只打磨 CLI 日常使用体验�
 - v1.2.9 Workstation Document Upload API MVP 已新增后端 `upload-intent` / `finalize` route、`upload_documents` capability、Workstation 专用 10 MB 文件限制、受控 `workstation-uploads/collections/{collection_id}/uploads/{upload_id}/file.{ext}` path、Storage object existence check、默认 private metadata 写入、collection stats 重算和 `documents.upload_intent` / `documents.finalize` operation logs；CLI 仍没有 `document upload` 命令，真实受控上传器和 CLI upload 后续单独 PR。
 - v1.2.10 Workstation controlled uploader / CLI document upload MVP 已新增 `documents.upload` 受控上传 route 和 CLI `document upload` 命令，支持把单个本地 PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG / JPEG 上传到已有文档包；上传仍走 Workstation Admin API、`upload_documents` capability、服务端生成 Storage path、private bucket、默认 private metadata、collection stats 刷新和安全 operation logs，不开放批量 / 目录 / public / visibility / delete / OCR / vector / AI summary / signed URL。
 - v1.2.11 Workstation upload UX / safety polish 已让 CLI `document upload` 在非 JSON 模式显示上传前安全摘要和三步进度，在 `--json` 模式保持纯 JSON，并补充 0027 grant、collection 不存在、支持类型和 10 MB 上限的友好错误提示；collection list 继续展示完整 id，文档和 skill 明确上传前先查 id、不猜 id、不自动创建 collection。
+- v1.2.12 Workstation collection resolution polish 已新增 collection show 只读 API / CLI，`collection list --q`、`--related-type`、`--related-id` 和完整 id 输出用于上传前定位文档包；operation logs 新增 `document_collections.show`，request summary 只记录 `collection_id`。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -485,6 +488,8 @@ v1.2.10 Workstation controlled uploader / CLI document upload MVP 不新增 migr
 
 v1.2.11 Workstation upload UX / safety polish 不新增 migration。它只修改 CLI 输出 / hint 和文档 / skill，不新增 API route，不修改 RLS、Storage policy、bucket visibility、public download route、Documents visibility 语义或现有文件数据。
 
+v1.2.12 Workstation collection resolution polish 不新增 migration。`workstation_operation_logs` 没有 action constraint，新增 `document_collections.show` action 只需更新应用层筛选常量；本轮只新增只读 collection show API / CLI 和文档 / skill，不修改 RLS、Storage policy、bucket visibility、public download route、Documents visibility 语义或现有文件数据。
+
 规则：
 
 - 已执行过的 migration 不应修改。
@@ -520,6 +525,7 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 - v1.2.7 后 Project update 还可维护 `progress` 和 `start_date`：`progress` 必须是 0-100 整数，`start_date` 必须是有效 `YYYY-MM-DD` 日期。不要新增或使用 `current_stage` 字段；阶段描述继续放在 summary / background / methodology，或沉淀为关联 Knowledge。
 - v1.2.10 后 Workstation CLI / API 可把单个本地文件上传到已有 document collection：CLI 初检文件，API 生成受控 path，server-side route 写入 private Storage，finalize 写默认 private metadata 并刷新 stats。该能力只覆盖单文件 MVP，不支持批量 / 目录 / 自动建包 / public / visibility 修改 / 删除 / zip / OCR / 向量索引 / AI 摘要 / signed URL。
 - v1.2.11 后 Workstation CLI document upload 更适合日常使用和 Codex 自动执行：上传前先用 `collection list` 获取真实 id，非 JSON 输出会展示安全摘要和三步进度，失败时保留 requestId 并给出 0027 grant、collection list、支持类型或 10 MB 上限提示；operation logs UI 验收优先登录后台查看，本地无 session 时只确认 API 200/201 和 requestId，不为验收打印 token、读取 `.env.local` 或直连数据库。
+- v1.2.12 后上传前 collection resolution 更明确：优先用 `collection list --q "关键词"` 搜索候选，再用 `collection show --id ...` 确认目标文档包安全 metadata；多个候选时不要猜，应让用户确认。该流程不自动创建 collection，不读取 Documents / Storage，不返回 signed URL 或公开下载入口。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
 

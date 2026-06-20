@@ -7,7 +7,7 @@ description: "Use the local Workstation CLI to save, update, query, or upload a 
 
 Use this skill when the user wants Codex to save, update, query low-risk metadata, or upload a single local file to an existing document collection in the personal workstation through the existing Workstation CLI.
 
-v1.2.11 notes: Workstation document upload now has a CLI MVP, server-side controlled uploader, and UX / safety polish. `document upload` is allowed only for one local regular file, an existing document collection, default private metadata, and the Workstation Admin API flow `upload-intent -> upload -> finalize`. Non-JSON upload output shows a safe preflight summary and three progress steps; JSON output remains pure finalize JSON. `docs/workstation-document-upload-design.md` remains the boundary document for anything beyond that MVP.
+v1.2.12 notes: Workstation document upload has a CLI MVP, server-side controlled uploader, UX / safety polish, and collection resolution polish. `document upload` is allowed only for one local regular file, an existing document collection, default private metadata, and the Workstation Admin API flow `upload-intent -> upload -> finalize`. Non-JSON upload output shows a safe preflight summary and three progress steps; JSON output remains pure finalize JSON. Use `collection list --q` and optionally `collection show --id` before upload when the collection id is not already certain. `docs/workstation-document-upload-design.md` remains the boundary document for anything beyond that MVP.
 
 The command entrypoint is:
 
@@ -39,8 +39,9 @@ Common intent mapping:
 - "创建一个 Knowledge" means use `knowledge create`.
 - "把这段内容沉淀成 Skill" means use `skill create`.
 - "看看工作台是否可用" means use `health`.
-- "查一下文档包" means use `collection list`.
-- "上传文件到文档包" means use `document upload` only when the user provides or clearly identifies an existing collection id and a local regular file path. If the id is not certain, run `collection list` first and let the user-visible output supply the id; do not guess one.
+- "查一下文档包" means use `collection list`, optionally with `--q`.
+- "查看这个文档包" means use `collection show --id`.
+- "上传文件到文档包" means use `document upload` only when the user provides or clearly identifies an existing collection id and a local regular file path. If the id is not certain, run `collection list --q "keyword"` first. If there are multiple candidates, ask the user to confirm. If there is one clear candidate, use that id and optionally run `collection show --id` before uploading. Do not guess ids.
 
 ## When Not To Use
 
@@ -115,6 +116,8 @@ Document collection metadata:
 ```bash
 npm run workstation -- collection list
 npm run workstation -- collection list --limit 10
+npm run workstation -- collection list --q "keyword"
+npm run workstation -- collection show --id "COLLECTION_ID"
 ```
 
 Document upload:
@@ -167,13 +170,13 @@ Supported create operations create private metadata only. Supported update opera
 
 The document upload MVP requires `upload_documents`, uploads only to an existing collection, defaults metadata to private, uses a server-generated ASCII-safe Storage path, and avoids reading Documents body text, Storage object body, or generating public links. The CLI must never generate Storage paths itself.
 
-Before uploading a document, confirm the collection id with the user or by running `npm run workstation -- collection list --limit 10`. Do not guess collection ids. Do not create a collection as part of upload.
+Before uploading a document, confirm the collection id with the user or by running `npm run workstation -- collection list --q "keyword"`. If there are multiple plausible candidates, do not guess; ask the user to confirm. If there is one clear candidate, you may use that id and optionally run `npm run workstation -- collection show --id "COLLECTION_ID"` to verify safe metadata. Do not create a collection as part of upload.
 
 ## Standard Workflow
 
 1. Identify whether the user wants to create Project, Knowledge, Skill, show an asset by id or slug, update whitelist metadata, upload a single file to an existing document collection, or query assets.
 2. If the environment is uncertain or this is the first Workstation call in the session, run `npm run workstation -- health`.
-3. For document upload, confirm the local path is a single regular file and the collection id is real. Use `collection list --limit 10` when the id is not already explicit. Do not upload directories, zip/exe/sh/dmg files, or guessed collection ids.
+3. For document upload, confirm the local path is a single regular file and the collection id is real. If the user did not provide a collection id, run `collection list --q "keyword"` using a user-provided or obvious title keyword. If multiple candidates appear, ask the user to choose. If exactly one candidate clearly matches, use its full id and optionally run `collection show --id` to confirm safe metadata. Do not upload directories, zip/exe/sh/dmg files, or guessed collection ids.
 4. Organize the user's content into CLI arguments. Use a local text file only when the user explicitly provides or requests file-based content input.
 5. Run the matching `npm run workstation -- ...` command.
 6. On document upload success, report the document id, title, visibility, and collection id. Do not report Storage path, signed URL, token, service role key, local absolute path, or file content.
@@ -225,6 +228,8 @@ Query document collection metadata:
 
 ```bash
 npm run workstation -- collection list
+npm run workstation -- collection list --q "Memory"
+npm run workstation -- collection show --id "COLLECTION_ID"
 ```
 
 Upload one private document into an existing collection:
@@ -313,7 +318,7 @@ If the CLI returns an error, keep the useful diagnostic fields and avoid secrets
 - `RATE_LIMITED`: requests are too frequent; wait and retry later.
 - `VALIDATION_ERROR`: command arguments or payload fields are invalid.
 - `permission denied for table documents` or `permission denied for table document_collections`: likely means `0027_workstation_document_upload_grants.sql` has not been applied.
-- `Document collection not found`: run `npm run workstation -- collection list --limit 10` and retry with a real id.
+- `Document collection not found`: run `npm run workstation -- collection list --q "keyword"` and retry with a real id.
 - Unsupported upload type: supported types are PDF, DOCX, XLSX, CSV, TXT, MD, PNG, JPG, JPEG.
 - Upload too large: maximum size is 10 MB.
 
