@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-06-20 - Add Workstation Project Progress And Date Update
+
+类型：decision
+
+决策：
+
+- v1.2.7 只扩展 Workstation Project update 白名单，新增 `progress` 和 `start_date` 两个既有 Project 字段。
+- CLI 新增 `project update --progress <0-100>`、`--start-date YYYY-MM-DD` 和 `--start_date YYYY-MM-DD`。
+- `progress` 在 CLI 本地和 API schema 中都校验为 0-100 整数；`start_date` 校验为有效 `YYYY-MM-DD` 日期。
+- Project update 返回字段新增 `progress` 和 `start_date`，便于 CLI / API smoke 读回验证。
+- operation log request_summary 的 Project update `fields` 可包含 `progress` / `start_date`，并新增 `has_progress`、`has_start_date` 布尔摘要；不记录 token、Authorization、service role key、Documents 正文或 Storage path。
+- 新增 `0026_workstation_project_progress_date_update_grants.sql`，只授予 `service_role` 对既有 `projects.progress` 和 `projects.start_date` 的列级 update 权限。
+- 本轮不新增 `current_stage` 字段；阶段信息继续放入 `summary` / `background` / `methodology`，或用关联 Knowledge 记录。
+- 本轮不新增数据库字段、upload、delete、public publish、visibility manage、Documents / Storage、signed URL、token lifecycle、MCP、Agent CEO、外部 app 或 CLI Supabase 直连。
+
+原因：
+
+- v1.2.5 已允许补充 Project metadata，但真实使用中还需要更新项目进度百分比和开始日期，这两个字段已存在于 Project 数据模型和后台表单。
+- 把既有字段纳入白名单比新增 `current_stage` 更低风险，也避免临时阶段描述变成未设计过的数据结构。
+
+影响：
+
+- Codex / 用户可通过 Workstation CLI 维护 Project 的 status、progress 和 start_date，支持按 id 或 slug 更新。
+- 生产 Supabase 需要执行 0026 以补齐 service_role 列级 update grant。
+- Project 阶段名称仍不是结构化字段；需要阶段记录时优先使用 summary/background/methodology 或关联 Knowledge。
+
 ## 2026-06-20 - Add Workstation Show And Slug Resolution Polish
 
 类型：decision

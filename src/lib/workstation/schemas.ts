@@ -29,6 +29,15 @@ const skillStatusSchema = skillStatusValueSchema
   .transform((status): SkillStatus => status);
 
 const updateTextArraySchema = z.array(z.string().trim().min(1));
+const progressSchema = z.number().int("Progress must be an integer.").min(0, "Progress must be at least 0.").max(100, "Progress must be at most 100.");
+const isoDateSchema = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must use YYYY-MM-DD.").refine((value) => {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
+}, "Start date must be a valid date.");
 
 function requireAtLeastOneUpdateField<T extends z.ZodRawShape>(schema: z.ZodObject<T>) {
   return schema.refine((value) => Object.keys(value).length > 0, {
@@ -80,6 +89,8 @@ export const workstationProjectUpdateSchema = requireAtLeastOneUpdateField(z.obj
   title: z.string().trim().min(1, "Title is required").max(120, "Title is too long").optional(),
   summary: z.string().trim().min(1, "Summary is required").max(500, "Summary is too long").optional(),
   status: projectStatusValueSchema.optional(),
+  progress: progressSchema.optional(),
+  start_date: isoDateSchema.optional(),
   tags: updateTextArraySchema.optional(),
   background: optionalText().optional(),
   research_question: optionalText().optional(),

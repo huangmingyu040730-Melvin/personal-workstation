@@ -54,6 +54,8 @@ v1.2.5 Workstation update API / CLI MVP 新增低风险 `PATCH /api/workstation/
 
 v1.2.6 Workstation show / ID resolution polish 新增 `GET /api/workstation/projects/[id]`、`/knowledge/[id]`、`/skills/[id]` 的安全 show 能力，路径段可为 id 或 slug；CLI 新增 `project|knowledge|skill show --id|--slug`，并允许 `project|knowledge|skill update --slug ...` 先通过 show API 解析真实 id 后继续调用既有 update-by-id API。人类可读 list 输出新增完整 `id` 第一列。该轮不新增 migration，不读取 Documents / Storage，不生成 signed URL，不新增 upload / delete / public publish / visibility manage / token lifecycle / Supabase 直连。
 
+v1.2.7 Workstation project progress/date update 只扩展 Project update 白名单，新增 `progress` 和 `start_date` 两个既有字段；CLI 支持 `project update --progress 25 --start-date 2026-06-16` / `--start_date`，progress 校验整数 0-100，start_date 校验 YYYY-MM-DD 有效日期。新增 `0026_workstation_project_progress_date_update_grants.sql` 只给 service_role 补 `projects.progress` / `projects.start_date` 列级 update 权限。不新增 `current_stage` 字段；阶段信息仍建议写入 summary / background / methodology，或用关联 Knowledge 记录。本轮不新增 upload / delete / public publish / visibility manage / Documents / Storage / signed URL / token lifecycle / Supabase 直连。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -132,6 +134,7 @@ v1.2.6 Workstation show / ID resolution polish 新增 `GET /api/workstation/proj
 - v1.2.4 Workstation Codex Skill wrapper 已新增项目内 Codex skill 文档 `.codex/skills/workstation/SKILL.md`，用于指导 Codex 何时调用 Workstation CLI、如何处理 requestId 错误和哪些高风险能力继续禁止；不新增真实 Workstation 能力。
 - v1.2.5 Workstation update API / CLI MVP 已新增 Project / Knowledge / Skill 白名单 update：Project 可补充 title、summary、status、tags、background、research_question、methodology；Knowledge 可补充 title、category、excerpt、content、tags、project_id；Skill 可补充 name、description、category、platforms、status、content、usage_guide、input/output description、current_version、repository_url。update 会写 operation logs，但不开放 upload、delete、public publish 或 visibility manage。
 - v1.2.6 Workstation show / ID resolution polish 已新增 Project / Knowledge / Skill show by id or slug，CLI update 可用 slug 解析到 id 后复用既有 update route，list 人类可读输出包含完整 id；仍不开放 Documents / Storage / upload / delete / public publish / visibility manage。
+- v1.2.7 Workstation project progress/date update 已把 Project update 白名单扩展到 `progress` 和 `start_date`，用于维护项目进度百分比和开始日期；不新增 `current_stage`，不开放 Documents / Storage / upload / delete / public publish / visibility manage。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -460,10 +463,12 @@ v1.2.5 hotfix 新增 `0025_consolidate_workstation_service_role_grants.sql`。�
 
 v1.2.6 Workstation show / ID resolution polish 不新增 migration。它只复用既有 `[id]` route 增加 GET show、CLI show、CLI slug-to-id update 解析和 list 输出字段调整；继续依赖 0025 已固化的 select / update / operation log 权限，不修改 RLS、Storage policy、bucket visibility、Documents 或 public download route。
 
+v1.2.7 Workstation project progress/date update 新增 `0026_workstation_project_progress_date_update_grants.sql`。该 migration 只给 `service_role` 补既有 `projects.progress` 和 `projects.start_date` 的列级 update 权限，不新增字段，不修改 RLS、Storage policy、bucket visibility、Documents、visibility 行为或 public download route。
+
 规则：
 
 - 已执行过的 migration 不应修改。
-- 执行 0025 后，后续数据库变更应新增 `0026_*` 或更高编号。
+- 执行 0026 后，后续数据库变更应新增 `0027_*` 或更高编号。
 - 不得重跑旧 migration。
 - 不得放宽 Storage / RLS。
 - 不得提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL 或 `service_role`。
@@ -492,6 +497,7 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 - v1.2.4 后 Codex 应优先通过 `.codex/skills/workstation/SKILL.md` 判断是否调用 Workstation CLI：保存到工作台、创建 Project / Knowledge / Skill、查询 metadata 和 health 可以使用 CLI；upload、delete、非白名单 update、public publish、visibility manage、Documents 正文、Storage、token / service role 操作和外部应用仍明确禁止。
 - v1.2.5 后 Workstation CLI / API 可用于低风险补充既有 Project / Knowledge / Skill metadata：只更新白名单字段并记录 `projects.update`、`knowledge.update`、`skills.update` operation logs；upload、delete、public publish、visibility manage、Documents / Storage / signed URL、token lifecycle、MCP、Agent CEO 和外部集成仍不开放。
 - v1.2.6 后 Workstation CLI / API 可用 `project|knowledge|skill show --id|--slug` 读回单个资产的安全字段，并可用 `update --slug` 由 CLI 先解析真实 id 后调用既有 update-by-id API；list 输出首列保留完整 id，便于复制到后续命令。show / slug resolution 不读取 Documents、Storage、signed URL、owner 或 service role key。
+- v1.2.7 后 Project update 还可维护 `progress` 和 `start_date`：`progress` 必须是 0-100 整数，`start_date` 必须是有效 `YYYY-MM-DD` 日期。不要新增或使用 `current_stage` 字段；阶段描述继续放在 summary / background / methodology，或沉淀为关联 Knowledge。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
 

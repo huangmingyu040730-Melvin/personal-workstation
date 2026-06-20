@@ -398,7 +398,7 @@ export async function updateWorkstationProject(id: string, input: WorkstationPro
     .from("projects")
     .update(payload)
     .eq("id", id)
-    .select("id,title,slug,summary,status,visibility,updated_at")
+    .select("id,title,slug,summary,status,progress,start_date,visibility,updated_at")
     .single();
 
   if (error) {

@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -13,6 +13,8 @@ npm run workstation -- <command>
 CLI 是薄层：只解析命令、读取本地环境变量、调用 Workstation Admin API 并展示结果。它不直接连接 Supabase，不读取或保存 Supabase service role key，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
 
 v1.2.6 后，Project / Knowledge / Skill 支持按 id 或 slug 查看安全字段；update 仍只调用既有 PATCH by id route，CLI 在收到 `--slug` 且没有 `--id` 时会先通过 show API 解析真实 id，再执行 update。`--id` 和 `--slug` 互斥。
+
+v1.2.7 后，Project update 可维护 `progress` 和 `start_date`：`--progress` 必须是 0-100 整数，`--start-date` / `--start_date` 必须是有效 `YYYY-MM-DD` 日期。本轮不新增 `current_stage` 字段；阶段描述继续写入 `summary` / `background` / `methodology`，或沉淀为关联 Knowledge。
 
 v1.2.3 后，Workstation API 成功 / 失败响应都会包含 `requestId`。CLI 人类可读错误输出会显示该 requestId，便于到后台 `/dashboard/developer/workstation-logs` 查看最近审计摘要。成功输出默认不额外显示 requestId；`--json` 会原样输出 API JSON。
 
@@ -130,6 +132,8 @@ CLI 不发送 public / unlisted visibility。传入 `--visibility public` 或 `-
 ```bash
 npm run workstation -- project update \
   --id "project-id" \
+  --progress 25 \
+  --start-date "2026-06-16" \
   --background "长期研究背景" \
   --research-question "核心研究问题" \
   --methodology "阶段性学习和实验方法" \
@@ -141,10 +145,13 @@ npm run workstation -- project update \
 ```bash
 npm run workstation -- project update \
   --slug "factor-investing-learning-plan" \
+  --status "in_progress" \
+  --progress 25 \
+  --start-date "2026-06-16" \
   --summary "更新后的项目摘要"
 ```
 
-允许字段：`title`、`summary`、`status`、`tags`、`background`、`research_question`、`methodology`。也可以使用 `--background-file`、`--research-question-file`、`--methodology-file` 读取用户显式传入的本地文本文件。
+允许字段：`title`、`summary`、`status`、`progress`、`start_date`、`tags`、`background`、`research_question`、`methodology`。也可以使用 `--background-file`、`--research-question-file`、`--methodology-file` 读取用户显式传入的本地文本文件。CLI 不支持 `--current-stage`。
 
 ## Knowledge
 
@@ -257,6 +264,7 @@ Collection list 只展示 metadata，不返回 Storage path、signed URL，不�
 - 不读取 Supabase service role key。
 - 不上传文件，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
 - 只允许 Project / Knowledge / Skill 白名单 update。
+- Project update 白名单包含 `progress` 和 `start_date`，但不包含 `current_stage`。
 - 查询和 update 可使用 id 或 slug；slug update 只由 CLI 本地解析到 id 后调用既有 update-by-id API。
 - 不 delete，不 public publish，不修改 visibility。
 - 不操作 Supabase、token、用户权限、Feishu / Lark、Notion、Gmail、MCP server 或 Agent CEO。
@@ -273,7 +281,7 @@ requestId: wreq_...
 
 Workstation Admin API 使用 server-side service role client 作为受控 API 的数据访问方式。Codex / CLI 不直接持有 service role key，但 Vercel Production / Preview 或本地 Next.js server 需要配置服务端 data access。
 
-生产 Supabase 应执行 `0025_consolidate_workstation_service_role_grants.sql` 固化 Workstation Admin API 已需的最小 grant。等价权限范围包括：
+生产 Supabase 应执行 `0025_consolidate_workstation_service_role_grants.sql` 固化 Workstation Admin API 已需的最小 grant，并执行 `0026_workstation_project_progress_date_update_grants.sql` 补 Project 进度 / 开始日期 update 权限。等价权限范围包括：
 
 ```sql
 grant select, insert, update on table public.projects to service_role;
@@ -285,7 +293,7 @@ grant select, insert on table public.workstation_operation_logs to service_role;
 
 当前表使用 UUID 默认值，不需要在本 checklist 中额外授予 sequence 权限。不要在文档、日志或聊天窗口中记录真实 key。`health` 的 `dataAccess` 只做 `select limit 1` 检查，能发现只读表级权限或配置问题，但不能完全证明 `insert` / `update` grant 可用。create / update 失败并出现 `permission denied for table ...` 时，应优先检查对应表的 `service_role` grant。
 
-`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；`0024_workstation_update_service_role_grants.sql` 让日志 method 约束接受 PATCH，并补 Workstation update 所需的白名单字段 update grant；`0025_consolidate_workstation_service_role_grants.sql` 再把 Project / Knowledge / Skill list/create/update、Document Collections list 和 operation logs 写入所需权限一次性固化。RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。后台只读页面：
+`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；`0024_workstation_update_service_role_grants.sql` 让日志 method 约束接受 PATCH，并补 Workstation update 所需的白名单字段 update grant；`0025_consolidate_workstation_service_role_grants.sql` 再把 Project / Knowledge / Skill list/create/update、Document Collections list 和 operation logs 写入所需权限一次性固化；`0026_workstation_project_progress_date_update_grants.sql` 只补 `projects.progress` / `projects.start_date` 两个既有字段的 update grant。RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。后台只读页面：
 
 ```text
 /dashboard/developer/workstation-logs
@@ -345,12 +353,13 @@ CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm ru
 
 ## Boundaries
 
-v1.2.5 CLI / API / Codex skill wrapper 仍明确不支持：
+v1.2.7 CLI / API / Codex skill wrapper 仍明确不支持：
 
 - document upload。
 - upload-intent / finalize。
 - delete。
 - 非白名单 update。
+- current_stage 字段。
 - public publish。
 - visibility manage。
 - token 管理页面。
