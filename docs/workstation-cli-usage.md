@@ -1,10 +1,10 @@
 # Workstation CLI Usage
 
-日期：2026-06-20
+日期：2026-06-21
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档；v1.2.9 新增后端 `upload-intent` / `finalize` API MVP；v1.2.10 新增 server-side controlled upload route 和 CLI `document upload` 单文件上传闭环。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档；v1.2.9 新增后端 `upload-intent` / `finalize` API MVP；v1.2.10 新增 server-side controlled upload route 和 CLI `document upload` 单文件上传闭环；v1.2.11 打磨上传前安全摘要、三步进度、常见错误提示、operation logs 验收文档和 Codex skill 边界。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -18,7 +18,7 @@ v1.2.7 后，Project update 可维护 `progress` 和 `start_date`：`--progress`
 
 过时信息保护：如果旧线程、旧截图或历史版本段落声称 Workstation CLI “只支持 list/create”或“不能 update Project 字段”，应视为 v1.2.1 时期的旧边界。当前能力以 `scripts/workstation.mjs --help`、本文件、`.codex/skills/workstation/SKILL.md` 和 v1.2.7 之后的记录为准。
 
-v1.2.10 后，document upload 已有 CLI MVP：`document upload` 只上传单个本地普通文件到已有 document collection。CLI 调用 `upload-intent` 获取服务端生成的 `upload_id` / `storage_path`，通过 server-side controlled upload route 写入 private `workspace-files` bucket，再调用 `finalize` 写入默认 private metadata 并刷新 collection stats。CLI 不会生成 Storage path、创建 public link、生成 signed URL、读取 Documents 正文、读取 Storage object body、创建 collection、删除文件或修改 visibility。
+v1.2.11 后，document upload 已有 CLI MVP 和 UX / safety polish：`document upload` 只上传单个本地普通文件到已有 document collection。CLI 调用 `upload-intent` 获取服务端生成的 `upload_id` / `storage_path`，通过 server-side controlled upload route 写入 private `workspace-files` bucket，再调用 `finalize` 写入默认 private metadata 并刷新 collection stats。非 `--json` 模式会显示上传前安全摘要和 1/3、2/3、3/3 进度；`--json` 仍只输出最终 JSON。CLI 不会生成 Storage path、创建 public link、生成 signed URL、读取 Documents 正文、读取 Storage object body、创建 collection、删除文件或修改 visibility。
 
 v1.2.3 后，Workstation API 成功 / 失败响应都会包含 `requestId`。CLI 人类可读错误输出会显示该 requestId，便于到后台 `/dashboard/developer/workstation-logs` 查看最近审计摘要。成功输出默认不额外显示 requestId；`--json` 会原样输出 API JSON。
 
@@ -249,9 +249,15 @@ npm run workstation -- collection list --json
 
 Collection list 展示安全 metadata 和完整 `id`，便于复制到 `document upload --collection-id`。它不返回 Storage path、signed URL，不读取 Documents 正文，也不上传文件。
 
+上传前应先运行 `collection list` 找到真实 collection id，不要猜测 id，也不要为了上传自动创建 collection。人类可读输出列至少包括：
+
+```text
+id | title | type | file_count | total_size | updated_at
+```
+
 ## Document Upload
 
-v1.2.10 起 CLI 支持把单个本地文件上传到已有 document collection：
+v1.2.10 起 CLI 支持把单个本地文件上传到已有 document collection；v1.2.11 起非 JSON 输出会先展示安全摘要和三步进度。上传前先用 `collection list` 复制真实 id：
 
 ```bash
 npm run workstation -- document upload \
@@ -264,6 +270,15 @@ npm run workstation -- document upload \
 成功的人类可读输出：
 
 ```text
+Preparing document upload:
+- file: report.pdf
+- size: 123456 bytes
+- mime_type: application/pdf
+- collection_id: ...
+- visibility: private
+1/3 Created upload intent.
+2/3 Uploaded file to private storage.
+3/3 Finalized document metadata.
 Uploaded document:
 - title: 因子投资学习材料
 - id: ...
@@ -271,7 +286,9 @@ Uploaded document:
 - collection_id: ...
 ```
 
-`--json` 只输出最终 `finalize` 的 API JSON，不输出中间 `upload-intent` / `upload` 响应。
+上传前摘要只显示 basename，不显示本地绝对路径。它也不显示 Storage path、token、Authorization、service role key、signed URL、upload credential 或文件内容。
+
+`--json` 只输出最终 `finalize` 的 API JSON，不输出上传前摘要、三步进度或中间 `upload-intent` / `upload` 响应。
 
 CLI 本地负责：
 
@@ -282,6 +299,8 @@ CLI 本地负责：
 - 根据扩展名猜测 MIME type。
 - 拒绝 `.zip`、`.sh`、`.exe`、`.dmg`、`.app` 等压缩包、脚本、安装包和可执行文件。
 - 调用 `upload-intent`、受控上传 route 和 `finalize`。
+- 在非 `--json` 模式输出安全摘要和三步进度。
+- 在常见失败场景下输出不含 secret 的 hint。
 
 后端负责：
 
@@ -372,13 +391,21 @@ grant select, insert on table public.workstation_operation_logs to service_role;
 
 当前表使用 UUID 默认值，不需要在本 checklist 中额外授予 sequence 权限。不要在文档、日志或聊天窗口中记录真实 key。`health` 的 `dataAccess` 只做 `select limit 1` 检查，能发现只读表级权限或配置问题，但不能完全证明 `insert` / `update` grant 可用。create / update 失败并出现 `permission denied for table ...` 时，应优先检查对应表的 `service_role` grant。
 
-`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；`0024_workstation_update_service_role_grants.sql` 让日志 method 约束接受 PATCH，并补 Workstation update 所需的白名单字段 update grant；`0025_consolidate_workstation_service_role_grants.sql` 再把 Project / Knowledge / Skill list/create/update、Document Collections list 和 operation logs 写入所需权限一次性固化；`0026_workstation_project_progress_date_update_grants.sql` 只补 `projects.progress` / `projects.start_date` 两个既有字段的 update grant；`0027_workstation_document_upload_grants.sql` 只补 `documents` metadata insert / select 和 `document_collections` stats update。RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。后台只读页面：
+`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；`0024_workstation_update_service_role_grants.sql` 让日志 method 约束接受 PATCH，并补 Workstation update 所需的白名单字段 update grant；`0025_consolidate_workstation_service_role_grants.sql` 再把 Project / Knowledge / Skill list/create/update、Document Collections list 和 operation logs 写入所需权限一次性固化；`0026_workstation_project_progress_date_update_grants.sql` 只补 `projects.progress` / `projects.start_date` 两个既有字段的 update grant；`0027_workstation_document_upload_grants.sql` 只补 `documents` metadata insert / select 和 `document_collections` stats update。RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。
+
+验证 operation logs 的推荐方式：
+
+1. 登录后台后打开只读页面：
 
 ```text
 /dashboard/developer/workstation-logs
 ```
 
-该页面展示最近 100 条日志，并支持 `status`、`action`、`target_type` 筛选；不展示 token、Authorization header、service role key、signed URL、Storage path、Documents 正文或完整请求体。
+该页面展示最近 100 条日志，并支持 `status`、`action`、`target_type` 筛选。document upload 应能看到 `documents.upload_intent`、`documents.upload`、`documents.finalize`。
+
+2. 如果本地没有登录 session，页面可能跳转 `/login`。这时至少确认本地 API route 返回 200/201 和响应里有 requestId；不要为了验收去打印 token、读取 `.env.local`、展示 service role key，或直连数据库绕过后台。
+
+operation logs 不展示 token、Authorization header、service role key、signed URL、Storage path、Documents 正文、文件内容或完整请求体。
 
 ## Network And Proxy Notes
 
@@ -422,6 +449,16 @@ CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm ru
 
 服务端能连接 Supabase，但目标表缺少 `service_role` grant。CLI 在 create 权限错误时会附加提示：`Hint: check Supabase service_role grants for the target table.`
 
+如果 document upload 返回 `permission denied for table documents` 或 `permission denied for table document_collections`，通常说明 Supabase migration `0027_workstation_document_upload_grants.sql` 尚未应用。
+
+`Collection not found`
+
+上传目标 collection id 不存在或复制错误。先运行：
+
+```bash
+npm run workstation -- collection list --limit 10
+```
+
 `VALIDATION_ERROR`
 
 输入字段不满足 Admin API schema，例如缺少标题、slug 不合法、tags 格式不符合预期、update 未传任何可更新字段，或尝试传入 public / unlisted visibility。
@@ -431,8 +468,8 @@ Document upload 的常见本地错误：
 - `Upload file does not exist or cannot be read.`
 - `Upload file must be a regular file, not a directory.`
 - `Upload file must not be empty.`
-- `Upload file must be 10 MB or smaller.`
-- `Executable, installer, archive, and script files are not supported.`
+- `Upload file is too large. Maximum size: 10 MB.`
+- `Unsupported upload file type. Supported types: PDF, DOCX, XLSX, CSV, TXT, MD, PNG, JPG, JPEG.`
 
 这些错误在发起上传前本地拒绝，不会读取 Documents 正文、不会生成 Storage path，也不会上传文件。
 
@@ -442,7 +479,7 @@ Document upload 的常见本地错误：
 
 ## Boundaries
 
-v1.2.10 CLI / Codex skill wrapper 只支持单文件 document upload 到已有文档包。当前不支持：
+v1.2.11 CLI / Codex skill wrapper 只支持单文件 document upload 到已有文档包，并只打磨 UX / safety 输出。当前不支持：
 
 - 批量 document upload。
 - 目录 upload。
