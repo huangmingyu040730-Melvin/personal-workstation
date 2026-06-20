@@ -11,6 +11,7 @@ export const WORKSTATION_LOG_ACTIONS = [
   "skills.create",
   "document_collections.list",
   "documents.upload_intent",
+  "documents.upload",
   "documents.finalize"
 ] as const;
 export const WORKSTATION_LOG_TARGET_TYPES = [

@@ -1,5 +1,36 @@
 # Decisions
 
+## 2026-06-20 - Implement Workstation Controlled Uploader And CLI Document Upload MVP
+
+类型：decision
+
+决策：
+
+- v1.2.10 新增 `POST /api/workstation/documents/upload`，作为 Workstation document upload 的 server-side controlled upload route。
+- CLI 新增 `npm run workstation -- document upload --collection-id ... --file ... --title ... --category ...`，第一版只支持单个本地普通文件上传到已有 document collection。
+- CLI 流程固定为：本地文件初检 -> `upload-intent` -> multipart controlled upload -> `finalize` -> 输出 document id / title / visibility / collection_id。
+- CLI 只校验文件存在、不是目录、非空、10 MB 以内、扩展名允许，并按扩展名猜测 MIME type；最终 path、collection、MIME、size 和 object 写入仍由后端校验。
+- controlled upload route 需要 `upload_documents` capability，重新计算服务端受控 `storage_path`，拒绝 path mismatch、collection 不存在、空文件、大小不一致、MIME 不一致和目标 object 已存在。
+- Storage 写入由 Next.js server 使用 service-role client 上传到 private `workspace-files` bucket；CLI 不直连 Supabase，不读取 service role key，不生成 signed URL，不获取 Storage credential。
+- 成功上传 route 只返回 `upload_id`、`collection_id` 和 `uploaded: true`；CLI 人类可读输出只展示 finalize 后的 document id / title / visibility / collection_id，`--json` 只输出 finalize JSON。
+- 新增 operation log action `documents.upload`；`documents.upload_intent` / `documents.upload` / `documents.finalize` 的 request_summary 继续只记录 `collection_id`、`filename_ext`、`mime_type`、`size_bytes`、`category`，不记录 token、Authorization、service role key、signed URL、完整 Storage path、本地绝对路径、Documents 正文或文件内容。
+- `collection list` 人类可读输出补充完整 `id`，便于复制到 `document upload --collection-id`。
+- 本轮不新增 migration；继续依赖 v1.2.9 的 `0027_workstation_document_upload_grants.sql`，因为新 route 不需要额外数据库 grant。
+- 本轮不修改 RLS、Storage policy、bucket visibility、public download route、Documents visibility 管理流程或既有文件数据。
+- 本轮不支持批量上传、目录上传、自动创建 collection、public 文件、visibility 修改、文件删除、Documents 正文读取、Storage object body 读取、OCR、向量索引、自动摘要、zip、signed public URL、MCP、Agent CEO 或外部 app 集成。
+
+原因：
+
+- v1.2.9 已有 upload-intent / finalize，但没有二进制上传步骤；CLI 若直连 Supabase 或自行生成 Storage path 会绕过既定安全边界。
+- server-side controlled upload route 让 CLI 只持有 Workstation token，把 private Storage 写入、service-role credential 和最终 object key 都留在后端控制内。
+- 第一版只做单文件到已有文档包，可先验证最小闭环、operation logs、collection stats 和失败处理，再评审更复杂的批量 / 目录 / 清理任务。
+
+影响：
+
+- Codex / 用户现在可通过 Workstation CLI 上传小型研究材料到已有文档包，文件 metadata 默认 private。
+- Operation logs 可追踪 intent、upload、finalize 三段链路，但不会暴露 Storage path、文件内容或本地路径。
+- 后续如需 orphan object 清理、upload intent 过期状态、批量 / 目录上传、delete、public publish 或 visibility manage，需要单独设计和 PR。
+
 ## 2026-06-20 - Implement Workstation Document Upload API MVP
 
 类型：decision
@@ -26,7 +57,7 @@
 影响：
 
 - 后续 CLI `document upload` 可复用这两个 API，但仍必须单独实现受控上传步骤。
-- 当前 Workstation CLI / Codex skill wrapper 仍不能上传文件；需要文件上传时继续走后台 Documents 上传页。
+- v1.2.9 当时 Workstation CLI / Codex skill wrapper 仍不能上传文件；需要文件上传时继续走后台 Documents 上传页。
 - 本决策不改变既有后台 Documents 浏览器直传流程、public attachment 下载路由、RLS、Storage policy、bucket private 状态或公开页面查询。
 
 ## 2026-06-20 - Add Workstation Document Upload Design
@@ -56,7 +87,7 @@
 影响：
 
 - 后续文件上传 PR 必须以本文为边界，先实现 upload-intent / controlled upload / finalize 的最小闭环，再独立验证 Storage、RLS、operation logs 和失败清理。
-- 当前 Workstation CLI / Codex skill wrapper 仍不能上传文件；用户如果需要上传，继续走后台 Documents 上传页。
+- v1.2.8 当时 Workstation CLI / Codex skill wrapper 仍不能上传文件；用户如果需要上传，继续走后台 Documents 上传页。
 - 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询、后台网页 CRUD 或 CLI 当前命令。
 
 ## 2026-06-20 - Add Workstation Project Progress And Date Update

@@ -2,9 +2,9 @@
 
 日期：2026-06-20
 
-状态：v1.2.8 完成安全设计；v1.2.9 已实现后端 API MVP。当前已有 `upload-intent` / `finalize` route、`upload_documents` capability、受控 path 生成、Storage object existence check、默认 private metadata 写入、collection stats 重算和 operation logs；仍没有 CLI `document upload` 命令，也没有真实受控上传器。本文件继续作为后续 CLI upload / controlled upload PR 的边界说明。
+状态：v1.2.8 完成安全设计；v1.2.9 已实现后端 API MVP；v1.2.10 已实现 server-side controlled upload route 和 CLI `document upload` 单文件 MVP。当前已有 `upload-intent` / `upload` / `finalize` route、`upload_documents` capability、受控 path 生成、private Storage object 上传、Storage object existence check、默认 private metadata 写入、collection stats 重算和 operation logs。本文件继续作为后续批量 / 目录 / 清理任务 / 更高风险文件能力的边界说明。
 
-v1.2.9 明确仍不做：不新增 CLI upload 命令、不上传文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route，不新增 OCR / vector / AI summary / delete / public publish / visibility manage。
+v1.2.10 明确仍不做：不批量上传、不上传目录、不自动创建 collection、不创建 public 文件、不修改 visibility、不删除文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route，不新增 OCR / vector / AI summary / public publish / visibility manage。
 
 ## Why Document Upload
 
@@ -14,7 +14,8 @@ Workstation API / CLI 已支持 Project / Knowledge / Skill 的 list、create、
 npm run workstation -- document upload \
   --collection-id "..." \
   --file "./report.pdf" \
-  --title "因子投资学习材料"
+  --title "因子投资学习材料" \
+  --category "research_material"
 ```
 
 这个能力的价值是把本地研究材料、学习资料、报告草稿和轻量附件沉淀到既有 document collection，避免管理员先手动进入后台上传再回到 CLI 维护 metadata。
@@ -127,21 +128,53 @@ Workstation CLI
 - `filename` 仅作为 metadata 输入，不作为 Storage path 核心。
 - `title` / `category` 满足 documents 现有 metadata 约束。
 
-### Controlled Upload
+### `POST /api/workstation/documents/upload`
 
-受控上传的具体实现留到后续 PR 决定，可选方向包括：
+v1.2.10 选择 server-side controlled upload route，而不是让 CLI 直连 Supabase 或生成 signed upload URL。
 
-- server-side upload route，由 Next.js server 代为写入 private bucket；
-- 或 Supabase Storage 的短时受控 upload token / signed upload 机制。
+multipart/form-data 输入：
 
-无论选择哪种方式，第一版必须保持：
+```text
+upload_id
+collection_id
+storage_path
+filename
+mime_type
+size_bytes
+category
+file
+```
+
+输出：
+
+```json
+{
+  "ok": true,
+  "data": {
+    "upload_id": "wup_...",
+    "collection_id": "...",
+    "uploaded": true
+  },
+  "message": "Document uploaded successfully",
+  "apiVersion": "v1",
+  "requestId": "wreq_..."
+}
+```
+
+controlled upload route 必须保持：
 
 - 不生成 signed public URL。
 - 不生成 public download link。
 - 不改变 `workspace-files` bucket private 状态。
 - 不把 service role key、Storage credential、完整 Storage path 或 upload credential 写入日志、PR、文档示例或用户可见错误。
+- 重新计算 `storage_path`，只接受后端规则生成的 path。
+- 校验 collection 存在。
+- 校验文件非空、大小不超过 10 MB 且等于 `size_bytes`。
+- 校验 multipart 文件 MIME type 与输入一致。
+- 上传前拒绝目标 object 已存在。
+- 使用 service-role server-side client 上传到 private `workspace-files` bucket，`upsert = false`。
 
-v1.2.9 API MVP 尚未实现这一受控上传步骤。调用方必须先通过后续实现的受控上传器把 object 写入后端返回的 path；`finalize` 在 object 不存在时会拒绝写入 metadata。
+CLI 不接收 service role key，不直连 Supabase，不保存或展示 Storage credential。`storage_path` 可以作为服务端内部 API 字段在 intent/upload/finalize 三段之间传递，但不得进入 operation log request_summary、公开页面、PR 描述或用户成功输出。
 
 ### `POST /api/workstation/documents/finalize`
 
@@ -260,6 +293,7 @@ workstation-uploads/collections/{collection_id}/uploads/{upload_id}/file.pdf
 
 ```text
 documents.upload_intent
+documents.upload
 documents.finalize
 ```
 
@@ -288,7 +322,7 @@ documents.finalize
 - 本地绝对路径。
 - 原始文件名中可能含有的敏感路径片段。
 
-成功 finalize 的 operation log 可以记录 `target_type = "document"` 和新建 document id。失败日志应保留 `requestId`、错误 code、HTTP status 和安全摘要，便于在 `/dashboard/developer/workstation-logs` 排障。
+成功 upload 的 operation log 记录 `target_type = "document_collection"` 和 collection id。成功 finalize 的 operation log 可以记录 `target_type = "document"` 和新建 document id。失败日志应保留 `requestId`、错误 code、HTTP status 和安全摘要，便于在 `/dashboard/developer/workstation-logs` 排障。
 
 ## Failure Handling
 
@@ -318,7 +352,7 @@ documents.finalize
 
 ## CLI Design
 
-未来命令设计：
+v1.2.10 已实现命令：
 
 ```bash
 npm run workstation -- document upload \
@@ -365,10 +399,18 @@ v1.2.9 已具备：
 - `documents.upload_intent` / `documents.finalize` operation logs。
 - private `workspace-files` bucket object existence check，不读取 object body。
 
+v1.2.10 新增：
+
+- server-side controlled upload route 写入 private `workspace-files` bucket。
+- CLI `document upload` 单文件流程。
+- `documents.upload` operation log action。
+- `collection list` 人类可读输出展示 collection id。
+
 后续实现仍可能需要：
 
-- Storage upload policy 或 server-side signed upload design。
+- orphan object 清理任务。
 - upload intent 的短期状态存储方案，可能是数据库表、签名 payload 或只允许短窗口内 finalize 的服务端记录。
+- 批量 / 目录上传的独立安全设计。
 - collection stats 刷新逻辑复用或封装。
 
 后续实现不得默认修改：
@@ -422,4 +464,28 @@ v1.2.9 只把后端 API MVP 落地，仍严格不做：
 - 不修改 public download route。
 - 不新增 OCR / vector / AI summary。
 - 不新增 public publish / visibility manage。
+- 不写入 token / service role key / `.env.local`。
+
+## Explicit Non-Goals For v1.2.10 CLI Upload MVP
+
+v1.2.10 只把 server-side controlled upload route 和 CLI 单文件上传闭环落地，仍严格不做：
+
+- 不批量上传。
+- 不上传目录。
+- 不自动创建 collection。
+- 不创建 public 文件。
+- 不修改 visibility。
+- 不删除文件。
+- 不读取 Documents 正文。
+- 不读取 Storage object body。
+- 不解析 PDF / Word / Excel 内容。
+- 不生成 signed URL 或 signed public URL。
+- 不修改 RLS。
+- 不修改 Storage policy。
+- 不修改 bucket visibility。
+- 不修改 public download route。
+- 不新增 OCR / vector / AI summary。
+- 不新增 public publish / visibility manage。
+- 不让 CLI 直连 Supabase。
+- 不让 CLI 读取或保存 service role key。
 - 不写入 token / service role key / `.env.local`。
