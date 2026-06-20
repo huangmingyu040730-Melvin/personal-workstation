@@ -11,7 +11,7 @@ The CLI is the capability entrypoint. This Skill is only Codex's discovery and i
 
 Use `docs/workstation-codex-runbook.md` as the operational source of truth for sequencing, stop conditions, PR review, grant troubleshooting, asset workflows, collection resolution, document upload, and safety boundaries.
 
-Cross-project usage is currently design-only. See `docs/workstation-cross-project-skill-pack.md` for the future Skill Pack design. This repo-level Skill does not make Personal Workstation globally visible in every Codex project, and no installer or standalone cross-project client exists yet.
+Cross-project usage now has a minimal Skill Pack installer. See `docs/workstation-cross-project-skill-pack.md` and `packages/workstation-skill-pack/README.md`. This repo-level Skill does not make Personal Workstation globally visible in every Codex project; target projects must install the Skill Pack and configure `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN` locally.
 
 Command entrypoint:
 
@@ -89,10 +89,31 @@ Never:
 - guess a `collection_id`
 - generate Storage paths in the CLI
 - save service role keys in the CLI
+- copy Workstation token values, `.env.local`, service role keys, Storage credentials, migrations, RLS files, or Storage policy files into another project when installing the Skill Pack
 - add MCP server, Agent CEO, Notion, Feishu, Gmail, or other external integration as part of Workstation CLI work
-- copy this Skill into another project together with token values, `.env.local`, service role key, Storage credentials, migrations, RLS files, or Storage policy files
+- modify a target project's `package.json` automatically while installing the Skill Pack
 
 If the user asks for one of those operations, stop and explain that the current Workstation CLI does not support it. Keep the boundary intact unless the user explicitly requests a separate safety design.
+
+## Cross-project Skill Pack
+
+v1.2.16 adds a minimal installable Skill Pack:
+
+```bash
+npm run workstation:install-skill -- /path/to/target-project
+# or
+bash packages/workstation-skill-pack/install.sh /path/to/target-project
+```
+
+The installer copies only:
+
+- `.codex/skills/workstation/SKILL.md`
+- `.codex/skills/workstation/examples.md`
+- `scripts/workstation.mjs`
+
+It does not copy token values, `.env.local`, service role keys, Storage credentials, migrations, RLS files, Storage policy files, uploaded files, `node_modules`, or app source. It refuses to overwrite existing target files unless `--force` is passed, and it prints the package script to add manually instead of editing `package.json`.
+
+Target projects must configure `WORKSTATION_API_URL` and `WORKSTATION_API_TOKEN` in their local environment. Do not ask the user to paste token values into chat.
 
 ## Standard Invocation Patterns
 

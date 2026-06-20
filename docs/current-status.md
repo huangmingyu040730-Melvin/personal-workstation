@@ -72,6 +72,8 @@ v1.2.14 Workstation Codex Skill discovery hardening 只强化 `.codex/skills/wor
 
 v1.2.15 Cross-project Workstation Skill Pack design 只新增 `docs/workstation-cross-project-skill-pack.md`，设计未来如何把 Personal Workstation Skill / examples / standalone client / installer 作为轻量 Skill Pack 接入其他 Codex 项目。当前 `.codex/skills/workstation/SKILL.md` 仍是 repo-level；跨项目可用需要后续单独实现安装器和 standalone client，不能承诺 Codex slash menu 全局可见。本轮不创建 `packages/workstation-skill-pack/`，不复制文件到其他项目，不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility、public download route、delete、public publish、visibility manage、批量/目录上传、自动创建 collection、OCR/vector/AI summary、MCP、Agent CEO 或外部集成，不写入真实 token、service role key 或 `.env.local`。
 
+v1.2.16 Cross-project Workstation Skill Pack installer 新增最小可复制 Skill Pack：`packages/workstation-skill-pack/README.md`、`install.sh`、`.codex/skills/workstation/SKILL.md`、`.codex/skills/workstation/examples.md` 和 standalone `scripts/workstation.mjs`。新增根脚本 `npm run workstation:install-skill -- /path/to/target-project`，安装器只复制 Skill / examples / CLI client，默认不覆盖目标文件，`--force` 才覆盖，并只打印手动添加 package script 的说明，不自动修改目标项目 `package.json`。目标项目仍需本地配置 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`；安装器不复制 token、`.env.local`、service role key、Storage credentials、migration、RLS、Storage policy 或真实文件，也不让 Skill 全局自动可见。本轮不新增 Workstation API route、CLI capability、migration、RLS、Storage policy、bucket visibility、public download route、delete、public publish、visibility manage、批量/目录上传、自动创建 collection、OCR/vector/AI summary、MCP、Agent CEO 或外部集成。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -159,6 +161,7 @@ v1.2.15 Cross-project Workstation Skill Pack design 只新增 `docs/workstation-
 - v1.2.13 Workstation Codex runbook 已新增 `docs/workstation-codex-runbook.md`，把 v1.2.0-v1.2.12 的真实 PR / smoke / grant 排查经验整理为 Codex 可执行操作手册；`.codex/skills/workstation/SKILL.md` 和 CLI usage 已指向该 runbook。
 - v1.2.14 Workstation Codex Skill discovery hardening 已把 Skill 名称调整为 `Personal Workstation`，扩展 description 的 `personal workstation` / `workstation CLI` / `project` / `knowledge note` / `document upload` 等检索关键词，补充中英文触发语义、Never do、标准调用模式和 examples 文件；这只是 Codex 发现性和说明层加固。
 - v1.2.15 Cross-project Workstation Skill Pack design 已新增 `docs/workstation-cross-project-skill-pack.md`，设计未来 `packages/workstation-skill-pack/`、目标项目 `.codex/skills/workstation/`、standalone `scripts/workstation.mjs`、安装器、token 安全策略和接入验证流程；当前只是设计，不新增真实安装器或跨项目复制动作。
+- v1.2.16 Cross-project Workstation Skill Pack installer 已新增 `packages/workstation-skill-pack/` 的最小安装器、README、目标项目 Skill / examples 和 standalone Workstation client，并新增根脚本 `workstation:install-skill`。安装器只复制文件到用户指定目标项目，拒绝覆盖除非 `--force`，不自动改目标 `package.json`，不复制 token、`.env.local`、service role key、Storage credentials、migration、RLS 或 Storage policy。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -543,7 +546,7 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 - v1.2.12 后上传前 collection resolution 更明确：优先用 `collection list --q "关键词"` 搜索候选，再用 `collection show --id ...` 确认目标文档包安全 metadata；多个候选时不要猜，应让用户确认。该流程不自动创建 collection，不读取 Documents / Storage，不返回 signed URL 或公开下载入口。
 - v1.2.13 后 Workstation CLI 已进入可日常使用阶段：Codex 应按 `docs/workstation-codex-runbook.md` 执行开发、资产操作、上传、grant 排查和 PR review；后续可单独考虑 audit review polish 或 Agent CEO Workbench design，但不得把这些方向混入普通 CLI 操作。
 - v1.2.14 后 Workstation Codex Skill 更适合被 slash menu / 语义检索发现：Skill frontmatter 使用 `Personal Workstation` 名称和更宽的 description 关键词，正文保留 runbook 为 operational source of truth，并通过 `.codex/skills/workstation/examples.md` 固化常见调用样例；后续仍不因此扩大 CLI/API 能力边界。
-- v1.2.15 后，跨项目使用 Personal Workstation 的方向先停留在设计层：其他 Codex 项目未来可通过 Skill Pack 安装 `.codex/skills/workstation/` 和轻量 CLI client，但当前仓库没有实现安装器，也不把 repo-level Skill 视为全局 Skill。
+- v1.2.16 后，跨项目使用 Personal Workstation 有最小 Skill Pack 安装器：其他 Codex 项目可通过安装器复制 `.codex/skills/workstation/` 和轻量 CLI client，但仍需手动配置目标项目 package script 与本地 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`，也不把 repo-level Skill 视为全局 Skill。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
 

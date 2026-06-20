@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "smoke:public": "node scripts/public-launch-smoke.mjs",
-    "workstation": "node scripts/workstation.mjs"
+    "workstation": "node scripts/workstation.mjs",
+    "workstation:install-skill": "bash packages/workstation-skill-pack/install.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

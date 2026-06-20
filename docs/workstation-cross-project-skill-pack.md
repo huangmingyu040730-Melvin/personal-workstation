@@ -2,9 +2,44 @@
 
 日期：2026-06-21
 
-本文档是 v1.2.15 的设计记录。目标是设计一个未来可复用的 Cross-project Workstation Skill Pack，让其他 Codex 项目可以轻量接入 Personal Workstation，并通过 Workstation API / CLI 把项目、知识笔记、Skill、文档包查询和私密单文件上传写回 personal-workstation。
+本文档记录 v1.2.15 的 Cross-project Workstation Skill Pack 设计，以及 v1.2.16 的最小安装器实现。目标是让其他 Codex 项目可以轻量接入 Personal Workstation，并通过 Workstation API / CLI 把项目、知识笔记、Skill、文档包查询和私密单文件上传写回 personal-workstation。
 
-本轮只做设计，不实现安装器，不创建真实 package 目录，不复制到其他项目，不新增 API / CLI 能力。
+v1.2.16 已实现最小 Skill Pack 目录和安装器，但仍不新增 API / CLI 能力，不自动复制到真实外部项目，不自动修改目标项目 `package.json`，不写入任何真实 token 或 service role key。
+
+## v1.2.16 Implementation Status
+
+已新增：
+
+```text
+packages/workstation-skill-pack/
+  README.md
+  install.sh
+  .codex/
+    skills/
+      workstation/
+        SKILL.md
+        examples.md
+  scripts/
+    workstation.mjs
+```
+
+根项目新增：
+
+```json
+{
+  "scripts": {
+    "workstation:install-skill": "bash packages/workstation-skill-pack/install.sh"
+  }
+}
+```
+
+仍未实现：
+
+- 全局 Codex Skill 安装。
+- 自动修改目标项目 `package.json`。
+- 版本检查 / 升级器。
+- token 管理 UI。
+- 新 API route、CLI command、migration、RLS、Storage policy、bucket visibility 或 public download route。
 
 ## 1. Why The Current Skill Is Repo-level
 
@@ -67,9 +102,9 @@ Non-goals：
 - 不新增 Notion / 飞书 / Gmail 集成。
 - 不实现批量上传、目录上传、delete、public publish、visibility manage、OCR、vector indexing 或 AI summary。
 
-## 4. Future Skill Pack Structure
+## 4. Skill Pack Structure
 
-建议未来设计目录如下：
+v1.2.16 的最小实现目录如下：
 
 ```text
 packages/workstation-skill-pack/
@@ -80,11 +115,11 @@ packages/workstation-skill-pack/
         SKILL.md
         examples.md
   scripts/
-    workstation-client.mjs
+    workstation.mjs
   install.sh
 ```
 
-本轮不创建该目录。上述结构仅作为未来实现目标。
+`scripts/workstation.mjs` 是当前 standalone client 文件名，安装到目标项目后也保持为 `scripts/workstation.mjs`，便于目标项目配置 `"workstation": "node scripts/workstation.mjs"`。
 
 ### File Responsibilities
 
@@ -108,7 +143,7 @@ packages/workstation-skill-pack/
 - 覆盖保存学习笔记、创建项目、更新项目进度、创建 Skill、查询 collection、上传单个文件、处理 permission denied、多个候选停止。
 - 不包含真实 token、service role key、Storage path、signed URL 或私密文件内容。
 
-`scripts/workstation-client.mjs`
+`scripts/workstation.mjs`
 
 - 跨项目轻量 CLI client。
 - 只读取 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`。
@@ -124,11 +159,11 @@ packages/workstation-skill-pack/
 
 `install.sh`
 
-- 未来安装脚本。
 - 把 Skill Pack 文件复制到目标项目。
 - 检查目标项目是否存在。
 - 避免覆盖用户已有文件，除非显式 `--force`。
 - 不复制 token、`.env.local`、service role key、node_modules、构建产物或 personal-workstation 源码。
+- 不自动修改目标项目 `package.json`；只打印要手动添加的 script。
 
 ## 5. Target Project Shape
 
@@ -224,18 +259,19 @@ Do not copy:
 - RLS or Storage policy files
 - personal-workstation app source unrelated to the standalone client
 
-## 8. Future Installer Design
+## 8. Installer Behavior
 
-Future command options:
+已支持命令：
 
 ```bash
-npm run workstation:install-skill -- --target /path/to/target-project
+npm run workstation:install-skill -- /path/to/target-project
 ```
 
 or:
 
 ```bash
 bash packages/workstation-skill-pack/install.sh /path/to/target-project
+bash packages/workstation-skill-pack/install.sh /path/to/target-project --force
 ```
 
 Installer responsibilities:
@@ -251,12 +287,8 @@ Installer responsibilities:
 
 4. Copy `SKILL.md` and `examples.md`.
 5. Copy standalone client as `scripts/workstation.mjs`.
-6. Detect whether `package.json` exists.
-7. If `package.json` exists, either:
-   - print an instruction to add `"workstation": "node scripts/workstation.mjs"`, or
-   - optionally update it only in a future explicit implementation.
-8. If target files already exist, stop unless `--force` is passed.
-9. Print post-install verification commands.
+6. If target files already exist, stop unless `--force` is passed.
+7. Print the exact next steps, including manual package script addition and local env setup.
 
 Installer must not:
 
@@ -272,10 +304,12 @@ Installer must not:
 - create public links
 - run document upload automatically
 - run delete/public publish/visibility manage
+- modify target `package.json` automatically
+- write shell profile files
 
-## 9. Cross-project CLI Client Design
+## 9. Cross-project CLI Client
 
-The future `scripts/workstation-client.mjs` should be a standalone client extracted from current CLI behavior.
+v1.2.16 copies `packages/workstation-skill-pack/scripts/workstation.mjs` into the target project. It is derived from current CLI behavior and remains standalone.
 
 Required properties:
 
@@ -319,11 +353,11 @@ It must not:
 - public publish
 - change visibility
 
-Current `scripts/workstation.mjs` may contain assumptions from the personal-workstation repo layout and package environment. Future implementation should audit it and extract a smaller standalone client rather than copying unnecessary app-specific code.
+Current audit result for v1.2.16: the copied client imports only Node built-ins (`node:fs/promises`, `node:path`) and uses built-in `fetch`, `FormData`, and `Blob`. It reads only `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN` and does not import Next.js or Supabase SDK.
 
 ## 10. Verification Flow In Target Projects
 
-After installing the future Skill Pack into a target project:
+After installing the Skill Pack into a target project and adding the package script manually:
 
 ```bash
 npm run workstation -- health
@@ -364,17 +398,19 @@ When working in another project after installing the Skill Pack:
 
 This still writes to Personal Workstation through Workstation API; it does not make the target project a database owner or Storage operator.
 
-## 12. Current v1.2.15 Boundary
+## 12. Current v1.2.16 Boundary
 
-v1.2.15 only designs the Cross-project Workstation Skill Pack.
+v1.2.16 implements the minimal Cross-project Workstation Skill Pack installer.
 
-This PR should not create:
+This PR creates only:
 
 - `packages/workstation-skill-pack/`
+- `packages/workstation-skill-pack/README.md`
 - `packages/workstation-skill-pack/install.sh`
-- `packages/workstation-skill-pack/scripts/workstation-client.mjs`
-- target project files
-- npm script `workstation:install-skill`
+- `packages/workstation-skill-pack/.codex/skills/workstation/SKILL.md`
+- `packages/workstation-skill-pack/.codex/skills/workstation/examples.md`
+- `packages/workstation-skill-pack/scripts/workstation.mjs`
+- root npm script `workstation:install-skill`
 
 This PR should not modify:
 
@@ -387,4 +423,6 @@ This PR should not modify:
 - public download route
 - token handling implementation
 
-Future implementation should be a separate PR with its own verification.
+It should not perform a real cross-project install outside a temporary verification directory, and it should not auto-edit target `package.json`.
+
+Future enhancements such as versioned upgrades, package.json patching, global distribution, or richer install UX should be separate PRs with their own verification.

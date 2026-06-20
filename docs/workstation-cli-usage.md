@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档；v1.2.9 新增后端 `upload-intent` / `finalize` API MVP；v1.2.10 新增 server-side controlled upload route 和 CLI `document upload` 单文件上传闭环；v1.2.11 打磨上传前安全摘要、三步进度、常见错误提示、operation logs 验收文档和 Codex skill 边界；v1.2.12 新增只读 `collection show --id` 和上传前 collection resolution 流程；v1.2.13 新增 `docs/workstation-codex-runbook.md`，沉淀真实 Codex 执行经验；v1.2.14 强化 `Personal Workstation` Codex Skill discovery metadata、触发语义和 examples；v1.2.15 新增 cross-project Skill Pack 设计文档。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档；v1.2.9 新增后端 `upload-intent` / `finalize` API MVP；v1.2.10 新增 server-side controlled upload route 和 CLI `document upload` 单文件上传闭环；v1.2.11 打磨上传前安全摘要、三步进度、常见错误提示、operation logs 验收文档和 Codex skill 边界；v1.2.12 新增只读 `collection show --id` 和上传前 collection resolution 流程；v1.2.13 新增 `docs/workstation-codex-runbook.md`，沉淀真实 Codex 执行经验；v1.2.14 强化 `Personal Workstation` Codex Skill discovery metadata、触发语义和 examples；v1.2.15 新增 cross-project Skill Pack 设计文档；v1.2.16 新增 `packages/workstation-skill-pack/` 最小安装器。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -16,7 +16,7 @@ For Codex workflows and operational rules, see `docs/workstation-codex-runbook.m
 
 For Codex Skill discovery examples, see `.codex/skills/workstation/examples.md`. 这些 examples 说明如何调用既有 CLI，不新增命令、权限、API route 或 migration。
 
-For cross-project Skill Pack design, see `docs/workstation-cross-project-skill-pack.md`. 当前 Skill 仍是 repo-level；跨项目接入需要后续单独实现 installer / standalone client，不要假设 Codex slash menu 全局可见。
+For cross-project Skill Pack design and installer behavior, see `docs/workstation-cross-project-skill-pack.md` and `packages/workstation-skill-pack/README.md`. 当前 Skill 仍是 repo-level；跨项目接入需要在目标项目安装 Skill Pack，不要假设 Codex slash menu 全局可见。
 
 v1.2.6 后，Project / Knowledge / Skill 支持按 id 或 slug 查看安全字段；update 仍只调用既有 PATCH by id route，CLI 在收到 `--slug` 且没有 `--id` 时会先通过 show API 解析真实 id，再执行 update。`--id` 和 `--slug` 互斥。
 
@@ -46,7 +46,13 @@ Codex 执行 Workstation CLI 任务时，还应优先参考：
 docs/workstation-codex-runbook.md
 ```
 
-v1.2.15 后，其他项目接入 Personal Workstation 的方案仍只在设计文档中。未来目标项目可以通过复制 Skill / examples / standalone client 并配置本地 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN` 使用 Workstation API；当前仓库没有实现 `workstation:install-skill`、`packages/workstation-skill-pack/` 或跨项目复制动作。
+v1.2.16 后，其他项目可以通过最小 Skill Pack 安装器接入 Personal Workstation：
+
+```bash
+npm run workstation:install-skill -- /path/to/target-project
+```
+
+安装器只复制 `.codex/skills/workstation/SKILL.md`、`examples.md` 和 `scripts/workstation.mjs`，默认拒绝覆盖，`--force` 才覆盖；它不自动修改目标项目 `package.json`，只提示手动添加 `"workstation": "node scripts/workstation.mjs"`。目标项目仍需在本地环境配置 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`，不得提交 token、`.env.local` 或 service role key。跨项目 Skill Pack 不等于全局 Codex Skill，slash menu 是否显示仍取决于目标项目文件和 Codex 产品环境。
 
 ## Environment
 

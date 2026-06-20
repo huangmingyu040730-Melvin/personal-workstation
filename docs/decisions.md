@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-06-21 - Implement Cross-project Workstation Skill Pack Installer
+
+类型：decision
+
+决策：
+
+- v1.2.16 新增 `packages/workstation-skill-pack/`，实现最小可复制 Cross-project Workstation Skill Pack。
+- Skill Pack 文件包括 `README.md`、`install.sh`、`.codex/skills/workstation/SKILL.md`、`.codex/skills/workstation/examples.md` 和 standalone `scripts/workstation.mjs`。
+- 根 `package.json` 新增 `"workstation:install-skill": "bash packages/workstation-skill-pack/install.sh"`，用于从 personal-workstation 仓库安装到目标项目。
+- 安装器用法为 `bash packages/workstation-skill-pack/install.sh /path/to/target-project` 或 `npm run workstation:install-skill -- /path/to/target-project`。
+- 安装器只检查目标目录、创建 `.codex/skills/workstation/` 与 `scripts/`、复制 Skill / examples / CLI client，并打印目标项目手动添加 `"workstation": "node scripts/workstation.mjs"` 的说明。
+- 安装器默认拒绝覆盖已有目标文件；只有显式 `--force` 才覆盖 Skill Pack 管理的三个文件。
+- 安装器不自动修改目标项目 `package.json`，不写 shell profile，不复制 token、`.env.local`、`SUPABASE_SERVICE_ROLE_KEY`、Storage credentials、migration、RLS、Storage policy、bucket config、上传文件或 personal-workstation app 源码。
+- Pack 内 standalone client 复用当前 `scripts/workstation.mjs`，该脚本只导入 Node built-ins、读取 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`，并只调用 Workstation API；不依赖 Next.js 项目结构、不依赖 Supabase SDK、不读取 service role key 或 `.env.local`。
+- 本轮不新增 API route、Workstation API capability、CLI command surface、migration、RLS、Storage policy、bucket visibility、public download route、delete、public publish、visibility manage、批量/目录上传、自动创建 collection、OCR/vector/AI summary、MCP、Agent CEO 或外部集成。
+
+原因：
+
+- v1.2.15 已冻结 cross-project Skill Pack 设计；v1.2.16 只把可安全复制的最小文件包和安装器落地，避免其他项目手动复制时遗漏边界或带入 secret。
+- 目标项目只需要 Workstation API token 和轻量 CLI；Supabase service role key 必须继续留在 personal-workstation server-side 环境。
+- 不自动改目标 `package.json` 可以降低安装器的写入面，并让用户 / Codex 明确确认目标项目是否要暴露 `npm run workstation` 入口。
+
+影响：
+
+- 其他 Codex 项目可以通过安装 Skill Pack 获得 repo-level `Personal Workstation` Skill 和 `scripts/workstation.mjs` client。
+- 这仍不是全局 Skill 安装；Codex slash menu 是否显示取决于目标项目文件和 Codex 产品环境。
+- 后续如果要做版本检查、自动 package.json patch、全局分发、Skill Pack upgrade 机制或更强安装 UX，需要单独 PR 和安全设计。
+
 ## 2026-06-21 - Design Cross-project Workstation Skill Pack
 
 类型：decision
