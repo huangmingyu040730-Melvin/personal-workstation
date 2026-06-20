@@ -9,6 +9,7 @@ import {
   getAllowedWorkstationDocumentMimeType,
   getWorkstationDocumentExtension,
   WORKSTATION_DOCUMENT_UPLOAD_MAX_SIZE_BYTES,
+  type WorkstationDocumentControlledUploadInput,
   type WorkstationDocumentFinalizeInput,
   type WorkstationDocumentUploadIntentInput
 } from "./document-upload-schemas";
@@ -317,6 +318,144 @@ export async function createWorkstationDocumentUploadIntent(
       storage_path: storagePath,
       max_size_bytes: WORKSTATION_DOCUMENT_UPLOAD_MAX_SIZE_BYTES,
       allowed_mime_type: getAllowedWorkstationDocumentMimeType(extension, input.mime_type)
+    }
+  };
+}
+
+export async function uploadWorkstationDocumentObject(
+  input: WorkstationDocumentControlledUploadInput,
+  file: File
+) {
+  const supabaseResult = getSupabase();
+
+  if (!supabaseResult.ok) {
+    return supabaseResult;
+  }
+
+  const supabase = supabaseResult.data;
+  const expectedStoragePath = buildWorkstationDocumentStoragePath({
+    collectionId: input.collection_id,
+    uploadId: input.upload_id,
+    filename: input.filename
+  });
+
+  if (input.storage_path !== expectedStoragePath) {
+    return {
+      ok: false as const,
+      error: {
+        code: "VALIDATION_ERROR" as const,
+        message: "storage_path does not match the server-controlled upload path.",
+        status: 400
+      }
+    };
+  }
+
+  if (!file || file.size === 0) {
+    return {
+      ok: false as const,
+      error: {
+        code: "VALIDATION_ERROR" as const,
+        message: "file must be a non-empty upload.",
+        status: 400
+      }
+    };
+  }
+
+  if (file.size > WORKSTATION_DOCUMENT_UPLOAD_MAX_SIZE_BYTES) {
+    return {
+      ok: false as const,
+      error: {
+        code: "VALIDATION_ERROR" as const,
+        message: "File size exceeds the Workstation upload limit.",
+        status: 400
+      }
+    };
+  }
+
+  if (file.size !== input.size_bytes) {
+    return {
+      ok: false as const,
+      error: {
+        code: "VALIDATION_ERROR" as const,
+        message: "Uploaded file size does not match size_bytes.",
+        status: 400
+      }
+    };
+  }
+
+  const fileMimeType = normalizeMimeType(file.type);
+
+  if (fileMimeType && fileMimeType !== normalizeMimeType(input.mime_type)) {
+    return {
+      ok: false as const,
+      error: {
+        code: "VALIDATION_ERROR" as const,
+        message: "Uploaded file MIME type does not match mime_type.",
+        status: 400
+      }
+    };
+  }
+
+  const collection = await getDocumentCollection(supabase, input.collection_id);
+
+  if (!collection.ok) {
+    return collection;
+  }
+
+  const inspectedObject = await inspectStorageObject(supabase, input.storage_path);
+
+  if (!inspectedObject.ok) {
+    return inspectedObject;
+  }
+
+  if (inspectedObject.data.exists) {
+    return {
+      ok: false as const,
+      error: {
+        code: "VALIDATION_ERROR" as const,
+        message: "Storage object already exists for this upload.",
+        status: 409
+      }
+    };
+  }
+
+  const fileBytes = await file.arrayBuffer();
+
+  if (fileBytes.byteLength !== input.size_bytes) {
+    return {
+      ok: false as const,
+      error: {
+        code: "VALIDATION_ERROR" as const,
+        message: "Uploaded file bytes do not match size_bytes.",
+        status: 400
+      }
+    };
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from(WORKSPACE_FILES_BUCKET)
+    .upload(input.storage_path, fileBytes, {
+      contentType: input.mime_type,
+      upsert: false
+    });
+
+  if (uploadError) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: uploadError.message || "Failed to upload file to private storage.",
+        status: 500
+      }
+    };
+  }
+
+  return {
+    ok: true as const,
+    data: {
+      upload_id: input.upload_id,
+      collection_id: collection.data.id,
+      uploaded: true
     }
   };
 }

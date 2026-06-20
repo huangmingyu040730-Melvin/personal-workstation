@@ -60,6 +60,8 @@ v1.2.8 Workstation document upload design 新增 `docs/workstation-document-uplo
 
 v1.2.9 Workstation Document Upload API MVP 新增后端 `POST /api/workstation/documents/upload-intent` 和 `POST /api/workstation/documents/finalize`。`upload-intent` 使用新的 `upload_documents` capability 校验已有 document collection、文件大小、MIME type、扩展名、title 和 category，并由服务端生成 ASCII-safe `upload_id` / `storage_path`；`finalize` 重新计算受控 path、验证 Storage object 已存在且可检查的 size / MIME metadata 匹配，安全拒绝重复 finalize，写入默认 private 的 `documents` metadata，并重算 collection `file_count` / `total_size`。该轮只实现后端 API MVP 和最小 service_role grants，不实现 CLI upload 命令、不实现受控上传器、不上传文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route。
 
+v1.2.10 Workstation controlled uploader / CLI document upload MVP 新增 `POST /api/workstation/documents/upload` 受控上传 route，并让 `npm run workstation -- document upload --collection-id ... --file ... --title ... --category ...` 完成单文件上传闭环。CLI 只做本地文件存在 / 普通文件 / 非空 / 10 MB / 扩展名初检，随后调用 `upload-intent`、multipart 受控上传和 `finalize`；后端用 service-role server-side 写入 private `workspace-files` bucket 的服务端生成 path，成功后 `finalize` 写入默认 private `documents` metadata、刷新 collection stats，并记录 `documents.upload_intent` / `documents.upload` / `documents.finalize` operation logs。本轮不新增 migration，不修改 RLS、Storage policy、bucket visibility、public download route，不读取 Documents 正文或 Storage object body，不生成 signed URL，不支持批量 / 目录 / zip、自动创建 collection、delete、public publish 或 visibility manage；CLI 仍不直连 Supabase、不读取 service role key。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -141,6 +143,7 @@ v1.2.9 Workstation Document Upload API MVP 新增后端 `POST /api/workstation/d
 - v1.2.7 Workstation project progress/date update 已把 Project update 白名单扩展到 `progress` 和 `start_date`，用于维护项目进度百分比和开始日期；不新增 `current_stage`，不开放 Documents / Storage / upload / delete / public publish / visibility manage。
 - v1.2.8 Workstation document upload design 已新增后续文件上传设计文档，规划未来 `document upload` 命令、`upload-intent` / `finalize` API、`upload_documents` capability、服务端生成 ASCII-safe Storage path、默认 private metadata、collection stats 刷新和 operation logs 摘要；本轮仍不实现真实上传，不新增 API / CLI / migration / Storage / RLS / public download 改动。
 - v1.2.9 Workstation Document Upload API MVP 已新增后端 `upload-intent` / `finalize` route、`upload_documents` capability、Workstation 专用 10 MB 文件限制、受控 `workstation-uploads/collections/{collection_id}/uploads/{upload_id}/file.{ext}` path、Storage object existence check、默认 private metadata 写入、collection stats 重算和 `documents.upload_intent` / `documents.finalize` operation logs；CLI 仍没有 `document upload` 命令，真实受控上传器和 CLI upload 后续单独 PR。
+- v1.2.10 Workstation controlled uploader / CLI document upload MVP 已新增 `documents.upload` 受控上传 route 和 CLI `document upload` 命令，支持把单个本地 PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG / JPEG 上传到已有文档包；上传仍走 Workstation Admin API、`upload_documents` capability、服务端生成 Storage path、private bucket、默认 private metadata、collection stats 刷新和安全 operation logs，不开放批量 / 目录 / public / visibility / delete / OCR / vector / AI summary / signed URL。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -471,10 +474,16 @@ v1.2.6 Workstation show / ID resolution polish 不新增 migration。它只复�
 
 v1.2.7 Workstation project progress/date update 新增 `0026_workstation_project_progress_date_update_grants.sql`。该 migration 只给 `service_role` 补既有 `projects.progress` 和 `projects.start_date` 的列级 update 权限，不新增字段，不修改 RLS、Storage policy、bucket visibility、Documents、visibility 行为或 public download route。
 
+v1.2.8 Workstation document upload design 不新增 migration。它只新增设计文档和状态同步，不新增 API route、CLI 命令、RLS、Storage policy、bucket visibility、public download route 或真实上传能力。
+
+v1.2.9 Workstation Document Upload API MVP 新增 `0027_workstation_document_upload_grants.sql`。该 migration 只给 `service_role` 补 Workstation document upload finalize 所需的 `documents` select / insert 和 `document_collections` stats update grant，不修改 RLS、Storage policy、bucket visibility、public download route 或文件数据。
+
+v1.2.10 Workstation controlled uploader / CLI document upload MVP 不新增 migration。它只新增受控上传 API route、CLI `document upload` 流程、日志 action 常量和文档同步，继续依赖 0027 的最小表权限和 server-side service-role Storage upload；不修改 RLS、Storage policy、bucket visibility、public download route、Documents visibility 语义或现有文件数据。
+
 规则：
 
 - 已执行过的 migration 不应修改。
-- 执行 0026 后，后续数据库变更应新增 `0027_*` 或更高编号。
+- 执行 0027 后，后续数据库变更应新增 `0028_*` 或更高编号。
 - 不得重跑旧 migration。
 - 不得放宽 Storage / RLS。
 - 不得提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL 或 `service_role`。
@@ -499,11 +508,12 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 - v1.1 维护：继续观察四类资产分类是否清楚、AI Draft Lab 预填是否顺手、搜索和 Documents 是否适合真实资产增长、390px 移动端是否稳定；后续默认只做明确 bugfix、轻量 UX polish、文档同步和安全边界复查。
 - v1.1.4 后可进入 Workstation Admin API MVP 准备：先按 `docs/workstation-cli-design.md` 评审 token capability、operation logs、upload-intent / finalize 和 API 版本兼容策略；实现前仍不得让 CLI 直连 Supabase、持有 service role key、创建 signed URL 或绕过现有后台业务校验。
 - v1.2.0 后 Workstation API 进入低风险 MVP 试用：只允许静态 token 调用 health、metadata list 和 private create；如继续推进，应先做 CLI 薄层或 operation logs / permission hardening，文件上传仍需单独安全审查。
-- v1.2.3 后 Workstation CLI / API 进入可审计试用：Codex / 用户可通过 `npm run workstation -- health|project|knowledge|skill|collection ...` 调用 Admin API，并在失败时用 requestId 到 `/dashboard/developer/workstation-logs` 查最近审计摘要；文件上传、删除、更新、公开发布和 visibility 管理仍需单独安全设计。
-- v1.2.4 后 Codex 应优先通过 `.codex/skills/workstation/SKILL.md` 判断是否调用 Workstation CLI：保存到工作台、创建 Project / Knowledge / Skill、查询 metadata 和 health 可以使用 CLI；upload、delete、非白名单 update、public publish、visibility manage、Documents 正文、Storage、token / service role 操作和外部应用仍明确禁止。
-- v1.2.5 后 Workstation CLI / API 可用于低风险补充既有 Project / Knowledge / Skill metadata：只更新白名单字段并记录 `projects.update`、`knowledge.update`、`skills.update` operation logs；upload、delete、public publish、visibility manage、Documents / Storage / signed URL、token lifecycle、MCP、Agent CEO 和外部集成仍不开放。
+- v1.2.3 后 Workstation CLI / API 进入可审计试用：Codex / 用户可通过 `npm run workstation -- health|project|knowledge|skill|collection ...` 调用 Admin API，并在失败时用 requestId 到 `/dashboard/developer/workstation-logs` 查最近审计摘要；删除、公开发布和 visibility 管理仍需单独安全设计。
+- v1.2.4 后 Codex 应优先通过 `.codex/skills/workstation/SKILL.md` 判断是否调用 Workstation CLI：保存到工作台、创建 Project / Knowledge / Skill、查询 metadata 和 health 可以使用 CLI；v1.2.10 起单文件 document upload 可用，但仍不得 delete、非白名单 update、public publish、visibility manage、读取 Documents 正文、读取 Storage object body、生成 signed URL、操作 token / service role 或调用外部应用。
+- v1.2.5 后 Workstation CLI / API 可用于低风险补充既有 Project / Knowledge / Skill metadata：只更新白名单字段并记录 `projects.update`、`knowledge.update`、`skills.update` operation logs；delete、public publish、visibility manage、Documents 正文 / Storage object body / signed URL、token lifecycle、MCP、Agent CEO 和外部集成仍不开放。
 - v1.2.6 后 Workstation CLI / API 可用 `project|knowledge|skill show --id|--slug` 读回单个资产的安全字段，并可用 `update --slug` 由 CLI 先解析真实 id 后调用既有 update-by-id API；list 输出首列保留完整 id，便于复制到后续命令。show / slug resolution 不读取 Documents、Storage、signed URL、owner 或 service role key。
 - v1.2.7 后 Project update 还可维护 `progress` 和 `start_date`：`progress` 必须是 0-100 整数，`start_date` 必须是有效 `YYYY-MM-DD` 日期。不要新增或使用 `current_stage` 字段；阶段描述继续放在 summary / background / methodology，或沉淀为关联 Knowledge。
+- v1.2.10 后 Workstation CLI / API 可把单个本地文件上传到已有 document collection：CLI 初检文件，API 生成受控 path，server-side route 写入 private Storage，finalize 写默认 private metadata 并刷新 stats。该能力只覆盖单文件 MVP，不支持批量 / 目录 / 自动建包 / public / visibility 修改 / 删除 / zip / OCR / 向量索引 / AI 摘要 / signed URL。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
 

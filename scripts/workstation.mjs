@@ -1,12 +1,26 @@
 #!/usr/bin/env node
 
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { readFile, stat } from "node:fs/promises";
+import { basename, resolve } from "node:path";
 
 const DEFAULT_API_URL = "https://personal-workstation.vercel.app";
 const API_URL_ENV = "WORKSTATION_API_URL";
 const TOKEN_ENV = "WORKSTATION_API_TOKEN";
 const REQUEST_TIMEOUT_MS = 15000;
+const UPLOAD_REQUEST_TIMEOUT_MS = 60000;
+const DOCUMENT_UPLOAD_MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const DOCUMENT_UPLOAD_MIME_BY_EXTENSION = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  csv: "text/csv",
+  txt: "text/plain",
+  md: "text/markdown",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg"
+};
+const DOCUMENT_UPLOAD_BLOCKED_EXTENSIONS = new Set(["app", "bat", "cmd", "com", "dmg", "exe", "msi", "ps1", "rar", "scr", "sh", "zip", "7z"]);
 const CREATE_FIELD_BLOCKLIST = new Set([
   "owner",
   "owner-id",
@@ -65,6 +79,11 @@ async function main() {
 
   if (area === "collection") {
     await runCollectionCommand(action, commandArgs);
+    return;
+  }
+
+  if (area === "document") {
+    await runDocumentCommand(action, commandArgs);
     return;
   }
 
@@ -165,6 +184,77 @@ async function runCollectionCommand(action, args) {
   }
 
   printCollectionList(response.body?.data?.items ?? []);
+}
+
+async function runDocumentCommand(action, args) {
+  if (action !== "upload") {
+    throw new CliError(`Unknown document command: ${action ?? ""}`.trim());
+  }
+
+  const options = parseOptions(args, {
+    "collection-id": "collectionId",
+    "collection_id": "collectionId",
+    file: "file",
+    title: "title",
+    category: "category"
+  });
+  const upload = await prepareDocumentUpload(options);
+  const intentResponse = await requestWorkstationApi("POST", "/api/workstation/documents/upload-intent", {
+    body: upload.metadata,
+    jsonOutput: options.json
+  });
+  const intent = intentResponse.body?.data;
+
+  if (!intent?.upload_id || !intent?.storage_path) {
+    throw new CliError("Workstation API did not return a valid upload intent.");
+  }
+
+  const formData = new FormData();
+  formData.set("upload_id", intent.upload_id);
+  formData.set("collection_id", upload.metadata.collection_id);
+  formData.set("storage_path", intent.storage_path);
+  formData.set("filename", upload.metadata.filename);
+  formData.set("mime_type", upload.metadata.mime_type);
+  formData.set("size_bytes", String(upload.metadata.size_bytes));
+  formData.set("category", upload.metadata.category);
+
+  let bytes;
+
+  try {
+    bytes = await readFile(upload.absolutePath);
+  } catch {
+    throw new CliError("Unable to read selected upload file.");
+  }
+
+  const fileBlob = new Blob([bytes], { type: upload.metadata.mime_type });
+  formData.set("file", fileBlob, upload.metadata.filename);
+
+  await requestWorkstationApi("POST", "/api/workstation/documents/upload", {
+    formData,
+    jsonOutput: options.json,
+    timeoutMs: UPLOAD_REQUEST_TIMEOUT_MS
+  });
+
+  const finalizeResponse = await requestWorkstationApi("POST", "/api/workstation/documents/finalize", {
+    body: {
+      upload_id: intent.upload_id,
+      collection_id: upload.metadata.collection_id,
+      storage_path: intent.storage_path,
+      title: upload.metadata.title,
+      filename: upload.metadata.filename,
+      mime_type: upload.metadata.mime_type,
+      size_bytes: upload.metadata.size_bytes,
+      category: upload.metadata.category
+    },
+    jsonOutput: options.json
+  });
+
+  if (options.json) {
+    printJson(finalizeResponse.body);
+    return;
+  }
+
+  printUploadedDocument(finalizeResponse.body?.data ?? {});
 }
 
 async function runList(assetType, args) {
@@ -719,6 +809,76 @@ function parseStartDate(value) {
   return normalized;
 }
 
+async function prepareDocumentUpload(options) {
+  requireOptions(options, ["collectionId", "file", "title", "category"]);
+
+  const filePath = String(options.file).trim();
+  const absolutePath = resolve(process.cwd(), filePath);
+  let fileStats;
+
+  try {
+    fileStats = await stat(absolutePath);
+  } catch {
+    throw new CliError("Upload file does not exist or cannot be read.");
+  }
+
+  if (fileStats.isDirectory()) {
+    throw new CliError("Upload file must be a regular file, not a directory.");
+  }
+
+  if (!fileStats.isFile()) {
+    throw new CliError("Upload file must be a regular file.");
+  }
+
+  if (fileStats.size <= 0) {
+    throw new CliError("Upload file must not be empty.");
+  }
+
+  if (fileStats.size > DOCUMENT_UPLOAD_MAX_SIZE_BYTES) {
+    throw new CliError("Upload file must be 10 MB or smaller.");
+  }
+
+  const filename = basename(filePath);
+  const extension = getDocumentUploadExtension(filename);
+
+  if (!extension) {
+    throw new CliError("Upload file must include a supported extension.");
+  }
+
+  if (DOCUMENT_UPLOAD_BLOCKED_EXTENSIONS.has(extension)) {
+    throw new CliError("Executable, installer, archive, and script files are not supported.");
+  }
+
+  const mimeType = DOCUMENT_UPLOAD_MIME_BY_EXTENSION[extension];
+
+  if (!mimeType) {
+    throw new CliError("Unsupported upload file type. Use PDF, DOCX, XLSX, CSV, TXT, MD, PNG, JPG, or JPEG.");
+  }
+
+  return {
+    absolutePath,
+    metadata: {
+      collection_id: options.collectionId.trim(),
+      filename,
+      mime_type: mimeType,
+      size_bytes: fileStats.size,
+      title: options.title.trim(),
+      category: options.category.trim()
+    }
+  };
+}
+
+function getDocumentUploadExtension(filename) {
+  const cleanName = String(filename).replace(/\\/g, "/").split("/").pop()?.trim() ?? "";
+  const parts = cleanName.split(".");
+
+  if (parts.length < 2) {
+    return "";
+  }
+
+  return parts.pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
+}
+
 async function readTextFile(filePath) {
   try {
     return await readFile(resolve(process.cwd(), filePath), "utf8");
@@ -755,17 +915,27 @@ async function requestWorkstationApi(method, path, options = {}) {
 
   const baseUrl = normalizeBaseUrl(process.env[API_URL_ENV]?.trim() || DEFAULT_API_URL);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
   const url = new URL(path, `${baseUrl}/`);
+  const headers = {
+    Authorization: `Bearer ${token}`
+  };
+  let body;
+
+  if (method !== "GET") {
+    if (options.formData) {
+      body = options.formData;
+    } else {
+      headers["Content-Type"] = "application/json";
+      body = JSON.stringify(options.body ?? {});
+    }
+  }
 
   try {
     const response = await fetch(url, {
       method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: method === "GET" ? undefined : JSON.stringify(options.body ?? {}),
+      headers,
+      body,
       signal: controller.signal
     });
     const text = await response.text();
@@ -834,7 +1004,7 @@ function shouldPrintServiceRoleGrantHint(message, context) {
     return false;
   }
 
-  return /permission denied for table (projects|knowledge_notes|skills)/i.test(String(message ?? ""));
+  return /permission denied for table (projects|knowledge_notes|skills|documents|document_collections)/i.test(String(message ?? ""));
 }
 
 function printProjectList(items) {
@@ -889,7 +1059,8 @@ function printCollectionList(items) {
     return;
   }
 
-  printRows(["title", "type", "file_count", "total_size", "updated_at"], items.map((item) => [
+  printRows(["id", "title", "type", "file_count", "total_size", "updated_at"], items.map((item) => [
+    item.id,
     item.title,
     item.collection_type ?? item.type,
     item.file_count,
@@ -999,6 +1170,14 @@ function printUpdated(assetType, data, fields) {
   console.log(`- updated_fields: ${fields.length > 0 ? fields.join(", ") : "none"}`);
 }
 
+function printUploadedDocument(data) {
+  console.log("Uploaded document:");
+  console.log(`- title: ${data.title ?? "(untitled)"}`);
+  console.log(`- id: ${data.id ?? "unknown"}`);
+  console.log(`- visibility: ${data.visibility ?? "private"}`);
+  console.log(`- collection_id: ${data.collection_id ?? "unknown"}`);
+}
+
 function printDataAccess(dataAccess) {
   if (!dataAccess) {
     return;
@@ -1073,6 +1252,7 @@ Usage:
   npm run workstation -- skill create --name text --slug slug --description text --category text [--platforms codex,github] [--usage text | --usage-file path]
   npm run workstation -- skill update (--id id | --slug slug) [--name text] [--description text] [--category text] [--platforms codex,github] [--status available] [--usage text | --usage-file path]
   npm run workstation -- collection list [--q text] [--related-type project] [--related-id id] [--limit 20] [--page 1] [--cursor 0] [--json]
+  npm run workstation -- document upload --collection-id id --file path --title text --category research_material [--json]
 
 Environment:
   WORKSTATION_API_URL    Optional. Defaults to ${DEFAULT_API_URL}

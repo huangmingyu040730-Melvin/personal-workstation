@@ -44,12 +44,20 @@ const baseUploadMetadataSchema = z.object({
 
 export const workstationDocumentUploadIntentSchema = baseUploadMetadataSchema.superRefine(validateFileMetadata);
 
+export const workstationDocumentControlledUploadSchema = baseUploadMetadataSchema.omit({
+  title: true
+}).extend({
+  upload_id: z.string().trim().regex(/^wup_[A-Za-z0-9_-]{16,64}$/, "upload_id is invalid."),
+  storage_path: z.string().trim().min(1, "storage_path is required.").max(512, "storage_path is too long.")
+}).strict().superRefine(validateFileMetadata);
+
 export const workstationDocumentFinalizeSchema = baseUploadMetadataSchema.extend({
   upload_id: z.string().trim().regex(/^wup_[A-Za-z0-9_-]{16,64}$/, "upload_id is invalid."),
   storage_path: z.string().trim().min(1, "storage_path is required.").max(512, "storage_path is too long.")
 }).strict().superRefine(validateFileMetadata);
 
 export type WorkstationDocumentUploadIntentInput = z.infer<typeof workstationDocumentUploadIntentSchema>;
+export type WorkstationDocumentControlledUploadInput = z.infer<typeof workstationDocumentControlledUploadSchema>;
 export type WorkstationDocumentFinalizeInput = z.infer<typeof workstationDocumentFinalizeSchema>;
 
 export function getWorkstationDocumentExtension(filename: string) {
@@ -81,10 +89,7 @@ export function getAllowedWorkstationDocumentMimeType(extension: string, mimeTyp
     : allowedMimeTypes?.[0] ?? mimeType;
 }
 
-function validateFileMetadata(
-  value: z.infer<typeof baseUploadMetadataSchema>,
-  ctx: z.RefinementCtx
-) {
+function validateFileMetadata(value: { filename: string; mime_type: string }, ctx: z.RefinementCtx) {
   const extension = getWorkstationDocumentExtension(value.filename);
 
   if (!extension) {

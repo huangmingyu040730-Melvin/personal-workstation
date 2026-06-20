@@ -97,6 +97,7 @@
 - v1.2.7 Workstation project progress/date update：只扩展 Project update 白名单，新增 `progress` 和 `start_date` 两个既有字段；CLI 支持 `--progress`、`--start-date` / `--start_date`，并校验 progress 为 0-100 整数、start_date 为有效 YYYY-MM-DD。新增 `0026_workstation_project_progress_date_update_grants.sql` 只补 service_role 对既有 Project 进度 / 开始日期字段的列级 update 权限；不新增 `current_stage`、数据库字段、upload、delete、public publish、visibility manage、Documents / Storage、token lifecycle、MCP、Agent CEO 或外部集成。
 - v1.2.8 Workstation document upload design：新增 `docs/workstation-document-upload-design.md`，只设计未来 CLI document upload 的 upload-intent、受控上传、finalize、默认 private documents metadata、collection stats 刷新、`upload_documents` capability 和 operation logs 摘要；不新增真实 API route、CLI upload 命令、migration、RLS、Storage policy、bucket visibility、public download route、signed URL、OCR、向量索引、AI 摘要、delete、public publish 或 visibility manage。
 - v1.2.9 Workstation Document Upload API MVP：新增后端 `POST /api/workstation/documents/upload-intent` 和 `POST /api/workstation/documents/finalize`，`upload-intent` 校验 token、`upload_documents` capability、已有 collection、10 MB 文件上限、MIME / 扩展名、title 和 category，并返回服务端生成的 ASCII-safe `upload_id` / `storage_path`；`finalize` 重新计算受控 path、检查 private bucket 中 object 存在、在可得 metadata 下校验 size / MIME、拒绝重复 finalize、写入默认 private documents metadata，并重算文档包 `file_count` / `total_size`。该轮只新增后端 API MVP 和 `0027_workstation_document_upload_grants.sql` 最小 grants；仍不新增 CLI upload 命令、受控上传器、真实文件上传、RLS / Storage policy / bucket visibility / public download route 改动、signed URL、delete、public publish 或 visibility manage。
+- v1.2.10 Workstation controlled uploader / CLI document upload MVP：新增 `POST /api/workstation/documents/upload` server-side controlled upload route 和 CLI `npm run workstation -- document upload --collection-id ... --file ... --title ... --category ...`；CLI 只做本地文件存在 / 普通文件 / 非空 / 10 MB / 扩展名初检，调用 upload-intent、multipart controlled upload、finalize，最终写入默认 private documents metadata、刷新 collection stats，并记录 `documents.upload_intent` / `documents.upload` / `documents.finalize` operation logs。该轮不新增 migration，不修改 RLS、Storage policy、bucket visibility、public download route，不读取 Documents 正文或 Storage object body，不生成 signed URL，不支持批量 / 目录 / zip、自动创建 collection、delete、public publish 或 visibility manage，CLI 仍不直连 Supabase、不读取 service role key。
 
 当前网站包括：
 
@@ -148,7 +149,7 @@
 - v1.2.5 后，Workstation CLI 可以通过 `project|knowledge|skill update --id ...` 补充已有资产的白名单字段。v1.2.5 当时 Project update 仅限 title、summary、status、tags、background、research_question、methodology；该 Project 白名单已在 v1.2.7 被 `progress` 和 `start_date` 扩展。Knowledge update 仅限 title、category、excerpt、content、tags、project_id；Skill update 仅限 name、description、category、platforms、status、content、usage_guide、input/output description、current_version、repository_url。CLI / API 仍不得更新 visibility、owner/user/created_by、Documents 关联、Storage、signed URL 或公开发布状态。
 - v1.2.6 后，Workstation CLI 可用 `project|knowledge|skill show --id|--slug` 读回单个资产安全字段；`project|knowledge|skill update --slug ...` 只由 CLI 先调用 show API 解析真实 id，再调用既有 PATCH by id route。API 不提供 update-by-slug，PATCH 继续要求 UUID id。
 - v1.2.7 后，Project update 白名单扩展为 title、summary、status、progress、start_date、tags、background、research_question、methodology。`current_stage` 不是标准 Project 字段，不要新增；阶段文字继续写入 summary / background / methodology，或用关联 Knowledge 记录。
-- v1.2.9 后，Workstation document upload 已有后端 API MVP：`upload-intent` 可生成受控 `upload_id` / `storage_path`，`finalize` 可在 object 已存在时写入默认 private metadata 并刷新文档包统计。当前仍没有 CLI `document upload` 命令，也没有真实受控上传器；Codex / CLI 不得自行上传文件、生成 Storage path、读取 Documents 正文、读取 Storage object body、创建 collection、公开发布、修改 visibility、生成 public link、生成 signed URL 或持有 service role key。
+- v1.2.10 后，Workstation document upload 已有单文件 CLI MVP：`document upload` 只允许上传一个本地普通文件到已有 document collection，CLI 先调用 `upload-intent` 获取服务端生成的 `upload_id` / `storage_path`，再调用 server-side controlled upload route 写入 private `workspace-files` bucket，最后调用 `finalize` 写默认 private metadata 并刷新文档包统计。Codex / CLI 仍不得自行生成 Storage path、直连 Supabase、持有 service role key、读取 Documents 正文、读取 Storage object body、创建 collection、公开发布、修改 visibility、生成 public link、生成 signed URL、批量 / 目录上传或删除文件。
 - Profile 真实文件关联暂不实现；签证、身份、生活、求职、合同等个人资料当前建议通过文档包维护，避免扩展 DocumentRelatedType、resolver、Profile 页面和权限边界。
 - v1.1 后，四类资产定义应保持一致：Project 是持续推进主题；Publication 是阶段成果；Knowledge 是可复用知识；Skill 是可复用流程 / Prompt / 操作手册 / 能力包。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
@@ -409,8 +410,8 @@ Research Asset Links：
 - 公开详情与附件维护：四类公开详情页只展示 public 记录；Project / Publication 可显示 public related content 与显式 public 文件附件，管理员先在文件详情页或文件中心批量工具将文件显式设为 public，并确认该文件通过专用 link row 或 legacy primary relation 关联到对应 public Project / Publication；公开详情页只显示安全附件摘要，下载点击 `/public-files/[id]/download`，服务端再校验 public 文件、public 资产和关联存在后短时签名；Knowledge / Skill 公开详情不展示 Documents。
 - 公开 SEO 与分享维护：页面 metadata 通过 `src/lib/site.ts` 统一站点名、canonical、OG / Twitter card 和公开安全图片；sitemap 只收录 public 内容和公开静态入口，查询失败时降级；robots 阻止 dashboard、API、viewer、public-files 等路径；robots / sitemap 不作为权限边界。
 - 公开发布前 QA：启动本地服务后运行 `npm run smoke:public`，巡检公开入口、fallback、metadata、sitemap、robots 和敏感字段；结合浏览器 390px 冒烟确认首页、列表页、详情或 fallback、公开附件 metadata 无横向溢出。
-- Workstation CLI 本地使用：设置 `WORKSTATION_API_TOKEN`，可选设置 `WORKSTATION_API_URL`；运行 `npm run workstation -- health` 检查 API、auth、capability 和 dataAccess；用 `project|knowledge|skill list/show/create/update` 只操作资产 metadata，show 支持 `--id|--slug`，update 可用 `--id` 或由 CLI 用 `--slug` 解析到真实 id 后调用既有 update-by-id API；Project update 可维护 `progress` 和 `start_date`，但不能使用 `current_stage`；update 只能改白名单字段且不能改 visibility；`knowledge list --project-id <id>` 可验证 Knowledge 关联到某个 Project；用 `collection list` 只查看文档包 metadata。CLI 错误输出里的 `requestId` 可到 `/dashboard/developer/workstation-logs` 查询最近审计摘要。不要把 token 发给聊天窗口、写入 GitHub、贴到命令参数或日志里。
-- Workstation Codex Skill 使用：当用户要求保存内容到个人工作台、创建或补充 Project / Knowledge / Skill、查询项目 / Knowledge / Skill、查询文档包 metadata、查看 health、沉淀知识卡片或沉淀 Skill 时，Codex 应优先读取 `.codex/skills/workstation/SKILL.md` 并调用既有 `npm run workstation -- ...`；失败时向用户保留 error code、message 和 requestId，不打印 token。
+- Workstation CLI 本地使用：设置 `WORKSTATION_API_TOKEN`，可选设置 `WORKSTATION_API_URL`；运行 `npm run workstation -- health` 检查 API、auth、capability 和 dataAccess；用 `project|knowledge|skill list/show/create/update` 只操作资产 metadata，show 支持 `--id|--slug`，update 可用 `--id` 或由 CLI 用 `--slug` 解析到真实 id 后调用既有 update-by-id API；Project update 可维护 `progress` 和 `start_date`，但不能使用 `current_stage`；update 只能改白名单字段且不能改 visibility；`knowledge list --project-id <id>` 可验证 Knowledge 关联到某个 Project；用 `collection list` 查看文档包 metadata 和 id；用 `document upload --collection-id ... --file ... --title ... --category ...` 只把单个本地文件上传到已有文档包，默认 private，不生成 signed URL 或 public link。CLI 错误输出里的 `requestId` 可到 `/dashboard/developer/workstation-logs` 查询最近审计摘要。不要把 token 发给聊天窗口、写入 GitHub、贴到命令参数或日志里。
+- Workstation Codex Skill 使用：当用户要求保存内容到个人工作台、创建或补充 Project / Knowledge / Skill、查询项目 / Knowledge / Skill、查询文档包 metadata、上传单个文件到已有文档包、查看 health、沉淀知识卡片或沉淀 Skill 时，Codex 应优先读取 `.codex/skills/workstation/SKILL.md` 并调用既有 `npm run workstation -- ...`；失败时向用户保留 error code、message 和 requestId，不打印 token。
 - v1.1 稳定维护：每次 PR 复查 public-only、Documents private、public attachment 资产上下文、AI Draft Lab 不读 Documents / Storage、prefill 不自动保存 / 创建 / 公开、metadata-only 搜索、sidebar 无自动化 / 设置假入口、topbar 无通知 / 主题假按钮和 390px 无横向滚动。
 - 外部访问链路退役维护：不要恢复 `/access-request`、`/viewer/*`、`/dashboard/access-requests`、`/dashboard/access-grants`、访问申请 / 授权 actions、queries、forms、validations 或流程文档；fallback 不显示申请 / viewer 入口。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
@@ -430,7 +431,7 @@ Research Asset Links：
 2. 观察四类资产分类是否够清楚，必要时只做小范围 helper text、空状态或文档修正。
 3. 继续使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记；handoff 只作为浏览器预填，保存和公开仍由管理员手动完成。
 4. 持续观察 `/dashboard/search`、Documents 文件中心和 390px 移动端在真实资产增长后的可用性。
-5. Workstation CLI 可继续小范围验证：先用静态 token 跑 health dataAccess、metadata list、show by id / slug、Knowledge `--project-id` 过滤、private create、白名单 update、Project progress / start_date update 和 update `--slug` 解析；Codex 侧使用 `.codex/skills/workstation/SKILL.md` 作为调用说明；失败时用 requestId 到后台 logs 页查审计摘要。下一步优先观察生产 / 本地 data access 配置、网络稳定性、rate limit 和日志可读性，再单独评审文件上传或更高风险写操作。
+5. Workstation CLI 可继续小范围验证：先用静态 token 跑 health dataAccess、metadata list、show by id / slug、Knowledge `--project-id` 过滤、private create、白名单 update、Project progress / start_date update、update `--slug` 解析，以及单文件 `document upload` 到已有文档包；Codex 侧使用 `.codex/skills/workstation/SKILL.md` 作为调用说明；失败时用 requestId 到后台 logs 页查审计摘要。下一步优先观察生产 / 本地 data access、private Storage 上传、rate limit、日志可读性和 orphan object 清理需求；delete、public publish、visibility manage、批量 / 目录上传等更高风险写操作仍需单独评审。
 6. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
 7. 每轮 PR 继续运行 lint、build、public smoke、diff check 和 stale reference 搜索。
 
@@ -438,7 +439,7 @@ Research Asset Links：
 
 - Market Brief / 市场简报恢复。
 - Agent CEO / 自动化扩张线。
-- 继续扩展完整 Workstation CLI 高风险能力、MCP server 或 Agent CEO Workbench。
+- 继续扩展 Workstation CLI 高风险能力、MCP server 或 Agent CEO Workbench。
 - 自动化中心、任务中心或复盘中心。
 - 新的求职自动化。
 - 公开文件中心或公开 zip 下载。
@@ -464,3 +465,4 @@ Research Asset Links：
 - “Skill 当前没有 Project / Knowledge / Publication 显式关联字段，只能搜索相关资产”已过时。Skill 仍不新增单独外键字段，但可通过 `research_asset_links` 建立显式关系。
 - “后台存在独立全局研究资产关系视图页面”已过时。Phase 2Q-B-4 已移除该模块；显式关系仍在四类资产详情页维护。
 - “Agent CEO / 自动化扩张是当前主线”已过时。v1.1 后当前主线是 Personal Asset Intranet 稳定使用和已有资产模块 polish；自动化扩张、任务中心、复盘中心和外部集成不进入近期路线。
+- “Workstation CLI 没有 `document upload` 命令”已过时。v1.2.10 已支持单文件上传到已有文档包，但批量 / 目录 / public / visibility 修改 / 删除 / OCR / 向量索引 / AI 摘要 / signed URL 仍不支持。

@@ -1,13 +1,13 @@
 ---
 name: "Personal Workstation CLI"
-description: "Use the local Workstation CLI to save, update, or query Project, Knowledge, Skill, and document collection metadata through the Workstation Admin API."
+description: "Use the local Workstation CLI to save, update, query, or upload a single file into Project, Knowledge, Skill, and document collection workflows through the Workstation Admin API."
 ---
 
 # Personal Workstation CLI
 
-Use this skill when the user wants Codex to save, update, or query low-risk metadata in the personal workstation through the existing Workstation CLI.
+Use this skill when the user wants Codex to save, update, query low-risk metadata, or upload a single local file to an existing document collection in the personal workstation through the existing Workstation CLI.
 
-v1.2.9 notes: Workstation document upload now has backend API MVP routes for upload-intent and finalize, but the current CLI still has no real `document upload` command or controlled uploader. `docs/workstation-document-upload-design.md` remains the boundary document for future CLI upload work.
+v1.2.10 notes: Workstation document upload now has a CLI MVP and server-side controlled uploader. `document upload` is allowed only for one local regular file, an existing document collection, default private metadata, and the Workstation Admin API flow `upload-intent -> upload -> finalize`. `docs/workstation-document-upload-design.md` remains the boundary document for anything beyond that MVP.
 
 The command entrypoint is:
 
@@ -28,6 +28,7 @@ Use the Workstation CLI when the user asks Codex to:
 - 按 id 或 slug 查询 Knowledge。
 - 按 id 或 slug 查询 Skill。
 - 查询文档包 metadata。
+- 上传单个本地文件到已有文档包。
 - 查看 Workstation API health。
 - 把一段文本沉淀为知识卡片。
 - 把一段流程沉淀为 Skill。
@@ -39,16 +40,19 @@ Common intent mapping:
 - "把这段内容沉淀成 Skill" means use `skill create`.
 - "看看工作台是否可用" means use `health`.
 - "查一下文档包" means use `collection list`.
-- "上传文件到文档包" is not supported by the current CLI. Mention the v1.2.9 API-only boundary and do not invent an upload command.
+- "上传文件到文档包" means use `document upload` only when the user provides or clearly identifies an existing collection id and a local file path.
 
 ## When Not To Use
 
 Do not use this CLI for:
 
-- Uploading files.
-- Running a future `document upload` command before it exists.
+- Uploading files outside the single-file document upload MVP.
+- Uploading more than one file.
+- Uploading directories.
+- Creating a document collection during upload.
+- Uploading public files.
 - Reading Documents body text.
-- Reading Supabase Storage objects.
+- Reading Supabase Storage object body.
 - Generating signed URLs.
 - Deleting assets.
 - Updating fields outside the Project / Knowledge / Skill update whitelist.
@@ -113,8 +117,12 @@ npm run workstation -- collection list
 
 Document upload:
 
-```text
-CLI command not implemented. v1.2.9 only adds backend upload-intent / finalize API MVP.
+```bash
+npm run workstation -- document upload \
+  --collection-id "COLLECTION_ID" \
+  --file "./report.pdf" \
+  --title "因子投资学习材料" \
+  --category "research_material"
 ```
 
 ## Environment Variables
@@ -142,9 +150,8 @@ The Workstation CLI:
 - Does not connect to Supabase directly.
 - Does not read the service role key.
 - Does not read Documents body text.
-- Does not read Storage.
-- Does not upload files.
-- Does not implement CLI document upload or a controlled uploader yet.
+- Does not read Storage object body.
+- Uploads only one local regular file to an existing collection through the controlled Workstation API upload flow.
 - Does not delete.
 - Does not public publish.
 - Does not update visibility.
@@ -156,15 +163,15 @@ The Workstation CLI:
 
 Supported create operations create private metadata only. Supported update operations modify existing Project / Knowledge / Skill whitelist metadata only. Public or unlisted publishing remains a manual admin workflow outside this CLI.
 
-The backend API MVP now requires `upload_documents`, uploads only to an existing collection, defaults metadata to private, uses a server-generated ASCII-safe Storage path, and avoids reading Documents body text or generating public links. Future CLI upload must call that API and still must not generate Storage paths itself.
+The document upload MVP requires `upload_documents`, uploads only to an existing collection, defaults metadata to private, uses a server-generated ASCII-safe Storage path, and avoids reading Documents body text, Storage object body, or generating public links. The CLI must never generate Storage paths itself.
 
 ## Standard Workflow
 
-1. Identify whether the user wants to create Project, Knowledge, Skill, show an asset by id or slug, update whitelist metadata, or query assets.
+1. Identify whether the user wants to create Project, Knowledge, Skill, show an asset by id or slug, update whitelist metadata, upload a single file to an existing document collection, or query assets.
 2. If the environment is uncertain or this is the first Workstation call in the session, run `npm run workstation -- health`.
 3. Organize the user's content into CLI arguments. Use a local text file only when the user explicitly provides or requests file-based content input.
 4. Run the matching `npm run workstation -- ...` command.
-5. On success, report the created, updated, or returned `id`, title/name, slug when available, visibility when available, and updated fields when the command was an update. If update used `--slug`, mention the resolved id but never print tokens.
+5. On success, report the created, updated, uploaded, or returned `id`, title/name, slug when available, visibility when available, collection id for uploaded documents, and updated fields when the command was an update. If update used `--slug`, mention the resolved id but never print tokens.
 6. On failure, report the error code, message, and `requestId` if present.
 7. Do not modify code while performing ordinary Workstation CLI operations.
 8. Do not commit or stage any env file.
@@ -212,6 +219,16 @@ Query document collection metadata:
 
 ```bash
 npm run workstation -- collection list
+```
+
+Upload one private document into an existing collection:
+
+```bash
+npm run workstation -- document upload \
+  --collection-id "COLLECTION_ID" \
+  --file "./report.pdf" \
+  --title "因子投资学习材料" \
+  --category "research_material"
 ```
 
 Query Knowledge by Project:
@@ -277,7 +294,7 @@ Update whitelist:
 
 Never use update for `visibility`, `current_stage`, owner/user/created_by fields, Documents, Storage, public publish, delete, or bulk operations.
 
-Do not run `npm run workstation -- document upload ...` yet. v1.2.9 only implements backend upload-intent / finalize API MVP; the CLI command and controlled uploader must be implemented in a separate PR before use.
+Use `npm run workstation -- document upload ...` only for one local regular file, an existing collection id, default private metadata, and the controlled API flow. Do not use it for directories, batches, public files, visibility changes, delete, OCR, vector indexing, AI summaries, signed URLs, or Storage inspection.
 
 ## Error Handling
 

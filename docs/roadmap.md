@@ -40,6 +40,8 @@ v1.2.8 已完成 Workstation document upload design：新增 `docs/workstation-d
 
 v1.2.9 已完成 Workstation Document Upload API MVP：新增后端 `POST /api/workstation/documents/upload-intent` 和 `POST /api/workstation/documents/finalize`，新增 `upload_documents` capability、Workstation 专用 10 MB 文件限制、服务端生成 ASCII-safe `storage_path`、finalize 前 Storage object existence check、默认 private `documents` metadata 写入、collection stats 重算和安全 operation logs 摘要。该轮不新增 CLI upload 命令、不实现受控上传器、不修改 RLS、Storage policy、bucket visibility 或 public download route，不读取 Documents 正文或 Storage object body，不生成 signed URL。
 
+v1.2.10 已完成 Workstation controlled uploader / CLI document upload MVP：新增 server-side `POST /api/workstation/documents/upload` controlled upload route，并让 CLI `document upload` 支持单文件上传到已有 document collection。上传仍走 `upload_documents` capability、服务端生成 ASCII-safe path、private `workspace-files` bucket、默认 private metadata、collection stats 重算和 `documents.upload_intent` / `documents.upload` / `documents.finalize` operation logs；不新增 migration，不修改 RLS、Storage policy、bucket visibility 或 public download route，不读取 Documents 正文或 Storage object body，不生成 signed URL，不支持批量 / 目录 / public / visibility / delete / OCR / vector / AI summary。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -956,8 +958,9 @@ Phase 2R-Z 已退役：
 - v1.2.7 Workstation project progress/date update：已新增 `project update --progress` 和 `--start-date` / `--start_date`，只用于既有 Project 进度和开始日期字段；不新增 `current_stage`。
 - v1.2.8 Workstation document upload design：已冻结 upload-intent / controlled upload / finalize、默认 private、已有 collection、operation logs 和失败处理安全设计。
 - v1.2.9 Workstation Document Upload API MVP：已实现后端 upload-intent / finalize、`upload_documents` capability、最小 grants、受控 path、object existence check、private metadata 写入和 collection stats 重算。
+- v1.2.10 Workstation controlled uploader / CLI document upload MVP：已实现 server-side controlled upload route 和 CLI 单文件 `document upload` 闭环，仍只允许上传到已有文档包且默认 private。
 - v1.2.x Token lifecycle / capability hardening：后续再单独评审 token rotate / revoke、capability hardening 和更细粒度授权。
-- v1.2.x 文件上传后续 PR：单独实现受控上传器和 CLI `document upload`，继续沿用 v1.2.8 / v1.2.9 的安全边界。
+- v1.2.x 文件上传后续 PR：如需要，单独评审 orphan object 清理、upload intent 过期状态、批量 / 目录上传或更细文件限制；继续沿用 v1.2.8-v1.2.10 的安全边界。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
 
 v1.2.0 当前边界：
@@ -995,8 +998,8 @@ v1.2.3 当前边界：
 v1.2.4 当前边界：
 
 - Skill wrapper 只指导 Codex 使用既有 `npm run workstation -- ...` 命令，不新增命令或 API。
-- Codex 可用 CLI 创建 private Project / Knowledge / Skill、查询 metadata、查询文档包 metadata 和查看 health。
-- Codex 不得用 CLI 或其它方式上传文件、读取 Documents 正文、读取 Storage object、生成 signed URL、删除、公开发布、修改 visibility、批量操作、修改权限、操作 Supabase、操作 service role key、操作 token 或调用外部 app。
+- Codex 可用 CLI 创建 private Project / Knowledge / Skill、查询 metadata、查询文档包 metadata、查看 health；v1.2.10 起还可用 CLI 把单个本地文件上传到已有文档包。
+- Codex 不得用 CLI 或其它方式读取 Documents 正文、读取 Storage object body、生成 signed URL、删除、公开发布、修改 visibility、批量 / 目录上传、修改权限、操作 Supabase、操作 service role key、操作 token 或调用外部 app。
 
 v1.2.5 / v1.2.7 当前边界：
 
@@ -1013,6 +1016,15 @@ v1.2.6 当前边界：
 - 不读取 Documents 正文、Storage object、signed URL、owner / user 字段、service role key 或 `.env.local`。
 - 不新增 migration、upload、delete、public publish、visibility manage、token lifecycle、MCP server、Agent CEO 或外部 app。
 
+v1.2.10 当前边界：
+
+- `document upload` 只支持单个本地普通文件上传到已有 document collection，默认写入 private metadata。
+- CLI 不生成 Storage path、不直连 Supabase、不读取 service role key；path 由后端 upload-intent 生成，文件由 server-side controlled upload route 写入 private bucket。
+- 允许类型为 PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG / JPEG，最大 10 MB；zip、脚本、安装包和可执行文件不支持。
+- operation logs 记录 `documents.upload_intent`、`documents.upload`、`documents.finalize` 的安全摘要，不记录完整 Storage path、本地绝对路径、文件内容、token、Authorization 或 service role key。
+- 不新增 migration，不修改 RLS、Storage policy、bucket visibility 或 public download route。
+- 不支持批量 / 目录上传、自动创建 collection、public 文件、visibility 修改、delete、Documents 正文读取、Storage object body 读取、OCR、向量索引、AI 摘要、signed URL、MCP server、Agent CEO 或外部 app。
+
 ### Near-term Stable Usage
 
 近期只做：
@@ -1022,8 +1034,8 @@ v1.2.6 当前边界：
 - 使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记，但继续手动检查、手动保存、手动决定 visibility。
 - 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
 - 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
-- 如继续推进 Workstation API / CLI，优先观察 requestId / logs / rate limit、show by slug/id、update slug resolution、Project progress/start_date update 和 document upload API MVP 在生产与本地的可用性；CLI upload / controlled uploader 仍需单独评审。
-- Workstation update MVP 完成后，后续如需 token rotate / revoke、文件上传、delete/public publish 或 visibility manage，应单独评审安全模型，不和低风险 metadata update 混在同一轮。
+- 如继续推进 Workstation API / CLI，优先观察 requestId / logs / rate limit、show by slug/id、update slug resolution、Project progress/start_date update 和 CLI document upload MVP 在生产与本地的可用性；orphan object 清理、upload intent 过期、批量 / 目录上传仍需单独评审。
+- Workstation update / upload MVP 完成后，后续如需 token rotate / revoke、delete/public publish、visibility manage、批量 / 目录上传或文件清理任务，应单独评审安全模型，不和低风险 metadata update 混在同一轮。
 - Workstation Codex Skill wrapper 完成后，日常“保存到工作台 / 沉淀为 Knowledge / 沉淀为 Skill”请求应优先走 `.codex/skills/workstation/SKILL.md` 描述的 CLI 流程，失败时保留 requestId 便于追踪。
 
 近期不做：
