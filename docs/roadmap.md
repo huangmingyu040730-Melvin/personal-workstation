@@ -50,6 +50,8 @@ v1.2.13 已完成 Workstation Codex runbook：新增 `docs/workstation-codex-run
 
 v1.2.14 已完成 Workstation Codex Skill discovery hardening：强化 `.codex/skills/workstation/SKILL.md` 的 frontmatter metadata、description 检索关键词、When To Use、中文触发语义、Never Do 和标准调用模式，并新增 `.codex/skills/workstation/examples.md`。该轮只增强 Codex Skill 可发现性和调用说明，不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility 或 public download route。
 
+v1.2.15 已完成 Cross-project Workstation Skill Pack design：新增 `docs/workstation-cross-project-skill-pack.md`，设计未来让其他 Codex 项目轻量接入 Personal Workstation 的 Skill Pack、目标项目结构、standalone client、安装器、token 安全策略和验证流程。该轮只做设计，不创建 `packages/workstation-skill-pack/`，不实现 installer，不复制到其他项目，不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility 或 public download route。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -971,7 +973,9 @@ Phase 2R-Z 已退役：
 - v1.2.12 Workstation collection resolution polish：已实现 collection show 只读 API / CLI、`document_collections.show` operation log action 和上传前 `collection list --q` / `collection show` resolution 文档，不自动创建或猜测 collection id。
 - v1.2.13 Workstation Codex runbook：已新增基于真实 PR / smoke / grant 排查经验的 Codex 操作手册，后续 Workstation CLI 日常操作、开发 PR、上传、collection resolution 和 PR review 应先参考该 runbook。
 - v1.2.14 Workstation Codex Skill discovery hardening：已强化 `Personal Workstation` Skill metadata、trigger wording、Never Do、Standard Invocation Patterns，并新增 examples，帮助 Codex slash menu / 语义检索更稳定地发现既有 Workstation CLI 入口。
+- v1.2.15 Cross-project Workstation Skill Pack design：已设计未来 `packages/workstation-skill-pack/`、目标项目 `.codex/skills/workstation/`、standalone client、installer 和安全验证流程；当前仍未实现跨项目安装或全局 Skill。
 - v1.2.x Token lifecycle / capability hardening：后续再单独评审 token rotate / revoke、capability hardening 和更细粒度授权。
+- v1.2.x Cross-project Workstation Skill Pack implementation：如推进，应单独实现 installer / standalone client / package docs，继续禁止复制 token、`.env.local`、service role key 或 Supabase 直连能力。
 - v1.2.x 文件上传后续 PR：如需要，单独评审 orphan object 清理、upload intent 过期状态、批量 / 目录上传或更细文件限制；继续沿用 v1.2.8-v1.2.10 的安全边界。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
 
@@ -1037,6 +1041,7 @@ v1.2.10 当前边界：
 - v1.2.12 后上传前优先用 `collection list --q "关键词"` 搜索文档包候选，并可用 `collection show --id ...` 确认安全 metadata；多个候选时必须让用户确认，不要猜测 collection id。
 - v1.2.13 后 Codex 默认按 `docs/workstation-codex-runbook.md` 执行 Workstation 任务；遇到缺 token、多候选 collection、permission denied、service role key、public/visibility/delete/Storage/RLS 等 stop conditions 时先停下，而不是扩大 CLI 能力。
 - v1.2.14 后 `.codex/skills/workstation/SKILL.md` 是更清晰的 Codex discovery 入口，`.codex/skills/workstation/examples.md` 是调用样例；二者不新增真实 Workstation 能力。
+- v1.2.15 后跨项目 Skill Pack 仍是设计态：其他项目要使用 Personal Workstation，未来需要安装 Skill / examples / standalone client；当前不能假设 repo-level Skill 在其他项目全局可见。
 - 允许类型为 PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG / JPEG，最大 10 MB；zip、脚本、安装包和可执行文件不支持。
 - operation logs 记录 `documents.upload_intent`、`documents.upload`、`documents.finalize` 的安全摘要，不记录完整 Storage path、本地绝对路径、文件内容、token、Authorization 或 service role key。
 - 不新增 migration，不修改 RLS、Storage policy、bucket visibility 或 public download route。

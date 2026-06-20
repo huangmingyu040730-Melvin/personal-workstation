@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-06-21 - Design Cross-project Workstation Skill Pack
+
+类型：decision
+
+决策：
+
+- v1.2.15 新增 `docs/workstation-cross-project-skill-pack.md`，只设计未来 Cross-project Workstation Skill Pack，不实现安装器、不复制到其他项目、不新增 API / CLI 能力。
+- 当前 `.codex/skills/workstation/SKILL.md` 仍是 repo-level Skill；它在 personal-workstation 仓库内可发现，但不能承诺在所有 Codex 项目或 slash menu 中全局可见。
+- 未来 Skill Pack 建议结构为 `packages/workstation-skill-pack/README.md`、`.codex/skills/workstation/SKILL.md`、`.codex/skills/workstation/examples.md`、`scripts/workstation-client.mjs` 和 `install.sh`。
+- 目标项目接入后建议拥有 `.codex/skills/workstation/SKILL.md`、`.codex/skills/workstation/examples.md`、`scripts/workstation.mjs`，并在 `package.json` 中配置 `"workstation": "node scripts/workstation.mjs"`。
+- 未来 standalone client 只读取 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`，只调用 Workstation API，不依赖 Next.js 项目结构、不依赖 Supabase SDK、不读取 service role key、不读取 `.env.local`。
+- 未来安装器只复制 Skill / examples / standalone client，默认不覆盖用户已有文件，除非显式 `--force`；它不得复制 token、`.env.local`、service role key、Storage credentials、migrations、RLS 或 Storage policy。
+- 本轮不创建 `packages/workstation-skill-pack/`，不新增 `workstation:install-skill` script，不写入真实 token，不提交 `.env.local`。
+
+原因：
+
+- v1.2.14 已强化 repo-level Skill discovery，但用户在其他 Codex 项目中工作时仍无法自然发现这个仓库内的 Skill。
+- 将跨项目接入先做成设计，可以明确复制哪些文件、如何安全管理 token、如何验证接入成功，以及哪些能力仍不能做，避免后续实现时把 secret、service role key 或 Supabase 直连带入目标项目。
+
+影响：
+
+- personal-workstation 现在有一份跨项目 Skill Pack 蓝图，但还没有真实安装器或跨项目 CLI client。
+- 后续如实现，需要单独 PR，验证 installer、standalone client、目标项目 package script、secret handling 和不覆盖策略。
+- 后续实现仍不得新增 delete、public publish、visibility manage、batch/directory upload、MCP server、Agent CEO 或外部集成，除非另行安全设计。
+
 ## 2026-06-21 - Harden Personal Workstation Skill Discovery
 
 类型：decision

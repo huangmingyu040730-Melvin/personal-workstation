@@ -11,6 +11,8 @@ The CLI is the capability entrypoint. This Skill is only Codex's discovery and i
 
 Use `docs/workstation-codex-runbook.md` as the operational source of truth for sequencing, stop conditions, PR review, grant troubleshooting, asset workflows, collection resolution, document upload, and safety boundaries.
 
+Cross-project usage is currently design-only. See `docs/workstation-cross-project-skill-pack.md` for the future Skill Pack design. This repo-level Skill does not make Personal Workstation globally visible in every Codex project, and no installer or standalone cross-project client exists yet.
+
 Command entrypoint:
 
 ```bash
@@ -88,6 +90,7 @@ Never:
 - generate Storage paths in the CLI
 - save service role keys in the CLI
 - add MCP server, Agent CEO, Notion, Feishu, Gmail, or other external integration as part of Workstation CLI work
+- copy this Skill into another project together with token values, `.env.local`, service role key, Storage credentials, migrations, RLS files, or Storage policy files
 
 If the user asks for one of those operations, stop and explain that the current Workstation CLI does not support it. Keep the boundary intact unless the user explicitly requests a separate safety design.
 

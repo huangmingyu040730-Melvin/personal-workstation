@@ -4,6 +4,8 @@
 
 本文档是基于本项目真实 Codex 执行经验沉淀的 Workstation CLI / Codex Skill 操作手册。它不是理想流程设计，而是 v1.2.0-v1.2.12 中已经反复跑过、验证过、踩过权限问题并写进 PR 的做法。
 
+v1.2.15 note：跨项目使用 Personal Workstation 的方向目前只是设计，详见 `docs/workstation-cross-project-skill-pack.md`。当前 `.codex/skills/workstation/SKILL.md` 仍是 repo-level Skill；不要假设其他 Codex 项目已经安装该 Skill，也不要承诺 slash menu 全局可见。未来跨项目接入需要单独实现 Skill Pack installer 和 standalone client。
+
 证据来源：
 
 - PR #137-v1.2.0：Admin API MVP。
@@ -25,6 +27,7 @@
 - Use requestId as the debugging handle. Do not compensate by printing secrets or reading `.env.local`.
 - Operation logs are metadata-only. They must not contain token, Authorization header, service role key, Storage path, signed URL, Documents body, file content, or long user content.
 - If a task touches public files, visibility, delete, Storage policy, RLS, bucket visibility, signed URL, or public download route, stop unless the user explicitly asked for that scope and a separate safety design exists.
+- Treat cross-project Skill Pack work as design-only until an implementation PR exists. Do not create installer files, copy Skill files into other projects, or add package scripts unless explicitly requested in a future implementation scope.
 
 ## 2. Default Development Workflow
 
@@ -432,6 +435,7 @@ Stop and ask or report a blocker when:
 - The task requires service role key, full DB URL, `.env.local`, Storage credentials, or signed URL inspection. Do not request or print secrets.
 - The task touches public publish, visibility manage, delete, RLS, Storage policy, bucket visibility, public download route, batch upload, directory upload, OCR, vector indexing, AI summary, or external integrations without explicit scope and safety design.
 - Local operation logs UI redirects to login. Do not bypass with direct DB reads unless the user explicitly asks for a separate admin/database investigation and secret-safe path exists.
+- The user is in another Codex project and asks to use Personal Workstation, but that project has no Workstation Skill Pack installed. Do not assume global Skill availability; explain that cross-project support currently requires a future Skill Pack / installer or a user-provided safe local CLI path.
 
 ## 12. Never Do
 
@@ -453,3 +457,4 @@ Stop and ask or report a blocker when:
 - Never delete files or assets through Workstation CLI.
 - Never public publish or change visibility through Workstation CLI.
 - Never add MCP server, Agent CEO, Notion, Feishu, Gmail, or other external integration as part of Workstation CLI work unless a separate explicitly requested design exists.
+- Never copy `WORKSTATION_API_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `.env.local`, Storage credentials, migrations, RLS files, or Storage policy files into a target project as part of cross-project Skill Pack work.
