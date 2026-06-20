@@ -21,14 +21,16 @@ export type WorkstationQueryError = {
   status: number;
 };
 
-type WorkstationQueryResult<T> =
+export type WorkstationQueryResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: WorkstationQueryError };
 
 type WorkstationSupabaseClient = SupabaseClient;
+export type WorkstationLookupType = "id" | "slug";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const visibilityValues = new Set(["public", "private", "unlisted"]);
 const documentRelatedTypes = new Set(["publication", "project", "knowledge", "skill"]);
 
@@ -181,6 +183,53 @@ function emptyUpdateError() {
   };
 }
 
+export function getWorkstationLookupType(value: string): WorkstationLookupType {
+  return UUID_PATTERN.test(value.trim()) ? "id" : "slug";
+}
+
+function parseWorkstationLookup(value: string): WorkstationQueryResult<{ value: string; type: WorkstationLookupType }> {
+  const lookup = value.trim();
+
+  if (!lookup) {
+    return {
+      ok: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "A non-empty id or slug is required.",
+        status: 400
+      }
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      value: lookup,
+      type: getWorkstationLookupType(lookup)
+    }
+  };
+}
+
+function notFoundError(message: string) {
+  return {
+    ok: false as const,
+    error: {
+      code: "NOT_FOUND" as const,
+      message,
+      status: 404
+    }
+  };
+}
+
+function applyLookup<T>(
+  query: T,
+  lookup: { value: string; type: WorkstationLookupType }
+): T {
+  return lookup.type === "id"
+    ? (query as { eq: (column: string, value: string) => T }).eq("id", lookup.value)
+    : (query as { eq: (column: string, value: string) => T }).eq("slug", lookup.value);
+}
+
 export async function listWorkstationProjects(params: WorkstationListParams) {
   const supabaseResult = getSupabase();
 
@@ -223,6 +272,42 @@ export async function listWorkstationProjects(params: WorkstationListParams) {
       pagination: pagination(count, params)
     }
   };
+}
+
+export async function showWorkstationProject(lookupValue: string) {
+  const supabaseResult = getSupabase();
+
+  if (!supabaseResult.ok) {
+    return supabaseResult;
+  }
+
+  const lookup = parseWorkstationLookup(lookupValue);
+
+  if (!lookup.ok) {
+    return lookup;
+  }
+
+  const query = supabaseResult.data
+    .from("projects")
+    .select("id,title,slug,summary,status,visibility,tags,background,research_question,methodology,updated_at,created_at");
+  const { data, error } = await applyLookup(query, lookup.data).maybeSingle();
+
+  if (error) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: error.message || "Failed to read project.",
+        status: 500
+      }
+    };
+  }
+
+  if (!data) {
+    return notFoundError("Project not found.");
+  }
+
+  return { ok: true as const, data };
 }
 
 export async function createWorkstationProject(input: WorkstationProjectCreateInput) {
@@ -388,6 +473,42 @@ export async function listWorkstationKnowledge(params: WorkstationListParams) {
       pagination: pagination(count, params)
     }
   };
+}
+
+export async function showWorkstationKnowledge(lookupValue: string) {
+  const supabaseResult = getSupabase();
+
+  if (!supabaseResult.ok) {
+    return supabaseResult;
+  }
+
+  const lookup = parseWorkstationLookup(lookupValue);
+
+  if (!lookup.ok) {
+    return lookup;
+  }
+
+  const query = supabaseResult.data
+    .from("knowledge_notes")
+    .select("id,title,slug,category,excerpt,content,tags,project_id,visibility,updated_at,created_at");
+  const { data, error } = await applyLookup(query, lookup.data).maybeSingle();
+
+  if (error) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: error.message || "Failed to read knowledge.",
+        status: 500
+      }
+    };
+  }
+
+  if (!data) {
+    return notFoundError("Knowledge not found.");
+  }
+
+  return { ok: true as const, data };
 }
 
 export async function createWorkstationKnowledge(input: WorkstationKnowledgeCreateInput) {
@@ -613,6 +734,42 @@ export async function listWorkstationSkills(params: WorkstationListParams) {
       pagination: pagination(count, params)
     }
   };
+}
+
+export async function showWorkstationSkill(lookupValue: string) {
+  const supabaseResult = getSupabase();
+
+  if (!supabaseResult.ok) {
+    return supabaseResult;
+  }
+
+  const lookup = parseWorkstationLookup(lookupValue);
+
+  if (!lookup.ok) {
+    return lookup;
+  }
+
+  const query = supabaseResult.data
+    .from("skills")
+    .select("id,name,slug,description,category,platforms,status,content,usage_guide,input_description,output_description,current_version,repository_url,visibility,updated_at,created_at");
+  const { data, error } = await applyLookup(query, lookup.data).maybeSingle();
+
+  if (error) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: error.message || "Failed to read skill.",
+        status: 500
+      }
+    };
+  }
+
+  if (!data) {
+    return notFoundError("Skill not found.");
+  }
+
+  return { ok: true as const, data };
 }
 
 export async function createWorkstationSkill(input: WorkstationSkillCreateInput) {

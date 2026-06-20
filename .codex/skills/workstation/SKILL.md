@@ -22,9 +22,9 @@ Use the Workstation CLI when the user asks Codex to:
 - 创建 Knowledge。
 - 创建 Skill。
 - 补充或修正已有 Project / Knowledge / Skill 的白名单 metadata。
-- 查询工作台项目。
-- 查询 Knowledge。
-- 查询 Skill。
+- 按 id 或 slug 查询工作台 Project。
+- 按 id 或 slug 查询 Knowledge。
+- 按 id 或 slug 查询 Skill。
 - 查询文档包 metadata。
 - 查看 Workstation API health。
 - 把一段文本沉淀为知识卡片。
@@ -72,24 +72,33 @@ Project:
 
 ```bash
 npm run workstation -- project list
+npm run workstation -- project show --id "PROJECT_ID"
+npm run workstation -- project show --slug "PROJECT_SLUG"
 npm run workstation -- project create ...
 npm run workstation -- project update --id "PROJECT_ID" ...
+npm run workstation -- project update --slug "PROJECT_SLUG" ...
 ```
 
 Knowledge:
 
 ```bash
 npm run workstation -- knowledge list
+npm run workstation -- knowledge show --id "KNOWLEDGE_ID"
+npm run workstation -- knowledge show --slug "KNOWLEDGE_SLUG"
 npm run workstation -- knowledge create ...
 npm run workstation -- knowledge update --id "KNOWLEDGE_ID" ...
+npm run workstation -- knowledge update --slug "KNOWLEDGE_SLUG" ...
 ```
 
 Skill:
 
 ```bash
 npm run workstation -- skill list
+npm run workstation -- skill show --id "SKILL_ID"
+npm run workstation -- skill show --slug "SKILL_SLUG"
 npm run workstation -- skill create ...
 npm run workstation -- skill update --id "SKILL_ID" ...
+npm run workstation -- skill update --slug "SKILL_SLUG" ...
 ```
 
 Document collection metadata:
@@ -129,17 +138,19 @@ The Workstation CLI:
 - Does not public publish.
 - Does not update visibility.
 - Only updates Project / Knowledge / Skill whitelist fields.
+- Allows Project / Knowledge / Skill show by id or slug.
+- Allows update by slug only through CLI-side resolution to the existing update-by-id API.
 - Only calls the Workstation Admin API.
 
 Supported create operations create private metadata only. Supported update operations modify existing Project / Knowledge / Skill whitelist metadata only. Public or unlisted publishing remains a manual admin workflow outside this CLI.
 
 ## Standard Workflow
 
-1. Identify whether the user wants to create Project, Knowledge, Skill, update whitelist metadata, or query assets.
+1. Identify whether the user wants to create Project, Knowledge, Skill, show an asset by id or slug, update whitelist metadata, or query assets.
 2. If the environment is uncertain or this is the first Workstation call in the session, run `npm run workstation -- health`.
 3. Organize the user's content into CLI arguments. Use a local text file only when the user explicitly provides or requests file-based content input.
 4. Run the matching `npm run workstation -- ...` command.
-5. On success, report the created, updated, or returned `id`, title/name, slug when available, visibility when available, and updated fields when the command was an update.
+5. On success, report the created, updated, or returned `id`, title/name, slug when available, visibility when available, and updated fields when the command was an update. If update used `--slug`, mention the resolved id but never print tokens.
 6. On failure, report the error code, message, and `requestId` if present.
 7. Do not modify code while performing ordinary Workstation CLI operations.
 8. Do not commit or stage any env file.
@@ -195,6 +206,12 @@ Query Knowledge by Project:
 npm run workstation -- knowledge list --project-id "PROJECT_ID" --visibility private
 ```
 
+Show Project by slug:
+
+```bash
+npm run workstation -- project show --slug "factor-investing-learning-plan"
+```
+
 Update Project whitelist metadata:
 
 ```bash
@@ -204,6 +221,14 @@ npm run workstation -- project update \
   --research-question "如何把机器学习基础稳健地连接到因子研究流程？" \
   --methodology "按章节学习、复现实验、沉淀笔记并定期复盘" \
   --tags "factor,quant,learning"
+```
+
+Update Project whitelist metadata by slug:
+
+```bash
+npm run workstation -- project update \
+  --slug "factor-investing-learning-plan" \
+  --summary "围绕因子投资、机器学习工具和量化研究流程持续沉淀学习资产"
 ```
 
 Update Knowledge whitelist metadata:

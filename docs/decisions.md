@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-06-20 - Add Workstation Show And Slug Resolution Polish
+
+类型：decision
+
+决策：
+
+- v1.2.6 新增 Project / Knowledge / Skill 的安全 show 能力，复用既有 `/api/workstation/projects/[id]`、`/api/workstation/knowledge/[id]`、`/api/workstation/skills/[id]` route 增加 `GET` handler。
+- `[id]` 路径段在 GET 中可为 UUID id 或 slug；PATCH 仍只接受 UUID id，不新增 API update-by-slug。
+- show route 需要 `read_assets` capability，继续使用 requestId、best-effort rate limit 和 `workstation_operation_logs`，action 分别为 `projects.show`、`knowledge.show`、`skills.show`。
+- show operation log request_summary 只记录 `lookup` 和 `lookup_type`；成功时 target_id 记录真实 id，未找到时 target_id 为空。
+- CLI 新增 `project|knowledge|skill show --id|--slug`，`--json` 原样输出 API JSON，人类可读输出只展示安全字段。
+- CLI update 新增 `--slug`，当没有 `--id` 时先调用 show API 解析真实 id，再调用既有 update-by-id API；`--id` 与 `--slug` 互斥。
+- Project / Knowledge / Skill list 的人类可读输出新增完整 `id` 第一列，方便复制到 show / update 命令。
+- 本轮不新增 migration，不新增 Documents / Storage / signed URL 读取，不新增 upload、delete、public publish、visibility manage、token lifecycle、MCP server、Agent CEO、外部 app 或 CLI Supabase 直连。
+
+原因：
+
+- v1.2.5 的 update-by-id 可用，但实际 CLI 使用中常常只有 slug 或 list 输出，缺少稳定的单资产读回与 id resolution 会增加人工查找成本。
+- 复用 `[id]` route 的 GET handler 可避开 Next.js 同级动态路由冲突，同时不改变 PATCH 的 UUID-only 安全边界。
+
+影响：
+
+- Codex 和用户可先用 show 读回单个 Project / Knowledge / Skill 的安全字段，也可以用 slug 执行白名单 update。
+- operation logs 可区分 list / show / update，并保留 show lookup 摘要用于排障。
+- 文件上传、公开发布、visibility 管理和 token 生命周期仍需后续独立安全评审。
+
 ## 2026-06-20 - Add Workstation Update API And CLI MVP
 
 类型：decision

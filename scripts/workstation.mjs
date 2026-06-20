@@ -114,6 +114,11 @@ async function runAssetCommand(assetType, action, args) {
     return;
   }
 
+  if (action === "show") {
+    await runShow(assetType, args);
+    return;
+  }
+
   if (action === "create") {
     await runCreate(assetType, args);
     return;
@@ -227,6 +232,24 @@ async function runList(assetType, args) {
   printSkillList(items);
 }
 
+async function runShow(assetType, args) {
+  const options = parseOptions(args, {
+    id: "id",
+    slug: "slug"
+  });
+  const lookup = parseLookupOptions(options, assetType);
+  const response = await requestWorkstationApi("GET", `/api/workstation/${assetEndpoint(assetType)}/${encodeURIComponent(lookup.value)}`, {
+    jsonOutput: options.json
+  });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  printShown(assetType, response.body?.data ?? {});
+}
+
 async function runCreate(assetType, args) {
   const specs = {
     project: {
@@ -295,6 +318,7 @@ async function runUpdate(assetType, args) {
   const specs = {
     project: {
       id: "id",
+      slug: "slug",
       title: "title",
       summary: "summary",
       status: "status",
@@ -312,6 +336,7 @@ async function runUpdate(assetType, args) {
     },
     knowledge: {
       id: "id",
+      slug: "slug",
       title: "title",
       category: "category",
       excerpt: "excerpt",
@@ -324,6 +349,7 @@ async function runUpdate(assetType, args) {
     },
     skill: {
       id: "id",
+      slug: "slug",
       name: "name",
       description: "description",
       category: "category",
@@ -347,8 +373,10 @@ async function runUpdate(assetType, args) {
     rejectOwnerFields: true,
     rejectVisibility: true
   });
+  const lookup = parseLookupOptions(options, assetType);
   const payload = await buildUpdatePayload(assetType, options);
-  const response = await requestWorkstationApi("PATCH", `/api/workstation/${assetEndpoint(assetType)}/${encodeURIComponent(options.id)}`, {
+  const id = await resolveUpdateId(assetType, lookup, options.json);
+  const response = await requestWorkstationApi("PATCH", `/api/workstation/${assetEndpoint(assetType)}/${encodeURIComponent(id)}`, {
     body: payload,
     jsonOutput: options.json
   });
@@ -363,6 +391,44 @@ async function runUpdate(assetType, args) {
 
 function assetEndpoint(assetType) {
   return assetType === "knowledge" ? "knowledge" : `${assetType}s`;
+}
+
+async function resolveUpdateId(assetType, lookup, jsonOutput) {
+  if (lookup.type === "id") {
+    return lookup.value;
+  }
+
+  const response = await requestWorkstationApi("GET", `/api/workstation/${assetEndpoint(assetType)}/${encodeURIComponent(lookup.value)}`, {
+    jsonOutput
+  });
+  const id = response.body?.data?.id;
+
+  if (!id) {
+    throw new CliError(`Unable to resolve ${assetType} slug to an id.`);
+  }
+
+  if (!jsonOutput) {
+    console.log(`Resolved ${assetType} slug ${lookup.value} to id ${id}`);
+  }
+
+  return id;
+}
+
+function parseLookupOptions(options, assetType) {
+  const id = options.id?.trim();
+  const slug = options.slug?.trim();
+
+  if (id && slug) {
+    throw new CliError(`Use either --id or --slug for ${assetType}, not both.`);
+  }
+
+  if (!id && !slug) {
+    throw new CliError(`Missing required option: use --id or --slug for ${assetType}.`);
+  }
+
+  return id
+    ? { type: "id", value: id }
+    : { type: "slug", value: slug };
 }
 
 async function buildCreatePayload(assetType, options) {
@@ -428,8 +494,6 @@ async function buildCreatePayload(assetType, options) {
 }
 
 async function buildUpdatePayload(assetType, options) {
-  requireOptions(options, ["id"]);
-
   let payload;
 
   if (assetType === "project") {
@@ -729,7 +793,8 @@ function printProjectList(items) {
     return;
   }
 
-  printRows(["title", "status", "visibility", "updated_at"], items.map((item) => [
+  printRows(["id", "title", "status", "visibility", "updated_at"], items.map((item) => [
+    item.id,
     item.title,
     item.status,
     item.visibility,
@@ -743,7 +808,8 @@ function printKnowledgeList(items) {
     return;
   }
 
-  printRows(["title", "category", "visibility", "updated_at"], items.map((item) => [
+  printRows(["id", "title", "category", "visibility", "updated_at"], items.map((item) => [
+    item.id,
     item.title,
     item.category,
     item.visibility,
@@ -757,7 +823,8 @@ function printSkillList(items) {
     return;
   }
 
-  printRows(["name", "category", "status", "visibility", "updated_at"], items.map((item) => [
+  printRows(["id", "name", "category", "status", "visibility", "updated_at"], items.map((item) => [
+    item.id,
     item.name,
     item.category,
     item.status,
@@ -806,6 +873,71 @@ function printCreated(assetType, data) {
   console.log(`- visibility: ${data.visibility ?? "private"}`);
 }
 
+function printShown(assetType, data) {
+  const label = assetType === "knowledge" ? "Knowledge note" : `${assetType[0].toUpperCase()}${assetType.slice(1)}`;
+  const fields = showFields(assetType);
+
+  console.log(`${label}:`);
+
+  for (const field of fields) {
+    console.log(`- ${field}: ${formatDetail(data[field])}`);
+  }
+}
+
+function showFields(assetType) {
+  if (assetType === "project") {
+    return [
+      "id",
+      "title",
+      "slug",
+      "summary",
+      "status",
+      "visibility",
+      "tags",
+      "background",
+      "research_question",
+      "methodology",
+      "updated_at",
+      "created_at"
+    ];
+  }
+
+  if (assetType === "knowledge") {
+    return [
+      "id",
+      "title",
+      "slug",
+      "category",
+      "excerpt",
+      "content",
+      "tags",
+      "project_id",
+      "visibility",
+      "updated_at",
+      "created_at"
+    ];
+  }
+
+  return [
+    "id",
+    "name",
+    "slug",
+    "description",
+    "category",
+    "platforms",
+    "status",
+    "content",
+    "usage_guide",
+    "input_description",
+    "output_description",
+    "current_version",
+    "repository_url",
+    "visibility",
+    "updated_at",
+    "created_at"
+  ];
+}
+
 function printUpdated(assetType, data, fields) {
   const label = assetType === "knowledge" ? "knowledge note" : assetType;
   const title = data.title ?? data.name ?? "(untitled)";
@@ -852,6 +984,19 @@ function formatCell(value) {
   return String(value).replace(/\s+/g, " ").slice(0, 100);
 }
 
+function formatDetail(value) {
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  const normalized = String(value).replace(/\s+/g, " ").trim();
+  return normalized.length > 1000 ? `${normalized.slice(0, 1000)}...` : normalized;
+}
+
 function formatArray(value) {
   return Array.isArray(value) ? value.join(", ") : "";
 }
@@ -866,14 +1011,17 @@ function printHelp() {
 Usage:
   npm run workstation -- health [--json]
   npm run workstation -- project list [--q text] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
+  npm run workstation -- project show (--id id | --slug slug) [--json]
   npm run workstation -- project create --title text --slug slug --summary text [--status in_progress] [--tags a,b]
-  npm run workstation -- project update --id id [--title text] [--summary text] [--status in_progress] [--tags a,b] [--background text | --background-file path] [--research-question text | --research-question-file path] [--methodology text | --methodology-file path]
+  npm run workstation -- project update (--id id | --slug slug) [--title text] [--summary text] [--status in_progress] [--tags a,b] [--background text | --background-file path] [--research-question text | --research-question-file path] [--methodology text | --methodology-file path]
   npm run workstation -- knowledge list [--q text] [--category text] [--project-id id] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
+  npm run workstation -- knowledge show (--id id | --slug slug) [--json]
   npm run workstation -- knowledge create --title text --slug slug --category text [--excerpt text] [--content text | --content-file path] [--tags a,b]
-  npm run workstation -- knowledge update --id id [--title text] [--category text] [--excerpt text] [--content text | --content-file path] [--tags a,b] [--project-id id]
+  npm run workstation -- knowledge update (--id id | --slug slug) [--title text] [--category text] [--excerpt text] [--content text | --content-file path] [--tags a,b] [--project-id id]
   npm run workstation -- skill list [--q text] [--category text] [--platform codex] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
+  npm run workstation -- skill show (--id id | --slug slug) [--json]
   npm run workstation -- skill create --name text --slug slug --description text --category text [--platforms codex,github] [--usage text | --usage-file path]
-  npm run workstation -- skill update --id id [--name text] [--description text] [--category text] [--platforms codex,github] [--status available] [--usage text | --usage-file path]
+  npm run workstation -- skill update (--id id | --slug slug) [--name text] [--description text] [--category text] [--platforms codex,github] [--status available] [--usage text | --usage-file path]
   npm run workstation -- collection list [--q text] [--related-type project] [--related-id id] [--limit 20] [--page 1] [--cursor 0] [--json]
 
 Environment:
