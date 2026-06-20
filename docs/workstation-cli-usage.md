@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -70,7 +70,7 @@ npm run workstation -- health --json
 Workstation API is available
 apiVersion: v1
 auth: ok
-capabilities: read_assets, create_assets
+capabilities: read_assets, create_assets, update_assets
 dataAccess: ok
 - projects.select: ok
 - knowledge.select: ok
@@ -118,6 +118,19 @@ npm run workstation -- project create \
 
 CLI 不发送 public / unlisted visibility。传入 `--visibility public` 或 `--visibility unlisted` 会在本地被拒绝。
 
+更新 Project 白名单字段：
+
+```bash
+npm run workstation -- project update \
+  --id "project-id" \
+  --background "长期研究背景" \
+  --research-question "核心研究问题" \
+  --methodology "阶段性学习和实验方法" \
+  --tags "factor,quant,learning"
+```
+
+允许字段：`title`、`summary`、`status`、`tags`、`background`、`research_question`、`methodology`。也可以使用 `--background-file`、`--research-question-file`、`--methodology-file` 读取用户显式传入的本地文本文件。
+
 ## Knowledge
 
 查询：
@@ -143,6 +156,19 @@ npm run workstation -- knowledge create \
 
 `--content` 和 `--content-file` 二选一；同时传入会报错。`--content-file` 只读取本地文本文件，不读取 Documents 或 Storage。
 
+更新 Knowledge 白名单字段：
+
+```bash
+npm run workstation -- knowledge update \
+  --id "knowledge-id" \
+  --excerpt "更新后的摘要" \
+  --content-file "./note.md" \
+  --project-id "project-id" \
+  --tags "factor,model,quant"
+```
+
+允许字段：`title`、`category`、`excerpt`、`content`、`tags`、`project_id`。`--content` 和 `--content-file` 二选一；如果传入 `project_id`，API 会校验 Project 存在。
+
 ## Skill
 
 查询：
@@ -165,6 +191,17 @@ npm run workstation -- skill create \
 ```
 
 未传 `--platforms` 时默认使用 `codex`。`--usage` 和 `--usage-file` 二选一；CLI 不上传 Skill package，不执行、不解析、不安装 Skill。
+
+更新 Skill 白名单字段：
+
+```bash
+npm run workstation -- skill update \
+  --id "skill-id" \
+  --usage-file "./skill-usage.md" \
+  --platforms "codex,github"
+```
+
+允许字段：`name`、`description`、`category`、`platforms`、`status`、`content`、`usage_guide`、`input_description`、`output_description`、`current_version`、`repository_url`。CLI 的 `--usage` / `--usage-file` 会发送为 `usage_guide`；二者不能同时传入。
 
 ## Collections
 
@@ -196,7 +233,8 @@ Collection list 只展示 metadata，不返回 Storage path、signed URL，不�
 - 不打印 token，不读取或展示 `.env.local`。
 - 不读取 Supabase service role key。
 - 不上传文件，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
-- 不 delete，不 update，不 public publish，不修改 visibility。
+- 只允许 Project / Knowledge / Skill 白名单 update。
+- 不 delete，不 public publish，不修改 visibility。
 - 不操作 Supabase、token、用户权限、Feishu / Lark、Notion、Gmail、MCP server 或 Agent CEO。
 
 失败时 Codex 应向用户返回 error code、message 和 `requestId`，例如：
@@ -214,16 +252,16 @@ Workstation Admin API 使用 server-side service role client 作为受控 API �
 生产 Supabase 应通过 SQL Editor 或 migration 管理以下最小 grant：
 
 ```sql
-grant select, insert on table public.projects to service_role;
-grant select, insert on table public.knowledge_notes to service_role;
-grant select, insert on table public.skills to service_role;
+grant select, insert, update on table public.projects to service_role;
+grant select, insert, update on table public.knowledge_notes to service_role;
+grant select, insert, update on table public.skills to service_role;
 grant select on table public.document_collections to service_role;
 grant select, insert on table public.workstation_operation_logs to service_role;
 ```
 
-当前表使用 UUID 默认值，不需要在本 checklist 中额外授予 sequence 权限。不要在文档、日志或聊天窗口中记录真实 key。`health` 的 `dataAccess` 只做 `select limit 1` 检查，能发现只读表级权限或配置问题，但不能完全证明 `insert` grant 可用。create 失败并出现 `permission denied for table ...` 时，应优先检查对应表的 `service_role` grant。
+当前表使用 UUID 默认值，不需要在本 checklist 中额外授予 sequence 权限。不要在文档、日志或聊天窗口中记录真实 key。`health` 的 `dataAccess` 只做 `select limit 1` 检查，能发现只读表级权限或配置问题，但不能完全证明 `insert` / `update` grant 可用。create / update 失败并出现 `permission denied for table ...` 时，应优先检查对应表的 `service_role` grant。
 
-`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。后台只读页面：
+`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；`0024_workstation_update_service_role_grants.sql` 让日志 method 约束接受 PATCH，并补 Workstation update 所需的白名单字段 update grant。RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。后台只读页面：
 
 ```text
 /dashboard/developer/workstation-logs
@@ -275,20 +313,20 @@ CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm ru
 
 `VALIDATION_ERROR`
 
-输入字段不满足 Admin API schema，例如缺少标题、slug 不合法、tags 格式不符合预期，或尝试传入 public / unlisted visibility。
+输入字段不满足 Admin API schema，例如缺少标题、slug 不合法、tags 格式不符合预期、update 未传任何可更新字段，或尝试传入 public / unlisted visibility。
 
 `RATE_LIMITED`
 
-同一 token hash + IP hash 在当前服务进程内触发 best-effort rate limit。当前限制为每分钟最多 60 次请求，POST 创建类每分钟最多 20 次。Vercel serverless 环境下该限制不是强一致边界，但会返回 `RATE_LIMITED` 并记录 error log。
+同一 token hash + IP hash 在当前服务进程内触发 best-effort rate limit。当前限制为每分钟最多 60 次请求，POST / PATCH 写请求每分钟最多 20 次。Vercel serverless 环境下该限制不是强一致边界，但会返回 `RATE_LIMITED` 并记录 error log。
 
 ## Boundaries
 
-v1.2.4 CLI / API / Codex skill wrapper 仍明确不支持：
+v1.2.5 CLI / API / Codex skill wrapper 仍明确不支持：
 
 - document upload。
 - upload-intent / finalize。
 - delete。
-- update。
+- 非白名单 update。
 - public publish。
 - visibility manage。
 - token 管理页面。

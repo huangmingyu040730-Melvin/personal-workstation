@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import { workstationError } from "./api-response";
 
-export const workstationCapabilities = ["read_assets", "create_assets"] as const;
+export const workstationCapabilities = ["read_assets", "create_assets", "update_assets"] as const;
 
 export type WorkstationCapability = typeof workstationCapabilities[number];
 
@@ -60,6 +60,20 @@ export function requireWorkstationCapability(
   options: WorkstationAuthOptions = {}
 ) {
   if (!auth.capabilities.includes(capability)) {
+    return workstationError("FORBIDDEN", "The Workstation API token does not allow this operation.", 403, {
+      requestId: options.requestId
+    });
+  }
+
+  return null;
+}
+
+export function requireAnyWorkstationCapability(
+  auth: Extract<WorkstationAuthResult, { ok: true }>,
+  capabilities: WorkstationCapability[],
+  options: WorkstationAuthOptions = {}
+) {
+  if (!capabilities.some((capability) => auth.capabilities.includes(capability))) {
     return workstationError("FORBIDDEN", "The Workstation API token does not allow this operation.", 403, {
       requestId: options.requestId
     });

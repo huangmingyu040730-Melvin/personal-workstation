@@ -5,8 +5,11 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import type { Visibility } from "@/lib/types";
 import {
   type WorkstationKnowledgeCreateInput,
+  type WorkstationKnowledgeUpdateInput,
   type WorkstationProjectCreateInput,
+  type WorkstationProjectUpdateInput,
   type WorkstationSkillCreateInput,
+  type WorkstationSkillUpdateInput,
   toKnowledgePayload,
   toProjectPayload,
   toSkillPayload
@@ -161,6 +164,23 @@ function duplicateSlugMessage(error: { code?: string; message?: string }, fallba
   return error.code === "23505" ? "Slug already exists." : error.message || fallback;
 }
 
+function stripUndefined<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined)
+  ) as Partial<T>;
+}
+
+function emptyUpdateError() {
+  return {
+    ok: false as const,
+    error: {
+      code: "VALIDATION_ERROR" as const,
+      message: "At least one update field is required.",
+      status: 400
+    }
+  };
+}
+
 export async function listWorkstationProjects(params: WorkstationListParams) {
   const supabaseResult = getSupabase();
 
@@ -244,6 +264,76 @@ export async function createWorkstationProject(input: WorkstationProjectCreateIn
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/projects");
+
+  return { ok: true as const, data };
+}
+
+export async function updateWorkstationProject(id: string, input: WorkstationProjectUpdateInput) {
+  const supabaseResult = getSupabase();
+
+  if (!supabaseResult.ok) {
+    return supabaseResult;
+  }
+
+  const { data: existing, error: existingError } = await supabaseResult.data
+    .from("projects")
+    .select("id,slug")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingError) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: existingError.message || "Failed to validate project.",
+        status: 500
+      }
+    };
+  }
+
+  if (!existing) {
+    return {
+      ok: false as const,
+      error: {
+        code: "NOT_FOUND" as const,
+        message: "Project not found.",
+        status: 404
+      }
+    };
+  }
+
+  const payload = stripUndefined(input);
+
+  if (Object.keys(payload).length === 0) {
+    return emptyUpdateError();
+  }
+
+  const { data, error } = await supabaseResult.data
+    .from("projects")
+    .update(payload)
+    .eq("id", id)
+    .select("id,title,slug,summary,status,visibility,updated_at")
+    .single();
+
+  if (error) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: error.message || "Failed to update project.",
+        status: 500
+      }
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath("/projects");
+  revalidatePath("/dashboard/projects");
+  revalidatePath(`/projects/${existing.slug}`);
+  revalidatePath(`/projects/${data.slug}`);
+  revalidatePath(`/dashboard/projects/${id}`);
 
   return { ok: true as const, data };
 }
@@ -373,6 +463,106 @@ export async function createWorkstationKnowledge(input: WorkstationKnowledgeCrea
   return { ok: true as const, data };
 }
 
+export async function updateWorkstationKnowledge(id: string, input: WorkstationKnowledgeUpdateInput) {
+  const supabaseResult = getSupabase();
+
+  if (!supabaseResult.ok) {
+    return supabaseResult;
+  }
+
+  const { data: existing, error: existingError } = await supabaseResult.data
+    .from("knowledge_notes")
+    .select("id,slug")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingError) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: existingError.message || "Failed to validate knowledge.",
+        status: 500
+      }
+    };
+  }
+
+  if (!existing) {
+    return {
+      ok: false as const,
+      error: {
+        code: "NOT_FOUND" as const,
+        message: "Knowledge not found.",
+        status: 404
+      }
+    };
+  }
+
+  if (input.project_id) {
+    const { data: project, error: projectError } = await supabaseResult.data
+      .from("projects")
+      .select("id")
+      .eq("id", input.project_id)
+      .maybeSingle();
+
+    if (projectError) {
+      return {
+        ok: false as const,
+        error: {
+          code: "INTERNAL_ERROR" as const,
+          message: projectError.message || "Failed to validate project.",
+          status: 500
+        }
+      };
+    }
+
+    if (!project) {
+      return {
+        ok: false as const,
+        error: {
+          code: "NOT_FOUND" as const,
+          message: "Project not found.",
+          status: 404
+        }
+      };
+    }
+  }
+
+  const payload = stripUndefined(input);
+
+  if (Object.keys(payload).length === 0) {
+    return emptyUpdateError();
+  }
+
+  const { data, error } = await supabaseResult.data
+    .from("knowledge_notes")
+    .update(payload)
+    .eq("id", id)
+    .select("id,title,slug,category,excerpt,project_id,visibility,updated_at")
+    .single();
+
+  if (error) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: error.message || "Failed to update knowledge.",
+        status: 500
+      }
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath("/knowledge");
+  revalidatePath("/dashboard/knowledge");
+  revalidatePath(`/knowledge/${existing.slug}`);
+  revalidatePath(`/knowledge/${data.slug}`);
+  revalidatePath(`/dashboard/knowledge/${id}`);
+
+  return { ok: true as const, data };
+}
+
 export async function listWorkstationSkills(params: WorkstationListParams) {
   const supabaseResult = getSupabase();
 
@@ -469,6 +659,76 @@ export async function createWorkstationSkill(input: WorkstationSkillCreateInput)
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/skills");
+
+  return { ok: true as const, data };
+}
+
+export async function updateWorkstationSkill(id: string, input: WorkstationSkillUpdateInput) {
+  const supabaseResult = getSupabase();
+
+  if (!supabaseResult.ok) {
+    return supabaseResult;
+  }
+
+  const { data: existing, error: existingError } = await supabaseResult.data
+    .from("skills")
+    .select("id,slug")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingError) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: existingError.message || "Failed to validate skill.",
+        status: 500
+      }
+    };
+  }
+
+  if (!existing) {
+    return {
+      ok: false as const,
+      error: {
+        code: "NOT_FOUND" as const,
+        message: "Skill not found.",
+        status: 404
+      }
+    };
+  }
+
+  const payload = stripUndefined(input);
+
+  if (Object.keys(payload).length === 0) {
+    return emptyUpdateError();
+  }
+
+  const { data, error } = await supabaseResult.data
+    .from("skills")
+    .update(payload)
+    .eq("id", id)
+    .select("id,name,slug,description,category,platforms,status,current_version,visibility,updated_at")
+    .single();
+
+  if (error) {
+    return {
+      ok: false as const,
+      error: {
+        code: "INTERNAL_ERROR" as const,
+        message: error.message || "Failed to update skill.",
+        status: 500
+      }
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath("/skills");
+  revalidatePath("/dashboard/skills");
+  revalidatePath(`/skills/${existing.slug}`);
+  revalidatePath(`/skills/${data.slug}`);
+  revalidatePath(`/dashboard/skills/${id}`);
 
   return { ok: true as const, data };
 }

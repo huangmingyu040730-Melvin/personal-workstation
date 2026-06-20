@@ -3,7 +3,7 @@ import type { WorkstationRequestContext } from "./request-context";
 type RateLimitBucket = {
   windowStart: number;
   total: number;
-  post: number;
+  write: number;
 };
 
 const WINDOW_MS = 60_000;
@@ -31,21 +31,21 @@ export function checkWorkstationRateLimit(context: WorkstationRequestContext) {
   const tokenPart = context.tokenHash ?? "missing-token";
   const ipPart = context.ipHash ?? "missing-ip";
   const key = `${tokenPart}:${ipPart}:${windowStart}`;
-  const bucket = buckets.get(key) ?? { windowStart, total: 0, post: 0 };
+  const bucket = buckets.get(key) ?? { windowStart, total: 0, write: 0 };
 
   bucket.total += 1;
 
-  if (context.method === "POST") {
-    bucket.post += 1;
+  if (context.method === "POST" || context.method === "PATCH") {
+    bucket.write += 1;
   }
 
   buckets.set(key, bucket);
   pruneBuckets(now);
 
-  if (bucket.total > TOTAL_LIMIT || bucket.post > POST_LIMIT) {
+  if (bucket.total > TOTAL_LIMIT || bucket.write > POST_LIMIT) {
     return {
       ok: false as const,
-      limit: context.method === "POST" && bucket.post > POST_LIMIT ? POST_LIMIT : TOTAL_LIMIT
+      limit: (context.method === "POST" || context.method === "PATCH") && bucket.write > POST_LIMIT ? POST_LIMIT : TOTAL_LIMIT
     };
   }
 

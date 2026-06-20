@@ -9,7 +9,7 @@ import {
 export type WorkstationRequestContext = {
   requestId: string;
   action: string;
-  method: "GET" | "POST";
+  method: "GET" | "POST" | "PATCH";
   route: string;
   targetType: WorkstationOperationTargetType;
   tokenHash: string | null;
@@ -74,7 +74,7 @@ export function createWorkstationRequestContext(
   action: string,
   targetType: WorkstationOperationTargetType
 ): WorkstationRequestContext {
-  const method = request.method === "POST" ? "POST" : "GET";
+  const method = request.method === "POST" || request.method === "PATCH" ? request.method : "GET";
 
   return {
     requestId: createWorkstationRequestId(),

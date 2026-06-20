@@ -1,11 +1,11 @@
 ---
 name: "Personal Workstation CLI"
-description: "Use the local Workstation CLI to save or query private Project, Knowledge, Skill, and document collection metadata through the Workstation Admin API."
+description: "Use the local Workstation CLI to save, update, or query Project, Knowledge, Skill, and document collection metadata through the Workstation Admin API."
 ---
 
 # Personal Workstation CLI
 
-Use this skill when the user wants Codex to save or query low-risk metadata in the personal workstation through the existing Workstation CLI.
+Use this skill when the user wants Codex to save, update, or query low-risk metadata in the personal workstation through the existing Workstation CLI.
 
 The command entrypoint is:
 
@@ -21,6 +21,7 @@ Use the Workstation CLI when the user asks Codex to:
 - 创建研究项目或创建 Project。
 - 创建 Knowledge。
 - 创建 Skill。
+- 补充或修正已有 Project / Knowledge / Skill 的白名单 metadata。
 - 查询工作台项目。
 - 查询 Knowledge。
 - 查询 Skill。
@@ -46,7 +47,7 @@ Do not use this CLI for:
 - Reading Supabase Storage objects.
 - Generating signed URLs.
 - Deleting assets.
-- Updating assets.
+- Updating fields outside the Project / Knowledge / Skill update whitelist.
 - Public publishing.
 - Changing visibility.
 - Bulk operations.
@@ -72,6 +73,7 @@ Project:
 ```bash
 npm run workstation -- project list
 npm run workstation -- project create ...
+npm run workstation -- project update --id "PROJECT_ID" ...
 ```
 
 Knowledge:
@@ -79,6 +81,7 @@ Knowledge:
 ```bash
 npm run workstation -- knowledge list
 npm run workstation -- knowledge create ...
+npm run workstation -- knowledge update --id "KNOWLEDGE_ID" ...
 ```
 
 Skill:
@@ -86,6 +89,7 @@ Skill:
 ```bash
 npm run workstation -- skill list
 npm run workstation -- skill create ...
+npm run workstation -- skill update --id "SKILL_ID" ...
 ```
 
 Document collection metadata:
@@ -122,19 +126,20 @@ The Workstation CLI:
 - Does not read Storage.
 - Does not upload files.
 - Does not delete.
-- Does not update.
 - Does not public publish.
+- Does not update visibility.
+- Only updates Project / Knowledge / Skill whitelist fields.
 - Only calls the Workstation Admin API.
 
-Supported create operations create private metadata only. Public or unlisted publishing remains a manual admin workflow outside this CLI.
+Supported create operations create private metadata only. Supported update operations modify existing Project / Knowledge / Skill whitelist metadata only. Public or unlisted publishing remains a manual admin workflow outside this CLI.
 
 ## Standard Workflow
 
-1. Identify whether the user wants to create Project, Knowledge, Skill, or query assets.
+1. Identify whether the user wants to create Project, Knowledge, Skill, update whitelist metadata, or query assets.
 2. If the environment is uncertain or this is the first Workstation call in the session, run `npm run workstation -- health`.
 3. Organize the user's content into CLI arguments. Use a local text file only when the user explicitly provides or requests file-based content input.
 4. Run the matching `npm run workstation -- ...` command.
-5. On success, report the created or returned `id`, title/name, slug when available, and visibility when available.
+5. On success, report the created, updated, or returned `id`, title/name, slug when available, visibility when available, and updated fields when the command was an update.
 6. On failure, report the error code, message, and `requestId` if present.
 7. Do not modify code while performing ordinary Workstation CLI operations.
 8. Do not commit or stage any env file.
@@ -189,6 +194,44 @@ Query Knowledge by Project:
 ```bash
 npm run workstation -- knowledge list --project-id "PROJECT_ID" --visibility private
 ```
+
+Update Project whitelist metadata:
+
+```bash
+npm run workstation -- project update \
+  --id "PROJECT_ID" \
+  --background "围绕因子投资与机器学习方法建立长期学习背景" \
+  --research-question "如何把机器学习基础稳健地连接到因子研究流程？" \
+  --methodology "按章节学习、复现实验、沉淀笔记并定期复盘" \
+  --tags "factor,quant,learning"
+```
+
+Update Knowledge whitelist metadata:
+
+```bash
+npm run workstation -- knowledge update \
+  --id "KNOWLEDGE_ID" \
+  --excerpt "更新摘要" \
+  --content-file "./note.md" \
+  --project-id "PROJECT_ID"
+```
+
+Update Skill whitelist metadata:
+
+```bash
+npm run workstation -- skill update \
+  --id "SKILL_ID" \
+  --usage-file "./skill-usage.md" \
+  --platforms "codex,github"
+```
+
+Update whitelist:
+
+- Project: `title`, `summary`, `status`, `tags`, `background`, `research_question`, `methodology`.
+- Knowledge: `title`, `category`, `excerpt`, `content`, `tags`, `project_id`.
+- Skill: `name`, `description`, `category`, `platforms`, `status`, `content`, `usage_guide`, `input_description`, `output_description`, `current_version`, `repository_url`.
+
+Never use update for `visibility`, owner/user/created_by fields, Documents, Storage, public publish, delete, or bulk operations.
 
 ## Error Handling
 
