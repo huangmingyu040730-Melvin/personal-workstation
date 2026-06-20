@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -13,6 +13,14 @@ npm run workstation -- <command>
 CLI 是薄层：只解析命令、读取本地环境变量、调用 Workstation Admin API 并展示结果。它不直接连接 Supabase，不读取或保存 Supabase service role key，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
 
 v1.2.3 后，Workstation API 成功 / 失败响应都会包含 `requestId`。CLI 人类可读错误输出会显示该 requestId，便于到后台 `/dashboard/developer/workstation-logs` 查看最近审计摘要。成功输出默认不额外显示 requestId；`--json` 会原样输出 API JSON。
+
+v1.2.4 后，Codex 使用 Workstation CLI 的项目内说明为：
+
+```text
+.codex/skills/workstation/SKILL.md
+```
+
+该 skill 只指导 Codex 何时调用既有 CLI、如何组织命令、如何处理 requestId 错误以及哪些事情不能做；它不新增任何真实命令或权限。
 
 ## Environment
 
@@ -129,7 +137,8 @@ npm run workstation -- knowledge create \
   --category "因子投资" \
   --excerpt "解释多因子模型如何通过多个风险因子刻画股票截面收益差异" \
   --content-file "./note.md" \
-  --tags "factor,model,quant"
+  --tags "factor,model,quant" \
+  --project-id "project-id"
 ```
 
 `--content` 和 `--content-file` 二选一；同时传入会报错。`--content-file` 只读取本地文本文件，不读取 Documents 或 Storage。
@@ -168,6 +177,35 @@ npm run workstation -- collection list --json
 ```
 
 Collection list 只展示 metadata，不返回 Storage path、signed URL，不读取 Documents 正文，也不上传文件。
+
+## Codex Skill Wrapper
+
+项目内 Codex skill 文档位于：
+
+```text
+.codex/skills/workstation/SKILL.md
+```
+
+当用户说“保存到我的工作台”“创建 Project”“创建 Knowledge”“把这段流程沉淀成 Skill”“查询工作台项目”或“查询文档包 metadata”时，Codex 应使用该 skill 判断是否调用 Workstation CLI。
+
+该 skill 的核心约束：
+
+- 只调用 `npm run workstation -- ...`。
+- 只读取 `WORKSTATION_API_URL` 和 `WORKSTATION_API_TOKEN`。
+- 不要求用户把 token 粘贴到聊天框。
+- 不打印 token，不读取或展示 `.env.local`。
+- 不读取 Supabase service role key。
+- 不上传文件，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
+- 不 delete，不 update，不 public publish，不修改 visibility。
+- 不操作 Supabase、token、用户权限、Feishu / Lark、Notion、Gmail、MCP server 或 Agent CEO。
+
+失败时 Codex 应向用户返回 error code、message 和 `requestId`，例如：
+
+```text
+requestId: wreq_...
+```
+
+但不得输出 token 或 secret。
 
 ## Production Data Access Checklist
 
@@ -245,7 +283,7 @@ CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm ru
 
 ## Boundaries
 
-v1.2.3 CLI / API 仍明确不支持：
+v1.2.4 CLI / API / Codex skill wrapper 仍明确不支持：
 
 - document upload。
 - upload-intent / finalize。

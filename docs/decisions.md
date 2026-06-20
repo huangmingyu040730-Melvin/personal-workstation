@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-06-20 - Add Workstation Codex Skill Wrapper
+
+类型：decision
+
+决策：
+
+- v1.2.4 新增项目内 Codex skill 文档 `.codex/skills/workstation/SKILL.md`。
+- 该 skill 只作为使用说明层，指导 Codex 在保存内容到工作台、创建 Project / Knowledge / Skill、查询资产、查询文档包 metadata 或查看 health 时使用 `npm run workstation -- ...`。
+- skill 明确禁止 upload、delete、update、public publish、visibility manage、Documents 正文读取、Storage object 读取、signed URL 生成、Supabase 直连、service role key 操作、token 操作、外部 app 操作和 Agent CEO 自动执行。
+- skill 要求 CLI 只读取 `WORKSTATION_API_URL` 和 `WORKSTATION_API_TOKEN`，不得让用户在聊天框粘贴 token，不得打印 token，不得读取或展示 `.env.local`，不得新增 `--token` 参数。
+- 失败时 Codex 应向用户保留 error code、message 和 `requestId`，但不得输出 token 或 secret。
+- 本轮不新增真实 CLI 命令、API route、migration、RLS、Storage policy、token 管理、MCP server、Agent CEO、外部集成或 Supabase 直连能力。
+
+原因：
+
+- v1.2.1 到 v1.2.3 已经让 Workstation CLI 可用、可诊断且可审计，但 Codex 仍需要明确的触发条件、命令格式和安全边界说明。
+- 用户说“保存到我的工作台”“创建 Knowledge”“沉淀成 Skill”等自然语言时，Codex 需要稳定映射到已有低风险 CLI 命令，而不是直接改代码、读 Documents、碰 Supabase 或要求用户贴 token。
+- 先补 skill wrapper 能提升日常使用可靠性，同时不扩大真实权限面。
+
+影响：
+
+- `.codex/skills/workstation/SKILL.md` 成为 Codex 使用 Workstation CLI 的项目内入口说明。
+- `docs/workstation-cli-usage.md` 继续保留人类使用手册；skill 文档面向 Codex 行为约束和操作流程。
+- 后续如新增 upload、update、delete、public publish、visibility manage、token lifecycle、MCP server 或 Agent CEO，仍必须单独评审并更新 skill 边界。
+
 ## 2026-06-20 - Add Workstation Operation Logs And Permission Hardening
 
 类型：decision
