@@ -68,6 +68,8 @@ v1.2.12 Workstation collection resolution polish 只增强上传前查找文档�
 
 v1.2.13 Workstation Codex runbook 只新增 `docs/workstation-codex-runbook.md`，从本项目真实 Codex 执行过的 Workstation API/CLI 开发、Project / Knowledge / Skill create/update 验收、progress/start_date、document upload、collection list/show、Supabase grant 排查、PR 验证和 public smoke 中提炼可执行规则。该 runbook 作为 Codex Workstation 操作的 operational source of truth，覆盖默认开发流程、资产操作、文件上传、collection resolution、migration/grant troubleshooting、PR review、stop conditions 和 never-do 边界。本轮不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility、public download route、delete、public publish、visibility manage、批量/目录上传、OCR/vector/AI summary 或外部集成。
 
+v1.2.14 Workstation Codex Skill discovery hardening 只强化 `.codex/skills/workstation/SKILL.md` 的 frontmatter metadata、description 关键词、触发语义、Never do 边界和标准调用模式，并新增 `.codex/skills/workstation/examples.md` 作为 Codex 使用示例。目标是让 Personal Workstation / Workstation CLI 更容易被 Codex slash menu 或语义检索发现和正确调用；不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility、public download route、delete、public publish、visibility manage、批量/目录上传、自动创建 collection、OCR/vector/AI summary、MCP、Agent CEO 或外部集成。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -153,6 +155,7 @@ v1.2.13 Workstation Codex runbook 只新增 `docs/workstation-codex-runbook.md`�
 - v1.2.11 Workstation upload UX / safety polish 已让 CLI `document upload` 在非 JSON 模式显示上传前安全摘要和三步进度，在 `--json` 模式保持纯 JSON，并补充 0027 grant、collection 不存在、支持类型和 10 MB 上限的友好错误提示；collection list 继续展示完整 id，文档和 skill 明确上传前先查 id、不猜 id、不自动创建 collection。
 - v1.2.12 Workstation collection resolution polish 已新增 collection show 只读 API / CLI，`collection list --q`、`--related-type`、`--related-id` 和完整 id 输出用于上传前定位文档包；operation logs 新增 `document_collections.show`，request summary 只记录 `collection_id`。
 - v1.2.13 Workstation Codex runbook 已新增 `docs/workstation-codex-runbook.md`，把 v1.2.0-v1.2.12 的真实 PR / smoke / grant 排查经验整理为 Codex 可执行操作手册；`.codex/skills/workstation/SKILL.md` 和 CLI usage 已指向该 runbook。
+- v1.2.14 Workstation Codex Skill discovery hardening 已把 Skill 名称调整为 `Personal Workstation`，扩展 description 的 `personal workstation` / `workstation CLI` / `project` / `knowledge note` / `document upload` 等检索关键词，补充中英文触发语义、Never do、标准调用模式和 examples 文件；这只是 Codex 发现性和说明层加固。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -495,6 +498,8 @@ v1.2.12 Workstation collection resolution polish 不新增 migration。`workstat
 
 v1.2.13 Workstation Codex runbook 不新增 migration。它只新增经验复盘 runbook 并同步 Skill / CLI usage / 状态文档，不新增 API route、CLI command、RLS、Storage policy、bucket visibility、public download route 或 Workstation 数据写入能力。
 
+v1.2.14 Workstation Codex Skill discovery hardening 不新增 migration。它只修改 `.codex/skills/workstation/SKILL.md`、新增 Skill examples 并同步文档，不新增 API route、CLI command、RLS、Storage policy、bucket visibility、public download route 或 Workstation 数据写入能力。
+
 规则：
 
 - 已执行过的 migration 不应修改。
@@ -532,6 +537,7 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 - v1.2.11 后 Workstation CLI document upload 更适合日常使用和 Codex 自动执行：上传前先用 `collection list` 获取真实 id，非 JSON 输出会展示安全摘要和三步进度，失败时保留 requestId 并给出 0027 grant、collection list、支持类型或 10 MB 上限提示；operation logs UI 验收优先登录后台查看，本地无 session 时只确认 API 200/201 和 requestId，不为验收打印 token、读取 `.env.local` 或直连数据库。
 - v1.2.12 后上传前 collection resolution 更明确：优先用 `collection list --q "关键词"` 搜索候选，再用 `collection show --id ...` 确认目标文档包安全 metadata；多个候选时不要猜，应让用户确认。该流程不自动创建 collection，不读取 Documents / Storage，不返回 signed URL 或公开下载入口。
 - v1.2.13 后 Workstation CLI 已进入可日常使用阶段：Codex 应按 `docs/workstation-codex-runbook.md` 执行开发、资产操作、上传、grant 排查和 PR review；后续可单独考虑 audit review polish 或 Agent CEO Workbench design，但不得把这些方向混入普通 CLI 操作。
+- v1.2.14 后 Workstation Codex Skill 更适合被 slash menu / 语义检索发现：Skill frontmatter 使用 `Personal Workstation` 名称和更宽的 description 关键词，正文保留 runbook 为 operational source of truth，并通过 `.codex/skills/workstation/examples.md` 固化常见调用样例；后续仍不因此扩大 CLI/API 能力边界。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
 
