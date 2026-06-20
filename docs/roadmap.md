@@ -24,7 +24,7 @@ v1.1.4 新增 Workstation API/CLI design，先为未来 Codex 通过受控 CLI /
 
 v1.2.0 已完成 Workstation Admin API MVP：第一批只包括 health、Project / Knowledge / Skill list/create 和 Document Collections metadata list。它使用服务端 `WORKSTATION_API_TOKEN` 静态 token，不实现文件上传、token 管理页面、operation_logs 表、migration、RLS 或 Storage policy。
 
-v1.2.1 已实现 Workstation CLI MVP：新增 `npm run workstation -- ...` 本地薄层入口，支持 health、Project / Knowledge / Skill list/create 和 Collection list。CLI 只调用 Admin API，不直接连接 Supabase，不读取或保存 service role key，不支持 upload、delete、update、public publish 或 visibility manage。
+v1.2.1 已实现 Workstation CLI MVP：新增 `npm run workstation -- ...` 本地薄层入口，支持 health、Project / Knowledge / Skill list/create 和 Collection list。CLI 只调用 Admin API，不直接连接 Supabase，不读取或保存 service role key，不支持 upload、delete、update、public publish 或 visibility manage。注意：这是 v1.2.1 的历史边界，当前 update 能力以后续 v1.2.5 / v1.2.7 记录为准。
 
 v1.2.2 已完成 Workstation diagnostics and CLI query polish；v1.2.3 已完成 operation logs and permission hardening，新增 requestId、审计表、后台只读日志页和 best-effort rate limit。文件上传、update/delete、public publish、visibility manage、token lifecycle 和 MCP / Agent CEO 仍保持后置。
 
@@ -35,6 +35,8 @@ v1.2.5 已完成 Workstation update API / CLI MVP：新增 Project / Knowledge /
 v1.2.6 已完成 Workstation show / ID resolution polish：新增 Project / Knowledge / Skill show by id or slug、CLI update `--slug` 解析到 id 后复用既有 update-by-id API，以及 list 人类可读输出完整 id。该轮不新增 migration，不开放 Documents / Storage、upload、delete、public publish、visibility manage、token lifecycle、MCP 或 Agent CEO。
 
 v1.2.7 已完成 Workstation project progress/date update：Project update 白名单新增既有 `progress` 和 `start_date` 字段，CLI 支持 `--progress` 与 `--start-date` / `--start_date`；新增 0026 只补 service_role 对这两个既有列的 update grant。不新增 `current_stage`、数据库字段、Documents / Storage、upload、delete、public publish、visibility manage、token lifecycle、MCP 或 Agent CEO。
+
+v1.2.8 已完成 Workstation document upload design：新增 `docs/workstation-document-upload-design.md`，为后续 `npm run workstation -- document upload ...` 设计 upload-intent、受控上传、finalize、默认 private metadata、collection stats 刷新、`upload_documents` capability 和 operation logs 摘要。该轮只做设计，不新增 API route、CLI upload 命令、migration、RLS、Storage policy、bucket visibility、public download route、真实上传、signed URL、OCR、向量索引、AI 摘要、delete、public publish 或 visibility manage。
 
 ## Access Layers
 

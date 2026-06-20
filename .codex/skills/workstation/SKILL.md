@@ -7,6 +7,8 @@ description: "Use the local Workstation CLI to save, update, or query Project, K
 
 Use this skill when the user wants Codex to save, update, or query low-risk metadata in the personal workstation through the existing Workstation CLI.
 
+v1.2.8 notes: Workstation document upload is design-only. `docs/workstation-document-upload-design.md` describes a future upload-intent / controlled upload / finalize flow, but the current CLI still has no real document upload command.
+
 The command entrypoint is:
 
 ```bash
@@ -37,12 +39,14 @@ Common intent mapping:
 - "把这段内容沉淀成 Skill" means use `skill create`.
 - "看看工作台是否可用" means use `health`.
 - "查一下文档包" means use `collection list`.
+- "上传文件到文档包" is not supported by the current CLI. Mention the v1.2.8 design boundary and do not invent an upload command.
 
 ## When Not To Use
 
 Do not use this CLI for:
 
 - Uploading files.
+- Running a future `document upload` command before it exists.
 - Reading Documents body text.
 - Reading Supabase Storage objects.
 - Generating signed URLs.
@@ -107,6 +111,12 @@ Document collection metadata:
 npm run workstation -- collection list
 ```
 
+Document upload:
+
+```text
+Not implemented. v1.2.8 only documents the future design.
+```
+
 ## Environment Variables
 
 The CLI reads only local environment variables:
@@ -134,6 +144,7 @@ The Workstation CLI:
 - Does not read Documents body text.
 - Does not read Storage.
 - Does not upload files.
+- Does not implement the v1.2.8 future document upload flow yet.
 - Does not delete.
 - Does not public publish.
 - Does not update visibility.
@@ -144,6 +155,8 @@ The Workstation CLI:
 - Only calls the Workstation Admin API.
 
 Supported create operations create private metadata only. Supported update operations modify existing Project / Knowledge / Skill whitelist metadata only. Public or unlisted publishing remains a manual admin workflow outside this CLI.
+
+Future document upload, when implemented in a separate PR, must require `upload_documents`, upload only to an existing collection, default to private, use a server-generated ASCII-safe Storage path, and avoid reading Documents body text or generating public links.
 
 ## Standard Workflow
 
@@ -263,6 +276,8 @@ Update whitelist:
 - Skill: `name`, `description`, `category`, `platforms`, `status`, `content`, `usage_guide`, `input_description`, `output_description`, `current_version`, `repository_url`.
 
 Never use update for `visibility`, `current_stage`, owner/user/created_by fields, Documents, Storage, public publish, delete, or bulk operations.
+
+Do not run `npm run workstation -- document upload ...` yet. That command is only a v1.2.8 design target and must be implemented in a separate PR before use.
 
 ## Error Handling
 
