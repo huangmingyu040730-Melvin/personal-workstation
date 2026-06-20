@@ -1,5 +1,6 @@
-import { authenticateWorkstationRequest, workstationCapabilities } from "@/lib/workstation/auth";
+import { authenticateWorkstationRequest } from "@/lib/workstation/auth";
 import { WORKSTATION_API_VERSION, workstationSuccess } from "@/lib/workstation/api-response";
+import { getWorkstationDataAccessDiagnostics } from "@/lib/workstation/diagnostics";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +10,13 @@ export async function GET(request: Request) {
   if (!auth.ok) {
     return auth.response;
   }
+  const dataAccess = await getWorkstationDataAccessDiagnostics();
 
   return workstationSuccess({
     apiVersion: WORKSTATION_API_VERSION,
-    capabilities: workstationCapabilities,
-    status: "ok"
+    auth: "ok",
+    capabilities: auth.capabilities,
+    status: "ok",
+    dataAccess
   }, "Workstation API is available");
 }

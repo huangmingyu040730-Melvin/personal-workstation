@@ -102,7 +102,9 @@ async function runHealth(args) {
   const data = response.body?.data ?? {};
   console.log(response.body?.message ?? "Workstation API is available");
   console.log(`apiVersion: ${data.apiVersion ?? response.body?.apiVersion ?? "unknown"}`);
+  console.log(`auth: ${data.auth ?? "unknown"}`);
   console.log(`capabilities: ${formatArray(data.capabilities) || "none"}`);
+  printDataAccess(data.dataAccess);
 }
 
 async function runAssetCommand(assetType, action, args) {
@@ -166,6 +168,8 @@ async function runList(assetType, args) {
     knowledge: {
       q: "q",
       category: "category",
+      "project-id": "projectId",
+      "project_id": "projectId",
       visibility: "visibility",
       limit: "limit",
       page: "page",
@@ -187,6 +191,7 @@ async function runList(assetType, args) {
     q: options.q,
     category: options.category,
     platform: options.platform,
+    project_id: assetType === "knowledge" ? options.projectId : undefined,
     visibility: options.visibility,
     limit: options.limit,
     page: options.page,
@@ -508,11 +513,11 @@ async function requestWorkstationApi(method, path, options = {}) {
     const parsed = parseJson(text);
 
     if (!response.ok) {
-      handleApiFailure(response.status, parsed, options.jsonOutput);
+      handleApiFailure(response.status, parsed, options.jsonOutput, { method, path });
     }
 
     if (!parsed.ok) {
-      handleApiFailure(response.status, parsed, options.jsonOutput);
+      handleApiFailure(response.status, parsed, options.jsonOutput, { method, path });
     }
 
     return { body: parsed, status: response.status };
@@ -543,13 +548,16 @@ function parseJson(text) {
   }
 }
 
-function handleApiFailure(status, body, jsonOutput) {
+function handleApiFailure(status, body, jsonOutput, context = {}) {
   if (jsonOutput && body) {
     printJson(body);
   } else if (body?.error?.code || body?.error?.message) {
     console.error("Workstation API error:");
     console.error(`- code: ${body.error.code ?? "HTTP_ERROR"}`);
     console.error(`- message: ${body.error.message ?? `HTTP ${status}`}`);
+    if (shouldPrintServiceRoleGrantHint(body.error.message, context)) {
+      console.error("Hint: check Supabase service_role grants for the target table.");
+    }
   } else {
     console.error("Workstation API error:");
     console.error(`- code: HTTP_${status}`);
@@ -557,6 +565,14 @@ function handleApiFailure(status, body, jsonOutput) {
   }
 
   process.exit(1);
+}
+
+function shouldPrintServiceRoleGrantHint(message, context) {
+  if (context.method === "GET") {
+    return false;
+  }
+
+  return /permission denied for table (projects|knowledge_notes|skills)/i.test(String(message ?? ""));
 }
 
 function printProjectList(items) {
@@ -642,6 +658,29 @@ function printCreated(assetType, data) {
   console.log(`- visibility: ${data.visibility ?? "private"}`);
 }
 
+function printDataAccess(dataAccess) {
+  if (!dataAccess) {
+    return;
+  }
+
+  console.log(`dataAccess: ${dataAccess.status ?? "unknown"}`);
+
+  if (dataAccess.message) {
+    console.log(`message: ${dataAccess.message}`);
+  }
+
+  if (!dataAccess.checks || typeof dataAccess.checks !== "object") {
+    return;
+  }
+
+  for (const [name, check] of Object.entries(dataAccess.checks)) {
+    console.log(`- ${name}.select: ${check?.select ?? "unknown"}`);
+    if (check?.message) {
+      console.log(`  message: ${check.message}`);
+    }
+  }
+}
+
 function formatCell(value) {
   if (Array.isArray(value)) {
     return value.join(", ");
@@ -669,7 +708,7 @@ Usage:
   npm run workstation -- health [--json]
   npm run workstation -- project list [--q text] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- project create --title text --slug slug --summary text [--status in_progress] [--tags a,b]
-  npm run workstation -- knowledge list [--q text] [--category text] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
+  npm run workstation -- knowledge list [--q text] [--category text] [--project-id id] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- knowledge create --title text --slug slug --category text [--excerpt text] [--content text | --content-file path] [--tags a,b]
   npm run workstation -- skill list [--q text] [--category text] [--platform codex] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- skill create --name text --slug slug --description text --category text [--platforms codex,github] [--usage text | --usage-file path]

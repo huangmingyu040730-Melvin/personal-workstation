@@ -1,6 +1,6 @@
 # Current Status
 
-日期：2026-06-17
+日期：2026-06-20
 
 ## Product Positioning
 
@@ -43,6 +43,8 @@ v1.1.4 Workstation API/CLI design 新增 `docs/workstation-cli-design.md`，为�
 v1.2.0 Workstation Admin API MVP 新增第一批 `/api/workstation/*` 受控 API route：health、Project / Knowledge / Skill list/create，以及 Document Collections metadata list。认证第一版使用服务端 `WORKSTATION_API_TOKEN` 静态 token，capability 只开放 `read_assets` 和 `create_assets`；创建 Project / Knowledge / Skill 时默认 private，并拒绝 public / unlisted visibility 与 owner_id / user_id / created_by 等非白名单字段。本轮不实现 CLI、文件上传、upload-intent / finalize、operation_logs 落库、token 管理页面、migration、RLS、Storage policy 或 public download route 改动。
 
 v1.2.1 Workstation CLI MVP 新增本地薄层 CLI：`npm run workstation -- ...`。CLI 从本地环境变量读取 `WORKSTATION_API_URL` 和 `WORKSTATION_API_TOKEN`，只调用既有 Workstation Admin API，支持 health、Project / Knowledge / Skill list/create 和 Document Collections metadata list；不直接连接 Supabase，不读取或保存 service role key，不支持 upload、delete、update、public publish、visibility manage、operation logs 落库、migration、RLS、Storage policy 或 public download route 改动。
+
+v1.2.2 Workstation diagnostics and CLI query polish 增强 health 的 data access 诊断：token 正确时返回 `auth`、capabilities 和 `dataAccess`，只对 Projects、Knowledge、Skills 和 Document Collections 做轻量 `select limit 1` 检查；CLI health 人类可读输出展示 dataAccess，并为 create 权限错误提示检查 Supabase `service_role` grant；Knowledge list 新增 `--project-id` / `--project_id` 查询过滤。该轮只做诊断、查询和文档补强，不新增 upload、delete、update、public publish、visibility manage、token 管理、operation logs 落库、RLS、Storage policy、public download route 或 Supabase 直连能力。
 
 ## Completed Capabilities
 
@@ -117,6 +119,7 @@ v1.2.1 Workstation CLI MVP 新增本地薄层 CLI：`npm run workstation -- ...`
 - v1.1.4 Workstation API/CLI design 只新增设计文档和状态同步，建议未来通过 Workstation CLI -> Workstation Admin API -> 现有 server-side validation -> Supabase Auth / RLS / Storage 的路径提供受控操作。第一版规划 health、Project / Knowledge / Skill list/create、collection list 和 document upload，但本轮不实现任何真实 API、CLI、token、migration 或外部写入能力。
 - v1.2.0 Workstation Admin API MVP 已新增 `/api/workstation/health`、`/api/workstation/projects`、`/api/workstation/knowledge`、`/api/workstation/skills` 和 `/api/workstation/document-collections`。当前只支持静态 token 认证、统一 JSON 响应、metadata list 和 private create；不支持 upload、delete、update、public publish、visibility manage、operation logs 落库或 CLI。
 - v1.2.1 Workstation CLI MVP 已新增 `scripts/workstation.mjs` 与 `npm run workstation -- ...` 入口。CLI 只解析命令、读取本地环境变量、读取用户显式提供的本地文本文件、调用 Admin API 并格式化输出；不直连 Supabase，不读取 Storage，不读取 Documents 正文，不生成 signed URL，不支持 upload/delete/update/public publish。
+- v1.2.2 Workstation diagnostics and CLI query polish 已增强 `/api/workstation/health` 的 data access select 诊断、CLI health 输出和 Knowledge list 的 `project_id` 查询过滤；生产 / 本地联调文档新增 `service_role` grant checklist、本地 fallback 和 Node fetch 代理注意事项。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -433,6 +436,8 @@ v1.2.0 Workstation Admin API MVP 不新增 migration。它只新增受 `WORKSTAT
 
 v1.2.1 Workstation CLI MVP 不新增 migration。它只新增本地 Node CLI 脚本、`npm run workstation` 入口、环境变量占位和使用文档；不新增 token 表、operation_logs 表、RLS、Storage policy、bucket visibility、文件上传 API、public download route 或任何 Supabase schema。
 
+v1.2.2 Workstation diagnostics and CLI query polish 不新增 migration。它只新增 health select 诊断、Knowledge list 查询过滤、CLI 输出小修和文档 checklist；生产 Supabase 如缺少 `service_role` 表级权限，应通过 SQL Editor 或后续 migration 管理 grant，不修改既有 RLS、Storage policy、bucket visibility、Documents 或 public download route。
+
 规则：
 
 - 已执行过的 migration 不应修改。
@@ -461,7 +466,7 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 - v1.1 维护：继续观察四类资产分类是否清楚、AI Draft Lab 预填是否顺手、搜索和 Documents 是否适合真实资产增长、390px 移动端是否稳定；后续默认只做明确 bugfix、轻量 UX polish、文档同步和安全边界复查。
 - v1.1.4 后可进入 Workstation Admin API MVP 准备：先按 `docs/workstation-cli-design.md` 评审 token capability、operation logs、upload-intent / finalize 和 API 版本兼容策略；实现前仍不得让 CLI 直连 Supabase、持有 service role key、创建 signed URL 或绕过现有后台业务校验。
 - v1.2.0 后 Workstation API 进入低风险 MVP 试用：只允许静态 token 调用 health、metadata list 和 private create；如继续推进，应先做 CLI 薄层或 operation logs / permission hardening，文件上传仍需单独安全审查。
-- v1.2.1 后 Workstation CLI 进入本地薄层试用：Codex / 用户可通过 `npm run workstation -- health|project|knowledge|skill|collection ...` 调用 Admin API；后续优先观察命令可用性、错误提示和生产网络稳定性，再考虑 operation logs / permission hardening。文件上传、删除、更新、公开发布和 visibility 管理仍需单独安全设计。
+- v1.2.1 后 Workstation CLI 进入本地薄层试用：Codex / 用户可通过 `npm run workstation -- health|project|knowledge|skill|collection ...` 调用 Admin API；后续优先观察命令可用性、错误提示和生产网络稳定性，再考虑 operation logs / permission hardening。v1.2.2 已补 health data access 诊断、Knowledge 按 Project 查询和生产 / 本地联调 checklist；文件上传、删除、更新、公开发布和 visibility 管理仍需单独安全设计。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
 

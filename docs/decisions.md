@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-06-20 - Add Workstation Diagnostics And CLI Query Polish
+
+类型：decision
+
+决策：
+
+- v1.2.2 只做 Workstation diagnostics and CLI query polish，不落地 operation logs。
+- `/api/workstation/health` 在 token 正确时返回 `auth`、capabilities 和 `dataAccess`。
+- `dataAccess` 只检查 `projects`、`knowledge_notes`、`skills`、`document_collections` 的轻量 `select limit 1` 状态；不检查 insert，不插入测试记录，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
+- CLI health 人类可读输出展示 API message、apiVersion、auth、capabilities 和 dataAccess checks；`--json` 仍原样输出 API JSON。
+- `knowledge list` 支持 `--project-id` / `--project_id` 查询过滤，便于验证 Knowledge 是否关联到某个 Project；这不新增关联写入、update 或 Project 修改能力。
+- create 遇到 `permission denied for table projects|knowledge_notes|skills` 时，CLI 只追加非敏感 hint：检查 Supabase `service_role` grant。
+- 文档补充 production `service_role` grant checklist、本地 fallback、`SUPABASE_SERVICE_ROLE_KEY` 只供 Next.js server 使用，以及 Node fetch 不一定走 macOS 系统代理的问题。
+- 本轮不新增 upload、delete、update、public publish、visibility manage、token 管理页面、token 表、operation logs 落库、rate limit、MCP server、Agent CEO、外部集成、RLS、Storage policy、bucket visibility、public download route 或 Supabase 直连能力。
+
+原因：
+
+- 真实 CLI 联调发现 health capability 正常不代表底层 Supabase grant 可用，create 可能因生产 `service_role` 表级权限缺失而失败。
+- 本地 fallback 如果缺少 `SUPABASE_SERVICE_ROLE_KEY`，只能验证 token/API 外壳，不能真实读写数据。
+- Node fetch 在本机不一定自动使用 macOS 系统代理，生产 API 可达性问题需要文档化 fallback，而不应把代理 shim 或代理依赖写入主代码。
+- `knowledge list` 缺少 `--project-id` 过滤，导致无法方便验证新建 Knowledge 是否关联到指定 Project。
+
+影响：
+
+- Workstation API health 可作为 API/auth/capability/data access 的第一层诊断入口，但 `dataAccess.status = ok` 只代表 select 检查通过，不证明 insert grant 可用。
+- `docs/workstation-cli-usage.md` 成为生产 / 本地联调、grant checklist 和网络 fallback 的操作入口。
+- Operation logs、rate limit、token rotate / revoke、capability hardening 和文件上传继续留给后续独立 PR。
+- 本决策不改变数据库 schema、RLS、Storage policy、Documents、public download route、公开页面查询或后台网页 CRUD。
+
 ## 2026-06-20 - Add Thin Workstation CLI MVP
 
 类型：decision
