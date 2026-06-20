@@ -26,6 +26,8 @@ v1.2.0 已完成 Workstation Admin API MVP：第一批只包括 health、Project
 
 v1.2.1 已实现 Workstation CLI MVP：新增 `npm run workstation -- ...` 本地薄层入口，支持 health、Project / Knowledge / Skill list/create 和 Collection list。CLI 只调用 Admin API，不直接连接 Supabase，不读取或保存 service role key，不支持 upload、delete、update、public publish 或 visibility manage。
 
+v1.2.2 已完成 Workstation diagnostics and CLI query polish；v1.2.3 已完成 operation logs and permission hardening，新增 requestId、审计表、后台只读日志页和 best-effort rate limit。文件上传、update/delete、public publish、visibility manage、token lifecycle 和 MCP / Agent CEO 仍保持后置。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -935,7 +937,8 @@ Phase 2R-Z 已退役：
 - v1.2.0 Workstation Admin API MVP：已实现受控 Admin API、静态 token 校验、health、Project / Knowledge / Skill list/create、Document Collections metadata list。
 - v1.2.1 Workstation CLI MVP：已实现薄层 CLI，负责命令解析、读取本地环境变量、调用 Admin API 和展示结果；先不做文件上传。
 - v1.2.2 Workstation diagnostics and CLI query polish：增强 health data access 诊断、CLI health 输出、Knowledge 按 Project 查询、生产 / 本地 grant checklist 和 Node fetch 代理说明。
-- v1.2.x Operation logs and permission hardening：后续再单独落地 operation logs、rate limit、token rotate / revoke、capability hardening 和审计视图。
+- v1.2.3 Workstation operation logs and permission hardening：已新增 requestId、operation logs、best-effort rate limit、CLI 错误 requestId 输出和后台只读日志页。
+- v1.2.x Token lifecycle / capability hardening：后续再单独评审 token rotate / revoke、capability hardening 和更细粒度授权。
 - v1.2.x 文件上传 PR：单独设计并实现 upload-intent / finalize 和 `upload_documents` capability。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
 
@@ -946,7 +949,7 @@ v1.2.0 当前边界：
 - CLI 永远不保存 Supabase service role key，不直连 Supabase。
 - 创建 Project / Knowledge / Skill 默认 private，不允许 API 创建 public 内容。
 - 不实现文件上传、删除、更新、公开发布、visibility 管理、用户管理、bulk update、private Documents 正文读取、signed URL 生成或 Storage object 读取。
-- operation logs 暂不落库，后续 v1.2.2 再设计实现。
+- operation logs 已在 v1.2.3 通过专用表落库；token lifecycle 仍未实现。
 
 v1.2.1 当前边界：
 
@@ -964,6 +967,13 @@ v1.2.2 当前边界：
 - 文档补充 `service_role` grant checklist、本地 fallback 和 Node fetch 代理问题；CLI 仍不保存 service role key，不直连 Supabase，不新增代理依赖。
 - 不新增 upload、delete、update、public publish、visibility manage、token 管理页面、operation logs 落库、RLS / Storage policy / public download route 改动。
 
+v1.2.3 当前边界：
+
+- operation logs 只记录 Workstation API 安全摘要，不记录 token 明文、Authorization header、service role key、signed URL、Storage path、Documents 正文、文件内容或完整请求体。
+- rate limit 是进程内 best-effort，在 serverless 环境下不保证强一致。
+- 后台 logs 页面为 `/dashboard/developer/workstation-logs`，只读展示最近 100 条日志，继承 dashboard admin 保护。
+- 不新增 upload、delete、update、public publish、visibility manage、token 管理页面、token 表、token rotate / revoke UI、MCP server、Agent CEO、外部集成、Storage policy、bucket visibility、public download route 或 CLI Supabase 直连。
+
 ### Near-term Stable Usage
 
 近期只做：
@@ -973,8 +983,8 @@ v1.2.2 当前边界：
 - 使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记，但继续手动检查、手动保存、手动决定 visibility。
 - 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
 - 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
-- 如继续推进 Workstation API / CLI，优先做本地 / 生产可达性观察、命令文案小修、operation logs / permission hardening，或单独评审 document upload-intent / finalize。
-- Workstation CLI diagnostics 已完成后，后续如需写入审计、rate limit、token rotate / revoke 或文件上传，应单独评审安全模型，不和查询 polish 混在同一轮。
+- 如继续推进 Workstation API / CLI，优先观察 requestId / logs / rate limit 在生产与本地的可用性，或单独评审 document upload-intent / finalize。
+- Workstation CLI diagnostics 与 operation logs 已完成后，后续如需 token rotate / revoke、文件上传、update/delete/public publish 或 visibility manage，应单独评审安全模型，不和日志 hardening 混在同一轮。
 
 近期不做：
 

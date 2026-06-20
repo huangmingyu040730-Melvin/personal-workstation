@@ -10,6 +10,10 @@ export type WorkstationErrorCode =
   | "RATE_LIMITED"
   | "INTERNAL_ERROR";
 
+type WorkstationResponseOptions = {
+  requestId?: string;
+};
+
 const jsonHeaders = {
   "Cache-Control": "no-store"
 };
@@ -17,13 +21,15 @@ const jsonHeaders = {
 export function workstationSuccess<T>(
   data: T,
   message = "Success",
-  status = 200
+  status = 200,
+  options: WorkstationResponseOptions = {}
 ) {
   return NextResponse.json({
     ok: true,
     data,
     message,
-    apiVersion: WORKSTATION_API_VERSION
+    apiVersion: WORKSTATION_API_VERSION,
+    ...(options.requestId ? { requestId: options.requestId } : {})
   }, {
     status,
     headers: jsonHeaders
@@ -33,7 +39,8 @@ export function workstationSuccess<T>(
 export function workstationError(
   code: WorkstationErrorCode,
   message: string,
-  status: number
+  status: number,
+  options: WorkstationResponseOptions = {}
 ) {
   return NextResponse.json({
     ok: false,
@@ -41,7 +48,8 @@ export function workstationError(
       code,
       message
     },
-    apiVersion: WORKSTATION_API_VERSION
+    apiVersion: WORKSTATION_API_VERSION,
+    ...(options.requestId ? { requestId: options.requestId } : {})
   }, {
     status,
     headers: jsonHeaders

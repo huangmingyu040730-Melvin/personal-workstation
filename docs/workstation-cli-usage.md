@@ -4,13 +4,15 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页。入口为：
 
 ```bash
 npm run workstation -- <command>
 ```
 
 CLI 是薄层：只解析命令、读取本地环境变量、调用 Workstation Admin API 并展示结果。它不直接连接 Supabase，不读取或保存 Supabase service role key，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
+
+v1.2.3 后，Workstation API 成功 / 失败响应都会包含 `requestId`。CLI 人类可读错误输出会显示该 requestId，便于到后台 `/dashboard/developer/workstation-logs` 查看最近审计摘要。成功输出默认不额外显示 requestId；`--json` 会原样输出 API JSON。
 
 ## Environment
 
@@ -178,9 +180,18 @@ grant select, insert on table public.projects to service_role;
 grant select, insert on table public.knowledge_notes to service_role;
 grant select, insert on table public.skills to service_role;
 grant select on table public.document_collections to service_role;
+grant select, insert on table public.workstation_operation_logs to service_role;
 ```
 
 当前表使用 UUID 默认值，不需要在本 checklist 中额外授予 sequence 权限。不要在文档、日志或聊天窗口中记录真实 key。`health` 的 `dataAccess` 只做 `select limit 1` 检查，能发现只读表级权限或配置问题，但不能完全证明 `insert` grant 可用。create 失败并出现 `permission denied for table ...` 时，应优先检查对应表的 `service_role` grant。
+
+`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。后台只读页面：
+
+```text
+/dashboard/developer/workstation-logs
+```
+
+该页面展示最近 100 条日志，并支持 `status`、`action`、`target_type` 筛选；不展示 token、Authorization header、service role key、signed URL、Storage path、Documents 正文或完整请求体。
 
 ## Network And Proxy Notes
 
@@ -204,6 +215,14 @@ npm run workstation -- health
 
 token 缺失、错误，或服务端 `WORKSTATION_API_TOKEN` 与本地 token 不一致。不要在日志里打印 token；只检查本地环境和部署环境是否配置了同一枚 token。
 
+v1.2.3 起，API 错误响应会包含 `requestId`，CLI 人类可读错误会显示：
+
+```text
+- requestId: wreq_...
+```
+
+可以用这个值到 `/dashboard/developer/workstation-logs` 查询对应调用摘要。
+
 `Unable to connect to Workstation API`
 
 CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm run dev` 后使用 `WORKSTATION_API_URL=http://localhost:3000` 测试。
@@ -220,9 +239,13 @@ CLI 无法连接 API。检查 `WORKSTATION_API_URL`，或在本地启动 `npm ru
 
 输入字段不满足 Admin API schema，例如缺少标题、slug 不合法、tags 格式不符合预期，或尝试传入 public / unlisted visibility。
 
+`RATE_LIMITED`
+
+同一 token hash + IP hash 在当前服务进程内触发 best-effort rate limit。当前限制为每分钟最多 60 次请求，POST 创建类每分钟最多 20 次。Vercel serverless 环境下该限制不是强一致边界，但会返回 `RATE_LIMITED` 并记录 error log。
+
 ## Boundaries
 
-v1.2.2 CLI 仍明确不支持：
+v1.2.3 CLI / API 仍明确不支持：
 
 - document upload。
 - upload-intent / finalize。
@@ -231,9 +254,8 @@ v1.2.2 CLI 仍明确不支持：
 - public publish。
 - visibility manage。
 - token 管理页面。
-- operation logs 落库。
-- migration。
-- RLS / Storage policy / bucket visibility 改动。
+- token 表、token rotate / revoke UI。
+- 既有内容表 RLS / Storage policy / bucket visibility 改动。
 - public download route 改动。
 - Documents 正文读取。
 - Storage object 读取。

@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-06-20 - Add Workstation Operation Logs And Permission Hardening
+
+类型：decision
+
+决策：
+
+- v1.2.3 新增 `workstation_operation_logs` 专用审计表，用于记录 Workstation Admin API 的 requestId、action、method、route、target、状态、HTTP 状态、错误码和安全请求摘要。
+- 每次 Workstation API 请求都会生成 `wreq_...` requestId；成功和错误响应都返回该 requestId。
+- Workstation API route 统一记录 success / error operation log；create 成功后记录新建资产 id，validation / auth / rate limit error 不记录完整请求正文。
+- CLI 失败输出在 code 和 message 后显示 `requestId`，`--json` 仍原样输出 API JSON。
+- 新增 best-effort 进程内 rate limit：同一 `token_hash + ip_hash` 每分钟最多 60 次，POST 创建类每分钟最多 20 次；serverless 环境下不视为强一致安全边界。
+- 新增后台只读页面 `/dashboard/developer/workstation-logs`，展示最近 100 条日志并支持 status / action / target_type 筛选。
+- 本轮不新增 upload、delete、update、public publish、visibility manage、token 管理页面、token 表、token rotate / revoke UI、MCP server、Agent CEO、外部集成、Storage policy、bucket visibility、public download route 或 CLI Supabase 直连。
+
+原因：
+
+- v1.2.1 / v1.2.2 已经让 Codex / CLI 可创建 private Project、Knowledge 和 Skill；继续推进 update 或 upload 前，需要先有可追踪的 requestId、审计记录和权限失败排查入口。
+- operation logs 与现有 `activity_logs` 互补：前者记录 token-protected Workstation API 调用，后者主要记录管理员后台人工操作。
+- rate limit 和 requestId 是后续更高风险能力的基础防护与排障能力，但不应和 upload/update 一起落地。
+
+影响：
+
+- 新增 migration `0023_create_workstation_operation_logs.sql`；RLS 只允许 admin 读取，写入由 server-side helper 使用 service role 完成。
+- API 响应新增 `requestId` 是向后兼容字段；旧 CLI / 脚本可忽略。
+- 日志只保存 token / IP / user agent 的 hash 和精简 request summary，不保存 token 明文、Authorization header、service role key、Supabase key、signed URL、Storage path、Documents 正文、文件内容或大段 Knowledge / Skill 正文。
+- 文件上传仍需单独 PR 重新评审 upload-intent / finalize、Storage 边界和失败清理。
+
 ## 2026-06-20 - Add Workstation Diagnostics And CLI Query Polish
 
 类型：decision
@@ -26,7 +53,7 @@
 
 - Workstation API health 可作为 API/auth/capability/data access 的第一层诊断入口，但 `dataAccess.status = ok` 只代表 select 检查通过，不证明 insert grant 可用。
 - `docs/workstation-cli-usage.md` 成为生产 / 本地联调、grant checklist 和网络 fallback 的操作入口。
-- Operation logs、rate limit、token rotate / revoke、capability hardening 和文件上传继续留给后续独立 PR。
+- Operation logs 和 rate limit 已由 v1.2.3 独立 PR 接替；token rotate / revoke、capability hardening 和文件上传继续留给后续独立 PR。
 - 本决策不改变数据库 schema、RLS、Storage policy、Documents、public download route、公开页面查询或后台网页 CRUD。
 
 ## 2026-06-20 - Add Thin Workstation CLI MVP
@@ -55,7 +82,7 @@
 
 - `.env.example` 新增 `WORKSTATION_API_URL` 占位，仍不保存真实 token。
 - 新增 `docs/workstation-cli-usage.md` 作为本地使用入口。
-- 后续可在不改变 CLI 安全边界的前提下打磨命令输出、operation logs / permission hardening，文件上传仍需单独 PR 评审 upload-intent / finalize。
+- 后续可在不改变 CLI 安全边界的前提下继续打磨命令输出；operation logs / permission hardening 已由 v1.2.3 接替，文件上传仍需单独 PR 评审 upload-intent / finalize。
 - 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询或后台网页 CRUD。
 
 ## 2026-06-20 - Add Static Token Workstation Admin API MVP
@@ -82,7 +109,7 @@
 
 - `.env.example` 只新增 `WORKSTATION_API_TOKEN=your_workstation_api_token` 占位，不提交真实 token。
 - 后续 CLI 只能持有 Workstation token，不能直接连接 Supabase 或持有 service role key。
-- 后续 v1.2.1 可先做 CLI 薄层；v1.2.2 再做 operation logs / permission hardening；文件上传需单独设计 upload-intent / finalize。
+- 后续 v1.2.1 已完成 CLI 薄层，v1.2.3 已完成 operation logs / permission hardening；文件上传需单独设计 upload-intent / finalize。
 - 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询或后台网页 CRUD。
 
 ## 2026-06-20 - Keep Workstation API CLI As Design Only
@@ -109,7 +136,7 @@
 影响：
 
 - `docs/workstation-cli-design.md` 是后续 v1.2.0 / v1.2.1 的设计入口。
-- 后续实现前必须先决定 token 数据模型、撤销机制、operation logs、rate limit、API capability list 和 upload-intent / finalize 机制。
+- 后续高风险扩展前仍需决定 token 数据模型、撤销机制、更细 capability list 和 upload-intent / finalize 机制；operation logs 与 best-effort rate limit 已由 v1.2.3 接替。
 - 任何后续 CLI / MCP / agent workbench 都必须走 Workstation Admin API，不得直接持有 service role key 或绕过网站后端。
 - 本决策不改变数据库、RLS、Storage policy、Documents、public download route、公开页面查询或后台 CRUD。
 
