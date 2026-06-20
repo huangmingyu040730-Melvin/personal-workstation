@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-06-21 - Harden Personal Workstation Skill Discovery
+
+类型：decision
+
+决策：
+
+- v1.2.14 只强化 `.codex/skills/workstation/SKILL.md` 作为 Codex Skill 的可发现性和调用入口，不新增 Workstation CLI / API 能力。
+- Skill frontmatter 名称改为 `Personal Workstation`，description 明确覆盖 `personal workstation`、`workstation CLI`、`save to workstation`、Project、Knowledge note、Skill、Document collection、Document upload、private asset、progress、start date 和 Codex 等检索关键词。
+- Skill 正文新增/强化 `When To Use This Skill`、中文触发语义、`Never Do`、`Standard Invocation Patterns`、secret handling、error handling 和 examples 链接。
+- 新增 `.codex/skills/workstation/examples.md`，用 8 个真实风格示例说明保存学习笔记、创建研究项目、更新项目进度、上传本地文件、创建 Skill、查询 collection、处理 permission denied grant 和多候选停止。
+- `docs/workstation-codex-runbook.md` 继续作为 operational source of truth；Skill 和 examples 只帮助 Codex 发现和调用既有 CLI。
+- 本轮不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility、public download route、upload/delete/public publish/visibility manage 或外部集成。
+
+原因：
+
+- Workstation CLI 已进入可日常使用阶段，但 Codex 是否能稳定从 slash menu 或语义检索识别 Skill，主要取决于 Skill metadata、description、trigger wording 和 examples 的清晰度。
+- 将入口名称、英文关键词、中文触发语义和固定调用模式前置，可以让“保存到工作台 / 沉淀到知识库 / 上传到文档包 / 更新项目进度”等请求更容易路由到既有 CLI，而不是重新发明流程。
+
+影响：
+
+- Codex 更容易发现 Personal Workstation Skill，并按既有 Workstation CLI / runbook 执行。
+- 当前仓库只能做静态验证；Codex UI slash menu 是否展示该 Skill 仍取决于 Codex 产品环境。
+- 后续如需新增命令、MCP server、Agent CEO 或更广泛自动化，仍必须单独设计和 PR。
+
 ## 2026-06-21 - Add Workstation Codex Runbook From Real Runs
 
 类型：decision
