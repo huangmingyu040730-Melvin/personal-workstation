@@ -4,7 +4,7 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -249,7 +249,7 @@ requestId: wreq_...
 
 Workstation Admin API 使用 server-side service role client 作为受控 API 的数据访问方式。Codex / CLI 不直接持有 service role key，但 Vercel Production / Preview 或本地 Next.js server 需要配置服务端 data access。
 
-生产 Supabase 应通过 SQL Editor 或 migration 管理以下最小 grant：
+生产 Supabase 应执行 `0025_consolidate_workstation_service_role_grants.sql` 固化 Workstation Admin API 已需的最小 grant。等价权限范围包括：
 
 ```sql
 grant select, insert, update on table public.projects to service_role;
@@ -261,7 +261,7 @@ grant select, insert on table public.workstation_operation_logs to service_role;
 
 当前表使用 UUID 默认值，不需要在本 checklist 中额外授予 sequence 权限。不要在文档、日志或聊天窗口中记录真实 key。`health` 的 `dataAccess` 只做 `select limit 1` 检查，能发现只读表级权限或配置问题，但不能完全证明 `insert` / `update` grant 可用。create / update 失败并出现 `permission denied for table ...` 时，应优先检查对应表的 `service_role` grant。
 
-`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；`0024_workstation_update_service_role_grants.sql` 让日志 method 约束接受 PATCH，并补 Workstation update 所需的白名单字段 update grant。RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。后台只读页面：
+`workstation_operation_logs` 由 `0023_create_workstation_operation_logs.sql` 创建；`0024_workstation_update_service_role_grants.sql` 让日志 method 约束接受 PATCH，并补 Workstation update 所需的白名单字段 update grant；`0025_consolidate_workstation_service_role_grants.sql` 再把 Project / Knowledge / Skill list/create/update、Document Collections list 和 operation logs 写入所需权限一次性固化。RLS 只允许 admin 读取，写入通过 server-side helper 使用 service role 完成。后台只读页面：
 
 ```text
 /dashboard/developer/workstation-logs

@@ -50,7 +50,7 @@ v1.2.3 Workstation operation logs and permission hardening 新增 `workstation_o
 
 v1.2.4 Workstation Codex Skill wrapper 新增 `.codex/skills/workstation/SKILL.md`，让 Codex 在用户要求保存到工作台、创建 Project / Knowledge / Skill、查询资产或查询文档包 metadata 时优先使用 `npm run workstation -- ...`，并明确 token、service role、Documents、Storage、upload、delete、update、public publish、visibility manage、外部应用和 Agent CEO 的禁用边界。本轮只做 skill 使用说明和文档同步，不新增真实 CLI 命令、API route、migration、RLS、Storage policy、token 管理或 Supabase 直连能力。
 
-v1.2.5 Workstation update API / CLI MVP 新增低风险 `PATCH /api/workstation/projects/[id]`、`PATCH /api/workstation/knowledge/[id]`、`PATCH /api/workstation/skills/[id]` 与 `npm run workstation -- project|knowledge|skill update --id ...`。update 只允许 Project / Knowledge / Skill 白名单字段，新增 `update_assets` capability，继续记录 requestId、operation logs 和 rate limit；新增 `0024_workstation_update_service_role_grants.sql` 只为 service_role 补白名单 update grant，并让 operation logs 接受 PATCH method；不允许 visibility update、delete、upload、public publish、Documents 关联、Documents 正文读取、Storage object、signed URL、token 管理、MCP、Agent CEO、外部集成或 CLI Supabase 直连。
+v1.2.5 Workstation update API / CLI MVP 新增低风险 `PATCH /api/workstation/projects/[id]`、`PATCH /api/workstation/knowledge/[id]`、`PATCH /api/workstation/skills/[id]` 与 `npm run workstation -- project|knowledge|skill update --id ...`。update 只允许 Project / Knowledge / Skill 白名单字段，新增 `update_assets` capability，继续记录 requestId、operation logs 和 rate limit；新增 `0024_workstation_update_service_role_grants.sql` 只为 service_role 补白名单 update grant，并让 operation logs 接受 PATCH method。后续 hotfix 新增 `0025_consolidate_workstation_service_role_grants.sql`，一次性固化 Workstation API 已需的 Project / Knowledge / Skill select / insert / update、Document Collections select 与 operation logs select / insert 权限；不新增 API / CLI 能力，不允许 visibility update、delete、upload、public publish、Documents 关联、Documents 正文读取、Storage object、signed URL、token 管理、MCP、Agent CEO、外部集成或 CLI Supabase 直连。
 
 ## Completed Capabilities
 
@@ -453,10 +453,12 @@ v1.2.4 Workstation Codex Skill wrapper 不新增 migration。它只新增 `.code
 
 v1.2.5 Workstation update API / CLI MVP 新增 `0024_workstation_update_service_role_grants.sql`。该 migration 只让 `workstation_operation_logs` 接受 PATCH method，并给 `service_role` 补 Projects / Knowledge / Skills 白名单字段 update grant；不修改 RLS、Storage policy、bucket visibility、Documents、public download route 或文件数据。
 
+v1.2.5 hotfix 新增 `0025_consolidate_workstation_service_role_grants.sql`。该 migration 只补齐 Workstation Admin API 已经需要的 `service_role` 最小权限：Project / Knowledge / Skill 的 select / insert / update，Document Collections 的 select，以及 Workstation operation logs 的 select / insert 和 PATCH method check；不新增 API route、CLI 命令、RLS policy、Storage policy、bucket visibility、public download route、upload、delete、public publish、visibility manage、token 表或 token UI。
+
 规则：
 
 - 已执行过的 migration 不应修改。
-- 执行 0024 后，后续数据库变更应新增 `0025_*` 或更高编号。
+- 执行 0025 后，后续数据库变更应新增 `0026_*` 或更高编号。
 - 不得重跑旧 migration。
 - 不得放宽 Storage / RLS。
 - 不得提交 `.env.local`、Supabase key、管理员邮箱、密码、Auth UUID、signed URL 或 `service_role`。
