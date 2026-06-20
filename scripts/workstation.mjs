@@ -322,6 +322,9 @@ async function runUpdate(assetType, args) {
       title: "title",
       summary: "summary",
       status: "status",
+      progress: "progress",
+      "start-date": "startDate",
+      "start_date": "startDate",
       tags: "tags",
       background: "background",
       "background-file": "backgroundFile",
@@ -505,6 +508,8 @@ async function buildUpdatePayload(assetType, options) {
       title: options.title,
       summary: options.summary,
       status: options.status,
+      progress: options.progress === undefined ? undefined : parseProgress(options.progress),
+      start_date: options.startDate === undefined ? undefined : parseStartDate(options.startDate),
       tags: options.tags === undefined ? undefined : parseCsv(options.tags),
       background: options.backgroundFile ? await readTextFile(options.backgroundFile) : options.background,
       research_question: options.researchQuestionFile ? await readTextFile(options.researchQuestionFile) : options.researchQuestion,
@@ -667,6 +672,51 @@ function parseCsv(value) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function parseProgress(value) {
+  const normalized = String(value).trim();
+
+  if (!normalized) {
+    throw new CliError("--progress must be an integer between 0 and 100.");
+  }
+
+  const parsed = Number(normalized);
+
+  if (!Number.isInteger(parsed)) {
+    throw new CliError("--progress must be an integer between 0 and 100.");
+  }
+
+  if (parsed < 0 || parsed > 100) {
+    throw new CliError("--progress must be between 0 and 100.");
+  }
+
+  return parsed;
+}
+
+function parseStartDate(value) {
+  const normalized = String(value).trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized);
+
+  if (!match) {
+    throw new CliError("--start-date must use YYYY-MM-DD.");
+  }
+
+  const [, yearValue, monthValue, dayValue] = match;
+  const year = Number(yearValue);
+  const month = Number(monthValue);
+  const day = Number(dayValue);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year
+    || date.getUTCMonth() !== month - 1
+    || date.getUTCDate() !== day
+  ) {
+    throw new CliError("--start-date must be a valid date.");
+  }
+
+  return normalized;
 }
 
 async function readTextFile(filePath) {
@@ -1013,7 +1063,7 @@ Usage:
   npm run workstation -- project list [--q text] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- project show (--id id | --slug slug) [--json]
   npm run workstation -- project create --title text --slug slug --summary text [--status in_progress] [--tags a,b]
-  npm run workstation -- project update (--id id | --slug slug) [--title text] [--summary text] [--status in_progress] [--tags a,b] [--background text | --background-file path] [--research-question text | --research-question-file path] [--methodology text | --methodology-file path]
+  npm run workstation -- project update (--id id | --slug slug) [--title text] [--summary text] [--status in_progress] [--progress 25] [--start-date YYYY-MM-DD] [--tags a,b] [--background text | --background-file path] [--research-question text | --research-question-file path] [--methodology text | --methodology-file path]
   npm run workstation -- knowledge list [--q text] [--category text] [--project-id id] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- knowledge show (--id id | --slug slug) [--json]
   npm run workstation -- knowledge create --title text --slug slug --category text [--excerpt text] [--content text | --content-file path] [--tags a,b]

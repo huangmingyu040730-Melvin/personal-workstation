@@ -72,8 +72,10 @@ export function summarizeProjectUpdateRequest(id: string, input: unknown) {
 
   return {
     id: text(id, 80),
-    fields: fieldNames(body, ["title", "summary", "status", "tags", "background", "research_question", "methodology"]),
+    fields: fieldNames(body, ["title", "summary", "status", "progress", "start_date", "tags", "background", "research_question", "methodology"]),
     tags_count: arrayCount(body.tags),
+    has_progress: Object.prototype.hasOwnProperty.call(body, "progress"),
+    has_start_date: Object.prototype.hasOwnProperty.call(body, "start_date"),
     has_background: booleanPresence(body.background),
     has_research_question: booleanPresence(body.research_question),
     has_methodology: booleanPresence(body.methodology)

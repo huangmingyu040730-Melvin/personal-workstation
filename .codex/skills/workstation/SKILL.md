@@ -138,6 +138,7 @@ The Workstation CLI:
 - Does not public publish.
 - Does not update visibility.
 - Only updates Project / Knowledge / Skill whitelist fields.
+- Project update whitelist includes `progress` and `start_date`, but not `current_stage`.
 - Allows Project / Knowledge / Skill show by id or slug.
 - Allows update by slug only through CLI-side resolution to the existing update-by-id API.
 - Only calls the Workstation Admin API.
@@ -217,6 +218,8 @@ Update Project whitelist metadata:
 ```bash
 npm run workstation -- project update \
   --id "PROJECT_ID" \
+  --progress 25 \
+  --start-date "2026-06-16" \
   --background "围绕因子投资与机器学习方法建立长期学习背景" \
   --research-question "如何把机器学习基础稳健地连接到因子研究流程？" \
   --methodology "按章节学习、复现实验、沉淀笔记并定期复盘" \
@@ -228,6 +231,9 @@ Update Project whitelist metadata by slug:
 ```bash
 npm run workstation -- project update \
   --slug "factor-investing-learning-plan" \
+  --status "in_progress" \
+  --progress 25 \
+  --start-date "2026-06-16" \
   --summary "围绕因子投资、机器学习工具和量化研究流程持续沉淀学习资产"
 ```
 
@@ -252,11 +258,11 @@ npm run workstation -- skill update \
 
 Update whitelist:
 
-- Project: `title`, `summary`, `status`, `tags`, `background`, `research_question`, `methodology`.
+- Project: `title`, `summary`, `status`, `progress`, `start_date`, `tags`, `background`, `research_question`, `methodology`.
 - Knowledge: `title`, `category`, `excerpt`, `content`, `tags`, `project_id`.
 - Skill: `name`, `description`, `category`, `platforms`, `status`, `content`, `usage_guide`, `input_description`, `output_description`, `current_version`, `repository_url`.
 
-Never use update for `visibility`, owner/user/created_by fields, Documents, Storage, public publish, delete, or bulk operations.
+Never use update for `visibility`, `current_stage`, owner/user/created_by fields, Documents, Storage, public publish, delete, or bulk operations.
 
 ## Error Handling
 
