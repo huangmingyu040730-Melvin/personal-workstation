@@ -91,6 +91,7 @@
 - v1.2.1 Workstation CLI MVP：新增本地 `npm run workstation -- ...` 薄层 CLI，支持 health、Project / Knowledge / Skill list/create 和 Document Collections metadata list；CLI 只读取本地 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`、调用 Admin API 和展示结果，不直连 Supabase、不保存 service role key、不上传文件、不删除 / 更新 / 公开发布资产。
 - v1.2.2 Workstation diagnostics and CLI query polish：增强 health 的 data access select 诊断、CLI health 输出、Knowledge list 按 `project_id` 查询、权限错误 hint 和生产 / 本地联调文档；仍不新增 upload、delete、update、public publish、visibility manage、token 管理、operation logs 落库、RLS、Storage policy 或 Supabase 直连能力。
 - v1.2.3 Workstation operation logs and permission hardening：新增 `workstation_operation_logs`、`wreq_...` requestId、API success / error 审计、CLI 错误 requestId 输出、best-effort rate limit 和 `/dashboard/developer/workstation-logs` 只读页面；仍不新增 upload、delete、update、public publish、visibility manage、token 表、Storage policy、public download route 或 CLI Supabase 直连。
+- v1.2.4 Workstation Codex Skill wrapper：新增 `.codex/skills/workstation/SKILL.md`，让 Codex 在保存到工作台、创建 Project / Knowledge / Skill、查询资产、查询文档包 metadata 或查看 health 时使用既有 Workstation CLI；本轮只做说明层，不新增真实 API / CLI 能力。
 
 当前网站包括：
 
@@ -138,6 +139,7 @@
 - v1.2.2 后，`/api/workstation/health` 可用于区分 API/auth/capability 与 server-side data access：无 token 仍返回 `UNAUTHORIZED`，正确 token 返回 `auth`、capabilities 和 `dataAccess`。dataAccess 只检查 `projects`、`knowledge_notes`、`skills`、`document_collections` 的 select，不证明 insert grant 可用。
 - Workstation Admin API 的生产数据访问依赖 server-side `service_role` grant。CLI 不持有 service role key；本地真实写入需要 `.env.local` 给 Next.js server 配置 `SUPABASE_SERVICE_ROLE_KEY`。Node fetch 不一定走 macOS 系统代理，生产访问超时时优先用 `WORKSTATION_API_URL=http://localhost:3000` 本地 fallback；临时 proxy shim 只能作为本机排查工具，不提交仓库。
 - v1.2.3 后，所有 Workstation API 响应都带 `requestId`；operation logs 只记录 request summary、token/IP/user-agent hash、action、route、target、status 和错误摘要，不记录 token 明文、Authorization header、service role key、signed URL、Storage path、Documents 正文或完整请求体。rate limit 是 serverless best-effort，不是强一致安全边界。
+- v1.2.4 后，Codex 使用 Workstation CLI 的项目内说明入口为 `.codex/skills/workstation/SKILL.md`。自然语言触发如“保存到我的工作台”“创建 Knowledge”“沉淀成 Skill”应映射到 `npm run workstation -- project|knowledge|skill ...`；仍不得上传文件、读取 Documents 正文、读取 Storage、生成 signed URL、删除、更新、公开发布、修改 visibility、操作 token / service role 或调用外部 app。
 - Profile 真实文件关联暂不实现；签证、身份、生活、求职、合同等个人资料当前建议通过文档包维护，避免扩展 DocumentRelatedType、resolver、Profile 页面和权限边界。
 - v1.1 后，四类资产定义应保持一致：Project 是持续推进主题；Publication 是阶段成果；Knowledge 是可复用知识；Skill 是可复用流程 / Prompt / 操作手册 / 能力包。
 - sitemap 只收录 public Project / Publication / Knowledge / Skill 详情和公开静态入口；不得收录 dashboard、viewer、login、public file download route、signed URL、Storage path、private Documents、unlisted / private / 历史 restricted 内容或后台关系页面。
@@ -262,6 +264,7 @@ Research Asset Links：
 - v1.2.1 采用 thin CLI MVP 决策：先实现无新增依赖的 Node CLI 脚本和 npm script，只调用既有 Admin API；创建命令不发送 visibility，拒绝 public / unlisted visibility 与 owner/user 字段；`--content-file` / `--usage-file` 只读取用户显式传入的本地文本，不读取 Documents 或 Storage。
 - v1.2.2 采用 diagnostics and query polish 决策：真实联调优先修 health 诊断、CLI 可排查性和 Knowledge list 查询缺口；operation logs、rate limit、token rotate / revoke、upload/delete/update/public publish 和 visibility manage 继续后置到独立安全评审。
 - v1.2.3 采用 operation logs and permission hardening 决策：先落 requestId、审计表、后台只读日志页和 best-effort rate limit，为后续 update / upload 奠定排障基础；token rotate / revoke、文件上传、update/delete/public publish 和 visibility manage 仍后置到独立 PR。
+- v1.2.4 采用 Codex Skill wrapper 决策：先用 `.codex/skills/workstation/SKILL.md` 固化 Codex 触发场景、命令入口、token 安全、requestId 错误处理和禁止事项；不扩大 Workstation CLI 的真实能力面。
 - Phase 2R-Z 取代旧 restricted / Viewer 路线：外部访问申请、Viewer magic link、Access Grants 和 restricted 外部授权已退役，不再作为 Phase 2I / hotfix 继续修复。
 - Phase 2F / 2G 只优化公开站点运营体验、SEO 和 UI，不扩展权限系统。
 - Resume 模块采用统一素材库、版本组合、浏览器预览 / 打印、Word 即时导出、AI JD 建议和 JD 分析历史；AI 输出只作为建议，不自动写回素材或版本。
@@ -305,7 +308,7 @@ Research Asset Links：
 - Phase 3B-1 采用 sessionStorage handoff 决策：实验室结果可带入 Project / Publication / Knowledge / Skill 新建页并由管理员确认预填；只写浏览器字段，填入后清除 handoff，不自动保存、不自动创建资产、不读取 Documents / Storage。
 - Phase 2R-E-1 / 2R-E-2 的访问申请后台与 Access Grants polish 已被 Phase 2R-Z 取代；不要恢复相关页面、actions、queries、forms 或流程文档。
 - Phase 2R-Z 采用 remove external access 决策：新增 0022 migration，将历史 restricted 回写 private，收紧 public read policy，删除旧 `access_requests`、`content_access_grants`、`has_content_access()` 和 `can_request_viewer_login()`；不修改 Documents、Storage policy 或 public 下载 route。
-- 后续数据库变更必须新增 `0023_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
+- 后续数据库变更必须新增 `0024_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
 
@@ -370,12 +373,13 @@ Research Asset Links：
 - v1.2.1 Workstation CLI MVP 不新增 migration；只新增本地 CLI 脚本、npm script、使用文档和环境变量占位，不新增 token 表、operation_logs 表、RLS、Storage policy、bucket visibility、文件上传 API 或 public download route 改动。
 - v1.2.2 Workstation diagnostics and CLI query polish 不新增 migration；只新增 health select 诊断、Knowledge list 查询过滤、CLI 输出小修和文档 checklist。生产 `service_role` grant 应通过 Supabase SQL Editor 或后续 migration 管理，不修改已执行 migration。
 - v1.2.3 Workstation operation logs and permission hardening 新增 `0023_create_workstation_operation_logs.sql`；只创建专用审计表、约束、索引、admin-read RLS 和 service_role select/insert grant，不修改 Documents、Storage policy、public download route 或既有内容表 RLS。
+- v1.2.4 Workstation Codex Skill wrapper 不新增 migration；只新增 `.codex/skills/workstation/SKILL.md` 和文档同步，不修改 API route、CLI、RLS、Storage policy、public download route、Documents 或既有数据库表。
 
 规则：
 
 - 已执行 migration 不应修改或重跑。
 - 0013 至 0017 是 Market Brief unused legacy data 对应迁移；当前产品代码不再依赖这些旧表，本轮不 drop。
-- 执行 0022 后，后续数据库变更应新增 `0023_*` 或更高编号。
+- 执行 0023 后，后续数据库变更应新增 `0024_*` 或更高编号。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Workflows
@@ -392,6 +396,7 @@ Research Asset Links：
 - 公开 SEO 与分享维护：页面 metadata 通过 `src/lib/site.ts` 统一站点名、canonical、OG / Twitter card 和公开安全图片；sitemap 只收录 public 内容和公开静态入口，查询失败时降级；robots 阻止 dashboard、API、viewer、public-files 等路径；robots / sitemap 不作为权限边界。
 - 公开发布前 QA：启动本地服务后运行 `npm run smoke:public`，巡检公开入口、fallback、metadata、sitemap、robots 和敏感字段；结合浏览器 390px 冒烟确认首页、列表页、详情或 fallback、公开附件 metadata 无横向溢出。
 - Workstation CLI 本地使用：设置 `WORKSTATION_API_TOKEN`，可选设置 `WORKSTATION_API_URL`；运行 `npm run workstation -- health` 检查 API、auth、capability 和 dataAccess；用 `project|knowledge|skill list/create` 只操作 metadata 和 private 草稿；`knowledge list --project-id <id>` 可验证 Knowledge 关联到某个 Project；用 `collection list` 只查看文档包 metadata。CLI 错误输出里的 `requestId` 可到 `/dashboard/developer/workstation-logs` 查询最近审计摘要。不要把 token 发给聊天窗口、写入 GitHub、贴到命令参数或日志里。
+- Workstation Codex Skill 使用：当用户要求保存内容到个人工作台、创建 Project / Knowledge / Skill、查询项目 / Knowledge / Skill、查询文档包 metadata、查看 health、沉淀知识卡片或沉淀 Skill 时，Codex 应优先读取 `.codex/skills/workstation/SKILL.md` 并调用既有 `npm run workstation -- ...`；失败时向用户保留 error code、message 和 requestId，不打印 token。
 - v1.1 稳定维护：每次 PR 复查 public-only、Documents private、public attachment 资产上下文、AI Draft Lab 不读 Documents / Storage、prefill 不自动保存 / 创建 / 公开、metadata-only 搜索、sidebar 无自动化 / 设置假入口、topbar 无通知 / 主题假按钮和 390px 无横向滚动。
 - 外部访问链路退役维护：不要恢复 `/access-request`、`/viewer/*`、`/dashboard/access-requests`、`/dashboard/access-grants`、访问申请 / 授权 actions、queries、forms、validations 或流程文档；fallback 不显示申请 / viewer 入口。
 - Project 研究中枢维护：进入 `/dashboard/projects/[id]` 先查看研究问题、背景、方法和进度；整理项目附件时使用页面内上传项目文件 / 文件夹或项目 Documents 筛选入口；整理相关资产时查看显式关联的知识笔记和学术成果，Skill 先通过标题或标签搜索定位。
@@ -411,7 +416,7 @@ Research Asset Links：
 2. 观察四类资产分类是否够清楚，必要时只做小范围 helper text、空状态或文档修正。
 3. 继续使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记；handoff 只作为浏览器预填，保存和公开仍由管理员手动完成。
 4. 持续观察 `/dashboard/search`、Documents 文件中心和 390px 移动端在真实资产增长后的可用性。
-5. Workstation CLI 可继续小范围验证：先用静态 token 跑 health dataAccess、metadata list、Knowledge `--project-id` 过滤和 private create；失败时用 requestId 到后台 logs 页查审计摘要。下一步优先观察生产 / 本地 data access 配置、网络稳定性、rate limit 和日志可读性，再单独评审文件上传或更高风险写操作。
+5. Workstation CLI 可继续小范围验证：先用静态 token 跑 health dataAccess、metadata list、Knowledge `--project-id` 过滤和 private create；Codex 侧使用 `.codex/skills/workstation/SKILL.md` 作为调用说明；失败时用 requestId 到后台 logs 页查审计摘要。下一步优先观察生产 / 本地 data access 配置、网络稳定性、rate limit 和日志可读性，再单独评审文件上传或更高风险写操作。
 6. 稳定维护 Career Center：只处理 bugfix、文案修正和 broken link。
 7. 每轮 PR 继续运行 lint、build、public smoke、diff check 和 stale reference 搜索。
 
@@ -439,7 +444,7 @@ Research Asset Links：
 - “后续数据库变更应新增 `0018_*`”已过时。`0018_document_collections_and_folder_uploads.sql` 已存在；该过渡备注也已被 2Q-B-1 的 `0019` 取代。
 - “后续数据库变更应新增 `0019_*`”已过时。`0019_research_asset_links.sql` 已存在，且已被 2P-G-1 的 `0020_document_asset_links.sql` 继续推进。
 - “后续数据库变更应新增 `0020_*`”已过时。`0020_document_asset_links.sql` 已存在。
-- “后续数据库变更应新增 `0021_*` / `0022_*`”已过时。`0021_public_attachment_service_role_grants.sql` 与 `0022_remove_external_access_and_restricted_viewer.sql` 已存在，后续应使用 `0023_*` 或更高编号。
+- “后续数据库变更应新增 `0021_*` / `0022_*` / `0023_*`”已过时。`0021_public_attachment_service_role_grants.sql`、`0022_remove_external_access_and_restricted_viewer.sql` 与 `0023_create_workstation_operation_logs.sql` 已存在，后续应使用 `0024_*` 或更高编号。
 - “访问申请、Access Grants、Viewer magic link 和 restricted 外部授权是当前基础能力”已过时。Phase 2R-Z 已移除这些能力，不再作为 bugfix 或未来路线恢复。
 - “Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计”已过时。Phase 2Q-B-1 已新增 `research_asset_links` 管理员后台显式关系底座，但 Documents 仍保持独立附件关系模型。
 - “Skill 当前没有 Project / Knowledge / Publication 显式关联字段，只能搜索相关资产”已过时。Skill 仍不新增单独外键字段，但可通过 `research_asset_links` 建立显式关系。
