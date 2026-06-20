@@ -46,6 +46,8 @@ v1.2.11 已完成 Workstation upload UX / safety polish：CLI `document upload` 
 
 v1.2.12 已完成 Workstation collection resolution polish：新增只读 `GET /api/workstation/document-collections/[id]` 和 CLI `collection show --id ...`，让用户 / Codex 可先用 `collection list --q`、`--related-type`、`--related-id` 找候选，再用 show 确认目标文档包安全 metadata。新增 `document_collections.show` operation log action；不新增 migration，不做 collection create / update / delete，不扩展 upload / delete / public publish / visibility manage，不修改 RLS、Storage policy、bucket visibility 或 public download route。
 
+v1.2.13 已完成 Workstation Codex runbook：新增 `docs/workstation-codex-runbook.md`，把 v1.2.0-v1.2.12 真实 Codex 执行经验整理为可执行操作手册，覆盖开发流程、资产操作、Project / Knowledge / Skill、document upload、collection resolution、migration/grant troubleshooting、PR review、stop conditions 和 never-do。该轮不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility 或 public download route；Workstation CLI 进入可日常使用阶段，后续可单独考虑 audit review polish 或 Agent CEO Workbench design。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -965,6 +967,7 @@ Phase 2R-Z 已退役：
 - v1.2.10 Workstation controlled uploader / CLI document upload MVP：已实现 server-side controlled upload route 和 CLI 单文件 `document upload` 闭环，仍只允许上传到已有文档包且默认 private。
 - v1.2.11 Workstation upload UX / safety polish：已实现上传前安全摘要、三步进度、常见错误 hint、operation logs 验收文档和 Codex skill 上传边界同步，不扩展上传能力。
 - v1.2.12 Workstation collection resolution polish：已实现 collection show 只读 API / CLI、`document_collections.show` operation log action 和上传前 `collection list --q` / `collection show` resolution 文档，不自动创建或猜测 collection id。
+- v1.2.13 Workstation Codex runbook：已新增基于真实 PR / smoke / grant 排查经验的 Codex 操作手册，后续 Workstation CLI 日常操作、开发 PR、上传、collection resolution 和 PR review 应先参考该 runbook。
 - v1.2.x Token lifecycle / capability hardening：后续再单独评审 token rotate / revoke、capability hardening 和更细粒度授权。
 - v1.2.x 文件上传后续 PR：如需要，单独评审 orphan object 清理、upload intent 过期状态、批量 / 目录上传或更细文件限制；继续沿用 v1.2.8-v1.2.10 的安全边界。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
@@ -1029,6 +1032,7 @@ v1.2.10 当前边界：
 - v1.2.11 后非 JSON 上传输出安全摘要和三步进度，但不输出本地绝对路径、完整 Storage path、token、Authorization header、service role key、upload credential、signed URL 或文件内容；`--json` 仍只输出最终 JSON。
 - 上传前必须通过 `collection list` 或用户明确提供的信息确认真实 collection id，不猜 id、不自动创建 collection。
 - v1.2.12 后上传前优先用 `collection list --q "关键词"` 搜索文档包候选，并可用 `collection show --id ...` 确认安全 metadata；多个候选时必须让用户确认，不要猜测 collection id。
+- v1.2.13 后 Codex 默认按 `docs/workstation-codex-runbook.md` 执行 Workstation 任务；遇到缺 token、多候选 collection、permission denied、service role key、public/visibility/delete/Storage/RLS 等 stop conditions 时先停下，而不是扩大 CLI 能力。
 - 允许类型为 PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG / JPEG，最大 10 MB；zip、脚本、安装包和可执行文件不支持。
 - operation logs 记录 `documents.upload_intent`、`documents.upload`、`documents.finalize` 的安全摘要，不记录完整 Storage path、本地绝对路径、文件内容、token、Authorization 或 service role key。
 - 不新增 migration，不修改 RLS、Storage policy、bucket visibility 或 public download route。

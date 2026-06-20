@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-06-21 - Add Workstation Codex Runbook From Real Runs
+
+类型：decision
+
+决策：
+
+- v1.2.13 新增 `docs/workstation-codex-runbook.md`，作为 Workstation CLI / Codex Skill 的实际操作手册。
+- runbook 不凭空设计理想流程，而是从 v1.2.0-v1.2.12 的真实 Codex PR、smoke、grant 排查和验收经验提炼规则。
+- runbook 覆盖开发类任务、Project / Knowledge / Skill 资产操作、document upload、collection resolution、migration / grant troubleshooting、PR review checklist、stop conditions 和 never-do 边界。
+- `.codex/skills/workstation/SKILL.md` 声明 `docs/workstation-codex-runbook.md` 是 operational source of truth，并强化不要猜 collection_id、不要重复创建资产、先 list/show 再 create/update、长文本用临时文件、上传后汇报 document id / visibility / collection id、失败汇报 requestId、grant 问题提示 migration。
+- `docs/workstation-cli-usage.md` 增加 runbook 链接，避免复制大量规则到 CLI usage 中。
+- 本轮不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility、public download route、upload/delete/public publish/visibility manage 或外部集成。
+
+原因：
+
+- Workstation CLI 已从设计、API、CLI、update、upload 和 collection resolution 一路经过真实 PR 验证，后续 Codex 使用它需要一份基于真实经验的可执行 runbook。
+- 过去反复出现的模式包括：先 list/show 再写入、权限错误通常是 service_role grant / migration 未应用、上传前必须解析 collection id、PR 总结必须列明边界和验证结果。
+- 将这些经验集中到 runbook，可以减少后续 Codex 猜 id、重复创建资产、误扩大能力边界或为了排障触碰 secret 的风险。
+
+影响：
+
+- Workstation CLI 进入可日常使用阶段，Codex 执行相关任务时应先查 runbook 的 stop conditions 和 workflow。
+- 后续如继续推进，可单独评审 audit review polish 或 Agent CEO Workbench design；不得把这些方向混入普通 Workstation CLI 操作。
+
 ## 2026-06-21 - Add Workstation Collection Resolution Polish
 
 类型：decision

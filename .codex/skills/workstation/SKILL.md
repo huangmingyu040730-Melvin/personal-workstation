@@ -7,7 +7,7 @@ description: "Use the local Workstation CLI to save, update, query, or upload a 
 
 Use this skill when the user wants Codex to save, update, query low-risk metadata, or upload a single local file to an existing document collection in the personal workstation through the existing Workstation CLI.
 
-v1.2.12 notes: Workstation document upload has a CLI MVP, server-side controlled uploader, UX / safety polish, and collection resolution polish. `document upload` is allowed only for one local regular file, an existing document collection, default private metadata, and the Workstation Admin API flow `upload-intent -> upload -> finalize`. Non-JSON upload output shows a safe preflight summary and three progress steps; JSON output remains pure finalize JSON. Use `collection list --q` and optionally `collection show --id` before upload when the collection id is not already certain. `docs/workstation-document-upload-design.md` remains the boundary document for anything beyond that MVP.
+v1.2.13 notes: Workstation CLI / Codex operations now have an experience-based runbook at `docs/workstation-codex-runbook.md`. Use that runbook as the operational source of truth for real Codex workflows, stop conditions, PR checks, asset operations, collection resolution, document upload, and grant troubleshooting. `document upload` remains allowed only for one local regular file, an existing document collection, default private metadata, and the Workstation Admin API flow `upload-intent -> upload -> finalize`. Non-JSON upload output shows a safe preflight summary and three progress steps; JSON output remains pure finalize JSON. Use `collection list --q` and optionally `collection show --id` before upload when the collection id is not already certain. `docs/workstation-document-upload-design.md` remains the boundary document for anything beyond that MVP.
 
 The command entrypoint is:
 
@@ -42,6 +42,7 @@ Common intent mapping:
 - "查一下文档包" means use `collection list`, optionally with `--q`.
 - "查看这个文档包" means use `collection show --id`.
 - "上传文件到文档包" means use `document upload` only when the user provides or clearly identifies an existing collection id and a local regular file path. If the id is not certain, run `collection list --q "keyword"` first. If there are multiple candidates, ask the user to confirm. If there is one clear candidate, use that id and optionally run `collection show --id` before uploading. Do not guess ids.
+- For operational sequencing, stop conditions, PR review, grant troubleshooting, and real run habits, follow `docs/workstation-codex-runbook.md`.
 
 ## When Not To Use
 
@@ -172,19 +173,23 @@ The document upload MVP requires `upload_documents`, uploads only to an existing
 
 Before uploading a document, confirm the collection id with the user or by running `npm run workstation -- collection list --q "keyword"`. If there are multiple plausible candidates, do not guess; ask the user to confirm. If there is one clear candidate, you may use that id and optionally run `npm run workstation -- collection show --id "COLLECTION_ID"` to verify safe metadata. Do not create a collection as part of upload.
 
+For Project / Knowledge / Skill operations, list or show before create/update when there is any risk of duplication. Do not create a second asset when the user meant to update an existing one. Use temporary local files for long text arguments, and do not commit those temporary files.
+
 ## Standard Workflow
 
 1. Identify whether the user wants to create Project, Knowledge, Skill, show an asset by id or slug, update whitelist metadata, upload a single file to an existing document collection, or query assets.
 2. If the environment is uncertain or this is the first Workstation call in the session, run `npm run workstation -- health`.
-3. For document upload, confirm the local path is a single regular file and the collection id is real. If the user did not provide a collection id, run `collection list --q "keyword"` using a user-provided or obvious title keyword. If multiple candidates appear, ask the user to choose. If exactly one candidate clearly matches, use its full id and optionally run `collection show --id` to confirm safe metadata. Do not upload directories, zip/exe/sh/dmg files, or guessed collection ids.
-4. Organize the user's content into CLI arguments. Use a local text file only when the user explicitly provides or requests file-based content input.
-5. Run the matching `npm run workstation -- ...` command.
-6. On document upload success, report the document id, title, visibility, and collection id. Do not report Storage path, signed URL, token, service role key, local absolute path, or file content.
-7. On create/update/show success, report the created, updated, or returned `id`, title/name, slug when available, visibility when available, and updated fields when the command was an update. If update used `--slug`, mention the resolved id but never print tokens.
-8. On failure, report the error code, message, and `requestId` if present.
-9. Do not modify code while performing ordinary Workstation CLI operations.
-10. Do not commit or stage any env file.
-11. Do not print tokens or secret values.
+3. For create/update tasks, list or show first when the target may already exist. Do not duplicate Project / Knowledge / Skill records.
+4. For long Project / Knowledge / Skill text, use a temporary local file and pass `--background-file`, `--research-question-file`, `--methodology-file`, `--content-file`, or `--usage-file`.
+5. For document upload, confirm the local path is a single regular file and the collection id is real. If the user did not provide a collection id, run `collection list --q "keyword"` using a user-provided or obvious title keyword. If multiple candidates appear, ask the user to choose. If exactly one candidate clearly matches, use its full id and optionally run `collection show --id` to confirm safe metadata. Do not upload directories, zip/exe/sh/dmg/app files, or guessed collection ids.
+6. Run the matching `npm run workstation -- ...` command.
+7. On document upload success, report the document id, title, visibility, and collection id. Do not report Storage path, signed URL, token, service role key, local absolute path, or file content.
+8. On create/update/show success, report the created, updated, or returned `id`, title/name, slug when available, visibility when available, and updated fields when the command was an update. If update used `--slug`, mention the resolved id but never print tokens.
+9. On failure, report the error code, message, and `requestId` if present.
+10. If the error is `permission denied for table ...`, stop and tell the user this usually means the corresponding Supabase migration or service_role grant has not been applied.
+11. Do not modify code while performing ordinary Workstation CLI operations.
+12. Do not commit or stage any env file.
+13. Do not print tokens or secret values.
 
 ## Examples
 
