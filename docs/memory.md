@@ -92,7 +92,7 @@
 - v1.2.2 Workstation diagnostics and CLI query polish：增强 health 的 data access select 诊断、CLI health 输出、Knowledge list 按 `project_id` 查询、权限错误 hint 和生产 / 本地联调文档；仍不新增 upload、delete、update、public publish、visibility manage、token 管理、operation logs 落库、RLS、Storage policy 或 Supabase 直连能力。
 - v1.2.3 Workstation operation logs and permission hardening：新增 `workstation_operation_logs`、`wreq_...` requestId、API success / error 审计、CLI 错误 requestId 输出、best-effort rate limit 和 `/dashboard/developer/workstation-logs` 只读页面；仍不新增 upload、delete、update、public publish、visibility manage、token 表、Storage policy、public download route 或 CLI Supabase 直连。
 - v1.2.4 Workstation Codex Skill wrapper：新增 `.codex/skills/workstation/SKILL.md`，让 Codex 在保存到工作台、创建 Project / Knowledge / Skill、查询资产、查询文档包 metadata 或查看 health 时使用既有 Workstation CLI；本轮只做说明层，不新增真实 API / CLI 能力。
-- v1.2.5 Workstation update API / CLI MVP：新增 Project / Knowledge / Skill 白名单 update route 和 CLI update 命令；update 记录 requestId / operation logs，只补充低风险 metadata；新增 `0024_workstation_update_service_role_grants.sql`，只补 service_role 白名单 update grant 和 PATCH 日志 method 约束，不支持 visibility update、upload、delete、public publish、Documents / Storage、token lifecycle、MCP、Agent CEO 或外部集成。
+- v1.2.5 Workstation update API / CLI MVP：新增 Project / Knowledge / Skill 白名单 update route 和 CLI update 命令；update 记录 requestId / operation logs，只补充低风险 metadata；新增 `0024_workstation_update_service_role_grants.sql`，只补 service_role 白名单 update grant 和 PATCH 日志 method 约束。后续 hotfix 新增 `0025_consolidate_workstation_service_role_grants.sql`，把 Workstation API 已需的 Project / Knowledge / Skill select / insert / update、Document Collections select、operation logs select / insert 与 PATCH method check 固化为最小权限 migration；不支持 visibility update、upload、delete、public publish、Documents / Storage、token lifecycle、MCP、Agent CEO 或外部集成。
 
 当前网站包括：
 
@@ -311,7 +311,7 @@ Research Asset Links：
 - Phase 3B-1 采用 sessionStorage handoff 决策：实验室结果可带入 Project / Publication / Knowledge / Skill 新建页并由管理员确认预填；只写浏览器字段，填入后清除 handoff，不自动保存、不自动创建资产、不读取 Documents / Storage。
 - Phase 2R-E-1 / 2R-E-2 的访问申请后台与 Access Grants polish 已被 Phase 2R-Z 取代；不要恢复相关页面、actions、queries、forms 或流程文档。
 - Phase 2R-Z 采用 remove external access 决策：新增 0022 migration，将历史 restricted 回写 private，收紧 public read policy，删除旧 `access_requests`、`content_access_grants`、`has_content_access()` 和 `can_request_viewer_login()`；不修改 Documents、Storage policy 或 public 下载 route。
-- 后续数据库变更必须新增 `0025_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
+- 后续数据库变更必须新增 `0026_*` 或更高编号 migration，不修改或重跑已执行过的旧 migration。
 
 ## Known Issues
 
@@ -378,12 +378,13 @@ Research Asset Links：
 - v1.2.3 Workstation operation logs and permission hardening 新增 `0023_create_workstation_operation_logs.sql`；只创建专用审计表、约束、索引、admin-read RLS 和 service_role select/insert grant，不修改 Documents、Storage policy、public download route 或既有内容表 RLS。
 - v1.2.4 Workstation Codex Skill wrapper 不新增 migration；只新增 `.codex/skills/workstation/SKILL.md` 和文档同步，不修改 API route、CLI、RLS、Storage policy、public download route、Documents 或既有数据库表。
 - v1.2.5 Workstation update API / CLI MVP 新增 `0024_workstation_update_service_role_grants.sql`；只补 operation logs 的 PATCH method 约束和 service_role 对 Projects / Knowledge / Skills 白名单字段的 update grant，不修改 RLS、Storage policy、public download route、Documents 或文件数据。
+- v1.2.5 hotfix 新增 `0025_consolidate_workstation_service_role_grants.sql`；只固化 Workstation Admin API list/create/update/log 已需的 service_role grant 和 PATCH method check，不新增 API / CLI 能力，不修改 RLS、Storage policy、public download route、Documents 或文件数据。
 
 规则：
 
 - 已执行 migration 不应修改或重跑。
 - 0013 至 0017 是 Market Brief unused legacy data 对应迁移；当前产品代码不再依赖这些旧表，本轮不 drop。
-- 执行 0024 后，后续数据库变更应新增 `0025_*` 或更高编号。
+- 执行 0025 后，后续数据库变更应新增 `0026_*` 或更高编号。
 - 不得放宽 RLS、Storage policies 或 Documents 访问边界。
 
 ## Workflows
@@ -448,7 +449,7 @@ Research Asset Links：
 - “后续数据库变更应新增 `0018_*`”已过时。`0018_document_collections_and_folder_uploads.sql` 已存在；该过渡备注也已被 2Q-B-1 的 `0019` 取代。
 - “后续数据库变更应新增 `0019_*`”已过时。`0019_research_asset_links.sql` 已存在，且已被 2P-G-1 的 `0020_document_asset_links.sql` 继续推进。
 - “后续数据库变更应新增 `0020_*`”已过时。`0020_document_asset_links.sql` 已存在。
-- “后续数据库变更应新增 `0021_*` / `0022_*` / `0023_*` / `0024_*`”已过时。`0021_public_attachment_service_role_grants.sql`、`0022_remove_external_access_and_restricted_viewer.sql`、`0023_create_workstation_operation_logs.sql` 与 `0024_workstation_update_service_role_grants.sql` 已存在，后续应使用 `0025_*` 或更高编号。
+- “后续数据库变更应新增 `0021_*` / `0022_*` / `0023_*` / `0024_*` / `0025_*`”已过时。`0021_public_attachment_service_role_grants.sql`、`0022_remove_external_access_and_restricted_viewer.sql`、`0023_create_workstation_operation_logs.sql`、`0024_workstation_update_service_role_grants.sql` 与 `0025_consolidate_workstation_service_role_grants.sql` 已存在，后续应使用 `0026_*` 或更高编号。
 - “访问申请、Access Grants、Viewer magic link 和 restricted 外部授权是当前基础能力”已过时。Phase 2R-Z 已移除这些能力，不再作为 bugfix 或未来路线恢复。
 - “Publication / Skill 与 Knowledge 的显式关系留到后续 Phase 2Q-B 统一设计”已过时。Phase 2Q-B-1 已新增 `research_asset_links` 管理员后台显式关系底座，但 Documents 仍保持独立附件关系模型。
 - “Skill 当前没有 Project / Knowledge / Publication 显式关联字段，只能搜索相关资产”已过时。Skill 仍不新增单独外键字段，但可通过 `research_asset_links` 建立显式关系。
