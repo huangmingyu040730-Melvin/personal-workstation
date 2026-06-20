@@ -9,6 +9,8 @@ const TOKEN_ENV = "WORKSTATION_API_TOKEN";
 const REQUEST_TIMEOUT_MS = 15000;
 const UPLOAD_REQUEST_TIMEOUT_MS = 60000;
 const DOCUMENT_UPLOAD_MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const DOCUMENT_UPLOAD_MAX_SIZE_LABEL = "10 MB";
+const DOCUMENT_UPLOAD_SUPPORTED_TYPES_LABEL = "PDF, DOCX, XLSX, CSV, TXT, MD, PNG, JPG, JPEG.";
 const DOCUMENT_UPLOAD_MIME_BY_EXTENSION = {
   pdf: "application/pdf",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -199,6 +201,11 @@ async function runDocumentCommand(action, args) {
     category: "category"
   });
   const upload = await prepareDocumentUpload(options);
+
+  if (!options.json) {
+    printDocumentUploadPreparation(upload.metadata);
+  }
+
   const intentResponse = await requestWorkstationApi("POST", "/api/workstation/documents/upload-intent", {
     body: upload.metadata,
     jsonOutput: options.json
@@ -207,6 +214,10 @@ async function runDocumentCommand(action, args) {
 
   if (!intent?.upload_id || !intent?.storage_path) {
     throw new CliError("Workstation API did not return a valid upload intent.");
+  }
+
+  if (!options.json) {
+    console.log("1/3 Created upload intent.");
   }
 
   const formData = new FormData();
@@ -235,6 +246,10 @@ async function runDocumentCommand(action, args) {
     timeoutMs: UPLOAD_REQUEST_TIMEOUT_MS
   });
 
+  if (!options.json) {
+    console.log("2/3 Uploaded file to private storage.");
+  }
+
   const finalizeResponse = await requestWorkstationApi("POST", "/api/workstation/documents/finalize", {
     body: {
       upload_id: intent.upload_id,
@@ -254,6 +269,7 @@ async function runDocumentCommand(action, args) {
     return;
   }
 
+  console.log("3/3 Finalized document metadata.");
   printUploadedDocument(finalizeResponse.body?.data ?? {});
 }
 
@@ -835,24 +851,24 @@ async function prepareDocumentUpload(options) {
   }
 
   if (fileStats.size > DOCUMENT_UPLOAD_MAX_SIZE_BYTES) {
-    throw new CliError("Upload file must be 10 MB or smaller.");
+    throw new CliError(`Upload file is too large. Maximum size: ${DOCUMENT_UPLOAD_MAX_SIZE_LABEL}.`);
   }
 
   const filename = basename(filePath);
   const extension = getDocumentUploadExtension(filename);
 
   if (!extension) {
-    throw new CliError("Upload file must include a supported extension.");
+    throw new CliError(unsupportedDocumentUploadTypeMessage());
   }
 
   if (DOCUMENT_UPLOAD_BLOCKED_EXTENSIONS.has(extension)) {
-    throw new CliError("Executable, installer, archive, and script files are not supported.");
+    throw new CliError(unsupportedDocumentUploadTypeMessage());
   }
 
   const mimeType = DOCUMENT_UPLOAD_MIME_BY_EXTENSION[extension];
 
   if (!mimeType) {
-    throw new CliError("Unsupported upload file type. Use PDF, DOCX, XLSX, CSV, TXT, MD, PNG, JPG, or JPEG.");
+    throw new CliError(unsupportedDocumentUploadTypeMessage());
   }
 
   return {
@@ -981,14 +997,17 @@ function handleApiFailure(status, body, jsonOutput, context = {}) {
   if (jsonOutput && body) {
     printJson(body);
   } else if (body?.error?.code || body?.error?.message) {
+    const message = sanitizeCliMessage(body.error.message ?? `HTTP ${status}`);
+
     console.error("Workstation API error:");
     console.error(`- code: ${body.error.code ?? "HTTP_ERROR"}`);
-    console.error(`- message: ${body.error.message ?? `HTTP ${status}`}`);
+    console.error(`- message: ${message}`);
     if (body.requestId) {
       console.error(`- requestId: ${body.requestId}`);
     }
-    if (shouldPrintServiceRoleGrantHint(body.error.message, context)) {
-      console.error("Hint: check Supabase service_role grants for the target table.");
+
+    for (const hint of getFriendlyApiHints(body.error, context)) {
+      console.error(hint);
     }
   } else {
     console.error("Workstation API error:");
@@ -1005,6 +1024,51 @@ function shouldPrintServiceRoleGrantHint(message, context) {
   }
 
   return /permission denied for table (projects|knowledge_notes|skills|documents|document_collections)/i.test(String(message ?? ""));
+}
+
+function getFriendlyApiHints(error, context) {
+  const message = String(error?.message ?? "");
+  const code = String(error?.code ?? "");
+  const hints = [];
+
+  if (/permission denied for table (documents|document_collections)/i.test(message)) {
+    hints.push("Hint: This usually means Supabase migration 0027_workstation_document_upload_grants.sql has not been applied.");
+  } else if (shouldPrintServiceRoleGrantHint(message, context)) {
+    hints.push("Hint: check Supabase service_role grants for the target table.");
+  }
+
+  if (isDocumentUploadContext(context) && (/document collection not found/i.test(message) || (code === "NOT_FOUND" && /collection/i.test(message)))) {
+    hints.push("Hint: Collection not found. Run:");
+    hints.push("npm run workstation -- collection list --limit 10");
+  }
+
+  if (isDocumentUploadContext(context) && isDocumentUploadTypeError(message)) {
+    hints.push(`Hint: Supported types: ${DOCUMENT_UPLOAD_SUPPORTED_TYPES_LABEL}`);
+  }
+
+  if (isDocumentUploadContext(context) && isDocumentUploadSizeError(message)) {
+    hints.push(`Hint: Maximum size: ${DOCUMENT_UPLOAD_MAX_SIZE_LABEL}.`);
+  }
+
+  return Array.from(new Set(hints));
+}
+
+function isDocumentUploadContext(context) {
+  return String(context.path ?? "").startsWith("/api/workstation/documents/");
+}
+
+function isDocumentUploadTypeError(message) {
+  return /extension is not supported|supported extension|mime_type does not match|mime type does not match|unsupported upload file type/i.test(String(message ?? ""));
+}
+
+function isDocumentUploadSizeError(message) {
+  return /file size exceeds|too large|upload limit|maximum size/i.test(String(message ?? ""));
+}
+
+function sanitizeCliMessage(message) {
+  return String(message)
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [redacted]")
+    .replace(/workstation-uploads\/collections\/[A-Za-z0-9._~/-]+/g, "[storage_path redacted]");
 }
 
 function printProjectList(items) {
@@ -1178,6 +1242,15 @@ function printUploadedDocument(data) {
   console.log(`- collection_id: ${data.collection_id ?? "unknown"}`);
 }
 
+function printDocumentUploadPreparation(metadata) {
+  console.log("Preparing document upload:");
+  console.log(`- file: ${metadata.filename}`);
+  console.log(`- size: ${metadata.size_bytes} bytes`);
+  console.log(`- mime_type: ${metadata.mime_type}`);
+  console.log(`- collection_id: ${metadata.collection_id}`);
+  console.log("- visibility: private");
+}
+
 function printDataAccess(dataAccess) {
   if (!dataAccess) {
     return;
@@ -1232,6 +1305,10 @@ function formatArray(value) {
 
 function printJson(value) {
   console.log(JSON.stringify(value, null, 2));
+}
+
+function unsupportedDocumentUploadTypeMessage() {
+  return `Unsupported upload file type. Supported types: ${DOCUMENT_UPLOAD_SUPPORTED_TYPES_LABEL}`;
 }
 
 function printHelp() {

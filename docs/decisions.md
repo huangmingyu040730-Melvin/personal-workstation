@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-06-21 - Add Workstation Upload UX And Safety Polish
+
+类型：decision
+
+决策：
+
+- v1.2.11 只打磨 Workstation CLI `document upload` 的人类可读体验和安全提示，不扩展文件上传能力边界。
+- 非 `--json` 模式下，CLI 在真实请求前输出上传准备摘要：basename 文件名、字节大小、MIME type、collection id 和 `visibility: private`；不输出本地绝对路径、Storage path、token、Authorization、service role key、文件内容或 signed URL。
+- 非 `--json` 模式下，CLI 在三段链路成功后分别输出 `1/3 Created upload intent.`、`2/3 Uploaded file to private storage.`、`3/3 Finalized document metadata.`；`--json` 仍只输出最终 `finalize` JSON，避免污染脚本输出。
+- CLI 对常见失败增加更友好的 hint：`documents` / `document_collections` permission denied 指向 `0027_workstation_document_upload_grants.sql`；collection 不存在时提示先运行 `npm run workstation -- collection list --limit 10`；文件类型错误提示允许的 PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG / JPEG；文件过大提示 10 MB 上限。
+- CLI 错误消息打印前会做轻量脱敏，避免把 `Bearer ...` 或 Workstation 受控 Storage path 片段输出到终端。
+- `collection list` 人类可读输出继续包含完整 `id`、`title`、`type`、`file_count`、`total_size`、`updated_at`，文档和 skill 明确上传前先用它找到真实 collection id，不猜 id、不自动创建 collection。
+- 文档补充 operation logs 验收方式：登录后台后打开 `/dashboard/developer/workstation-logs`；若本地没有登录 session，至少确认 API route 返回 200/201 和 requestId，不为了验收打印 token 或读取 `.env.local` 直连数据库。
+- 本轮不新增 migration、API route、CLI logs 命令、RLS、Storage policy、bucket visibility、public download route，不修改 visibility，不删除文件，不公开文件，不读取 Documents 正文或 Storage object body，不新增批量 / 目录上传、zip、OCR、向量索引、AI summary、MCP、Agent CEO 或外部集成。
+
+原因：
+
+- v1.2.10 已完成最小上传闭环，但真实验收显示 Codex 自动执行时需要更清楚的上传前确认、分步进度和常见错误提示。
+- 这类 polish 可以降低误传、误判权限缺失和复制 collection id 的摩擦，同时不增加新的数据、Storage 或公开访问能力。
+
+影响：
+
+- 日常 CLI 上传更适合人工和 Codex 观察：成功时能看到安全摘要、三段进度、document id、visibility 和 collection id；失败时更容易定位缺少 0027 grant、collection id 错误、类型不支持或文件过大。
+- 后续若要增加批量 / 目录、清理任务、visibility manage、delete、public publish、token lifecycle 或 logs CLI，仍必须单独设计和 PR。
+
 ## 2026-06-20 - Implement Workstation Controlled Uploader And CLI Document Upload MVP
 
 类型：decision

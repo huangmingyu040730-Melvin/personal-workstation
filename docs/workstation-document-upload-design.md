@@ -1,10 +1,10 @@
 # Workstation Document Upload Design
 
-日期：2026-06-20
+日期：2026-06-21
 
-状态：v1.2.8 完成安全设计；v1.2.9 已实现后端 API MVP；v1.2.10 已实现 server-side controlled upload route 和 CLI `document upload` 单文件 MVP。当前已有 `upload-intent` / `upload` / `finalize` route、`upload_documents` capability、受控 path 生成、private Storage object 上传、Storage object existence check、默认 private metadata 写入、collection stats 重算和 operation logs。本文件继续作为后续批量 / 目录 / 清理任务 / 更高风险文件能力的边界说明。
+状态：v1.2.8 完成安全设计；v1.2.9 已实现后端 API MVP；v1.2.10 已实现 server-side controlled upload route 和 CLI `document upload` 单文件 MVP；v1.2.11 已完成上传前摘要、三步进度、友好错误提示、operation logs 验收说明和 Codex skill 同步。当前已有 `upload-intent` / `upload` / `finalize` route、`upload_documents` capability、受控 path 生成、private Storage object 上传、Storage object existence check、默认 private metadata 写入、collection stats 重算和 operation logs。本文件继续作为后续批量 / 目录 / 清理任务 / 更高风险文件能力的边界说明。
 
-v1.2.10 明确仍不做：不批量上传、不上传目录、不自动创建 collection、不创建 public 文件、不修改 visibility、不删除文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route，不新增 OCR / vector / AI summary / public publish / visibility manage。
+v1.2.11 明确仍不做：不批量上传、不上传目录、不自动创建 collection、不创建 public 文件、不修改 visibility、不删除文件、不读取 Documents 正文、不读取 Storage object body、不生成 signed URL、不修改 RLS、Storage policy、bucket visibility 或 public download route，不新增 OCR / vector / AI summary / public publish / visibility manage。
 
 ## Why Document Upload
 
@@ -324,6 +324,11 @@ documents.finalize
 
 成功 upload 的 operation log 记录 `target_type = "document_collection"` 和 collection id。成功 finalize 的 operation log 可以记录 `target_type = "document"` 和新建 document id。失败日志应保留 `requestId`、错误 code、HTTP status 和安全摘要，便于在 `/dashboard/developer/workstation-logs` 排障。
 
+operation logs 验收方式：
+
+- 首选登录后台后打开 `/dashboard/developer/workstation-logs`，确认最近日志包含 `documents.upload_intent`、`documents.upload`、`documents.finalize`，且 summary 不含 token、Authorization header、service role key、完整 Storage path、本地文件路径、文件内容或 signed URL。
+- 如果本地没有登录 session，后台页面会跳转登录；这时至少确认本地 API route 返回 200/201 和响应 requestId，不为了验收去打印 token、读取 `.env.local`、展示 service role key 或直连数据库。
+
 ## Failure Handling
 
 需要覆盖的失败场景：
@@ -364,15 +369,19 @@ npm run workstation -- document upload \
 
 CLI 负责：
 
+- 上传前先由用户或 Codex 通过 `collection list` 获取真实 collection id；CLI 不猜 id、不自动创建 collection。
 - 检查本地文件存在。
 - 确认目标是普通文件，不是目录。
 - 读取文件大小。
 - 根据扩展名和本地能力猜测 MIME type。
+- 非 `--json` 模式输出安全摘要：basename 文件名、大小、MIME type、collection id 和 `visibility: private`。
 - 调用 `upload-intent`。
 - 按后端返回的受控目标上传文件。
 - 调用 `finalize`。
+- 非 `--json` 模式输出 `1/3 Created upload intent.`、`2/3 Uploaded file to private storage.`、`3/3 Finalized document metadata.`。
 - 显示 document id / title / visibility / collection_id。
 - 在失败时显示 code、message、requestId。
+- 对 0027 grant 缺失、collection 不存在、文件类型不支持和超过 10 MB 等常见错误输出友好 hint。
 
 CLI 不负责：
 
@@ -387,6 +396,7 @@ CLI 不负责：
 - 修改 visibility。
 - 读取或保存 service role key。
 - 生成 public link 或 signed public URL。
+- 输出本地绝对路径、完整 Storage path、token、Authorization header、service role key、upload credential、signed URL 或文件内容。
 
 ## Database / RLS / Storage Impact
 
@@ -405,6 +415,13 @@ v1.2.10 新增：
 - CLI `document upload` 单文件流程。
 - `documents.upload` operation log action。
 - `collection list` 人类可读输出展示 collection id。
+
+v1.2.11 新增：
+
+- CLI 非 JSON 上传前安全摘要和三步进度提示。
+- CLI 常见错误友好 hint 和错误消息轻量脱敏。
+- 文档化 operation logs 验收方式，避免用打印 token、读取 `.env.local` 或直连数据库绕过后台。
+- Codex skill 同步上传前 collection id、文件类型和默认 private 安全边界。
 
 后续实现仍可能需要：
 
@@ -486,6 +503,34 @@ v1.2.10 只把 server-side controlled upload route 和 CLI 单文件上传闭环
 - 不修改 public download route。
 - 不新增 OCR / vector / AI summary。
 - 不新增 public publish / visibility manage。
+- 不让 CLI 直连 Supabase。
+- 不让 CLI 读取或保存 service role key。
+- 不写入 token / service role key / `.env.local`。
+
+## Explicit Non-Goals For v1.2.11 UX / Safety Polish
+
+v1.2.11 只打磨 CLI 输出、错误提示、文档和 Codex skill，仍严格不做：
+
+- 不新增 API route。
+- 不新增 CLI logs 命令。
+- 不新增 migration。
+- 不修改 RLS。
+- 不修改 Storage policy。
+- 不修改 bucket visibility。
+- 不修改 public download route。
+- 不批量上传。
+- 不上传目录。
+- 不自动创建 collection。
+- 不创建 public 文件。
+- 不修改 visibility。
+- 不删除文件。
+- 不读取 Documents 正文。
+- 不读取 Storage object body。
+- 不解析 PDF / Word / Excel 内容。
+- 不生成 signed URL 或 signed public URL。
+- 不新增 OCR / vector / AI summary。
+- 不新增 public publish / visibility manage。
+- 不新增 MCP server、Agent CEO、Notion、飞书或 Gmail 集成。
 - 不让 CLI 直连 Supabase。
 - 不让 CLI 读取或保存 service role key。
 - 不写入 token / service role key / `.env.local`。

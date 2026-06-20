@@ -7,7 +7,7 @@ description: "Use the local Workstation CLI to save, update, query, or upload a 
 
 Use this skill when the user wants Codex to save, update, query low-risk metadata, or upload a single local file to an existing document collection in the personal workstation through the existing Workstation CLI.
 
-v1.2.10 notes: Workstation document upload now has a CLI MVP and server-side controlled uploader. `document upload` is allowed only for one local regular file, an existing document collection, default private metadata, and the Workstation Admin API flow `upload-intent -> upload -> finalize`. `docs/workstation-document-upload-design.md` remains the boundary document for anything beyond that MVP.
+v1.2.11 notes: Workstation document upload now has a CLI MVP, server-side controlled uploader, and UX / safety polish. `document upload` is allowed only for one local regular file, an existing document collection, default private metadata, and the Workstation Admin API flow `upload-intent -> upload -> finalize`. Non-JSON upload output shows a safe preflight summary and three progress steps; JSON output remains pure finalize JSON. `docs/workstation-document-upload-design.md` remains the boundary document for anything beyond that MVP.
 
 The command entrypoint is:
 
@@ -40,7 +40,7 @@ Common intent mapping:
 - "把这段内容沉淀成 Skill" means use `skill create`.
 - "看看工作台是否可用" means use `health`.
 - "查一下文档包" means use `collection list`.
-- "上传文件到文档包" means use `document upload` only when the user provides or clearly identifies an existing collection id and a local file path.
+- "上传文件到文档包" means use `document upload` only when the user provides or clearly identifies an existing collection id and a local regular file path. If the id is not certain, run `collection list` first and let the user-visible output supply the id; do not guess one.
 
 ## When Not To Use
 
@@ -49,6 +49,7 @@ Do not use this CLI for:
 - Uploading files outside the single-file document upload MVP.
 - Uploading more than one file.
 - Uploading directories.
+- Uploading zip, exe, sh, dmg, app, installer, script, archive, or executable files.
 - Creating a document collection during upload.
 - Uploading public files.
 - Reading Documents body text.
@@ -113,6 +114,7 @@ Document collection metadata:
 
 ```bash
 npm run workstation -- collection list
+npm run workstation -- collection list --limit 10
 ```
 
 Document upload:
@@ -165,17 +167,21 @@ Supported create operations create private metadata only. Supported update opera
 
 The document upload MVP requires `upload_documents`, uploads only to an existing collection, defaults metadata to private, uses a server-generated ASCII-safe Storage path, and avoids reading Documents body text, Storage object body, or generating public links. The CLI must never generate Storage paths itself.
 
+Before uploading a document, confirm the collection id with the user or by running `npm run workstation -- collection list --limit 10`. Do not guess collection ids. Do not create a collection as part of upload.
+
 ## Standard Workflow
 
 1. Identify whether the user wants to create Project, Knowledge, Skill, show an asset by id or slug, update whitelist metadata, upload a single file to an existing document collection, or query assets.
 2. If the environment is uncertain or this is the first Workstation call in the session, run `npm run workstation -- health`.
-3. Organize the user's content into CLI arguments. Use a local text file only when the user explicitly provides or requests file-based content input.
-4. Run the matching `npm run workstation -- ...` command.
-5. On success, report the created, updated, uploaded, or returned `id`, title/name, slug when available, visibility when available, collection id for uploaded documents, and updated fields when the command was an update. If update used `--slug`, mention the resolved id but never print tokens.
-6. On failure, report the error code, message, and `requestId` if present.
-7. Do not modify code while performing ordinary Workstation CLI operations.
-8. Do not commit or stage any env file.
-9. Do not print tokens or secret values.
+3. For document upload, confirm the local path is a single regular file and the collection id is real. Use `collection list --limit 10` when the id is not already explicit. Do not upload directories, zip/exe/sh/dmg files, or guessed collection ids.
+4. Organize the user's content into CLI arguments. Use a local text file only when the user explicitly provides or requests file-based content input.
+5. Run the matching `npm run workstation -- ...` command.
+6. On document upload success, report the document id, title, visibility, and collection id. Do not report Storage path, signed URL, token, service role key, local absolute path, or file content.
+7. On create/update/show success, report the created, updated, or returned `id`, title/name, slug when available, visibility when available, and updated fields when the command was an update. If update used `--slug`, mention the resolved id but never print tokens.
+8. On failure, report the error code, message, and `requestId` if present.
+9. Do not modify code while performing ordinary Workstation CLI operations.
+10. Do not commit or stage any env file.
+11. Do not print tokens or secret values.
 
 ## Examples
 
@@ -296,6 +302,8 @@ Never use update for `visibility`, `current_stage`, owner/user/created_by fields
 
 Use `npm run workstation -- document upload ...` only for one local regular file, an existing collection id, default private metadata, and the controlled API flow. Do not use it for directories, batches, public files, visibility changes, delete, OCR, vector indexing, AI summaries, signed URLs, or Storage inspection.
 
+For document upload, do not upload zip, exe, sh, dmg, app, installer, script, archive, or executable files. Do not read the file body to summarize it. The CLI may read bytes only as part of the explicit upload command after local file checks.
+
 ## Error Handling
 
 If the CLI returns an error, keep the useful diagnostic fields and avoid secrets:
@@ -304,6 +312,10 @@ If the CLI returns an error, keep the useful diagnostic fields and avoid secrets
 - `INTERNAL_ERROR`: the server may have Supabase service-role or data-access configuration trouble.
 - `RATE_LIMITED`: requests are too frequent; wait and retry later.
 - `VALIDATION_ERROR`: command arguments or payload fields are invalid.
+- `permission denied for table documents` or `permission denied for table document_collections`: likely means `0027_workstation_document_upload_grants.sql` has not been applied.
+- `Document collection not found`: run `npm run workstation -- collection list --limit 10` and retry with a real id.
+- Unsupported upload type: supported types are PDF, DOCX, XLSX, CSV, TXT, MD, PNG, JPG, JPEG.
+- Upload too large: maximum size is 10 MB.
 
 If the error output includes a request id, preserve it for the user:
 
