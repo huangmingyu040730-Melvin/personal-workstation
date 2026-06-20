@@ -1,4 +1,5 @@
 import type { WorkstationListParams } from "./query";
+import type { WorkstationLookupType } from "./query";
 
 function asRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -42,6 +43,13 @@ export function summarizeListRequest(params: WorkstationListParams) {
 export function summarizeHealthRequest(dataAccess: { status?: string } | null | undefined) {
   return {
     data_access_status: dataAccess?.status ?? "unknown"
+  };
+}
+
+export function summarizeShowRequest(lookup: string, lookupType: WorkstationLookupType) {
+  return {
+    lookup: text(lookup, 120),
+    lookup_type: lookupType
   };
 }
 

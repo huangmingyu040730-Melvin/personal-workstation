@@ -1,8 +1,8 @@
-import { authenticateWorkstationRequest, requireAnyWorkstationCapability } from "@/lib/workstation/auth";
+import { authenticateWorkstationRequest, requireAnyWorkstationCapability, requireWorkstationCapability } from "@/lib/workstation/auth";
 import { checkWorkstationRateLimit } from "@/lib/workstation/rate-limit";
 import { createWorkstationRequestContext, finishWorkstationError, finishWorkstationResponse } from "@/lib/workstation/request-context";
-import { summarizeProjectUpdateRequest } from "@/lib/workstation/request-summary";
-import { updateWorkstationProject } from "@/lib/workstation/query";
+import { summarizeProjectUpdateRequest, summarizeShowRequest } from "@/lib/workstation/request-summary";
+import { getWorkstationLookupType, showWorkstationProject, updateWorkstationProject } from "@/lib/workstation/query";
 import { workstationProjectUpdateSchema } from "@/lib/workstation/schemas";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,71 @@ async function readJsonBody(request: Request) {
         status: 400
       }
     };
+  }
+}
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const lookup = id.trim();
+  const requestSummary = summarizeShowRequest(lookup, getWorkstationLookupType(lookup));
+  const context = createWorkstationRequestContext(request, "projects.show", "project");
+
+  try {
+    const rateLimit = checkWorkstationRateLimit(context);
+
+    if (!rateLimit.ok) {
+      return finishWorkstationError(context, {
+        code: "RATE_LIMITED",
+        message: "Too many Workstation API requests. Please try again later.",
+        status: 429,
+        requestSummary
+      });
+    }
+
+    const auth = authenticateWorkstationRequest(request, { requestId: context.requestId });
+
+    if (!auth.ok) {
+      return finishWorkstationError(context, {
+        code: "UNAUTHORIZED",
+        message: "Missing or invalid Workstation API token.",
+        status: 401,
+        requestSummary
+      });
+    }
+
+    const forbidden = requireWorkstationCapability(auth, "read_assets", { requestId: context.requestId });
+
+    if (forbidden) {
+      return finishWorkstationError(context, {
+        code: "FORBIDDEN",
+        message: "The Workstation API token does not allow this operation.",
+        status: 403,
+        requestSummary
+      });
+    }
+
+    const result = await showWorkstationProject(lookup);
+
+    if (!result.ok) {
+      return finishWorkstationError(context, {
+        code: result.error.code,
+        message: result.error.message,
+        status: result.error.status,
+        requestSummary
+      });
+    }
+
+    return finishWorkstationResponse(context, result.data, {
+      requestSummary,
+      targetId: result.data.id
+    });
+  } catch {
+    return finishWorkstationError(context, {
+      code: "INTERNAL_ERROR",
+      message: "Unexpected Workstation API error.",
+      status: 500,
+      requestSummary
+    });
   }
 }
 

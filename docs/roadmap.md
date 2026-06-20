@@ -32,6 +32,8 @@ v1.2.4 已完成 Workstation Codex Skill wrapper：新增 `.codex/skills/worksta
 
 v1.2.5 已完成 Workstation update API / CLI MVP：新增 Project / Knowledge / Skill 白名单 update route 与 CLI update 命令，用于安全补充已有资产 metadata。update 继续走 Workstation Admin API、requestId、operation logs 和 rate limit，并通过 `0024_workstation_update_service_role_grants.sql` 补 service_role 白名单 update grant 与 PATCH 日志约束；不开放 visibility update、upload、delete、public publish、Documents / Storage、token lifecycle、MCP 或 Agent CEO。
 
+v1.2.6 已完成 Workstation show / ID resolution polish：新增 Project / Knowledge / Skill show by id or slug、CLI update `--slug` 解析到 id 后复用既有 update-by-id API，以及 list 人类可读输出完整 id。该轮不新增 migration，不开放 Documents / Storage、upload、delete、public publish、visibility manage、token lifecycle、MCP 或 Agent CEO。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -942,8 +944,9 @@ Phase 2R-Z 已退役：
 - v1.2.1 Workstation CLI MVP：已实现薄层 CLI，负责命令解析、读取本地环境变量、调用 Admin API 和展示结果；先不做文件上传。
 - v1.2.2 Workstation diagnostics and CLI query polish：增强 health data access 诊断、CLI health 输出、Knowledge 按 Project 查询、生产 / 本地 grant checklist 和 Node fetch 代理说明。
 - v1.2.3 Workstation operation logs and permission hardening：已新增 requestId、operation logs、best-effort rate limit、CLI 错误 requestId 输出和后台只读日志页。
-- v1.2.4 Workstation Codex Skill wrapper：已新增 `.codex/skills/workstation/SKILL.md`，指导 Codex 何时和如何调用既有 Workstation CLI，并重申 token、service role、Documents、Storage、upload/delete/update/public publish/visibility manage 等边界。
+- v1.2.4 Workstation Codex Skill wrapper：已新增 `.codex/skills/workstation/SKILL.md`，指导 Codex 何时和如何调用既有 Workstation CLI，并重申 token、service role、Documents、Storage、upload/delete/非白名单 update/public publish/visibility manage 等边界。
 - v1.2.5 Workstation update API / CLI MVP：已新增 `project|knowledge|skill update --id ...`，只允许白名单 metadata update，并记录 `projects.update`、`knowledge.update`、`skills.update` operation logs。
+- v1.2.6 Workstation show / ID resolution polish：已新增 `project|knowledge|skill show --id|--slug`，并允许 `update --slug` 由 CLI 解析真实 id 后调用既有 update route；list 输出完整 id。
 - v1.2.x Token lifecycle / capability hardening：后续再单独评审 token rotate / revoke、capability hardening 和更细粒度授权。
 - v1.2.x 文件上传 PR：单独设计并实现 upload-intent / finalize 和 `upload_documents` capability。
 - v1.3.x MCP Server / Agent CEO Workbench exploration：只在 Admin API 边界稳定后探索更高层 agent workbench，不绕过 CLI / API 安全模型。
@@ -993,6 +996,14 @@ v1.2.5 当前边界：
 - CLI update 继续只读取 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`，不支持 `--token`，不读取 `.env.local`，不直连 Supabase。
 - 不允许 visibility update、owner/user/created_by、Documents 关联、Documents 正文、Storage object、signed URL、upload、delete、public publish、bulk update、token rotate / revoke、MCP server、Agent CEO 或外部 app。
 
+v1.2.6 当前边界：
+
+- show 只返回 Project / Knowledge / Skill 的安全白名单字段；路径段可为 id 或 slug，但不新增单独 `[slug]` route。
+- CLI update `--slug` 只做本地 id resolution；API 仍只接受 PATCH by UUID id。
+- list 人类可读输出新增完整 `id`，便于复制使用；`--json` 仍原样输出 API JSON。
+- 不读取 Documents 正文、Storage object、signed URL、owner / user 字段、service role key 或 `.env.local`。
+- 不新增 migration、upload、delete、public publish、visibility manage、token lifecycle、MCP server、Agent CEO 或外部 app。
+
 ### Near-term Stable Usage
 
 近期只做：
@@ -1002,7 +1013,7 @@ v1.2.5 当前边界：
 - 使用 AI Draft Lab 整理原始想法、会议摘录和研究笔记，但继续手动检查、手动保存、手动决定 visibility。
 - 观察 `/dashboard/search`、Documents 和 390px 移动端在真实资产增长后的可用性。
 - 修复明确 bug、明显 UX 问题、broken link 和文档漂移。
-- 如继续推进 Workstation API / CLI，优先观察 requestId / logs / rate limit 在生产与本地的可用性，或单独评审 document upload-intent / finalize。
+- 如继续推进 Workstation API / CLI，优先观察 requestId / logs / rate limit、show by slug/id 和 update slug resolution 在生产与本地的可用性，或单独评审 document upload-intent / finalize。
 - Workstation update MVP 完成后，后续如需 token rotate / revoke、文件上传、delete/public publish 或 visibility manage，应单独评审安全模型，不和低风险 metadata update 混在同一轮。
 - Workstation Codex Skill wrapper 完成后，日常“保存到工作台 / 沉淀为 Knowledge / 沉淀为 Skill”请求应优先走 `.codex/skills/workstation/SKILL.md` 描述的 CLI 流程，失败时保留 requestId 便于追踪。
 

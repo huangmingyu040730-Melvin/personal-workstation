@@ -4,13 +4,15 @@
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。入口为：
+v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。入口为：
 
 ```bash
 npm run workstation -- <command>
 ```
 
 CLI 是薄层：只解析命令、读取本地环境变量、调用 Workstation Admin API 并展示结果。它不直接连接 Supabase，不读取或保存 Supabase service role key，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
+
+v1.2.6 后，Project / Knowledge / Skill 支持按 id 或 slug 查看安全字段；update 仍只调用既有 PATCH by id route，CLI 在收到 `--slug` 且没有 `--id` 时会先通过 show API 解析真实 id，再执行 update。`--id` 和 `--slug` 互斥。
 
 v1.2.3 后，Workstation API 成功 / 失败响应都会包含 `requestId`。CLI 人类可读错误输出会显示该 requestId，便于到后台 `/dashboard/developer/workstation-logs` 查看最近审计摘要。成功输出默认不额外显示 requestId；`--json` 会原样输出 API JSON。
 
@@ -103,7 +105,12 @@ dataAccess: degraded
 npm run workstation -- project list
 npm run workstation -- project list --q "factor" --visibility private --limit 10
 npm run workstation -- project list --json
+npm run workstation -- project show --id "project-id"
+npm run workstation -- project show --slug "factor-investing-learning-plan"
+npm run workstation -- project show --slug "factor-investing-learning-plan" --json
 ```
+
+人类可读 `project list` 输出会包含完整 `id`，便于直接复制到后续 show / update 命令。
 
 创建 private Project：
 
@@ -129,6 +136,14 @@ npm run workstation -- project update \
   --tags "factor,quant,learning"
 ```
 
+也可以用 slug 更新，CLI 会先解析为 id，再调用既有 update-by-id API：
+
+```bash
+npm run workstation -- project update \
+  --slug "factor-investing-learning-plan" \
+  --summary "更新后的项目摘要"
+```
+
 允许字段：`title`、`summary`、`status`、`tags`、`background`、`research_question`、`methodology`。也可以使用 `--background-file`、`--research-question-file`、`--methodology-file` 读取用户显式传入的本地文本文件。
 
 ## Knowledge
@@ -139,7 +154,11 @@ npm run workstation -- project update \
 npm run workstation -- knowledge list
 npm run workstation -- knowledge list --q "多因子" --category "因子投资" --limit 10
 npm run workstation -- knowledge list --project-id "project-id" --visibility private
+npm run workstation -- knowledge show --id "knowledge-id"
+npm run workstation -- knowledge show --slug "multi-factor-model-core-logic"
 ```
+
+人类可读 `knowledge list` 输出会包含完整 `id`。
 
 创建 private Knowledge：
 
@@ -167,7 +186,7 @@ npm run workstation -- knowledge update \
   --tags "factor,model,quant"
 ```
 
-允许字段：`title`、`category`、`excerpt`、`content`、`tags`、`project_id`。`--content` 和 `--content-file` 二选一；如果传入 `project_id`，API 会校验 Project 存在。
+也可以使用 `--slug` 更新；CLI 会先用 show API 解析 id。允许字段：`title`、`category`、`excerpt`、`content`、`tags`、`project_id`。`--content` 和 `--content-file` 二选一；如果传入 `project_id`，API 会校验 Project 存在。
 
 ## Skill
 
@@ -176,7 +195,11 @@ npm run workstation -- knowledge update \
 ```bash
 npm run workstation -- skill list
 npm run workstation -- skill list --category "workflow" --platform codex
+npm run workstation -- skill show --id "skill-id"
+npm run workstation -- skill show --slug "codex-pr-review-workflow"
 ```
+
+人类可读 `skill list` 输出会包含完整 `id`。
 
 创建 private Skill：
 
@@ -201,7 +224,7 @@ npm run workstation -- skill update \
   --platforms "codex,github"
 ```
 
-允许字段：`name`、`description`、`category`、`platforms`、`status`、`content`、`usage_guide`、`input_description`、`output_description`、`current_version`、`repository_url`。CLI 的 `--usage` / `--usage-file` 会发送为 `usage_guide`；二者不能同时传入。
+也可以使用 `--slug` 更新；CLI 会先用 show API 解析 id。允许字段：`name`、`description`、`category`、`platforms`、`status`、`content`、`usage_guide`、`input_description`、`output_description`、`current_version`、`repository_url`。CLI 的 `--usage` / `--usage-file` 会发送为 `usage_guide`；二者不能同时传入。
 
 ## Collections
 
@@ -234,6 +257,7 @@ Collection list 只展示 metadata，不返回 Storage path、signed URL，不�
 - 不读取 Supabase service role key。
 - 不上传文件，不读取 Documents 正文，不读取 Storage object，不生成 signed URL。
 - 只允许 Project / Knowledge / Skill 白名单 update。
+- 查询和 update 可使用 id 或 slug；slug update 只由 CLI 本地解析到 id 后调用既有 update-by-id API。
 - 不 delete，不 public publish，不修改 visibility。
 - 不操作 Supabase、token、用户权限、Feishu / Lark、Notion、Gmail、MCP server 或 Agent CEO。
 
