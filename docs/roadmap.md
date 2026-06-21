@@ -56,6 +56,8 @@ v1.2.16 已完成 Cross-project Workstation Skill Pack installer：新增 `packa
 
 v1.2.17 已完成 Cross-project install UX polish：安装器支持 `--check` / `--dry-run`，并在安装完成后检查目标 `package.json` 与 `scripts.workstation` 状态，给出手动配置提示；仍不自动修改目标项目、不做全局系统安装、不复制 token、`.env.local`、service role key、Storage credentials 或 shell profile。README 补充 uninstall 和 Codex discovery troubleshooting。该轮不新增 API route、API capability、migration、RLS、Storage policy、bucket visibility 或 public download route。
 
+v1.2.18 已完成 New Project Bootstrap Guide：新增 `docs/workstation-new-project-bootstrap.md`，将全新项目接入 Workstation 的流程标准化为创建项目、安装 Skill Pack、手动添加 npm script、本地配置 token、运行 health / list 验证，并明确最小接入原则和失败排查。该轮只新增文档标准，不改变 installer 行为、Skill Pack 逻辑、API、CLI、migration、RLS、Storage policy、bucket visibility 或 public download route。
+
 ## Access Layers
 
 ### Public Research Workstation
@@ -980,6 +982,7 @@ Phase 2R-Z 已退役：
 - v1.2.15 Cross-project Workstation Skill Pack design：已设计未来 `packages/workstation-skill-pack/`、目标项目 `.codex/skills/workstation/`、standalone client、installer 和安全验证流程。
 - v1.2.16 Cross-project Workstation Skill Pack installer：已实现最小 `packages/workstation-skill-pack/`、安装器、目标项目 Skill / examples 和 standalone `scripts/workstation.mjs`；安装器只复制文件，不自动修改目标 `package.json`，不复制 secret，也不提供全局 Skill。
 - v1.2.17 Cross-project install UX polish：已实现 `--check` / `--dry-run`、安装后 package.json 状态提示、README uninstall 和 Codex discovery troubleshooting；继续只提示 package script，不自动改目标项目。
+- v1.2.18 New Project Bootstrap Guide：已新增新项目 5 分钟接入手册，定义标准目录、完整接入流程、token 安全、slash menu 排查和 install 排查。
 - v1.2.x Token lifecycle / capability hardening：后续再单独评审 token rotate / revoke、capability hardening 和更细粒度授权。
 - v1.2.x Cross-project Workstation Skill Pack follow-up：如推进版本检查、升级器、自动 package.json patch、全局分发或 npm 包发布，应单独设计，继续禁止复制 token、`.env.local`、service role key 或 Supabase 直连能力。
 - v1.2.x 文件上传后续 PR：如需要，单独评审 orphan object 清理、upload intent 过期状态、批量 / 目录上传或更细文件限制；继续沿用 v1.2.8-v1.2.10 的安全边界。
@@ -1049,6 +1052,7 @@ v1.2.10 当前边界：
 - v1.2.14 后 `.codex/skills/workstation/SKILL.md` 是更清晰的 Codex discovery 入口，`.codex/skills/workstation/examples.md` 是调用样例；二者不新增真实 Workstation 能力。
 - v1.2.16 后跨项目 Skill Pack 有最小安装器：其他项目要使用 Personal Workstation，需要从本仓库安装 Skill / examples / standalone client，并手动配置 package script 与本地 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`；仍不能假设 repo-level Skill 在其他项目全局可见。
 - v1.2.17 后安装器可以先 `--check` / `--dry-run`，并检查目标 package script 状态；这只是安装 UX polish，不代表自动修改 `package.json` 或全局 Skill 可见。
+- v1.2.18 后全新项目接入应优先按 `docs/workstation-new-project-bootstrap.md` 执行；这只是接入标准，不代表新增后端能力或改变 installer 行为。
 - 允许类型为 PDF / DOCX / XLSX / CSV / TXT / MD / PNG / JPG / JPEG，最大 10 MB；zip、脚本、安装包和可执行文件不支持。
 - operation logs 记录 `documents.upload_intent`、`documents.upload`、`documents.finalize` 的安全摘要，不记录完整 Storage path、本地绝对路径、文件内容、token、Authorization 或 service role key。
 - 不新增 migration，不修改 RLS、Storage policy、bucket visibility 或 public download route。

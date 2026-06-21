@@ -2,7 +2,7 @@
 
 日期：2026-06-21
 
-本文档记录 v1.2.15 的 Cross-project Workstation Skill Pack 设计、v1.2.16 的最小安装器实现，以及 v1.2.17 的安装体验 polish。目标是让其他 Codex 项目可以轻量接入 Personal Workstation，并通过 Workstation API / CLI 把项目、知识笔记、Skill、文档包查询和私密单文件上传写回 personal-workstation。
+本文档记录 v1.2.15 的 Cross-project Workstation Skill Pack 设计、v1.2.16 的最小安装器实现、v1.2.17 的安装体验 polish，以及 v1.2.18 新项目接入手册的关系。目标是让其他 Codex 项目可以轻量接入 Personal Workstation，并通过 Workstation API / CLI 把项目、知识笔记、Skill、文档包查询和私密单文件上传写回 personal-workstation。
 
 v1.2.17 后，安装器支持 `--check` / `--dry-run` 并会检查目标项目 `package.json` / `scripts.workstation` 状态，但仍不新增 API / CLI 能力，不自动复制到真实外部项目，不自动修改目标项目 `package.json`，不写入任何真实 token 或 service role key。
 
@@ -48,6 +48,13 @@ v1.2.17 已补充：
 - 安装完成后的 package script 状态提示。
 - README uninstall 指南。
 - Codex slash menu / discovery troubleshooting。
+
+v1.2.18 补充了实操手册：
+
+- `docs/workstation-new-project-bootstrap.md`
+- 面向全新项目的 5 分钟接入流程。
+- 标准目录结构、package script、local env、验证命令和 troubleshooting。
+- 不改变 Skill Pack installer 或 standalone client 行为。
 
 ## 1. Why The Current Skill Is Repo-level
 
@@ -206,6 +213,14 @@ npm run workstation -- health
 npm run workstation -- project list --limit 5
 npm run workstation -- collection list --limit 5
 ```
+
+全新项目从零接入时，优先使用：
+
+```text
+docs/workstation-new-project-bootstrap.md
+```
+
+该文档把目标项目创建、Skill Pack 安装、package script、local env 和 smoke 验证整理为 checklist。
 
 ## 6. Environment And Token Safety
 
@@ -418,6 +433,8 @@ If dataAccess is degraded:
 - Do not request service role key.
 - Do not print `.env.local`.
 
+For a brand-new project bootstrap, follow `docs/workstation-new-project-bootstrap.md` first, then return to this document for detailed Skill Pack design and boundary rationale.
+
 ## 11. Expected Cross-project Codex Flow
 
 When working in another project after installing the Skill Pack:
@@ -432,9 +449,9 @@ When working in another project after installing the Skill Pack:
 
 This still writes to Personal Workstation through Workstation API; it does not make the target project a database owner or Storage operator.
 
-## 12. Current v1.2.17 Boundary
+## 12. Current v1.2.18 Boundary
 
-v1.2.17 keeps the v1.2.16 minimal Cross-project Workstation Skill Pack installer and only polishes its UX.
+v1.2.18 keeps the v1.2.16 minimal Cross-project Workstation Skill Pack installer and v1.2.17 installer UX polish unchanged. It adds only the new project bootstrap guide.
 
 The Skill Pack file surface remains:
 
@@ -446,7 +463,7 @@ The Skill Pack file surface remains:
 - `packages/workstation-skill-pack/scripts/workstation.mjs`
 - root npm script `workstation:install-skill`
 
-v1.2.17 modifies installer and documentation only. It should not modify:
+v1.2.18 modifies documentation only. It should not modify:
 
 - Workstation API routes
 - current CLI commands
@@ -456,6 +473,8 @@ v1.2.17 modifies installer and documentation only. It should not modify:
 - bucket visibility
 - public download route
 - token handling implementation
+- installer behavior
+- Skill Pack logic
 
 It should not perform a real cross-project install outside a temporary verification directory, and it should not auto-edit target `package.json`.
 

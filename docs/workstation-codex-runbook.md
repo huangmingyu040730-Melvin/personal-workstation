@@ -4,7 +4,7 @@
 
 本文档是基于本项目真实 Codex 执行经验沉淀的 Workstation CLI / Codex Skill 操作手册。它不是理想流程设计，而是 v1.2.0-v1.2.12 中已经反复跑过、验证过、踩过权限问题并写进 PR 的做法。
 
-v1.2.17 note：跨项目使用 Personal Workstation 已有最小 Skill Pack 安装器，详见 `docs/workstation-cross-project-skill-pack.md` 和 `packages/workstation-skill-pack/README.md`。安装器支持 `--check` / `--dry-run`，并会检查目标 `package.json` / `scripts.workstation` 状态，但仍不会自动修改 `package.json`。当前 `.codex/skills/workstation/SKILL.md` 仍是 repo-level Skill；不要假设其他 Codex 项目已经安装该 Skill，也不要承诺 slash menu 全局可见。目标项目必须安装 Skill Pack，并在本地配置 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`。
+v1.2.18 note：跨项目使用 Personal Workstation 已有最小 Skill Pack 安装器，详见 `docs/workstation-cross-project-skill-pack.md` 和 `packages/workstation-skill-pack/README.md`。安装器支持 `--check` / `--dry-run`，并会检查目标 `package.json` / `scripts.workstation` 状态，但仍不会自动修改 `package.json`。全新项目接入优先参考 `docs/workstation-new-project-bootstrap.md`。当前 `.codex/skills/workstation/SKILL.md` 仍是 repo-level Skill；不要假设其他 Codex 项目已经安装该 Skill，也不要承诺 slash menu 全局可见。目标项目必须安装 Skill Pack，并在本地配置 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`。
 
 证据来源：
 
@@ -21,6 +21,7 @@ v1.2.17 note：跨项目使用 Personal Workstation 已有最小 Skill Pack 安�
 
 - Treat Workstation CLI as a controlled thin client. It calls the Workstation Admin API; it does not connect to Supabase directly.
 - Keep every PR tightly scoped. If the request is design-only, do not implement API/CLI/migration. If the request is CLI polish, do not add new backend capability.
+- Treat new-project bootstrap as documentation and checklist work unless the user explicitly asks for installer implementation changes.
 - Preserve the private-by-default model. Project / Knowledge / Skill create uses private metadata; document upload writes private documents.
 - Use existing capability boundaries: `read_assets`, `create_assets`, `update_assets`, `upload_documents`.
 - Prefer list/show before create/update/upload. Avoid duplicate assets and wrong collection ids.
@@ -436,6 +437,7 @@ Stop and ask or report a blocker when:
 - The task touches public publish, visibility manage, delete, RLS, Storage policy, bucket visibility, public download route, batch upload, directory upload, OCR, vector indexing, AI summary, or external integrations without explicit scope and safety design.
 - Local operation logs UI redirects to login. Do not bypass with direct DB reads unless the user explicitly asks for a separate admin/database investigation and secret-safe path exists.
 - The user is in another Codex project and asks to use Personal Workstation, but that project has no Workstation Skill Pack installed. Do not assume global Skill availability; explain that the project must install the Skill Pack or use a user-provided safe local CLI path. Use `install.sh --check` or `--dry-run` first when the user wants a non-destructive install preview.
+- The user asks how to connect a brand-new project to Workstation. Start from `docs/workstation-new-project-bootstrap.md`; do not add new API, CLI, installer behavior, npm package publishing, or global installation unless separately requested and designed.
 
 ## 12. Never Do
 
