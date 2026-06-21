@@ -15,6 +15,8 @@ npm run workstation -- <command>
 
 This Skill Pack is repo-level inside the target project. It does not guarantee global Codex slash menu visibility in every project. It only helps Codex discover Personal Workstation when these files are installed in the current project.
 
+If `/Personal Workstation` is not visible, confirm Codex opened this target project directory, confirm `.codex/skills/workstation/SKILL.md` exists, confirm the frontmatter name is `Personal Workstation`, reload Codex, and try a natural-language trigger such as "用 Personal Workstation 帮我查一下项目列表". If Codex can read this Skill and run `npm run workstation`, the repo-level setup is usable even if the slash menu does not immediately show it.
+
 More examples live in:
 
 ```text
@@ -74,6 +76,7 @@ Never:
 - guess a `collection_id`
 - generate Storage paths in the CLI
 - add MCP server, Agent CEO, Notion, Feishu, Gmail, or other external integration as part of Workstation CLI work
+- modify `package.json` automatically as part of Skill Pack installation
 
 If the user asks for one of those operations, stop and explain that the current Workstation CLI does not support it.
 

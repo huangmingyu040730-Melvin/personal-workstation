@@ -11,7 +11,7 @@ The CLI is the capability entrypoint. This Skill is only Codex's discovery and i
 
 Use `docs/workstation-codex-runbook.md` as the operational source of truth for sequencing, stop conditions, PR review, grant troubleshooting, asset workflows, collection resolution, document upload, and safety boundaries.
 
-Cross-project usage now has a minimal Skill Pack installer. See `docs/workstation-cross-project-skill-pack.md` and `packages/workstation-skill-pack/README.md`. This repo-level Skill does not make Personal Workstation globally visible in every Codex project; target projects must install the Skill Pack and configure `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN` locally.
+Cross-project usage now has a minimal Skill Pack installer. See `docs/workstation-cross-project-skill-pack.md` and `packages/workstation-skill-pack/README.md`. The installer supports `--check` and `--dry-run`, and reports target `package.json` / `scripts.workstation` status, but it still does not edit `package.json`. This repo-level Skill does not make Personal Workstation globally visible in every Codex project; target projects must install the Skill Pack and configure `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN` locally.
 
 Command entrypoint:
 
@@ -101,8 +101,12 @@ v1.2.16 adds a minimal installable Skill Pack:
 
 ```bash
 npm run workstation:install-skill -- /path/to/target-project
+npm run workstation:install-skill -- /path/to/target-project --check
+npm run workstation:install-skill -- /path/to/target-project --dry-run
 # or
 bash packages/workstation-skill-pack/install.sh /path/to/target-project
+bash packages/workstation-skill-pack/install.sh --check /path/to/target-project
+bash packages/workstation-skill-pack/install.sh --dry-run /path/to/target-project
 ```
 
 The installer copies only:
@@ -113,7 +117,14 @@ The installer copies only:
 
 It does not copy token values, `.env.local`, service role keys, Storage credentials, migrations, RLS files, Storage policy files, uploaded files, `node_modules`, or app source. It refuses to overwrite existing target files unless `--force` is passed, and it prints the package script to add manually instead of editing `package.json`.
 
-Target projects must configure `WORKSTATION_API_URL` and `WORKSTATION_API_TOKEN` in their local environment. Do not ask the user to paste token values into chat.
+v1.2.17 adds installer UX checks:
+
+- `--check` reports whether Skill Pack files, `package.json`, and `scripts.workstation` exist.
+- `--dry-run` previews directories and files that would be created or copied.
+- normal install reports package script status after copying files.
+- none of these modes modifies `package.json`.
+
+Target projects must configure `WORKSTATION_API_URL` and `WORKSTATION_API_TOKEN` in their local environment. Do not ask the user to paste token values into chat. Skill Pack installation does not guarantee slash menu visibility immediately; if `/Personal Workstation` is not visible, confirm the target project directory, Skill file, frontmatter name, and Codex reload state. Natural-language triggering is acceptable when Codex can read the Skill and run `npm run workstation`.
 
 ## Standard Invocation Patterns
 

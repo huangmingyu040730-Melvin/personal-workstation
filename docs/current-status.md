@@ -74,6 +74,8 @@ v1.2.15 Cross-project Workstation Skill Pack design 只新增 `docs/workstation-
 
 v1.2.16 Cross-project Workstation Skill Pack installer 新增最小可复制 Skill Pack：`packages/workstation-skill-pack/README.md`、`install.sh`、`.codex/skills/workstation/SKILL.md`、`.codex/skills/workstation/examples.md` 和 standalone `scripts/workstation.mjs`。新增根脚本 `npm run workstation:install-skill -- /path/to/target-project`，安装器只复制 Skill / examples / CLI client，默认不覆盖目标文件，`--force` 才覆盖，并只打印手动添加 package script 的说明，不自动修改目标项目 `package.json`。目标项目仍需本地配置 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`；安装器不复制 token、`.env.local`、service role key、Storage credentials、migration、RLS、Storage policy 或真实文件，也不让 Skill 全局自动可见。本轮不新增 Workstation API route、CLI capability、migration、RLS、Storage policy、bucket visibility、public download route、delete、public publish、visibility manage、批量/目录上传、自动创建 collection、OCR/vector/AI summary、MCP、Agent CEO 或外部集成。
 
+v1.2.17 Cross-project install UX polish 只优化 Skill Pack 安装器体验：`install.sh` 支持 `--check` 和 `--dry-run`，并在安装完成后检查目标项目 `package.json` 与 `scripts.workstation` 状态，给出可复制 script 建议。安装器仍不自动修改目标 `package.json`，不做全局系统安装，不写 shell profile，不写 `.env.local`，不复制 `WORKSTATION_API_TOKEN`、`SUPABASE_SERVICE_ROLE_KEY`、Storage credentials 或真实 token。README 补充 uninstall 指南和 Codex slash menu / discovery 排查步骤；跨项目 Skill 仍是 repo-level 文件安装，不承诺全局自动可见。本轮不新增 Workstation API route、API capability、migration、RLS、Storage policy、bucket visibility、public download route 或任何上传 / 删除 / 公开发布能力。
+
 ## Completed Capabilities
 
 ### Public Site
@@ -162,6 +164,7 @@ v1.2.16 Cross-project Workstation Skill Pack installer 新增最小可复制 Ski
 - v1.2.14 Workstation Codex Skill discovery hardening 已把 Skill 名称调整为 `Personal Workstation`，扩展 description 的 `personal workstation` / `workstation CLI` / `project` / `knowledge note` / `document upload` 等检索关键词，补充中英文触发语义、Never do、标准调用模式和 examples 文件；这只是 Codex 发现性和说明层加固。
 - v1.2.15 Cross-project Workstation Skill Pack design 已新增 `docs/workstation-cross-project-skill-pack.md`，设计未来 `packages/workstation-skill-pack/`、目标项目 `.codex/skills/workstation/`、standalone `scripts/workstation.mjs`、安装器、token 安全策略和接入验证流程；当前只是设计，不新增真实安装器或跨项目复制动作。
 - v1.2.16 Cross-project Workstation Skill Pack installer 已新增 `packages/workstation-skill-pack/` 的最小安装器、README、目标项目 Skill / examples 和 standalone Workstation client，并新增根脚本 `workstation:install-skill`。安装器只复制文件到用户指定目标项目，拒绝覆盖除非 `--force`，不自动改目标 `package.json`，不复制 token、`.env.local`、service role key、Storage credentials、migration、RLS 或 Storage policy。
+- v1.2.17 Cross-project install UX polish 已让安装器支持 `--check` / `--dry-run`，并检查目标 `package.json` / `scripts.workstation` 后给出手动配置提示；仍不自动修改目标项目、不复制 secret、不新增后端或 Storage 能力。
 - Project / Publication / Knowledge / Skill 新建与编辑表单提供 AI 草稿补全助手，基于当前浏览器表单白名单字段生成建议，并支持补全空字段、优化已有内容、公开风险检查三种模式；管理员可复制或采用到表单字段，但仍需手动保存。AI 不自动修改 visibility，不自动创建内容，不读取 Documents / Storage。
 - `/dashboard/ai-drafts` 提供 AI 草稿实验室，可把管理员粘贴的原始文本转换为 Project / Publication / Knowledge / Skill 结构化草稿；支持复制字段、复制完整 Markdown，或通过当前浏览器 `sessionStorage` 带入对应新建表单进行人工确认预填。不自动保存数据库、不自动创建资产、不读取 Documents / Storage。
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示。
@@ -547,6 +550,7 @@ v1.1 后，默认路线从“继续扩展新功能”转为“稳定使用 Perso
 - v1.2.13 后 Workstation CLI 已进入可日常使用阶段：Codex 应按 `docs/workstation-codex-runbook.md` 执行开发、资产操作、上传、grant 排查和 PR review；后续可单独考虑 audit review polish 或 Agent CEO Workbench design，但不得把这些方向混入普通 CLI 操作。
 - v1.2.14 后 Workstation Codex Skill 更适合被 slash menu / 语义检索发现：Skill frontmatter 使用 `Personal Workstation` 名称和更宽的 description 关键词，正文保留 runbook 为 operational source of truth，并通过 `.codex/skills/workstation/examples.md` 固化常见调用样例；后续仍不因此扩大 CLI/API 能力边界。
 - v1.2.16 后，跨项目使用 Personal Workstation 有最小 Skill Pack 安装器：其他 Codex 项目可通过安装器复制 `.codex/skills/workstation/` 和轻量 CLI client，但仍需手动配置目标项目 package script 与本地 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`，也不把 repo-level Skill 视为全局 Skill。
+- v1.2.17 后，安装器可用 `--check` 检查目标安装状态，也可用 `--dry-run` 预览复制动作；安装后会提示 `package.json` 是否缺少 `scripts.workstation`，但仍只提示、不自动改文件。
 - 求职闭环维护：Career Center、Resume、AI JD 分析记录和投递看板维持现有流程，只做 bugfix 和文案修正。
 - 外部授权：Viewer magic link、访问申请、Access Grants 和 restricted 外部授权已退役，不再作为 bugfix 专项处理。
 
