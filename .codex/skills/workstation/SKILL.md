@@ -13,6 +13,8 @@ Use `docs/workstation-codex-runbook.md` as the operational source of truth for s
 
 Cross-project usage now has a minimal Skill Pack installer. See `docs/workstation-cross-project-skill-pack.md` and `packages/workstation-skill-pack/README.md`. The installer supports `--check` and `--dry-run`, and reports target `package.json` / `scripts.workstation` status, but it still does not edit `package.json`. This repo-level Skill does not make Personal Workstation globally visible in every Codex project; target projects must install the Skill Pack and configure `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN` locally.
 
+For a brand-new project bootstrap, use `docs/workstation-new-project-bootstrap.md` as the standard 5-minute onboarding checklist. It is documentation only; do not change installer behavior, publish packages, or add global installation when following it.
+
 Command entrypoint:
 
 ```bash
@@ -51,6 +53,7 @@ Chinese trigger wording:
 - 用户说“查一下工作台里的项目 / 知识 / Skill”。
 - 用户说“找一下文档包 id”。
 - 用户说“把这段长期记忆保存到工作台”。
+- 用户说“让一个新项目接入 Personal Workstation”。
 
 Common intent mapping:
 
@@ -63,6 +66,7 @@ Common intent mapping:
 - "查一下文档包" means use `collection list`, usually with `--q`.
 - "查看这个文档包" means use `collection show --id`.
 - "上传文件到文档包" means use `document upload` only for one local regular file, one existing document collection, and default private metadata.
+- "新项目接入 Workstation" means follow `docs/workstation-new-project-bootstrap.md`: install the Skill Pack, add the npm script manually, configure local env, and verify with health/list commands.
 
 ## Never Do
 

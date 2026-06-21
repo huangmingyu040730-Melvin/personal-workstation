@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-06-22 - Add New Project Workstation Bootstrap Guide
+
+类型：decision
+
+决策：
+
+- v1.2.18 新增 `docs/workstation-new-project-bootstrap.md`，作为全新项目接入 Personal Workstation 的 5 分钟手册。
+- Bootstrap 流程固定为：创建新项目、运行 Skill Pack installer、手动添加 `"workstation": "node scripts/workstation.mjs"`、在本地配置 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`、运行 `health` / `project list` / `collection list` 验证。
+- 新项目标准结构为 `.codex/skills/workstation/SKILL.md`、`.codex/skills/workstation/examples.md`、`scripts/workstation.mjs` 和 `package.json`。
+- 最小接入原则是：不修改业务代码即可接入；Skill Pack 只是 Codex 使用入口说明；CLI 是唯一执行通道；所有资产仍写入 personal-workstation；新项目不存储 Workstation 数据、service role key 或真实 token。
+- 文档明确 token missing、Skill 不显示和 install 失败的排查步骤：不要让用户把 token 发给 Codex，不读取 `.env.local`，优先用 `--check` / `--dry-run` 诊断安装状态。
+- 本轮不改变 installer 行为，不修改 Skill Pack 逻辑，不新增 API route、CLI command、migration、RLS、Storage policy、bucket visibility、public download route、delete、public publish、visibility manage、批量/目录上传、OCR/vector/AI summary、MCP、Agent CEO 或外部集成。
+
+原因：
+
+- v1.2.16 / v1.2.17 已让 Skill Pack 可安装且安装体验可诊断，但还缺少一份面向“空白新项目”的标准接入流程。
+- 将接入流程文档化，可以让 Workstation 从单个工具升级为新项目默认能力标准，减少每次新项目接入时重复解释 package script、token 安全和 slash menu 排查的成本。
+
+影响：
+
+- 新项目可以按固定 checklist 在 5 分钟内接入 Workstation CLI / Codex Skill。
+- 后续新项目接入问题应优先引用 `docs/workstation-new-project-bootstrap.md`，再看 `docs/workstation-cross-project-skill-pack.md` 和 `packages/workstation-skill-pack/README.md`。
+- 这仍不是全局 Skill 安装，也不代表新项目自动获得任何新增后端或 Storage 能力。
+
 ## 2026-06-21 - Polish Cross-project Skill Pack Installer UX
 
 类型：decision
