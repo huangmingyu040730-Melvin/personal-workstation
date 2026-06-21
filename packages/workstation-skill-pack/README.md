@@ -43,15 +43,66 @@ Overwrite previously installed Skill Pack files only when you intend to replace 
 bash packages/workstation-skill-pack/install.sh /path/to/target-project --force
 ```
 
+Preview the install without copying files:
+
+```bash
+bash packages/workstation-skill-pack/install.sh /path/to/target-project --dry-run
+```
+
+Check a target project's current install status without copying files:
+
+```bash
+bash packages/workstation-skill-pack/install.sh /path/to/target-project --check
+```
+
+Flags can appear before or after the target path:
+
+```bash
+bash packages/workstation-skill-pack/install.sh --check /path/to/target-project
+bash packages/workstation-skill-pack/install.sh --dry-run /path/to/target-project
+bash packages/workstation-skill-pack/install.sh --force /path/to/target-project
+```
+
 The installer:
 
 - checks that the target path exists and is a directory
 - creates `.codex/skills/workstation/` and `scripts/`
 - copies `SKILL.md`, `examples.md`, and `scripts/workstation.mjs`
 - refuses to overwrite existing target files unless `--force` is passed
+- checks whether `package.json` exists
+- checks whether `scripts.workstation` already exists
 - prints next steps for adding the package script and configuring local env
+- never modifies `package.json`
 
-The installer never copies token values, `.env.local`, Supabase keys, Storage credentials, migrations, RLS files, Storage policy files, or uploaded files.
+The installer never copies `.env.local`, `WORKSTATION_API_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, Storage credentials, shell profile settings, migrations, RLS files, Storage policy files, uploaded files, or token values.
+
+Configure `WORKSTATION_API_URL` and `WORKSTATION_API_TOKEN` locally.
+
+## Check Mode
+
+`--check` reports whether the target has:
+
+- `.codex/skills/workstation/SKILL.md`
+- `.codex/skills/workstation/examples.md`
+- `scripts/workstation.mjs`
+- `package.json`
+- `package.json` `scripts.workstation`
+
+It does not copy files and does not edit `package.json`. If `scripts.workstation` is missing, it prints this suggested snippet:
+
+```json
+{
+  "scripts": {
+    "workstation": "node scripts/workstation.mjs"
+  }
+}
+```
+
+## Dry Run Mode
+
+`--dry-run` prints the target path, directories that would be created, files that would be copied, files and secrets that would not be copied, and package script status.
+
+It does not copy files and does not edit `package.json`.
 
 ## Environment
 
@@ -154,9 +205,26 @@ rm -rf .codex/skills/workstation
 rm -f scripts/workstation.mjs
 ```
 
+If `scripts/workstation.mjs` was manually edited after installation, inspect it before deleting it.
+
 If you added a `workstation` script to `package.json`, remove that script manually.
 
-Do not delete unrelated target project files.
+The installer never writes token values, so uninstalling does not involve token cleanup. Do not delete unrelated target project files.
+
+## Codex Discovery Troubleshooting
+
+Skill Pack installed successfully does not guarantee the Codex slash menu will immediately show `Personal Workstation`.
+
+Discovery may depend on the Codex product environment, current repository, branch, reload state, and UI behavior.
+
+If `/Personal Workstation` is not visible:
+
+1. Confirm Codex opened the target project directory, not a parent or sibling directory.
+2. Confirm the target project has `.codex/skills/workstation/SKILL.md`.
+3. Confirm the `SKILL.md` frontmatter name is `Personal Workstation`.
+4. Restart or reload the Codex project.
+5. Try a natural-language trigger such as: "用 Personal Workstation 帮我查一下项目列表".
+6. If the slash menu still does not show it, but Codex can read the Skill and run `npm run workstation`, the cross-project setup is still usable.
 
 ## FAQ
 
@@ -170,7 +238,7 @@ No. The target project only needs `WORKSTATION_API_URL` and `WORKSTATION_API_TOK
 
 ### Can the installer update package.json automatically?
 
-No. v1.2.16 intentionally prints the script to add and leaves `package.json` untouched.
+No. The installer checks `package.json` and reports whether `scripts.workstation` is present, but it intentionally leaves `package.json` untouched.
 
 ### Can this upload directories or public files?
 

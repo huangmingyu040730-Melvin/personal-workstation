@@ -2,11 +2,11 @@
 
 日期：2026-06-21
 
-本文档记录 v1.2.15 的 Cross-project Workstation Skill Pack 设计，以及 v1.2.16 的最小安装器实现。目标是让其他 Codex 项目可以轻量接入 Personal Workstation，并通过 Workstation API / CLI 把项目、知识笔记、Skill、文档包查询和私密单文件上传写回 personal-workstation。
+本文档记录 v1.2.15 的 Cross-project Workstation Skill Pack 设计、v1.2.16 的最小安装器实现，以及 v1.2.17 的安装体验 polish。目标是让其他 Codex 项目可以轻量接入 Personal Workstation，并通过 Workstation API / CLI 把项目、知识笔记、Skill、文档包查询和私密单文件上传写回 personal-workstation。
 
-v1.2.16 已实现最小 Skill Pack 目录和安装器，但仍不新增 API / CLI 能力，不自动复制到真实外部项目，不自动修改目标项目 `package.json`，不写入任何真实 token 或 service role key。
+v1.2.17 后，安装器支持 `--check` / `--dry-run` 并会检查目标项目 `package.json` / `scripts.workstation` 状态，但仍不新增 API / CLI 能力，不自动复制到真实外部项目，不自动修改目标项目 `package.json`，不写入任何真实 token 或 service role key。
 
-## v1.2.16 Implementation Status
+## v1.2.17 Implementation Status
 
 已新增：
 
@@ -40,6 +40,14 @@ packages/workstation-skill-pack/
 - 版本检查 / 升级器。
 - token 管理 UI。
 - 新 API route、CLI command、migration、RLS、Storage policy、bucket visibility 或 public download route。
+
+v1.2.17 已补充：
+
+- `install.sh --check`：只读检查目标路径、Skill Pack 文件、`package.json` 与 `scripts.workstation` 状态。
+- `install.sh --dry-run`：只展示将创建的目录、将复制的文件和不会复制的 secret / shell profile / `.env.local`。
+- 安装完成后的 package script 状态提示。
+- README uninstall 指南。
+- Codex slash menu / discovery troubleshooting。
 
 ## 1. Why The Current Skill Is Repo-level
 
@@ -272,6 +280,11 @@ or:
 ```bash
 bash packages/workstation-skill-pack/install.sh /path/to/target-project
 bash packages/workstation-skill-pack/install.sh /path/to/target-project --force
+bash packages/workstation-skill-pack/install.sh /path/to/target-project --dry-run
+bash packages/workstation-skill-pack/install.sh /path/to/target-project --check
+bash packages/workstation-skill-pack/install.sh --force /path/to/target-project
+bash packages/workstation-skill-pack/install.sh --dry-run /path/to/target-project
+bash packages/workstation-skill-pack/install.sh --check /path/to/target-project
 ```
 
 Installer responsibilities:
@@ -288,7 +301,28 @@ Installer responsibilities:
 4. Copy `SKILL.md` and `examples.md`.
 5. Copy standalone client as `scripts/workstation.mjs`.
 6. If target files already exist, stop unless `--force` is passed.
-7. Print the exact next steps, including manual package script addition and local env setup.
+7. Check target `package.json` and `scripts.workstation`.
+8. Print the exact next steps, including manual package script addition and local env setup.
+
+`--check` responsibilities:
+
+1. Check the target path exists and is a directory.
+2. Report whether the three Skill Pack files exist or are missing.
+3. Report whether `package.json` exists.
+4. Report whether `package.json` has `scripts.workstation`.
+5. Print the suggested package script when missing.
+6. Do not copy files.
+7. Do not modify `package.json`.
+
+`--dry-run` responsibilities:
+
+1. Print the target path.
+2. Print the directories that would be created.
+3. Print the files that would be copied.
+4. Print what will not be copied, including `.env.local`, token values, service role key, Storage credentials and shell profile settings.
+5. Print package script status.
+6. Do not copy files.
+7. Do not modify `package.json`.
 
 Installer must not:
 
@@ -398,11 +432,11 @@ When working in another project after installing the Skill Pack:
 
 This still writes to Personal Workstation through Workstation API; it does not make the target project a database owner or Storage operator.
 
-## 12. Current v1.2.16 Boundary
+## 12. Current v1.2.17 Boundary
 
-v1.2.16 implements the minimal Cross-project Workstation Skill Pack installer.
+v1.2.17 keeps the v1.2.16 minimal Cross-project Workstation Skill Pack installer and only polishes its UX.
 
-This PR creates only:
+The Skill Pack file surface remains:
 
 - `packages/workstation-skill-pack/`
 - `packages/workstation-skill-pack/README.md`
@@ -412,7 +446,7 @@ This PR creates only:
 - `packages/workstation-skill-pack/scripts/workstation.mjs`
 - root npm script `workstation:install-skill`
 
-This PR should not modify:
+v1.2.17 modifies installer and documentation only. It should not modify:
 
 - Workstation API routes
 - current CLI commands
@@ -425,4 +459,4 @@ This PR should not modify:
 
 It should not perform a real cross-project install outside a temporary verification directory, and it should not auto-edit target `package.json`.
 
-Future enhancements such as versioned upgrades, package.json patching, global distribution, or richer install UX should be separate PRs with their own verification.
+Future enhancements such as versioned upgrades, automatic package.json patching, global distribution, npm publishing, or richer install UX should be separate PRs with their own verification.

@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-06-21 - Polish Cross-project Skill Pack Installer UX
+
+类型：decision
+
+决策：
+
+- v1.2.17 只优化 `packages/workstation-skill-pack/install.sh` 的安装体验，不新增 Workstation API route、API capability、CLI command surface、migration、RLS、Storage policy、bucket visibility 或 public download route。
+- 安装器新增 `--check`，用于只读检查目标目录、Skill Pack 三个目标文件、`package.json` 和 `scripts.workstation` 是否存在；缺少 `scripts.workstation` 时只打印建议 JSON snippet。
+- 安装器新增 `--dry-run`，用于预览会创建的目录、会复制的文件、不会复制的 secret / shell profile / `.env.local`，以及 `package.json` 当前状态；不复制文件。
+- `--force`、`--dry-run`、`--check` 均可放在目标路径前后；`--dry-run` 和 `--check` 互斥。
+- 普通安装完成后，安装器会检查目标项目 `package.json`：没有 package 文件、缺少 `scripts.workstation`、或已有 `scripts.workstation` 时分别给出明确提示。
+- 安装器仍不自动修改目标项目 `package.json`，不写 shell profile，不写 `.env.local`，不复制 `WORKSTATION_API_TOKEN`、`SUPABASE_SERVICE_ROLE_KEY`、Storage credentials、真实 token、migrations、RLS 或 Storage policy。
+- Skill Pack README 补充 `--check` / `--dry-run`、uninstall 指南和 Codex discovery troubleshooting，说明安装成功不保证 slash menu 立即显示 `Personal Workstation`。
+
+原因：
+
+- v1.2.16 的最小安装器已经能复制文件，但真实跨项目安装验收显示用户还需要更清楚地知道目标项目是否已有 npm script、安装会做什么、如何安全卸载，以及 slash menu 不显示时如何判断是否仍可用。
+- 继续只提示 package script 而不自动修改，可以降低安装器写入面，避免在任意目标项目中意外改动用户配置。
+
+影响：
+
+- 其他 Codex 项目接入 Personal Workstation 时可以先 `--check` 或 `--dry-run`，再决定是否安装或 `--force` 覆盖。
+- 这仍不是全局 Skill 安装；目标项目仍需要 repo-level Skill Pack 文件和本地 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`。
+- 后续如需自动 package.json patch、全局安装、版本升级器或 npm 分发，仍必须单独设计并继续禁止复制 secret。
+
 ## 2026-06-21 - Implement Cross-project Workstation Skill Pack Installer
 
 类型：decision
