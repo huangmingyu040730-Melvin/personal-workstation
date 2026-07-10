@@ -1,5 +1,6 @@
 import type { WorkstationListParams } from "./query";
 import type { WorkstationLookupType } from "./query";
+import type { WorkstationCareerListParams } from "./career-query";
 import { getWorkstationDocumentFilenameExt } from "./document-upload-schemas";
 
 function asRecord(value: unknown) {
@@ -58,6 +59,90 @@ export function summarizeCollectionShowRequest(collectionId: string) {
   return {
     collection_id: text(collectionId, 80)
   };
+}
+
+export function summarizeCareerListRequest(params: WorkstationCareerListParams) {
+  return {
+    q: params.q,
+    limit: params.limit,
+    page: params.page,
+    cursor: params.offset,
+    item_type: params.itemType,
+    status: params.status,
+    version_id: params.versionId,
+    direction: params.direction,
+    channel: params.channel
+  };
+}
+
+export function summarizeCareerCreateRequest(kind: "resume_item" | "resume_version" | "resume_jd_review", input: unknown) {
+  const body = asRecord(input);
+
+  if (kind === "resume_item") {
+    return {
+      item_type: text(body.item_type, 40),
+      title: text(body.title),
+      bullets_count: arrayCount(body.bullets),
+      skills_count: arrayCount(body.skills),
+      tags_count: arrayCount(body.tags),
+      has_summary: booleanPresence(body.summary),
+      has_details: Object.keys(asRecord(body.details)).length > 0
+    };
+  }
+
+  if (kind === "resume_version") {
+    return {
+      title: text(body.title),
+      target_role: text(body.target_role),
+      language: text(body.language, 20),
+      template_key: text(body.template_key, 40),
+      items_count: arrayCount(body.items)
+    };
+  }
+
+  return {
+    resume_version_id: text(body.resume_version_id, 80),
+    company_name: text(body.company_name),
+    job_title: text(body.job_title),
+    application_status: text(body.application_status, 40),
+    has_jd_text: booleanPresence(body.jd_text),
+    jd_text_length: typeof body.jd_text === "string" ? body.jd_text.length : 0,
+    target_keywords_count: arrayCount(body.target_keywords)
+  };
+}
+
+export function summarizeCareerUpdateRequest(id: string, kind: "resume_item" | "resume_version" | "resume_jd_review", input: unknown) {
+  const body = asRecord(input);
+  const allowed = kind === "resume_item"
+    ? ["item_type", "title", "organization", "role_title", "location", "start_date", "end_date", "is_current", "summary", "bullets", "skills", "tags", "details", "sort_order", "is_featured", "related_project_id", "related_publication_id", "related_knowledge_id", "related_skill_id"]
+    : kind === "resume_version"
+      ? ["title", "target_role", "summary", "language", "template_key", "is_active", "is_featured", "notes", "profile_fields", "section_order", "template_options", "items"]
+      : ["company_name", "job_title", "job_direction", "job_location", "application_channel", "application_status", "notes"];
+
+  return {
+    id: text(id, 80),
+    fields: fieldNames(body, allowed),
+    items_count: kind === "resume_version" ? arrayCount(body.items) : undefined,
+    bullets_count: kind === "resume_item" ? arrayCount(body.bullets) : undefined,
+    skills_count: kind === "resume_item" ? arrayCount(body.skills) : undefined
+  };
+}
+
+export function summarizeCareerAnalyzeRequest(input: unknown) {
+  const body = asRecord(input);
+  return {
+    resume_version_id: text(body.resume_version_id, 80),
+    company_name: text(body.company_name),
+    job_title: text(body.job_title),
+    direction: text(body.direction, 40),
+    application_status: text(body.application_status, 40),
+    has_jd_text: booleanPresence(body.jd_text),
+    jd_text_length: typeof body.jd_text === "string" ? body.jd_text.length : 0
+  };
+}
+
+export function summarizeCareerDeleteRequest(id: string) {
+  return { id: text(id, 80), confirmed: true };
 }
 
 export function summarizeDocumentUploadRequest(input: unknown) {

@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "smoke:public": "node scripts/public-launch-smoke.mjs",
     "workstation": "node scripts/workstation.mjs",
-    "workstation:install-skill": "bash packages/workstation-skill-pack/install.sh"
+    "workstation:install-skill": "bash packages/workstation-skill-pack/install.sh",
+    "workstation:install-global-skill": "bash packages/workstation-skill-pack/install-global.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

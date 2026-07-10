@@ -7,7 +7,11 @@ export type WorkstationOperationTargetType =
   | "knowledge"
   | "skill"
   | "document"
-  | "document_collection";
+  | "document_collection"
+  | "career"
+  | "resume_item"
+  | "resume_version"
+  | "resume_jd_review";
 
 export type WorkstationOperationLogInput = {
   requestId: string;

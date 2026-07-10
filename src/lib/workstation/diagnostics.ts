@@ -9,7 +9,10 @@ const dataAccessChecks = [
   { key: "projects", table: "projects" },
   { key: "knowledge", table: "knowledge_notes" },
   { key: "skills", table: "skills" },
-  { key: "documentCollections", table: "document_collections" }
+  { key: "documentCollections", table: "document_collections" },
+  { key: "resumeItems", table: "resume_items" },
+  { key: "resumeVersions", table: "resume_versions" },
+  { key: "resumeJdReviews", table: "resume_jd_reviews" }
 ] as const;
 
 function sanitizeMessage(message: string | undefined) {

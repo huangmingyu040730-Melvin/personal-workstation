@@ -1,5 +1,7 @@
 # Cross-project Workstation Skill Pack Design
 
+> v1.2.19 update: the implemented pack now also installs the repo-level `personal-career-center` Skill and the standalone client supports `career ...` commands. A separate global installer can install the Career Skill and cwd-independent wrapper under the user's Codex/local data directories. See `docs/workstation-career-center-skill.md` and `packages/workstation-skill-pack/README.md`. The original v1.2.15 design-only statements below are historical context.
+
 日期：2026-06-21
 
 本文档记录 v1.2.15 的 Cross-project Workstation Skill Pack 设计、v1.2.16 的最小安装器实现、v1.2.17 的安装体验 polish，以及 v1.2.18 新项目接入手册的关系。目标是让其他 Codex 项目可以轻量接入 Personal Workstation，并通过 Workstation API / CLI 把项目、知识笔记、Skill、文档包查询和私密单文件上传写回 personal-workstation。

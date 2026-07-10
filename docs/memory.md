@@ -2,6 +2,17 @@
 
 日期：2026-06-21
 
+## 2026-07-11 - Personal Career Center Global Skill
+
+- 新增独立 `personal-career-center` Codex Skill，覆盖现有私密 Career Center 的简历素材、简历版本、质量检查、预览、Word 导出、AI JD 分析、JD 历史和投递状态。
+- 执行链路固定为 Skill -> standalone Workstation CLI -> token-protected Career API -> server-side service_role -> operation logs；CLI 不直连 Supabase。
+- 新 capability 为 `read_career`、`manage_career`、`analyze_career`、`export_career`、`delete_career`。
+- 新建 Resume Item / Version 始终 private；Career API 不支持 visibility update 或 public publish。
+- 删除属于现有功能覆盖，但必须由用户明确要求，并同时满足 `delete_career`、API `confirm=true` 与 CLI `--confirm-delete`。删除 Resume Version 可能级联 JD records，执行前必须 show 并说明影响。
+- AI JD 只生成并保存建议，不自动更新真实简历，不自动投递，不联系雇主，不得编造经历或数据。
+- 全局安装由 `npm run workstation:install-global-skill -- --force` 完成；安装 Skill、standalone client 与 keychain-aware wrapper，不复制 token、service role key、`.env.local` 或 AI key。
+- 生产可用仍要求应用 `0028_workstation_career_center_grants.sql` 并部署包含新 routes 的版本。
+
 ## Current State
 
 项目定位：

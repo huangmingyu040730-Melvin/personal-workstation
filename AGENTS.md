@@ -23,6 +23,7 @@
 - Phase 3A-T 起 AI Draft Form Copilot 支持 `complete_missing`、`improve_existing`、`public_safety_check` 三种生成模式；当前 AI 方向仍是后台表单内草稿补全 / 优化 / 风险检查，不恢复 #118 详情页 AI，不自动保存、不自动公开，不修改数据库、RLS、Storage、Documents 或 public download route。
 - Phase 3B 起新增后台 AI 草稿实验室 `/dashboard/ai-drafts`，用于把管理员粘贴的 raw note 转为 Project / Publication / Knowledge / Skill 结构化草稿；它不是表单内 copilot，不自动创建资产、不保存草稿、不读取 Documents / Storage，不进入公开导航。
 - Phase 3B-1 起 AI 草稿实验室结果可通过当前浏览器 `sessionStorage` 带入四类新建表单；这只是用户确认后的浏览器表单预填，不自动提交、不自动创建资产、不保存数据库、不修改 `visibility`，仍需管理员人工检查并点击保存。
+- v1.2.19 起 Workstation Career API / CLI 与全局 `personal-career-center` Skill 可操作现有私密求职闭环：Resume Items、Resume Versions、quality、preview、DOCX export、AI JD history 和 application status。所有 create 继续强制 private；不通过 Career API 修改 visibility，不自动公开、投递、联系雇主或编造经历。删除必须有 `delete_career` capability、API `confirm=true`、CLI `--confirm-delete` 和当前对话中的用户明确授权。
 
 ## Tech Stack
 
@@ -89,6 +90,7 @@ npm run smoke:public
 - 保留 `.gitignore` 对 `.env`、`node_modules`、`.next`、`dist`、`out` 等文件的忽略规则。
 - 每轮代码修改后运行 `npm run lint` 和 `npm run build`，并修复发现的问题。
 - 修改前先理解现有结构，优先遵循项目已有模式。
+- Career API / CLI 长文本优先使用临时 JSON / text 文件；operation logs 只记录字段名、数量、长度和 id，不记录简历正文、JD 原文、联系方式、AI key 或临时文件内容。
 - 不要改动无关文件，不要回滚用户或其他工具产生的未说明改动。
 
 ## Memory Rules

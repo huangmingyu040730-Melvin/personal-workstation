@@ -6,6 +6,8 @@
 
 v1.2.18 note：跨项目使用 Personal Workstation 已有最小 Skill Pack 安装器，详见 `docs/workstation-cross-project-skill-pack.md` 和 `packages/workstation-skill-pack/README.md`。安装器支持 `--check` / `--dry-run`，并会检查目标 `package.json` / `scripts.workstation` 状态，但仍不会自动修改 `package.json`。全新项目接入优先参考 `docs/workstation-new-project-bootstrap.md`。当前 `.codex/skills/workstation/SKILL.md` 仍是 repo-level Skill；不要假设其他 Codex 项目已经安装该 Skill，也不要承诺 slash menu 全局可见。目标项目必须安装 Skill Pack，并在本地配置 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN`。
 
+v1.2.19 note：求职中心使用独立 `personal-career-center` Skill，见 `docs/workstation-career-center-skill.md`。全局安装后优先调用 `$HOME/.local/bin/workstation-cli career ...`；repo-level 安装仍可用 `npm run workstation -- career ...`。Resume/JD/Application 属于私密个人数据：先 list/show，再 create/update；AI 建议必须人工复核；删除必须由用户明确要求并在 show 后使用 `--confirm-delete`；不得自动公开、投递、发送雇主邮件或编造经历。
+
 证据来源：
 
 - PR #137-v1.2.0：Admin API MVP。

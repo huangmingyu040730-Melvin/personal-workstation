@@ -7,6 +7,8 @@ description: Use this skill when the user wants to save to workstation, create, 
 
 Use this skill when Codex should operate the local Personal Workstation through the existing Workstation CLI.
 
+For resume, JD analysis, application pipeline, interview status, or other 求职中心 work, delegate to the dedicated `personal-career-center` Skill. Do not improvise Career database operations through the generic asset commands.
+
 The CLI is the capability entrypoint. This Skill is only Codex's discovery and invocation guide.
 
 Use `docs/workstation-codex-runbook.md` as the operational source of truth for sequencing, stop conditions, PR review, grant troubleshooting, asset workflows, collection resolution, document upload, and safety boundaries.
