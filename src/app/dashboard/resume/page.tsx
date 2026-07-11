@@ -9,23 +9,21 @@ import { getResumeItemTypeLabel, resumeItemTypes } from "@/lib/content-options";
 import type { ResumeItemType } from "@/lib/content-types";
 import { formatRelative } from "@/lib/format";
 import { getResumeItems, getResumeStats } from "@/lib/queries/resume";
-import { getResumeApplicationStats, getResumeJdReviews } from "@/lib/queries/resume-jd-reviews";
 import { getResumeItemDisplay } from "@/lib/resume-display";
-import { getResumeJdReviewStatusLabel, getResumeJdReviewStatusTone } from "@/lib/resume-jd-review-options";
 
 export default async function ResumePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const itemType = params.item_type ?? "all";
   const visibility = params.visibility ?? "all";
   const q = params.q ?? "";
-  const [items, stats, allItems, jdReviews] = await Promise.all([getResumeItems({ itemType, visibility, q }), getResumeStats(), getResumeItems({ visibility: "all" }), getResumeJdReviews()]);
+  const [items, stats, allItems] = await Promise.all([getResumeItems({ itemType, visibility, q }), getResumeStats(), getResumeItems({ visibility: "all" })]);
   const sectionCards = buildSectionCards(allItems);
-  const applicationStats = getResumeApplicationStats(jdReviews);
 
   return (
     <AppShell>
       <AdminPageSurface>
         <PageHeader
+          compact
           eyebrow="Resume Library"
           title="简历素材库"
           description="维护教育、实习、项目、研究、技能、证书和奖项等结构化履历素材，为后续生成不同版本简历做准备。"
@@ -50,35 +48,6 @@ export default async function ResumePage({ searchParams }: { searchParams: Promi
           <ResumeMetric label="实习 / 工作" value={stats.experience} icon={<Sparkles size={20} />} />
           <ResumeMetric label="技能 / 证书 / 奖项" value={stats.skillCertificationAward} icon={<Award size={20} />} />
         </div>
-
-        <AdminSection
-          title="投递状态概览"
-          description="基于已保存的 JD 分析记录查看求职 pipeline 摘要。"
-          action={<Link href="/dashboard/resume/applications" className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700">打开投递看板</Link>}
-        >
-          <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <MiniApplicationMetric label="已投递" value={applicationStats.submitted} />
-              <MiniApplicationMetric label="面试中" value={applicationStats.interview} />
-              <MiniApplicationMetric label="Offer" value={applicationStats.offer} />
-            </div>
-            <div className="space-y-3">
-              {jdReviews.slice(0, 3).length > 0 ? (
-                jdReviews.slice(0, 3).map((review) => (
-                  <Link key={review.id} href={`/dashboard/resume/jd-reviews/${review.id}`} className="flex items-start justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-950">{review.job_title || "未命名岗位"}</p>
-                      <p className="mt-1 truncate text-xs text-slate-500">{review.company_name || "未填写公司"} · {review.resume_versions?.title || "未知版本"}</p>
-                    </div>
-                    <Badge className={getResumeJdReviewStatusTone(review.application_status)}>{getResumeJdReviewStatusLabel(review.application_status)}</Badge>
-                  </Link>
-                ))
-              ) : (
-                <p className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-500">暂无 JD 分析记录。完成一次 AI JD 优化并保存后，会出现在投递看板中。</p>
-              )}
-            </div>
-          </div>
-        </AdminSection>
 
         <AdminSection title="按简历区块管理" description="先按简历版式维护素材：个人信息、教育、实习、项目、研究、技能和补充经历分开管理。">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -204,15 +173,6 @@ function ResumeMetric({ label, value, icon }: { label: string; value: number; ic
       <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">{icon}</div>
       <p className="mt-5 text-3xl font-semibold text-slate-950">{value}</p>
       <p className="mt-1 text-sm text-slate-500">{label}</p>
-    </div>
-  );
-}
-
-function MiniApplicationMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-      <p className="text-2xl font-semibold text-slate-950">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{label}</p>
     </div>
   );
 }
