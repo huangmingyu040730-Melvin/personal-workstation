@@ -11,10 +11,13 @@ export type ResumeJdReviewFilters = {
 
 export type ResumeApplicationStats = {
   total: number;
+  active: number;
+  preparing: number;
   submitted: number;
   interview: number;
   offer: number;
   rejected: number;
+  archived: number;
   weekNew: number;
 };
 
@@ -30,7 +33,9 @@ export async function getResumeJdReviews(filters?: ResumeJdReviewFilters) {
     .select("*, resume_versions(id,title,target_role)")
     .order("created_at", { ascending: false });
 
-  if (filters?.status && filters.status !== "all") {
+  if (filters?.status === "active") {
+    query = query.neq("application_status", "archived");
+  } else if (filters?.status && filters.status !== "all") {
     query = query.eq("application_status", filters.status as ResumeJdReviewStatus);
   }
 
@@ -102,13 +107,17 @@ export async function getRecentResumeJdReviewsForVersion(versionId: string, limi
 
 export function getResumeApplicationStats(reviews: ResumeJdReviewRecord[]): ResumeApplicationStats {
   const weekStart = getCurrentWeekStart();
+  const preparingStatuses: ResumeJdReviewStatus[] = ["draft", "reviewed", "ready"];
 
   return {
     total: reviews.length,
+    active: reviews.filter((review) => review.application_status !== "archived").length,
+    preparing: reviews.filter((review) => preparingStatuses.includes(review.application_status)).length,
     submitted: reviews.filter((review) => review.application_status === "submitted").length,
     interview: reviews.filter((review) => review.application_status === "interview").length,
     offer: reviews.filter((review) => review.application_status === "offer").length,
     rejected: reviews.filter((review) => review.application_status === "rejected").length,
+    archived: reviews.filter((review) => review.application_status === "archived").length,
     weekNew: reviews.filter((review) => new Date(review.created_at).getTime() >= weekStart.getTime()).length
   };
 }
