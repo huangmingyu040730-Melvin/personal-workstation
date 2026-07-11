@@ -24,6 +24,7 @@ export default async function ResumeJdReviewsPage({
     <AppShell>
       <AdminPageSurface>
         <PageHeader
+          compact
           eyebrow="JD Review History"
           title="JD 分析记录"
           description="沉淀 AI JD 分析结果、投递岗位和后续行动，避免每次投递重新分析。"
