@@ -7,6 +7,7 @@ export type WorkstationErrorCode =
   | "FORBIDDEN"
   | "VALIDATION_ERROR"
   | "NOT_FOUND"
+  | "CONFLICT"
   | "RATE_LIMITED"
   | "INTERNAL_ERROR";
 

@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-07-11 - Expose Existing Private Career Workflows Through A Dedicated Global Skill
+
+类型：decision
+
+决策：
+
+- 新增独立 `personal-career-center` Skill，不把全部求职规则继续堆入通用 `Personal Workstation` Skill。
+- Skill 只通过 standalone Workstation CLI 调用 token-protected Career API；不使用浏览器脚本作为主执行通道，不直连 Supabase。
+- API 覆盖现有 Career Center 私密业务：overview、Resume Items、Resume Versions、quality、preview、DOCX export、JD analysis/history 和 application status。
+- Application Board 继续复用 `resume_jd_reviews`，不新建第二套 application schema。
+- create 强制 private，update 不开放 visibility；public resume 和 public link 不进入此 Skill。
+- delete 作为现有 CRUD 的显式高风险能力保留，但需要 `delete_career` capability、API `{ confirm: true }`、CLI `--confirm-delete` 和 Skill 层当前对话明确授权。
+- AI JD 继续 advisory-only，不自动写回 Resume Item/Version，不编造事实，不自动投递。
+- 使用 `0028_workstation_career_center_grants.sql` 增加精确 service_role grants 并允许 operation logs 记录 DELETE；不修改 RLS 或 Storage。
+- 全局安装复制 Skill、standalone client 和 keychain-aware wrapper；不复制任何 secret，也不改 shell profile。
+
+原因：
+
+- 求职中心页面和数据模型已经成熟，但此前没有 Codex 可执行入口，导致 Skill 只能说明页面操作，不能可靠完成任务。
+- 独立 Skill 能减少通用 Workstation Skill 的触发冲突，并对简历、JD、联系方式、AI 建议和删除建立更严格的隐私边界。
+- CLI/API 比浏览器点击更可审计、可复现，并能复用 requestId、rate limit、capabilities 和 operation logs。
+
+影响：
+
+- 任意 Codex 项目在全局安装后可发现并调用 Personal Career Center。
+- 生产端必须先应用 0028 migration 并部署新 API；未完成时 health 会显示 Career dataAccess degraded 或新 route 不可用。
+- 2026-06-21 “求职中心只做 bugfix，不主动扩展求职自动化”的决策被部分 supersede：不新增新的求职产品模型，但允许对现有全部私密功能增加受控 Codex 操作入口。
+
 ## 2026-06-22 - Add New Project Workstation Bootstrap Guide
 
 类型：decision

@@ -82,6 +82,9 @@ print_check() {
   local target="$1"
   local dest_skill="$target/.codex/skills/workstation/SKILL.md"
   local dest_examples="$target/.codex/skills/workstation/examples.md"
+  local dest_career_skill="$target/.codex/skills/personal-career-center/SKILL.md"
+  local dest_career_agent="$target/.codex/skills/personal-career-center/agents/openai.yaml"
+  local dest_career_commands="$target/.codex/skills/personal-career-center/references/commands.md"
   local dest_client="$target/scripts/workstation.mjs"
   local package_json="$target/package.json"
 
@@ -101,7 +104,7 @@ print_check() {
     echo "- target directory: no"
   fi
 
-  for file in "$dest_skill" "$dest_examples" "$dest_client"; do
+  for file in "$dest_skill" "$dest_examples" "$dest_career_skill" "$dest_career_agent" "$dest_career_commands" "$dest_client"; do
     local rel="${file#$target/}"
     if [ -f "$file" ]; then
       echo "- $rel: exists"
@@ -134,10 +137,15 @@ Target:
 - $target
 Would create:
 - .codex/skills/workstation/
+- .codex/skills/personal-career-center/agents/
+- .codex/skills/personal-career-center/references/
 - scripts/
 Would copy:
 - .codex/skills/workstation/SKILL.md
 - .codex/skills/workstation/examples.md
+- .codex/skills/personal-career-center/SKILL.md
+- .codex/skills/personal-career-center/agents/openai.yaml
+- .codex/skills/personal-career-center/references/commands.md
 - scripts/workstation.mjs
 Would not copy:
 - .env.local
@@ -200,13 +208,19 @@ script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 
 src_skill="$script_dir/.codex/skills/workstation/SKILL.md"
 src_examples="$script_dir/.codex/skills/workstation/examples.md"
+src_career_skill="$script_dir/.codex/skills/personal-career-center/SKILL.md"
+src_career_agent="$script_dir/.codex/skills/personal-career-center/agents/openai.yaml"
+src_career_commands="$script_dir/.codex/skills/personal-career-center/references/commands.md"
 src_client="$script_dir/scripts/workstation.mjs"
 
 dest_skill="$target/.codex/skills/workstation/SKILL.md"
 dest_examples="$target/.codex/skills/workstation/examples.md"
+dest_career_skill="$target/.codex/skills/personal-career-center/SKILL.md"
+dest_career_agent="$target/.codex/skills/personal-career-center/agents/openai.yaml"
+dest_career_commands="$target/.codex/skills/personal-career-center/references/commands.md"
 dest_client="$target/scripts/workstation.mjs"
 
-for src in "$src_skill" "$src_examples" "$src_client"; do
+for src in "$src_skill" "$src_examples" "$src_career_skill" "$src_career_agent" "$src_career_commands" "$src_client"; do
   if [ ! -f "$src" ]; then
     echo "Skill Pack source file is missing: $src" >&2
     exit 1
@@ -225,7 +239,7 @@ fi
 
 existing=()
 
-for dest in "$dest_skill" "$dest_examples" "$dest_client"; do
+for dest in "$dest_skill" "$dest_examples" "$dest_career_skill" "$dest_career_agent" "$dest_career_commands" "$dest_client"; do
   if [ -e "$dest" ] && [ "$force" -ne 1 ]; then
     existing+=("$dest")
   fi
@@ -240,16 +254,19 @@ if [ "${#existing[@]}" -gt 0 ]; then
   exit 1
 fi
 
-mkdir -p "$target/.codex/skills/workstation" "$target/scripts"
+mkdir -p "$target/.codex/skills/workstation" "$target/.codex/skills/personal-career-center/agents" "$target/.codex/skills/personal-career-center/references" "$target/scripts"
 
 cp "$src_skill" "$dest_skill"
 cp "$src_examples" "$dest_examples"
+cp "$src_career_skill" "$dest_career_skill"
+cp "$src_career_agent" "$dest_career_agent"
+cp "$src_career_commands" "$dest_career_commands"
 cp "$src_client" "$dest_client"
 
-chmod 0644 "$dest_skill" "$dest_examples" "$dest_client"
+chmod 0644 "$dest_skill" "$dest_examples" "$dest_career_skill" "$dest_career_agent" "$dest_career_commands" "$dest_client"
 
 cat <<'EOF'
-Installed Personal Workstation Skill Pack.
+Installed Personal Workstation and Personal Career Center Skill Pack.
 This installer never copies .env.local, WORKSTATION_API_TOKEN, SUPABASE_SERVICE_ROLE_KEY, Storage credentials, or shell profile settings.
 Configure WORKSTATION_API_URL and WORKSTATION_API_TOKEN locally.
 EOF

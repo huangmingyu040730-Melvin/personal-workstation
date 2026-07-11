@@ -1,6 +1,6 @@
 # Personal Workstation Skill Pack
 
-This package is the cross-project Skill Pack for using Personal Workstation from another Codex project.
+This package is the cross-project and global Skill Pack for using Personal Workstation and Personal Career Center from Codex.
 
 It installs a repo-level Codex Skill and a lightweight `scripts/workstation.mjs` client into a target project. It does not make the Skill globally visible in every Codex workspace; Codex discovery still depends on the target project containing `.codex/skills/workstation/SKILL.md` and on the Codex product environment.
 
@@ -15,6 +15,10 @@ target-project/
       workstation/
         SKILL.md
         examples.md
+      personal-career-center/
+        SKILL.md
+        agents/openai.yaml
+        references/commands.md
   scripts/
     workstation.mjs
 ```
@@ -63,11 +67,11 @@ bash packages/workstation-skill-pack/install.sh --dry-run /path/to/target-projec
 bash packages/workstation-skill-pack/install.sh --force /path/to/target-project
 ```
 
-The installer:
+The repo-level installer:
 
 - checks that the target path exists and is a directory
-- creates `.codex/skills/workstation/` and `scripts/`
-- copies `SKILL.md`, `examples.md`, and `scripts/workstation.mjs`
+- creates `.codex/skills/workstation/`, `.codex/skills/personal-career-center/`, and `scripts/`
+- copies both Skills, Career command references, and `scripts/workstation.mjs`
 - refuses to overwrite existing target files unless `--force` is passed
 - checks whether `package.json` exists
 - checks whether `scripts.workstation` already exists
@@ -75,6 +79,26 @@ The installer:
 - never modifies `package.json`
 
 The installer never copies `.env.local`, `WORKSTATION_API_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, Storage credentials, shell profile settings, migrations, RLS files, Storage policy files, uploaded files, or token values.
+
+## Global Install
+
+Install `personal-career-center` into the global Codex Skill catalog and install a cwd-independent standalone wrapper:
+
+```bash
+npm run workstation:install-global-skill -- --dry-run
+npm run workstation:install-global-skill -- --force
+npm run workstation:install-global-skill -- --check
+```
+
+Global files:
+
+```text
+${CODEX_HOME:-$HOME/.codex}/skills/personal-career-center/
+$HOME/.local/share/personal-workstation/workstation.mjs
+$HOME/.local/bin/workstation-cli
+```
+
+The wrapper may source the existing local Keychain loader, but the installer never copies or writes token values. It does not edit shell profiles. Reload Codex after installation so the global Skill catalog is refreshed.
 
 Configure `WORKSTATION_API_URL` and `WORKSTATION_API_TOKEN` locally.
 
@@ -84,6 +108,9 @@ Configure `WORKSTATION_API_URL` and `WORKSTATION_API_TOKEN` locally.
 
 - `.codex/skills/workstation/SKILL.md`
 - `.codex/skills/workstation/examples.md`
+- `.codex/skills/personal-career-center/SKILL.md`
+- `.codex/skills/personal-career-center/agents/openai.yaml`
+- `.codex/skills/personal-career-center/references/commands.md`
 - `scripts/workstation.mjs`
 - `package.json`
 - `package.json` `scripts.workstation`

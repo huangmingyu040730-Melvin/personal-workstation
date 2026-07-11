@@ -1,0 +1,4 @@
+interface:
+  display_name: "Personal Career Center"
+  short_description: "用 Codex 安全管理简历、JD 分析与投递进度"
+  default_prompt: "Use $personal-career-center to review my Career Center and safely continue the next job-search task."

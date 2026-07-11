@@ -7,6 +7,8 @@ description: Use this skill when the user wants to save to Personal Workstation,
 
 Use this Skill when Codex should operate Personal Workstation from this target project through the installed Workstation CLI.
 
+For resume, JD analysis, application pipeline, interview status, or other 求职中心 work, use the installed `personal-career-center` Skill. Both Skills share the same standalone Workstation client, but Career privacy and deletion rules are stricter.
+
 The CLI entrypoint is:
 
 ```bash

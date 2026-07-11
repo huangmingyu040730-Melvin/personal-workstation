@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFile, stat } from "node:fs/promises";
+import { readFile, stat, writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 
 const DEFAULT_API_URL = "https://personal-workstation.vercel.app";
@@ -86,6 +86,11 @@ async function main() {
 
   if (area === "document") {
     await runDocumentCommand(action, commandArgs);
+    return;
+  }
+
+  if (area === "career") {
+    await runCareerCommand(action, commandArgs);
     return;
   }
 
@@ -303,6 +308,351 @@ async function runDocumentCommand(action, args) {
 
   console.log("3/3 Finalized document metadata.");
   printUploadedDocument(finalizeResponse.body?.data ?? {});
+}
+
+async function runCareerCommand(area, args) {
+  if (area === "overview") {
+    await runCareerOverview(args);
+    return;
+  }
+
+  const [action, ...commandArgs] = args;
+
+  if (area === "item" || area === "resume-item") {
+    await runCareerEntityCommand("item", action, commandArgs);
+    return;
+  }
+
+  if (area === "version" || area === "resume-version") {
+    await runCareerEntityCommand("version", action, commandArgs);
+    return;
+  }
+
+  if (area === "jd" || area === "jd-review") {
+    await runCareerEntityCommand("jd", action, commandArgs);
+    return;
+  }
+
+  if (area === "application") {
+    await runCareerEntityCommand("application", action, commandArgs);
+    return;
+  }
+
+  throw new CliError(`Unknown career command: ${area ?? ""}`.trim());
+}
+
+async function runCareerOverview(args) {
+  const options = parseOptions(args, {});
+  const response = await requestWorkstationApi("GET", "/api/workstation/career/overview", { jsonOutput: options.json });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  const data = response.body?.data ?? {};
+  console.log("Career Center:");
+  console.log(`- resume_items: ${data.resume_items ?? 0}`);
+  console.log(`- resume_versions: ${data.resume_versions ?? 0}`);
+  console.log(`- jd_reviews: ${data.jd_reviews ?? 0}`);
+  console.log(`- submitted: ${data.applications?.submitted ?? 0}`);
+  console.log(`- interview: ${data.applications?.interview ?? 0}`);
+  console.log(`- offer: ${data.applications?.offer ?? 0}`);
+}
+
+async function runCareerEntityCommand(entity, action, args) {
+  if (action === "list") {
+    await runCareerList(entity, args);
+    return;
+  }
+
+  if (action === "show") {
+    await runCareerShow(entity, args);
+    return;
+  }
+
+  if (action === "create") {
+    await runCareerCreate(entity, args);
+    return;
+  }
+
+  if (action === "update") {
+    await runCareerUpdate(entity, args);
+    return;
+  }
+
+  if (action === "delete") {
+    await runCareerDelete(entity, args);
+    return;
+  }
+
+  if (entity === "version" && action === "quality") {
+    await runCareerVersionReadAction("quality", args);
+    return;
+  }
+
+  if (entity === "version" && action === "preview") {
+    await runCareerVersionReadAction("preview", args);
+    return;
+  }
+
+  if (entity === "version" && action === "export") {
+    await runCareerVersionExport(args);
+    return;
+  }
+
+  if ((entity === "jd" || entity === "application") && action === "analyze") {
+    await runCareerJdAnalyze(args);
+    return;
+  }
+
+  throw new CliError(`Unknown career ${entity} command: ${action ?? ""}`.trim());
+}
+
+async function runCareerList(entity, args) {
+  const options = parseOptions(args, {
+    q: "q",
+    "item-type": "itemType",
+    "item_type": "itemType",
+    status: "status",
+    "version-id": "versionId",
+    "version_id": "versionId",
+    direction: "direction",
+    channel: "channel",
+    limit: "limit",
+    page: "page",
+    cursor: "cursor"
+  });
+  const endpoint = careerEndpoint(entity);
+  const query = buildQuery({
+    q: options.q,
+    item_type: entity === "item" ? options.itemType : undefined,
+    status: entity === "jd" || entity === "application" ? options.status : undefined,
+    version_id: entity === "jd" || entity === "application" ? options.versionId : undefined,
+    direction: entity === "jd" || entity === "application" ? options.direction : undefined,
+    channel: entity === "jd" || entity === "application" ? options.channel : undefined,
+    limit: options.limit,
+    page: options.page,
+    cursor: options.cursor
+  });
+  const response = await requestWorkstationApi("GET", `${endpoint}${query}`, { jsonOutput: options.json });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  printCareerList(entity, response.body?.data?.items ?? []);
+}
+
+async function runCareerShow(entity, args) {
+  const options = parseOptions(args, { id: "id" });
+  requireOptions(options, ["id"]);
+  const response = await requestWorkstationApi("GET", `${careerEndpoint(entity)}/${encodeURIComponent(options.id)}`, { jsonOutput: options.json });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  printCareerShown(entity, response.body?.data ?? {});
+}
+
+async function runCareerCreate(entity, args) {
+  if (entity === "application") {
+    entity = "jd";
+  }
+  const options = parseOptions(args, {
+    "data-file": "dataFile",
+    "data_file": "dataFile"
+  }, { rejectOwnerFields: true, rejectVisibility: true });
+  requireOptions(options, ["dataFile"]);
+  const payload = await readJsonFile(options.dataFile);
+  const response = await requestWorkstationApi("POST", careerEndpoint(entity), { body: payload, jsonOutput: options.json });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  printCareerMutation("Created", entity, response.body?.data ?? {});
+}
+
+async function runCareerUpdate(entity, args) {
+  const options = parseOptions(args, {
+    id: "id",
+    "data-file": "dataFile",
+    "data_file": "dataFile",
+    status: "status",
+    company: "companyName",
+    "company-name": "companyName",
+    "company_name": "companyName",
+    "job-title": "jobTitle",
+    "job_title": "jobTitle",
+    direction: "jobDirection",
+    location: "jobLocation",
+    channel: "applicationChannel",
+    notes: "notes",
+    "notes-file": "notesFile",
+    "notes_file": "notesFile"
+  }, { rejectOwnerFields: true, rejectVisibility: true });
+  requireOptions(options, ["id"]);
+
+  if (options.dataFile && [options.status, options.companyName, options.jobTitle, options.jobDirection, options.jobLocation, options.applicationChannel, options.notes, options.notesFile].some((value) => value !== undefined)) {
+    throw new CliError("Use either --data-file or inline application update options, not both.");
+  }
+
+  let payload;
+  if (options.dataFile) {
+    payload = await readJsonFile(options.dataFile);
+  } else if (entity === "jd" || entity === "application") {
+    validateFilePair(options.notes, options.notesFile, "notes");
+    payload = stripUndefined({
+      application_status: options.status,
+      company_name: options.companyName,
+      job_title: options.jobTitle,
+      job_direction: options.jobDirection,
+      job_location: options.jobLocation,
+      application_channel: options.applicationChannel,
+      notes: options.notesFile ? await readTextFile(options.notesFile) : options.notes
+    });
+  } else {
+    throw new CliError("Career item/version updates require --data-file with a JSON object.");
+  }
+
+  if (Object.keys(payload).length === 0) {
+    throw new CliError("At least one update field is required.");
+  }
+
+  const response = await requestWorkstationApi("PATCH", `${careerEndpoint(entity)}/${encodeURIComponent(options.id)}`, { body: payload, jsonOutput: options.json });
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+  printCareerMutation("Updated", entity, response.body?.data ?? {});
+}
+
+async function runCareerDelete(entity, args) {
+  const options = parseOptions(args, {
+    id: "id",
+    "confirm-delete": "confirmDelete"
+  }, { booleanFlags: new Set(["confirm-delete"]) });
+  requireOptions(options, ["id"]);
+  if (!options.confirmDelete) {
+    throw new CliError("Career delete requires --confirm-delete. Review the record with show before deleting it.");
+  }
+
+  const response = await requestWorkstationApi("DELETE", `${careerEndpoint(entity)}/${encodeURIComponent(options.id)}`, {
+    body: { confirm: true },
+    jsonOutput: options.json
+  });
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+  printCareerMutation("Deleted", entity, response.body?.data ?? {});
+}
+
+async function runCareerVersionReadAction(action, args) {
+  const options = parseOptions(args, { id: "id" });
+  requireOptions(options, ["id"]);
+  const response = await requestWorkstationApi("GET", `/api/workstation/career/resume-versions/${encodeURIComponent(options.id)}/${action}`, { jsonOutput: options.json });
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  if (action === "quality") {
+    printCareerQuality(response.body?.data ?? {});
+  } else {
+    printJson(response.body?.data ?? {});
+  }
+}
+
+async function runCareerVersionExport(args) {
+  const options = parseOptions(args, { id: "id", output: "output" });
+  requireOptions(options, ["id", "output"]);
+  const outputPath = resolve(process.cwd(), options.output);
+  const response = await requestWorkstationApi("GET", `/api/workstation/career/resume-versions/${encodeURIComponent(options.id)}/export`, {
+    binary: true,
+    jsonOutput: options.json,
+    timeoutMs: UPLOAD_REQUEST_TIMEOUT_MS
+  });
+  await writeFile(outputPath, response.bytes);
+
+  if (options.json) {
+    printJson({ ok: true, data: { resume_version_id: options.id, output: basename(outputPath), size_bytes: response.bytes.length, requestId: response.requestId ?? null } });
+    return;
+  }
+
+  console.log("Exported resume version:");
+  console.log(`- id: ${options.id}`);
+  console.log(`- file: ${basename(outputPath)}`);
+  console.log(`- size: ${response.bytes.length} bytes`);
+  if (response.requestId) console.log(`- requestId: ${response.requestId}`);
+}
+
+async function runCareerJdAnalyze(args) {
+  const options = parseOptions(args, {
+    "version-id": "versionId",
+    "version_id": "versionId",
+    "jd-file": "jdFile",
+    "jd_file": "jdFile",
+    direction: "direction",
+    company: "companyName",
+    "company-name": "companyName",
+    "company_name": "companyName",
+    "job-title": "jobTitle",
+    "job_title": "jobTitle",
+    "job-direction": "jobDirection",
+    "job_direction": "jobDirection",
+    location: "jobLocation",
+    channel: "applicationChannel",
+    status: "applicationStatus",
+    notes: "notes",
+    "notes-file": "notesFile",
+    "notes_file": "notesFile"
+  });
+  requireOptions(options, ["versionId", "jdFile"]);
+  validateFilePair(options.notes, options.notesFile, "notes");
+  const payload = stripUndefined({
+    resume_version_id: options.versionId,
+    jd_text: await readTextFile(options.jdFile),
+    direction: options.direction,
+    company_name: options.companyName,
+    job_title: options.jobTitle,
+    job_direction: options.jobDirection,
+    job_location: options.jobLocation,
+    application_channel: options.applicationChannel,
+    application_status: options.applicationStatus,
+    notes: options.notesFile ? await readTextFile(options.notesFile) : options.notes
+  });
+  const response = await requestWorkstationApi("POST", "/api/workstation/career/jd-reviews/analyze", {
+    body: payload,
+    jsonOutput: options.json,
+    timeoutMs: UPLOAD_REQUEST_TIMEOUT_MS
+  });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  const data = response.body?.data ?? {};
+  const review = data.review ?? {};
+  console.log("Analyzed JD and saved application record:");
+  console.log(`- id: ${review.id ?? "unknown"}`);
+  console.log(`- company: ${review.company_name ?? ""}`);
+  console.log(`- job_title: ${review.job_title ?? ""}`);
+  console.log(`- status: ${review.application_status ?? "reviewed"}`);
+  console.log(`- resume_version_id: ${review.resume_version_id ?? options.versionId}`);
+  console.log("- review_required: true");
+}
+
+function careerEndpoint(entity) {
+  if (entity === "item") return "/api/workstation/career/resume-items";
+  if (entity === "version") return "/api/workstation/career/resume-versions";
+  return "/api/workstation/career/jd-reviews";
 }
 
 async function runList(assetType, args) {
@@ -728,6 +1078,11 @@ function parseOptions(args, specs, config = {}) {
       throw new CliError(`Unsupported option --${name}.`);
     }
 
+    if (config.booleanFlags?.has(name)) {
+      options[target] = true;
+      continue;
+    }
+
     const value = inlineValue ?? args[index + 1];
 
     if (value === undefined || value.startsWith("--")) {
@@ -935,6 +1290,20 @@ async function readTextFile(filePath) {
   }
 }
 
+async function readJsonFile(filePath) {
+  const text = await readTextFile(filePath);
+
+  try {
+    const parsed = JSON.parse(text);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("Expected a JSON object.");
+    }
+    return parsed;
+  } catch (error) {
+    throw new CliError(`Unable to parse JSON data file: ${basename(filePath)}. ${error instanceof Error ? error.message : "Invalid JSON."}`);
+  }
+}
+
 function stripUndefined(value) {
   return Object.fromEntries(
     Object.entries(value).filter(([, entry]) => entry !== undefined)
@@ -986,6 +1355,16 @@ async function requestWorkstationApi(method, path, options = {}) {
       body,
       signal: controller.signal
     });
+
+    if (options.binary && response.ok) {
+      const bytes = Buffer.from(await response.arrayBuffer());
+      return {
+        bytes,
+        status: response.status,
+        requestId: response.headers.get("x-workstation-request-id")
+      };
+    }
+
     const text = await response.text();
     const parsed = parseJson(text);
 
@@ -1055,7 +1434,7 @@ function shouldPrintServiceRoleGrantHint(message, context) {
     return false;
   }
 
-  return /permission denied for table (projects|knowledge_notes|skills|documents|document_collections)/i.test(String(message ?? ""));
+  return /permission denied for table (projects|knowledge_notes|skills|documents|document_collections|resume_items|resume_versions|resume_version_items|resume_jd_reviews|profiles|admin_users)/i.test(String(message ?? ""));
 }
 
 function getFriendlyApiHints(error, context) {
@@ -1065,6 +1444,8 @@ function getFriendlyApiHints(error, context) {
 
   if (/permission denied for table (documents|document_collections)/i.test(message)) {
     hints.push("Hint: This usually means Supabase migration 0027_workstation_document_upload_grants.sql has not been applied.");
+  } else if (/permission denied for table (resume_items|resume_versions|resume_version_items|resume_jd_reviews|profiles|admin_users)/i.test(message)) {
+    hints.push("Hint: This usually means Supabase migration 0028_workstation_career_center_grants.sql has not been applied.");
   } else if (shouldPrintServiceRoleGrantHint(message, context)) {
     hints.push("Hint: check Supabase service_role grants for the target table.");
   }
@@ -1293,6 +1674,61 @@ function printUploadedDocument(data) {
   console.log(`- collection_id: ${data.collection_id ?? "unknown"}`);
 }
 
+function printCareerList(entity, items) {
+  if (items.length === 0) {
+    console.log(`No career ${entity} records found.`);
+    return;
+  }
+
+  if (entity === "item") {
+    printRows(["id", "type", "title", "organization", "updated_at"], items.map((item) => [item.id, item.item_type, item.title, item.organization, item.updated_at]));
+    return;
+  }
+
+  if (entity === "version") {
+    printRows(["id", "title", "target_role", "items", "updated_at"], items.map((item) => [item.id, item.title, item.target_role, item.item_count, item.updated_at]));
+    return;
+  }
+
+  printRows(["id", "company", "job_title", "status", "resume_version_id", "updated_at"], items.map((item) => [item.id, item.company_name, item.job_title, item.application_status, item.resume_version_id, item.updated_at]));
+}
+
+function printCareerShown(entity, data) {
+  console.log(`Career ${entity}:`);
+  const fields = entity === "item"
+    ? ["id", "item_type", "title", "organization", "role_title", "location", "start_date", "end_date", "is_current", "summary", "bullets", "skills", "tags", "details", "visibility", "updated_at", "created_at"]
+    : entity === "version"
+      ? ["id", "title", "target_role", "summary", "language", "template_key", "visibility", "is_active", "notes", "profile_fields", "section_order", "template_options", "resume_version_items", "updated_at", "created_at"]
+      : ["id", "resume_version_id", "company_name", "job_title", "job_direction", "job_location", "application_channel", "application_status", "match_summary", "matched_keywords", "missing_keywords", "risks", "next_actions", "notes", "model_name", "updated_at", "created_at"];
+
+  for (const field of fields) {
+    console.log(`- ${field}: ${formatDetail(data[field])}`);
+  }
+}
+
+function printCareerMutation(verb, entity, data) {
+  console.log(`${verb} career ${entity}:`);
+  console.log(`- id: ${data.id ?? "unknown"}`);
+  console.log(`- title: ${data.title ?? data.job_title ?? ""}`);
+  if (data.company_name !== undefined) console.log(`- company: ${data.company_name ?? ""}`);
+  if (data.application_status !== undefined) console.log(`- status: ${data.application_status ?? ""}`);
+  if (data.visibility !== undefined) console.log(`- visibility: ${data.visibility}`);
+  if (data.cascaded_jd_reviews !== undefined) console.log(`- cascaded_jd_reviews: ${data.cascaded_jd_reviews}`);
+  if (data.deleted !== undefined) console.log(`- deleted: ${data.deleted}`);
+}
+
+function printCareerQuality(data) {
+  console.log("Resume quality report:");
+  console.log(`- score: ${data.score ?? 0}`);
+  console.log(`- status: ${data.status ?? "unknown"}`);
+  console.log(`- visible_items: ${data.metrics?.visibleItemCount ?? 0}`);
+  console.log(`- bullets: ${data.metrics?.bulletCount ?? 0}`);
+  console.log(`- quantified_bullets: ${data.metrics?.quantifiedBulletCount ?? 0}`);
+  console.log(`- passed: ${formatArray(data.passed)}`);
+  console.log(`- warnings: ${formatArray(data.warnings)}`);
+  console.log(`- suggestions: ${formatArray(data.suggestions)}`);
+}
+
 function printDocumentUploadPreparation(metadata) {
   console.log("Preparing document upload:");
   console.log(`- file: ${metadata.filename}`);
@@ -1334,6 +1770,11 @@ function formatCell(value) {
     return "";
   }
 
+  if (typeof value === "object") {
+    const serialized = JSON.stringify(value);
+    return serialized.length > 1000 ? `${serialized.slice(0, 1000)}...` : serialized;
+  }
+
   return String(value).replace(/\s+/g, " ").slice(0, 100);
 }
 
@@ -1344,6 +1785,11 @@ function formatDetail(value) {
 
   if (value === null || value === undefined) {
     return "";
+  }
+
+  if (typeof value === "object") {
+    const serialized = JSON.stringify(value);
+    return serialized.length > 1000 ? `${serialized.slice(0, 1000)}...` : serialized;
   }
 
   const normalized = String(value).replace(/\s+/g, " ").trim();
@@ -1382,6 +1828,26 @@ Usage:
   npm run workstation -- collection list [--q text] [--related-type project] [--related-id id] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- collection show --id id [--json]
   npm run workstation -- document upload --collection-id id --file path --title text --category research_material [--json]
+  npm run workstation -- career overview [--json]
+  npm run workstation -- career item list [--q text] [--item-type experience] [--limit 20] [--json]
+  npm run workstation -- career item show --id id [--json]
+  npm run workstation -- career item create --data-file /tmp/resume-item.json [--json]
+  npm run workstation -- career item update --id id --data-file /tmp/resume-item-update.json [--json]
+  npm run workstation -- career item delete --id id --confirm-delete [--json]
+  npm run workstation -- career version list [--q text] [--limit 20] [--json]
+  npm run workstation -- career version show --id id [--json]
+  npm run workstation -- career version create --data-file /tmp/resume-version.json [--json]
+  npm run workstation -- career version update --id id --data-file /tmp/resume-version-update.json [--json]
+  npm run workstation -- career version quality --id id [--json]
+  npm run workstation -- career version preview --id id [--json]
+  npm run workstation -- career version export --id id --output ./resume.docx [--json]
+  npm run workstation -- career version delete --id id --confirm-delete [--json]
+  npm run workstation -- career jd list [--q text] [--status interview] [--version-id id] [--json]
+  npm run workstation -- career jd show --id id [--json]
+  npm run workstation -- career jd create --data-file /tmp/jd-review.json [--json]
+  npm run workstation -- career jd analyze --version-id id --jd-file /tmp/job-description.txt [--company text] [--job-title text] [--status reviewed] [--json]
+  npm run workstation -- career application update --id id --status interview [--notes text | --notes-file path] [--json]
+  npm run workstation -- career jd delete --id id --confirm-delete [--json]
 
 Environment:
   WORKSTATION_API_URL    Optional. Defaults to ${DEFAULT_API_URL}

@@ -78,6 +78,8 @@ v1.2.17 Cross-project install UX polish 只优化 Skill Pack 安装器体验：`
 
 v1.2.18 New Project Bootstrap Guide 只新增 `docs/workstation-new-project-bootstrap.md` 并同步相关文档，把 Workstation 从“可用工具”沉淀为“新项目默认能力接入标准”。该指南覆盖从 `npm init -y`、安装 Skill Pack、手动添加 `scripts.workstation`、本地配置 `WORKSTATION_API_URL` / `WORKSTATION_API_TOKEN` 到 `health` / `project list` / `collection list` 验证的完整流程，并明确最小接入原则、token 安全边界、slash menu 不显示时的排查和安装失败排查。本轮不改变 installer 行为，不新增 Workstation API route、CLI command、migration、RLS、Storage policy、bucket visibility、public download route 或任何上传 / 删除 / 公开发布能力。
 
+v1.2.19 Personal Career Center global Skill 将现有私密求职闭环接入 Workstation API / CLI，并新增可全局发现的 `personal-career-center` Skill。覆盖 Career overview、简历素材、简历版本、质量检查、结构化预览、Word 导出、AI JD 分析、JD 记录和投递状态；删除需要独立 `delete_career` capability、API `confirm=true` 和 CLI `--confirm-delete`。新增 `0028_workstation_career_center_grants.sql` 只补 service_role 最小 grants 和 DELETE operation-log method，不修改 RLS、Storage、bucket、public download route 或 visibility；Career API 创建记录始终 private，AI 不自动改写经历，不自动投递或联系雇主。
+
 ## Completed Capabilities
 
 ### Public Site

@@ -9,7 +9,7 @@ import {
 export type WorkstationRequestContext = {
   requestId: string;
   action: string;
-  method: "GET" | "POST" | "PATCH";
+  method: "GET" | "POST" | "PATCH" | "DELETE";
   route: string;
   targetType: WorkstationOperationTargetType;
   tokenHash: string | null;
@@ -74,7 +74,7 @@ export function createWorkstationRequestContext(
   action: string,
   targetType: WorkstationOperationTargetType
 ): WorkstationRequestContext {
-  const method = request.method === "POST" || request.method === "PATCH" ? request.method : "GET";
+  const method = request.method === "POST" || request.method === "PATCH" || request.method === "DELETE" ? request.method : "GET";
 
   return {
     requestId: createWorkstationRequestId(),
@@ -136,5 +136,20 @@ export async function finishWorkstationResponse<T>(
     targetId: input.targetId
   });
 
+  return response;
+}
+
+export async function finishWorkstationRawResponse(
+  context: WorkstationRequestContext,
+  response: Response,
+  input: FinishLogInput = {}
+) {
+  response.headers.set("x-workstation-request-id", context.requestId);
+  await recordOperation(context, {
+    status: "success",
+    httpStatus: response.status,
+    requestSummary: input.requestSummary,
+    targetId: input.targetId
+  });
   return response;
 }

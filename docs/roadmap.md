@@ -1,5 +1,18 @@
 # Product Roadmap
 
+## v1.2.19 - Personal Career Center Global Skill
+
+状态：实现与验收中。
+
+- 将现有 Resume / AI JD / Application Board 私密闭环接入 Workstation API 和 standalone CLI。
+- 新增全局 `personal-career-center` Skill 与 global installer，使任意 Codex 项目可以通过 `$personal-career-center` 或自然语言触发。
+- 覆盖 overview、素材/版本/JD CRUD、质量检查、结构化预览、Word 导出、AI JD 分析和投递状态。
+- 保持 private-by-default；不做 public resume、自动投递、雇主邮件、日历邀请、Storage/Documents 读取或 AI 自动改写。
+- 删除保留为显式高风险能力，必须单独确认并记录 operation log。
+- 部署前应用 `0028_workstation_career_center_grants.sql`；不修改 RLS、Storage policy、bucket visibility 或 public download route。
+
+此前“求职中心只做 bugfix、不提供 Codex 自动化入口”的路线记录被本阶段部分 supersede：现有业务模型仍不扩张，但允许通过受控 Workstation API/CLI 操作已有私密功能。
+
 ## Product Positioning
 
 黄铭语个人数字工作站当前定位为：

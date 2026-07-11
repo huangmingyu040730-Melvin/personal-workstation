@@ -1,5 +1,7 @@
 # Workstation New Project Bootstrap Guide
 
+> v1.2.19 update: repo-level Skill Pack installation also includes `personal-career-center`. Users who want Career Center available in every Codex project can instead use `npm run workstation:install-global-skill -- --force` from personal-workstation, then reload Codex. Global installation does not copy token values or edit the new project's business code.
+
 日期：2026-06-22
 
 本文档是新项目接入 Personal Workstation 的 5 分钟手册。目标是让一个全新的 Codex / Node 项目在不修改业务代码、不复制 secret、不直连 Supabase 的前提下，获得同一套 Workstation CLI、Codex Skill 和跨项目资产沉淀能力。
