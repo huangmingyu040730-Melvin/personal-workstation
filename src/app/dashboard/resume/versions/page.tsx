@@ -29,6 +29,7 @@ export default async function ResumeVersionsPage() {
     <AppShell>
       <AdminPageSurface>
         <PageHeader
+          compact
           eyebrow="Resume Versions"
           title="简历版本"
           description="将简历素材按岗位、语言和场景组合成不同版本，并在后台预览。"
