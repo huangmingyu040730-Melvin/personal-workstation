@@ -103,7 +103,7 @@ public attachment 继续沿用显式公开和服务端校验边界：
 
 ## 每次部署前检查
 
-运行时先与仓库基线对齐：Node.js `24.20.0`、npm 11；升级或切换 Node 后执行 `npm ci`，不要沿用旧运行时生成的 `node_modules`。依赖升级后必须确认依赖审计为零漏洞：
+本地运行时先与仓库基线对齐：Node.js `24.20.0`、npm 11；Vercel Node 24 运行时最低兼容 `24.19.0`。升级或切换 Node 后执行 `npm ci`，不要沿用旧运行时生成的 `node_modules`。依赖升级后必须确认依赖审计为零漏洞：
 
 ```bash
 node --version

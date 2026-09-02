@@ -4,7 +4,7 @@
 
 ## 2026-09-02 Runtime And Security Maintenance
 
-- 本地运行时已从停止支持的 Node 23 切换到官方 Node.js `24.20.0` arm64 二进制与 npm 11；仓库新增 `.nvmrc` 和 `package.json` `engines` 作为后续基线。
+- 本地运行时已从停止支持的 Node 23 切换到官方 Node.js `24.20.0` arm64 二进制与 npm 11；仓库新增 `.nvmrc` 固化本机版本，并让 `package.json` `engines` 兼容 Vercel 当前 Node 24 的 `24.19.0` 运行时。
 - Next.js 已升级到 16.3.4，并同步兼容的 React、类型声明与直接依赖；本轮依赖安装后 `npm audit` 为 0 vulnerabilities，旧 `node_modules` 已通过 `npm ci` 重建。
 - `next-env.d.ts` 已按 Next.js 官方建议改为运行时生成并忽略，不再作为稳定源码跟踪。
 - 全局 Workstation wrapper 会尊重显式 `HTTP_PROXY` / `HTTPS_PROXY`；未显式配置时在 macOS 动态读取启用的系统代理，并使用 Node 24 `NODE_USE_ENV_PROXY`。它不硬编码或打印代理地址，localhost 保持 bypass。

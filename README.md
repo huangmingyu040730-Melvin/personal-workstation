@@ -69,7 +69,7 @@ v1.1 polish 已围绕边界、资产模型、AI Draft Lab 预填、搜索、列�
 
 ## 本地启动
 
-运行时基线：Node.js `24.20.0`（Node 24 LTS）与 npm 11。仓库提供 `.nvmrc`，`package.json` 也会校验支持范围；使用 nvm 时可先运行 `nvm use`，切换 Node 后应重新安装依赖。
+本地运行时基线：Node.js `24.20.0`（Node 24 LTS）与 npm 11。仓库提供 `.nvmrc`；`package.json` 允许 Vercel 当前 Node 24 运行时 `24.19.0` 及以上版本，避免云端构建出现引擎误报。使用 nvm 时可先运行 `nvm use`，切换 Node 后应重新安装依赖。
 
 安装依赖：
 

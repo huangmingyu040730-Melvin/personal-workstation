@@ -6,7 +6,7 @@
 
 决策：
 
-- 项目运行时基线统一为 Node.js `24.20.0`（Node 24 LTS）和 npm 11，通过 `.nvmrc` 与 `package.json` `engines` 记录。
+- 本地运行时基线统一为 Node.js `24.20.0`（Node 24 LTS）和 npm 11，通过 `.nvmrc` 记录；`package.json` `engines` 兼容 Vercel 当前 Node 24 的 `24.19.0` 及以上版本。
 - Next.js 升级到 16.3.4，并在不引入业务迁移的前提下同步兼容的 React、类型声明与直接依赖；OpenAI 7、Tailwind 4、TypeScript 7 等独立大版本迁移不混入本轮。
 - `next-env.d.ts` 改为由 Next.js 按运行模式生成并加入 `.gitignore`，避免 `next dev` 与 `next build` 在 `.next/dev/types` / `.next/types` 之间切换时持续污染工作树。
 - 全局 Workstation wrapper 使用 Node 24 内置环境代理能力。显式 `HTTP_PROXY` / `HTTPS_PROXY` 优先；未设置时仅在 macOS 动态读取当前启用的系统代理，并把 localhost 加入 `NO_PROXY`。
