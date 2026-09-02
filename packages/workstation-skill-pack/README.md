@@ -159,6 +159,7 @@ After adding the npm script and configuring local env:
 
 ```bash
 npm run workstation -- health
+npm run workstation -- review --period week
 npm run workstation -- project list --limit 5
 npm run workstation -- collection list --limit 5
 ```
@@ -197,6 +198,7 @@ Document upload remains single-file, existing-collection-only, and private by de
 The Skill Pack supports the existing safe Workstation CLI surface:
 
 - `health`
+- `review --period week [--json]` (read-only metadata review)
 - `project list/show/create/update`
 - `knowledge list/show/create/update`
 - `skill list/show/create/update`

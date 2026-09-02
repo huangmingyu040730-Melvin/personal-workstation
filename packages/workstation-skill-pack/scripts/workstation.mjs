@@ -62,6 +62,11 @@ async function main() {
     return;
   }
 
+  if (area === "review") {
+    await runReview(rest);
+    return;
+  }
+
   const [action, ...commandArgs] = rest;
 
   if (area === "project") {
@@ -132,6 +137,27 @@ async function runHealth(args) {
   console.log(`auth: ${data.auth ?? "unknown"}`);
   console.log(`capabilities: ${formatArray(data.capabilities) || "none"}`);
   printDataAccess(data.dataAccess);
+}
+
+async function runReview(args) {
+  const options = parseOptions(args, { period: "period" });
+  const period = options.period ?? "week";
+
+  if (period !== "week") {
+    throw new CliError("--period must be week.");
+  }
+
+  const params = new URLSearchParams({ period });
+  const response = await requestWorkstationApi("GET", `/api/workstation/review?${params.toString()}`, {
+    jsonOutput: options.json
+  });
+
+  if (options.json) {
+    printJson(response.body);
+    return;
+  }
+
+  printWeeklyReview(response.body?.data ?? {});
 }
 
 async function runAssetCommand(assetType, action, args) {
@@ -1499,6 +1525,52 @@ function printProjectList(items) {
   ]));
 }
 
+function printWeeklyReview(data) {
+  const totals = data.totals ?? {};
+  const thisWeek = data.thisWeek ?? {};
+  const health = data.health ?? {};
+  const attention = Array.isArray(data.attention) ? data.attention : [];
+
+  console.log("Workstation weekly review");
+  console.log(`- period: last ${data.window?.days ?? 7} days`);
+  console.log(`- generatedAt: ${data.generatedAt ?? "unknown"}`);
+  console.log(`- health: ${formatReviewHealth(health.status)}`);
+  console.log(`- assets: ${totals.projects ?? 0} projects, ${totals.knowledge ?? 0} knowledge notes, ${totals.skills ?? 0} skills, ${totals.collections ?? 0} collections`);
+  console.log(`- career: ${totals.resumeVersions ?? 0} resume versions, ${totals.applications ?? 0} applications`);
+  console.log("");
+  console.log("Updated this week:");
+  console.log(`- projects: ${thisWeek.projectsUpdated ?? 0}`);
+  console.log(`- knowledge: ${thisWeek.knowledgeUpdated ?? 0}`);
+  console.log(`- skills: ${thisWeek.skillsUpdated ?? 0}`);
+  console.log(`- collections: ${thisWeek.collectionsUpdated ?? 0}`);
+  console.log(`- applications: ${thisWeek.applicationsUpdated ?? 0}`);
+  console.log("");
+  console.log("Asset health:");
+  console.log(`- active projects with knowledge: ${health.activeProjectsWithKnowledge ?? 0}/${health.activeProjectsTotal ?? 0}`);
+  console.log(`- populated collections: ${health.populatedCollections ?? 0}/${health.collectionsTotal ?? 0}`);
+  console.log(`- available skills: ${health.availableSkills ?? 0}/${health.skillsTotal ?? 0}`);
+  console.log("");
+
+  if (attention.length === 0) {
+    console.log("Needs attention: none");
+    return;
+  }
+
+  console.log(`Needs attention (${attention.length}):`);
+
+  for (const item of attention) {
+    console.log(`- [${String(item.severity ?? "low").toUpperCase()}] ${formatCell(item.title)} — ${formatCell(item.description)}`);
+    console.log(`  ${item.href ?? ""}`);
+  }
+}
+
+function formatReviewHealth(status) {
+  if (status === "healthy") return "healthy";
+  if (status === "action_required") return "action required";
+  if (status === "watch") return "watch";
+  return "unknown";
+}
+
 function printKnowledgeList(items) {
   if (items.length === 0) {
     console.log("No knowledge notes found.");
@@ -1813,6 +1885,7 @@ function printHelp() {
 
 Usage:
   npm run workstation -- health [--json]
+  npm run workstation -- review [--period week] [--json]
   npm run workstation -- project list [--q text] [--visibility private] [--limit 20] [--page 1] [--cursor 0] [--json]
   npm run workstation -- project show (--id id | --slug slug) [--json]
   npm run workstation -- project create --title text --slug slug --summary text [--status in_progress] [--tags a,b]

@@ -1,5 +1,32 @@
 # Workflows
 
+## Weekly Review And Project Checkpoint
+
+日期：2026-09-02
+
+类型：workflow
+
+用途：
+
+- 每周查看工作站资产健康，处理长期未更新或尚未沉淀的项目，并把阶段结论保存为关联 Knowledge。
+
+步骤：
+
+1. 在管理员 Dashboard 查看“资产健康与本周复盘”，或运行 `workstation-cli review --period week`；需要脚本消费时加 `--json`。
+2. 先处理 high，再处理 medium / low。提醒只表示达到阈值，不自动判断内容质量，也不自动修改任何记录。
+3. 对“活跃项目尚无关联知识笔记”的条目，点击提醒或进入 Project 详情页使用“记录阶段结论”。
+4. 确认已预选正确 Project；按实际用途选择项目阶段结论、课程学习笔记或量化研究记录模板。
+5. 填写真实证据、决定、问题和下一步，检查 slug、分类、标签和关联 Project。
+6. 保持 private，除非管理员另行完成公开内容审查并明确决定公开；模板本身不会自动保存或公开。
+7. 点击保存后回到 Project 或下一次周报确认知识沉淀指标已更新。
+
+验证要求：
+
+- API / CLI 只允许 `period=week`，无 token 返回 401，非法 period 返回 400，并带 requestId。
+- 周报查询字段不得包含 Knowledge content、Resume 内容、JD 原文 / notes、Documents 内容或 Storage 信息。
+- Dashboard、API 和 CLI 的 totals、thisWeek、health 和 attention 来自同一聚合实现。
+- Knowledge 模板必须可编辑、仅预填、默认 private，并只接受真实存在的 Project id 作为预选项。
+
 ## Local Development
 
 日期：2026-05-31

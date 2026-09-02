@@ -1,6 +1,6 @@
 ---
 name: Personal Workstation
-description: Use this skill when the user wants to save to Personal Workstation, create, update, query, or upload private assets through the cross-project Workstation CLI. Supports Project, Knowledge note, Skill, document collection, document upload, private asset workflows, project progress, start date, and Codex execution through npm run workstation.
+description: Use this skill when the user wants to save to Personal Workstation, create, update, query, review, or upload private assets through the cross-project Workstation CLI. Supports weekly review, Project, Knowledge note, Skill, document collection, document upload, private asset workflows, project progress, start date, and Codex execution through npm run workstation.
 ---
 
 # Personal Workstation
@@ -38,6 +38,7 @@ Use this skill when the user asks to:
 - find a document collection id
 - upload one local file to an existing document collection
 - check Workstation API health
+- review weekly Workstation asset health and follow-up metadata
 - troubleshoot a Workstation requestId or permission error
 
 Chinese trigger wording:
@@ -50,6 +51,7 @@ Chinese trigger wording:
 - “设置项目开始日期”
 - “把这个流程变成 Skill”
 - “找一下文档包 id”
+- “做一次工作站周报 / 周度复盘”
 
 ## Never Do
 
@@ -106,6 +108,15 @@ Health:
 ```bash
 npm run workstation -- health
 ```
+
+Weekly review:
+
+```bash
+npm run workstation -- review --period week
+npm run workstation -- review --period week --json
+```
+
+Weekly review is read-only, supports only `week`, and returns threshold-based metadata. It must not read Knowledge content, resume bodies, JD text/notes, Documents bodies, Storage objects, Storage paths, or signed URLs, and it must not auto-update status, auto-create checkpoints, or publish assets.
 
 Project:
 

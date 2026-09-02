@@ -1,5 +1,16 @@
 # Product Roadmap
 
+## v1.3.0 - Weekly Review And Project Checkpoints
+
+状态：已完成。
+
+- Dashboard 新增“资产健康与本周复盘”，统一展示最近 7 天的更新、活跃项目知识沉淀率、非空文档包、可用 Skill 和达到阈值的待处理事项。
+- 新增只读 `GET /api/workstation/review?period=week` 与 `workstation-cli review --period week [--json]`，复用同一套聚合规则并继续使用 `read_assets` capability、requestId、rate limit 和 operation logs。
+- Project 详情页新增“记录阶段结论”入口，自动预选当前项目和项目阶段模板；Knowledge 新建页提供项目阶段结论、课程学习笔记、量化研究记录三种可编辑模板。
+- 模板只预填表单，不自动保存；新 Knowledge 继续默认 private，管理员仍需人工检查并点击保存。
+- 周报只读取项目、知识、Skill、文档包、简历版本和投递记录的必要 metadata，不读取 Knowledge 正文、简历正文、JD 原文、Documents 内容或 Storage object。
+- 不新增 migration，不修改 RLS、Storage policy、bucket visibility、public download route、现有 capability 或公开页面数据边界。
+
 ## v1.2.20 - Runtime And Dependency Maintenance
 
 状态：已完成。PR #160 已于 2026-09-02 合并并通过 Vercel 生产验收。
@@ -12,7 +23,7 @@
 
 ## v1.2.19 - Personal Career Center Global Skill
 
-状态：实现与验收中。
+状态：已完成。Career API / CLI、全局 Skill、必要 grants 与生产链路均已验收。
 
 - 将现有 Resume / AI JD / Application Board 私密闭环接入 Workstation API 和 standalone CLI。
 - 新增全局 `personal-career-center` Skill 与 global installer，使任意 Codex 项目可以通过 `$personal-career-center` 或自然语言触发。

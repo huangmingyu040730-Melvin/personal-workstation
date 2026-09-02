@@ -24,6 +24,7 @@
 - Phase 3B 起新增后台 AI 草稿实验室 `/dashboard/ai-drafts`，用于把管理员粘贴的 raw note 转为 Project / Publication / Knowledge / Skill 结构化草稿；它不是表单内 copilot，不自动创建资产、不保存草稿、不读取 Documents / Storage，不进入公开导航。
 - Phase 3B-1 起 AI 草稿实验室结果可通过当前浏览器 `sessionStorage` 带入四类新建表单；这只是用户确认后的浏览器表单预填，不自动提交、不自动创建资产、不保存数据库、不修改 `visibility`，仍需管理员人工检查并点击保存。
 - v1.2.19 起 Workstation Career API / CLI 与全局 `personal-career-center` Skill 可操作现有私密求职闭环：Resume Items、Resume Versions、quality、preview、DOCX export、AI JD history 和 application status。所有 create 继续强制 private；不通过 Career API 修改 visibility，不自动公开、投递、联系雇主或编造经历。删除必须有 `delete_career` capability、API `confirm=true`、CLI `--confirm-delete` 和当前对话中的用户明确授权。
+- v1.3.0 起 Dashboard、`GET /api/workstation/review?period=week` 与 CLI `review --period week` 共用 metadata-only 周报聚合；Project 阶段结论复用关联 Knowledge，三类模板只预填、默认 private、不自动保存。周报不得读取 Knowledge / Resume / JD 正文、Documents 内容、Storage object、Storage path 或 signed URL。
 
 ## Tech Stack
 

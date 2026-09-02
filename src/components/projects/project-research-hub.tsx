@@ -60,6 +60,11 @@ function buildDocumentsHref(projectId: string) {
   return `/dashboard/documents?${params.toString()}`;
 }
 
+function buildProjectCheckpointHref(projectId: string) {
+  const params = new URLSearchParams({ project_id: projectId, template: "project" });
+  return `/dashboard/knowledge/new?${params.toString()}`;
+}
+
 export function ProjectResearchHub({
   project,
   relatedAssets,
@@ -177,7 +182,7 @@ export function ProjectResearchHub({
             uploadFileHref={uploadFileHref}
             uploadFolderHref={uploadFolderHref}
             searchHref={projectSearchHref}
-            knowledgeNewHref="/dashboard/knowledge/new"
+            knowledgeNewHref={buildProjectCheckpointHref(project.id)}
             documentsHref={documentsHref}
           />
           <PublicReadinessCard items={readinessItems} publicHref={projectPublicHref(project)} />
@@ -256,7 +261,7 @@ function ProjectQuickActions({
         <ActionLink href={uploadFolderHref} icon={FolderArchive} label="上传项目文件夹" description="上传文件夹或资料包并保留相对路径。" />
         <ActionLink href={documentsHref} icon={FileText} label="查看项目 Documents" description="进入文件中心查看当前项目筛选结果。" />
         <ActionLink href={searchHref} icon={Search} label="搜索项目标题" description="在后台全局搜索中查找相关资产。" />
-        <ActionLink href={knowledgeNewHref} icon={BookOpen} label="创建知识笔记" description="使用现有知识库入口沉淀研究笔记。" />
+        <ActionLink href={knowledgeNewHref} icon={BookOpen} label="记录阶段结论" description="预选当前项目并用阶段模板沉淀证据、决定与下一步。" />
       </div>
     </Card>
   );

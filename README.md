@@ -7,6 +7,7 @@
 - 当前重点是 Personal Asset Intranet polish：打磨既有资产模块的清晰度、可信度和使用体验。
 - 对外展示公开研究项目、学术成果、知识笔记与 AI Skill / 工作流。
 - 对内管理全部项目、知识、成果、文件、日历、AI 草稿与求职资产。
+- 通过 Dashboard 与 `workstation-cli review --period week` 做 metadata-only 周度复盘，并把项目阶段结论沉淀为关联 Knowledge。
 - Agent CEO / 自动化扩张线暂停；不新增自动化中心、任务中心或外部集成主线。
 - 公开站点只展示 public 内容；外部访问申请、Access Grants、Viewer magic link 和 restricted 外部授权已在 Phase 2R-Z 退役，不恢复。
 
@@ -53,6 +54,7 @@ v1.1 polish 已围绕边界、资产模型、AI Draft Lab 预填、搜索、列�
 - RelatedDocumentsPanel 按文档包、独立文件和跨文档包文件分组展示
 - 文档包整体迁移 / 同步关联工具
 - Project 后台详情页研究中枢，整合研究问题、方法、私密附件、相关知识笔记 / 学术成果和快捷操作
+- v1.3.0 资产健康与周度复盘：Dashboard、只读 Workstation review API / CLI 共用统计口径；Project 提供“记录阶段结论”，Knowledge 提供项目、课程、量化三类默认私密模板
 - Knowledge 后台详情页知识节点，整合知识摘要、正文、关联 Project、私密附件、同项目成果和搜索入口
 - Skill 后台详情页能力包 / 工作流包，整合用途、平台、版本、私密资料、版本记录和相关资产搜索入口
 - Publication 后台详情页成果中枢，整合成果摘要、abstract、关联 Project、私密材料、同项目知识节点和搜索入口
