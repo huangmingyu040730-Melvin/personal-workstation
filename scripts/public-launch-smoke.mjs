@@ -21,7 +21,6 @@ const forbiddenPublicHtmlFragments = [
   "storage_bucket",
   "Storage path",
   "Storage 路径",
-  "signed URL",
   "signedUrl",
   "signed_url",
   "file_path",

@@ -98,7 +98,7 @@ $HOME/.local/share/personal-workstation/workstation.mjs
 $HOME/.local/bin/workstation-cli
 ```
 
-The wrapper may source the existing local Keychain loader, but the installer never copies or writes token values. It does not edit shell profiles. Reload Codex after installation so the global Skill catalog is refreshed.
+The wrapper may source the existing local Keychain loader, but the installer never copies or writes token values. It does not edit shell profiles. On Node 24 it enables the built-in environment-proxy support: explicit `HTTP_PROXY` / `HTTPS_PROXY` values take priority; otherwise macOS can supply its currently enabled system proxy through `scutil --proxy`. The wrapper never hardcodes or prints the proxy endpoint, and localhost remains in `NO_PROXY`. Set `NODE_USE_ENV_PROXY=0` before invocation to opt out. Reload Codex after installation so the global Skill catalog is refreshed.
 
 Configure `WORKSTATION_API_URL` and `WORKSTATION_API_TOKEN` locally.
 

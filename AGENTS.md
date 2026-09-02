@@ -99,3 +99,13 @@ npm run smoke:public
 - 重要阶段状态写入 `docs/memory.md`；关键产品、权限、数据模型和流程取舍写入 `docs/decisions.md`；可重复操作步骤写入 `docs/workflows.md`。
 - 过时信息必须在文档中标记为 stale / superseded，不要静默覆盖会影响后续判断的历史。
 - 记忆文件不得保存密码、API key、token、SMTP 授权码、管理员邮箱、Auth UUID、signed URL、Storage 内部路径或私人通信原文。
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
