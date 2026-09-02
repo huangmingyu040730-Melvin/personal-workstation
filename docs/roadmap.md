@@ -1,5 +1,15 @@
 # Product Roadmap
 
+## v1.2.20 - Runtime And Dependency Maintenance
+
+状态：本地实现与验收完成；生产部署待 GitHub 或 Vercel 重新授权。
+
+- 将运行时统一到 Node.js 24 LTS / npm 11，并用 `.nvmrc` 和 `package.json` `engines` 固化基线。
+- 将 Next.js 升级到 16.3.4 安全版本，同步兼容的 React、类型声明和直接依赖，清理旧依赖树与构建缓存。
+- 让全局 Workstation CLI wrapper 使用 Node 24 原生环境代理能力并动态读取 macOS 系统代理，同时保留显式代理优先、localhost bypass 和手动 opt-out。
+- 清理失效 worktree metadata 与 gone-tracking 历史分支；删除前保留可验证的完整 Git bundle 备份。
+- 不新增产品能力，不修改 migration、RLS、Storage policy、bucket visibility、public download route 或 secret 边界。
+
 ## v1.2.19 - Personal Career Center Global Skill
 
 状态：实现与验收中。

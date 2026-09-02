@@ -1,6 +1,14 @@
 # Current Status
 
-日期：2026-06-21
+日期：2026-09-02
+
+## 2026-09-02 Maintenance Baseline
+
+- 本地运行时已统一到 Node.js `24.20.0`（Node 24 LTS）与 npm 11，并通过 `.nvmrc` 和 `package.json` `engines` 固化支持范围。
+- Next.js 已从 16.2.6 升级到 16.3.4，并同步兼容的 React、类型声明与直接依赖；当前本地 `npm audit` 为 0 vulnerabilities。
+- 全局 Workstation wrapper 已启用 Node 24 原生环境代理支持，并能在未显式配置代理变量时读取 macOS 当前系统代理；不硬编码或输出代理地址，localhost 保持直连。
+- 已清理失效 worktree metadata、带 gone upstream 的历史本地分支和旧依赖树；分支删除前已创建可验证的 Git bundle 备份。
+- 本轮不修改数据库 migration、RLS、Storage policy、bucket visibility、public download route 或 Workstation 权限边界。本地 lint、build、dev 和 public smoke 已通过；当前机器的 GitHub CLI 授权失效且 Vercel CLI 未登录，因此生产部署仍待重新授权，不能从本地结果推断线上已升级。
 
 ## Product Positioning
 

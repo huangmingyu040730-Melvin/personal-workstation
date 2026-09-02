@@ -127,6 +127,59 @@ if [ -n "$certifi_path" ]; then
 fi
 unset certifi_path
 
+configure_node_proxy() {
+  local proxy_config=""
+  local http_enabled=""
+  local http_host=""
+  local http_port=""
+  local https_enabled=""
+  local https_host=""
+  local https_port=""
+  local no_proxy_value="${NO_PROXY:-${no_proxy:-}}"
+
+  if [[ -n "${HTTPS_PROXY:-${https_proxy:-}}" || -n "${HTTP_PROXY:-${http_proxy:-}}" ]]; then
+    export NODE_USE_ENV_PROXY="${NODE_USE_ENV_PROXY:-1}"
+  elif [[ "$(uname -s)" == "Darwin" ]] && command -v scutil >/dev/null 2>&1; then
+    proxy_config="$(scutil --proxy 2>/dev/null || true)"
+    http_enabled="$(printf '%s\n' "$proxy_config" | awk '$1 == "HTTPEnable" { print $3; exit }')"
+    http_host="$(printf '%s\n' "$proxy_config" | awk '$1 == "HTTPProxy" { print $3; exit }')"
+    http_port="$(printf '%s\n' "$proxy_config" | awk '$1 == "HTTPPort" { print $3; exit }')"
+    https_enabled="$(printf '%s\n' "$proxy_config" | awk '$1 == "HTTPSEnable" { print $3; exit }')"
+    https_host="$(printf '%s\n' "$proxy_config" | awk '$1 == "HTTPSProxy" { print $3; exit }')"
+    https_port="$(printf '%s\n' "$proxy_config" | awk '$1 == "HTTPSPort" { print $3; exit }')"
+
+    if [[ "$http_enabled" == "1" ]] &&
+       printf '%s' "$http_host" | LC_ALL=C grep -Eq '^[A-Za-z0-9._-]+$' &&
+       [[ "$http_port" == <-> ]] && (( http_port >= 1 && http_port <= 65535 )); then
+      export HTTP_PROXY="http://$http_host:$http_port"
+    fi
+
+    if [[ "$https_enabled" == "1" ]] &&
+       printf '%s' "$https_host" | LC_ALL=C grep -Eq '^[A-Za-z0-9._-]+$' &&
+       [[ "$https_port" == <-> ]] && (( https_port >= 1 && https_port <= 65535 )); then
+      export HTTPS_PROXY="http://$https_host:$https_port"
+    fi
+
+    if [[ -n "${HTTP_PROXY:-}" || -n "${HTTPS_PROXY:-}" ]]; then
+      export NODE_USE_ENV_PROXY="${NODE_USE_ENV_PROXY:-1}"
+    fi
+  fi
+
+  if [[ "${NODE_USE_ENV_PROXY:-}" == "1" ]]; then
+    case ",$no_proxy_value," in
+      *,localhost,*)
+        ;;
+      *)
+        no_proxy_value="${no_proxy_value:+$no_proxy_value,}localhost,127.0.0.1,::1"
+        ;;
+    esac
+    export NO_PROXY="$no_proxy_value"
+  fi
+}
+
+configure_node_proxy
+unset -f configure_node_proxy
+
 exec node "$HOME/.local/share/personal-workstation/workstation.mjs" "$@"
 EOF
 

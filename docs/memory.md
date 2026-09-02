@@ -1,6 +1,16 @@
 # Project Memory
 
-日期：2026-06-21
+日期：2026-09-02
+
+## 2026-09-02 Runtime And Security Maintenance
+
+- 本地运行时已从停止支持的 Node 23 切换到官方 Node.js `24.20.0` arm64 二进制与 npm 11；仓库新增 `.nvmrc` 和 `package.json` `engines` 作为后续基线。
+- Next.js 已升级到 16.3.4，并同步兼容的 React、类型声明与直接依赖；本轮依赖安装后 `npm audit` 为 0 vulnerabilities，旧 `node_modules` 已通过 `npm ci` 重建。
+- `next-env.d.ts` 已按 Next.js 官方建议改为运行时生成并忽略，不再作为稳定源码跟踪。
+- 全局 Workstation wrapper 会尊重显式 `HTTP_PROXY` / `HTTPS_PROXY`；未显式配置时在 macOS 动态读取启用的系统代理，并使用 Node 24 `NODE_USE_ENV_PROXY`。它不硬编码或打印代理地址，localhost 保持 bypass。
+- `.env.local` 权限已收紧到 `0600`；处理过程中没有读取或输出环境变量内容。
+- 失效 worktree metadata 与 gone-tracking 历史分支已清理。删除前的完整 refs 保存在 `$HOME/.local/share/personal-workstation/backups/local-branches-before-cleanup-2026-09-02.bundle`，并已通过 `git bundle verify`。
+- 生产部署状态属于易漂移信息，必须以当前 Vercel 部署和线上 smoke 复核为准，不从本条本地记录推断。
 
 ## 2026-07-11 - Personal Career Center Global Skill
 
@@ -162,7 +172,7 @@
 - v1.2.0 后，Workstation Admin API 是静态 token 保护的服务端入口；Codex / CLI 未来只能持有 Workstation token，不能持有 Supabase key。API 只返回安全 metadata，Project / Knowledge / Skill 创建默认 private，并拒绝 public / unlisted visibility 与 owner_id / user_id / created_by 等非白名单字段。
 - v1.2.1 后，Workstation CLI 是本地薄层入口；运行方式为 `npm run workstation -- <command>`。CLI 默认 API URL 是 `https://personal-workstation.vercel.app`，也可用 `WORKSTATION_API_URL=http://localhost:3000` 本地测试；token 只从 `WORKSTATION_API_TOKEN` 读取，不支持 `--token` 参数，避免进入 shell history。
 - v1.2.2 后，`/api/workstation/health` 可用于区分 API/auth/capability 与 server-side data access：无 token 仍返回 `UNAUTHORIZED`，正确 token 返回 `auth`、capabilities 和 `dataAccess`。dataAccess 只检查 `projects`、`knowledge_notes`、`skills`、`document_collections` 的 select，不证明 insert grant 可用。
-- Workstation Admin API 的生产数据访问依赖 server-side `service_role` grant。CLI 不持有 service role key；本地真实写入需要 `.env.local` 给 Next.js server 配置 `SUPABASE_SERVICE_ROLE_KEY`。Node fetch 不一定走 macOS 系统代理，生产访问超时时优先用 `WORKSTATION_API_URL=http://localhost:3000` 本地 fallback；临时 proxy shim 只能作为本机排查工具，不提交仓库。
+- Workstation Admin API 的生产数据访问依赖 server-side `service_role` grant。CLI 不持有 service role key；本地真实写入需要 `.env.local` 给 Next.js server 配置 `SUPABASE_SERVICE_ROLE_KEY`。2026-09-02 起，全局 `workstation-cli` wrapper 已通过 Node 24 原生环境代理和 macOS `scutil --proxy` 修复生产访问超时；仓库内直接运行 `npm run workstation` 时仍可显式设置环境代理，或使用 `WORKSTATION_API_URL=http://localhost:3000` 本地 fallback。临时 proxy shim 只能作为本机排查工具，不提交仓库。
 - v1.2.3 后，所有 Workstation API 响应都带 `requestId`；operation logs 只记录 request summary、token/IP/user-agent hash、action、route、target、status 和错误摘要，不记录 token 明文、Authorization header、service role key、signed URL、Storage path、Documents 正文或完整请求体。rate limit 是 serverless best-effort，不是强一致安全边界。
 - v1.2.4 后，Codex 使用 Workstation CLI 的项目内说明入口为 `.codex/skills/workstation/SKILL.md`。自然语言触发如“保存到我的工作台”“创建 Knowledge”“沉淀成 Skill”应映射到 `npm run workstation -- project|knowledge|skill ...`；仍不得上传文件、读取 Documents 正文、读取 Storage、生成 signed URL、删除、非白名单更新、公开发布、修改 visibility、操作 token / service role 或调用外部 app。
 - v1.2.5 后，Workstation CLI 可以通过 `project|knowledge|skill update --id ...` 补充已有资产的白名单字段。v1.2.5 当时 Project update 仅限 title、summary、status、tags、background、research_question、methodology；该 Project 白名单已在 v1.2.7 被 `progress` 和 `start_date` 扩展。Knowledge update 仅限 title、category、excerpt、content、tags、project_id；Skill update 仅限 name、description、category、platforms、status、content、usage_guide、input/output description、current_version、repository_url。CLI / API 仍不得更新 visibility、owner/user/created_by、Documents 关联、Storage、signed URL 或公开发布状态。
@@ -350,6 +360,14 @@ Research Asset Links：
 
 ## Known Issues
 
+### 生产发布授权待恢复
+
+状态：2026-09-02 当前机器实测阻塞，属于易漂移状态，后续必须重新检查。
+
+- GitHub CLI 的现有登录已失效，HTTPS remote 无法读取凭据；Vercel CLI 当前未登录，项目目录也没有本地 `.vercel` link。
+- v1.2.20 本地 lint、build、dev 和 public smoke 已完成，但不能据此声称 Next.js 安全升级已经发布到生产。
+- 后续先由用户重新完成 GitHub 或 Vercel 授权，再按维护手册部署并运行线上 smoke；不要在聊天、日志或文档中记录 token。
+
 ### Viewer / restricted 外部授权退役
 
 状态：已退役，不再作为已知问题或待修 hotfix。
@@ -477,6 +495,7 @@ Research Asset Links：
 
 ## Stale Or Superseded Notes
 
+- “全局 Workstation CLI 无法继承 macOS 系统代理，只能使用本地 fallback 或临时 proxy shim”已由 2026-09-02 的 Node 24 原生环境代理 wrapper supersede；仓库内直接 Node 入口仍需显式环境代理或本地 fallback。
 - “页面数据仍保持 mock data 预览”已过时。Projects、Knowledge、Skills、Publications、Documents、Profile、Calendar、Resume 与 Career 已使用真实 Supabase 数据或真实表结构；公开 `/calendar` 仍保留占位展示，真实管理入口为 `/dashboard/calendar`。Access Requests 和 Access Grants 曾接入真实表，但已由 Phase 2R-Z 退役。
 - “restricted 属于后续规划，尚未进入 schema / RLS / UI”已过时。restricted 基础代码和 migration 曾完成，但已由 Phase 2R-Z 移除外部访问链路并通过 0022 回写为 private。
 - “后台页面仍位于公开候选路径”已过时。主要后台管理页面已迁移到 `/dashboard/...`。

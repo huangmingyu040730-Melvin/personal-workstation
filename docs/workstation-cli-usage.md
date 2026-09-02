@@ -485,7 +485,9 @@ operation logs 不展示 token、Authorization header、service role key、signe
 
 ## Network And Proxy Notes
 
-Node.js 的 `fetch` 不一定自动走 macOS 系统代理。访问 Vercel 生产 API 超时时，优先使用本地 fallback：
+全局 `$HOME/.local/bin/workstation-cli` wrapper 以 Node 24 内置的环境代理能力为基线：如果 shell 已设置 `HTTP_PROXY` / `HTTPS_PROXY`，优先尊重显式配置；否则在 macOS 上动态读取当前启用的 `scutil --proxy` 设置，再启用 `NODE_USE_ENV_PROXY=1`。代理地址不会硬编码或打印，`localhost`、`127.0.0.1` 和 `::1` 始终加入 `NO_PROXY`。如需临时禁用自动代理，可在调用前设置 `NODE_USE_ENV_PROXY=0`。
+
+仓库内 `npm run workstation -- ...` 是直接 Node 入口，不经过全局 wrapper。若它访问 Vercel 生产 API 超时，可显式配置环境代理，或优先使用本地 fallback：
 
 ```bash
 export WORKSTATION_API_URL="http://localhost:3000"
@@ -493,7 +495,7 @@ npm run dev
 npm run workstation -- health
 ```
 
-必要时可以使用本机临时 proxy shim 作为一次性排查 workaround，但不要把 proxy shim、代理地址、token 或 `/tmp` 辅助文件提交到仓库。本轮不引入代理依赖，也不新增 `WORKSTATION_PROXY`。
+必要时可以使用本机临时 proxy shim 作为一次性排查 workaround，但不要把 proxy shim、代理地址、token 或 `/tmp` 辅助文件提交到仓库。本项目不引入额外代理依赖，也不新增 `WORKSTATION_PROXY`。
 
 ## Common Errors
 

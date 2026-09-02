@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-09-02 - Standardize Runtime And Use Native Proxy Support
+
+类型：decision
+
+决策：
+
+- 项目运行时基线统一为 Node.js `24.20.0`（Node 24 LTS）和 npm 11，通过 `.nvmrc` 与 `package.json` `engines` 记录。
+- Next.js 升级到 16.3.4，并在不引入业务迁移的前提下同步兼容的 React、类型声明与直接依赖；OpenAI 7、Tailwind 4、TypeScript 7 等独立大版本迁移不混入本轮。
+- `next-env.d.ts` 改为由 Next.js 按运行模式生成并加入 `.gitignore`，避免 `next dev` 与 `next build` 在 `.next/dev/types` / `.next/types` 之间切换时持续污染工作树。
+- 全局 Workstation wrapper 使用 Node 24 内置环境代理能力。显式 `HTTP_PROXY` / `HTTPS_PROXY` 优先；未设置时仅在 macOS 动态读取当前启用的系统代理，并把 localhost 加入 `NO_PROXY`。
+- 不新增第三方 proxy shim 依赖，不新增 `WORKSTATION_PROXY`，不硬编码或输出代理地址；`NODE_USE_ENV_PROXY=0` 作为显式 opt-out。
+- 依赖、缓存、gone-tracking 分支和失效 worktree metadata 纳入维护清理；删除历史分支前必须创建并验证完整 Git bundle 备份。
+
+原因：
+
+- 原 Node 23 已结束支持，且本地依赖工具明确不支持该版本；Next 16.2.6 也低于已修复安全问题的版本。
+- 生产 API 本身健康，但 Node `fetch` 未继承 macOS 系统代理导致 CLI 超时。Node 24 已提供原生环境代理支持，可以在不扩大依赖和 secret 暴露面的情况下修复链路。
+- 将大版本框架迁移与安全维护拆开，能降低一次性变更风险，并让 lint、build、smoke 和审计结果更容易归因。
+
+影响：
+
+- 本地开发、CI 和后续维护应使用 Node 24 / npm 11；切换运行时后重新执行 `npm ci`。
+- 全局 `workstation-cli` 可直接访问生产 API；仓库内 `npm run workstation` 仍是直接 Node 入口，必要时显式提供环境代理或使用本地 API fallback。
+- 本轮不改变 Workstation API capability、数据库、RLS、Storage、公开下载或凭据存储边界。
+
 ## 2026-07-11 - Expose Existing Private Career Workflows Through A Dedicated Global Skill
 
 类型：decision
