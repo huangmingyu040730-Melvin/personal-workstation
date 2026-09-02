@@ -10,7 +10,7 @@
 - 全局 Workstation wrapper 会尊重显式 `HTTP_PROXY` / `HTTPS_PROXY`；未显式配置时在 macOS 动态读取启用的系统代理，并使用 Node 24 `NODE_USE_ENV_PROXY`。它不硬编码或打印代理地址，localhost 保持 bypass。
 - `.env.local` 权限已收紧到 `0600`；处理过程中没有读取或输出环境变量内容。
 - 失效 worktree metadata 与 gone-tracking 历史分支已清理。删除前的完整 refs 保存在 `$HOME/.local/share/personal-workstation/backups/local-branches-before-cleanup-2026-09-02.bundle`，并已通过 `git bundle verify`。
-- 生产部署状态属于易漂移信息，必须以当前 Vercel 部署和线上 smoke 复核为准，不从本条本地记录推断。
+- PR #160 已于 2026-09-02 合并并完成 Vercel 生产发布；当次正式域名 public smoke 为 562 passed / 0 failed，Workstation API、认证和 7 组 dataAccess 检查均为 `ok`，新部署未发现 runtime error、fatal log 或 5xx。生产状态仍属于易漂移信息，后续必须以当前 Vercel 部署和线上 smoke 重新核实。
 
 ## 2026-07-11 - Personal Career Center Global Skill
 
@@ -360,13 +360,13 @@ Research Asset Links：
 
 ## Known Issues
 
-### 生产发布授权待恢复
+### 本机终端平台授权
 
-状态：2026-09-02 当前机器实测阻塞，属于易漂移状态，后续必须重新检查。
+状态：2026-09-02 不阻塞当前版本，属于易漂移状态，后续按实际使用方式重新检查。
 
-- GitHub CLI 的现有登录已失效，HTTPS remote 无法读取凭据；Vercel CLI 当前未登录，项目目录也没有本地 `.vercel` link。
-- v1.2.20 本地 lint、build、dev 和 public smoke 已完成，但不能据此声称 Next.js 安全升级已经发布到生产。
-- 后续先由用户重新完成 GitHub 或 Vercel 授权，再按维护手册部署并运行线上 smoke；不要在聊天、日志或文档中记录 token。
+- v1.2.20 已通过已连接的 GitHub / Vercel 平台接口完成 PR #160、预览与生产发布；先前的发布阻塞已经解决。
+- 本机 `gh` CLI 仍未登录，HTTPS remote 的终端 push / fetch 需要在未来使用前重新授权；Vercel CLI 也未登录且目录没有本地 `.vercel` link。当前发布流程不依赖这两个本机 CLI，不应把可选的 CLI 登录状态误判为线上部署失败。
+- 重新授权时不要在聊天、日志或文档中记录 token、设备授权码或其他凭据。
 
 ### Viewer / restricted 外部授权退役
 
@@ -495,6 +495,7 @@ Research Asset Links：
 
 ## Stale Or Superseded Notes
 
+- “v1.2.20 因 GitHub / Vercel 授权问题尚未发布生产”已由 2026-09-02 的 PR #160、Vercel 生产部署和线上验收 supersede。
 - “全局 Workstation CLI 无法继承 macOS 系统代理，只能使用本地 fallback 或临时 proxy shim”已由 2026-09-02 的 Node 24 原生环境代理 wrapper supersede；仓库内直接 Node 入口仍需显式环境代理或本地 fallback。
 - “页面数据仍保持 mock data 预览”已过时。Projects、Knowledge、Skills、Publications、Documents、Profile、Calendar、Resume 与 Career 已使用真实 Supabase 数据或真实表结构；公开 `/calendar` 仍保留占位展示，真实管理入口为 `/dashboard/calendar`。Access Requests 和 Access Grants 曾接入真实表，但已由 Phase 2R-Z 退役。
 - “restricted 属于后续规划，尚未进入 schema / RLS / UI”已过时。restricted 基础代码和 migration 曾完成，但已由 Phase 2R-Z 移除外部访问链路并通过 0022 回写为 private。

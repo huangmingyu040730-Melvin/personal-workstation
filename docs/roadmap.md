@@ -2,7 +2,7 @@
 
 ## v1.2.20 - Runtime And Dependency Maintenance
 
-状态：本地实现与验收完成；生产部署待 GitHub 或 Vercel 重新授权。
+状态：已完成。PR #160 已于 2026-09-02 合并并通过 Vercel 生产验收。
 
 - 将运行时统一到 Node.js 24 LTS / npm 11，并用 `.nvmrc` 和 `package.json` `engines` 固化基线。
 - 将 Next.js 升级到 16.3.4 安全版本，同步兼容的 React、类型声明和直接依赖，清理旧依赖树与构建缓存。
