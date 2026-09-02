@@ -1,5 +1,28 @@
 # Decisions
 
+## 2026-09-02 - Use Metadata-Only Weekly Review And Knowledge-Based Checkpoints
+
+类型：decision
+
+决策：
+
+- 周度复盘不创建新业务表，不新增 checkpoint 数据模型；Project 阶段结论继续保存为关联 Knowledge note。
+- Dashboard、API 和 CLI 必须复用同一个聚合模块和提醒阈值，避免不同入口产生不一致的健康结论。
+- API 只开放 `period=week`，复用 `read_assets` capability、静态 token、rate limit、requestId 与 operation logs；不新增更高权限或写能力。
+- 模板只用于管理员后台的表单预填，默认 private，不自动提交、不自动公开，也不读取文件正文或 AI 推断阶段结果。
+- 健康检查只查询必要 metadata 字段；不得查询 Knowledge 正文、Resume 内容、JD 原文 / notes、Documents 内容、Storage object、Storage path 或 signed URL。
+
+原因：
+
+- 当前工作站已经拥有 Project、Knowledge、Skill、Documents 和 Career 数据，主要缺口是周期性整理与阶段沉淀，而不是新的资产模型。
+- 用 Knowledge 表达 checkpoint 可以保留现有关联、搜索、附件和公开边界，避免迁移和重复 CRUD。
+- metadata-only 聚合足以识别长期未更新、未沉淀、空文档包和求职跟进问题，同时最小化敏感数据暴露。
+
+影响：
+
+- 后续增加 month / quarter 周期或新阈值时，应先扩展共用聚合契约，再同步 Dashboard、CLI、Skill 与文档。
+- 不得把周报演变为自动修改项目状态、自动生成总结、自动投递或读取私密附件的后台任务，除非另行完成安全设计和用户授权。
+
 ## 2026-09-02 - Standardize Runtime And Use Native Proxy Support
 
 类型：decision

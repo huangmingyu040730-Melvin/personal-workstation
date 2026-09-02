@@ -2,6 +2,14 @@
 
 日期：2026-09-02
 
+## v1.3.0 Weekly Review And Project Checkpoints
+
+- Dashboard 已新增“资产健康与本周复盘”：汇总最近 7 天 Project、Knowledge、Skill、文档包和投递记录的更新数量，并展示活跃项目知识沉淀、非空文档包和可用 Skill 三组健康指标。
+- 待处理规则固定为：进行中 Project 14 天未更新、活跃 Project 没有关联 Knowledge、空文档包、未完成 Skill 30 天未更新、submitted / interview 投递 7 天未更新；UI 和 CLI 共用 `src/lib/workstation/weekly-review.ts`，避免口径漂移。
+- Workstation API 新增只读 `GET /api/workstation/review?period=week`；CLI 新增 `review --period week` 与 `--json`。它们继续要求 token 和 `read_assets`，保留 rate limit、requestId 与 operation log，且只读取必要 metadata。
+- Project 详情页已有“记录阶段结论”快捷入口；Knowledge 新建页已有项目阶段结论、课程学习笔记、量化研究记录三种模板。模板只预填当前表单，默认 private，不自动创建或公开资产。
+- 本版本没有 migration、RLS、Storage、bucket visibility 或 public download route 变化，也不读取 Knowledge / Resume / JD 正文、Documents 内容或 Storage object。
+
 ## 2026-09-02 Maintenance Baseline
 
 - 本地运行时已统一到 Node.js `24.20.0`（Node 24 LTS）与 npm 11，并通过 `.nvmrc` 固化本机版本；`package.json` `engines` 同时兼容 Vercel 当前 Node 24 的 `24.19.0` 运行时。

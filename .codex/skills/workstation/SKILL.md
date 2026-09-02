@@ -1,6 +1,6 @@
 ---
 name: Personal Workstation
-description: Use this skill when the user wants to save to workstation, create, update, query, or upload private assets in the personal workstation using the Workstation CLI. Supports project, knowledge note, skill, document collection, document upload, private asset workflows, project progress, start date, and Codex execution through the workstation CLI.
+description: Use this skill when the user wants to save to workstation, create, update, query, review, or upload private assets in the personal workstation using the Workstation CLI. Supports weekly review, project, knowledge note, skill, document collection, document upload, private asset workflows, project progress, start date, and Codex execution through the workstation CLI.
 ---
 
 # Personal Workstation
@@ -40,6 +40,7 @@ Use this skill when the user asks to:
 - query workstation assets
 - preserve project memory
 - check Workstation API health
+- review weekly Workstation asset health and follow-up metadata
 - resolve a Workstation CLI requestId
 - troubleshoot a Workstation migration or grant error
 
@@ -55,6 +56,7 @@ Chinese trigger wording:
 - 用户说“查一下工作台里的项目 / 知识 / Skill”。
 - 用户说“找一下文档包 id”。
 - 用户说“把这段长期记忆保存到工作台”。
+- 用户说“做一次工作站周报 / 周度复盘 / 看看哪些资产需要处理”。
 - 用户说“让一个新项目接入 Personal Workstation”。
 
 Common intent mapping:
@@ -69,6 +71,7 @@ Common intent mapping:
 - "查看这个文档包" means use `collection show --id`.
 - "上传文件到文档包" means use `document upload` only for one local regular file, one existing document collection, and default private metadata.
 - "新项目接入 Workstation" means follow `docs/workstation-new-project-bootstrap.md`: install the Skill Pack, add the npm script manually, configure local env, and verify with health/list commands.
+- "工作站周报 / 周度复盘" means use `review --period week`; this is read-only metadata review and must not be presented as an automatic content-quality judgment.
 
 ## Never Do
 
@@ -133,6 +136,20 @@ v1.2.17 adds installer UX checks:
 Target projects must configure `WORKSTATION_API_URL` and `WORKSTATION_API_TOKEN` in their local environment. Do not ask the user to paste token values into chat. Skill Pack installation does not guarantee slash menu visibility immediately; if `/Personal Workstation` is not visible, confirm the target project directory, Skill file, frontmatter name, and Codex reload state. Natural-language triggering is acceptable when Codex can read the Skill and run `npm run workstation`.
 
 ## Standard Invocation Patterns
+
+### Weekly Review
+
+```bash
+npm run workstation -- review --period week
+npm run workstation -- review --period week --json
+```
+
+Rules:
+
+- The only supported period is `week`.
+- The review is read-only and uses `read_assets`.
+- It may report project, Knowledge, Skill, collection, resume-version, and application metadata, but never Knowledge content, resume body, JD text/notes, Documents bodies, Storage objects, Storage paths, or signed URLs.
+- Treat attention items as threshold-based prompts for human review; do not auto-update status, auto-create a checkpoint, or publish anything.
 
 ### Project
 
@@ -248,7 +265,7 @@ Rules:
 
 ## Standard Workflow
 
-1. Identify whether the user wants Project, Knowledge note, Skill, collection metadata, document upload, health, or troubleshooting.
+1. Identify whether the user wants Project, Knowledge note, Skill, collection metadata, document upload, weekly review, health, or troubleshooting.
 2. If the environment is uncertain, run:
 
    ```bash

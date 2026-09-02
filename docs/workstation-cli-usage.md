@@ -1,10 +1,10 @@
 # Workstation CLI Usage
 
-日期：2026-06-21
+日期：2026-09-02
 
 ## Status
 
-v1.2.1 新增本地 Workstation CLI MVP，v1.2.2 补充诊断输出和 Knowledge 查询过滤，v1.2.3 补充 requestId、operation logs、轻量 rate limit 和后台日志页，v1.2.4 新增 Codex Skill wrapper，v1.2.5 新增 Project / Knowledge / Skill 白名单 update，并通过 `0025_consolidate_workstation_service_role_grants.sql` 固化既有 list/create/update/log 所需的 service_role 最小权限。v1.2.6 新增 Project / Knowledge / Skill `show --id|--slug`、CLI update `--slug` 本地解析和 list 人类可读输出中的完整 `id`。v1.2.7 扩展 Project update 白名单，新增 `progress` 和 `start_date`。v1.2.8 只新增 Workstation document upload 设计文档；v1.2.9 新增后端 `upload-intent` / `finalize` API MVP；v1.2.10 新增 server-side controlled upload route 和 CLI `document upload` 单文件上传闭环；v1.2.11 打磨上传前安全摘要、三步进度、常见错误提示、operation logs 验收文档和 Codex skill 边界；v1.2.12 新增只读 `collection show --id` 和上传前 collection resolution 流程；v1.2.13 新增 `docs/workstation-codex-runbook.md`，沉淀真实 Codex 执行经验；v1.2.14 强化 `Personal Workstation` Codex Skill discovery metadata、触发语义和 examples；v1.2.15 新增 cross-project Skill Pack 设计文档；v1.2.16 新增 `packages/workstation-skill-pack/` 最小安装器；v1.2.17 为安装器新增 `--check` / `--dry-run` 和 package script 状态提示；v1.2.18 新增新项目 bootstrap 手册；v1.2.19 新增 Personal Career Center API/CLI、全局 Skill 与 global installer。入口为：
+v1.2.1 至 v1.2.19 建立并完善 Workstation CLI、受控资产操作、单文件上传、跨项目 Skill Pack 与 Personal Career Center。v1.3.0 新增 metadata-only 周度复盘：`review --period week [--json]`。入口为：
 
 ```bash
 npm run workstation -- <command>
@@ -159,6 +159,17 @@ dataAccess: degraded
 ```
 
 `--json` 会原样输出 API JSON，便于脚本检查 `data.dataAccess`。
+
+## Weekly Review
+
+```bash
+npm run workstation -- review --period week
+npm run workstation -- review --period week --json
+```
+
+该命令只读调用 `GET /api/workstation/review?period=week`，需要既有 `read_assets` capability。人类可读输出包括最近 7 天更新、资产健康比例和完整待处理列表；`--json` 原样输出统一响应。当前只支持 `week`，其它 period 会返回本地或 API `VALIDATION_ERROR`。
+
+周报只读取 Project、Knowledge、Skill、Document Collection、Resume Version 与 Application 的必要 metadata；不读取 Knowledge 正文、Resume 内容、JD 原文 / notes、Documents 内容、Storage object、Storage path 或 signed URL。它不会修改状态、创建 checkpoint 或自动公开内容。
 
 ## Project
 

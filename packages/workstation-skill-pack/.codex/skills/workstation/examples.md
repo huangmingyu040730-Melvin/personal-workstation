@@ -136,7 +136,22 @@ Codex should:
 
 Do not create a collection automatically.
 
-## 7. Handle Permission Denied Grant Errors
+## 7. Run A Weekly Review
+
+User:
+
+> 看一下这个工作站本周有哪些资产需要维护。
+
+Codex should:
+
+1. Run `npm run workstation -- review --period week`.
+2. Summarize totals, recent updates, health ratios, and attention metadata without treating threshold warnings as automatic quality judgments.
+3. Use `--json` only when machine-readable output is needed.
+4. Do not auto-create a checkpoint, change status, or publish assets.
+
+Do not read Knowledge content, resume body, JD text/notes, Documents body, Storage objects, Storage paths, or signed URLs.
+
+## 8. Handle Permission Denied Grant Errors
 
 User:
 
@@ -151,7 +166,7 @@ Codex should:
 
 Do not ask the user to paste service role key values, DB URLs, `.env.local`, Authorization headers, or token values.
 
-## 8. Stop On Multiple Candidates
+## 9. Stop On Multiple Candidates
 
 User:
 

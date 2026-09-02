@@ -2,6 +2,15 @@
 
 日期：2026-09-02
 
+## 2026-09-02 v1.3.0 Weekly Review And Project Checkpoints
+
+- 已新增共用周报聚合模块 `src/lib/workstation/weekly-review.ts`，Dashboard 与 Workstation API 复用相同阈值和统计口径。
+- `GET /api/workstation/review?period=week` 与 `workstation-cli review --period week [--json]` 是只读能力，只需既有 `read_assets` capability；响应包含总量、本周更新、健康指标、求职状态计数和待处理 metadata。
+- 周报不读取 Knowledge `content`、Resume 正文、JD `jd_text` / notes、Documents 记录正文、Storage object 或 signed URL。
+- Project 详情页的“记录阶段结论”会进入 Knowledge 新建页，预选当前 Project 和 project template；课程、量化、普通项目三类模板只预填可编辑字段，新建 Knowledge 仍默认 private。
+- 无 database migration、RLS、Storage policy、bucket visibility、public download route 或公开数据边界变化。
+- 当前提醒阈值属于可调整的产品规则：in-progress Project 14 天、unfinished Skill 30 天、submitted/interview Application 7 天；如后续调整，应同时更新聚合模块、CLI 文档和本文件。
+
 ## 2026-09-02 Runtime And Security Maintenance
 
 - 本地运行时已从停止支持的 Node 23 切换到官方 Node.js `24.20.0` arm64 二进制与 npm 11；仓库新增 `.nvmrc` 固化本机版本，并让 `package.json` `engines` 兼容 Vercel 当前 Node 24 的 `24.19.0` 运行时。
