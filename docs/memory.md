@@ -1,6 +1,14 @@
 # Project Memory
 
-日期：2026-09-02
+日期：2026-09-06
+
+## 2026-09-06 Standalone Browser Icon
+
+- 用户明确不喜欢此前暖白 / 墨绿的整站视觉预览；`codex/v1-3-1-editorial-design` 仅保留历史方案，不得随图标改动发布。
+- 当前 `codex/site-icon` 从改版前基线独立创建，只接入几何 M 浏览器图标，不修改页面配色、布局、公开数据或认证权限。
+- `src/app/icon.svg` 是可编辑源文件；`scripts/generate-site-icons.mjs` 同步生成包含 16 / 32 / 48px 的 `favicon.ico` 和 180px `apple-icon.png`，支持 `--check` 验证一致性。
+- 本地 lint、production build、562 项 public smoke 已通过；SVG / ICO / Apple 图标均返回 200，16 / 32 / 48px 小尺寸均正常解码。
+- 2026-09-06 用户已确认仅上线本图标；发布通过独立 PR 完成，最终生产部署与线上图标一致性验收以 PR 发布记录为准。不得将此前被拒绝的整站设计一起合并。
 
 ## 2026-09-02 v1.3.0 Weekly Review And Project Checkpoints
 
