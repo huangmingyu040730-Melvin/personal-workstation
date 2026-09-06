@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-09-06 - Keep The Browser Icon Separate From The Rejected Redesign
+
+类型：decision
+
+用户不喜欢暖白 / 墨绿整站方案，随后单独要求替换浏览器默认图标。图标使用深灰底、白色几何 M 与少量蓝色强调，保留 SVG 源文件并导出 ICO / PNG；依靠 Next.js 文件约定接入，不增加第三方字体、客户端代码或运行时依赖。整站改版分支仅存档，不与本次图标一起发布；用户于同日确认仅发布本图标，授权完成其独立 PR、合并与生产验收。
+
 ## 2026-09-02 - Use Metadata-Only Weekly Review And Knowledge-Based Checkpoints
 
 类型：decision
