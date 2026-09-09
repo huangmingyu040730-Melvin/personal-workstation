@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-09-09 - Remove Dashboard Asset Health And Weekly Review
+
+类型：decision
+
+用户认为工作台“资产健康与本周复盘”模块没有实际用途，决定从首页移除整块面板及其专用加载逻辑，让现有常用内容自然上移。范围仅为工作台展示与查询编排，不删除业务记录、不改变公开页面、配色、权限或数据模型。
+
+2026-09-02 决策中 Dashboard 必须复用周报聚合的要求已被取代；独立 API / CLI 周报功能与 metadata-only 安全边界保留。本次没有扩大为全站周报能力退役。
+
 ## 2026-09-06 - Keep The Browser Icon Separate From The Rejected Redesign
 
 类型：decision

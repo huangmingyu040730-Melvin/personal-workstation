@@ -8,7 +8,6 @@ import { countPublicProjects, getProjects } from "./projects";
 import { getPublicationStats, getRecentPublications } from "./publications";
 import { getRecentResumeItems, getRecentResumeVersions, getResumeStats, getResumeVersionStats } from "./resume";
 import { countAvailableSkills, countPublicSkills, getSkills } from "./skills";
-import { getDashboardWeeklyReview } from "./weekly-review";
 
 function mockActivityFallback(): ActivityLogRecord[] {
   return activityFeed.map((activity, index) => ({
@@ -38,8 +37,7 @@ export async function getDashboardData() {
     resumeStats,
     recentResumeItems,
     resumeVersionStats,
-    recentResumeVersions,
-    weeklyReview
+    recentResumeVersions
   ] = await Promise.all([
     getProjects(),
     getRecentKnowledgeNotes(4),
@@ -56,8 +54,7 @@ export async function getDashboardData() {
     getResumeStats(),
     getRecentResumeItems(3),
     getResumeVersionStats(),
-    getRecentResumeVersions(3),
-    getDashboardWeeklyReview()
+    getRecentResumeVersions(3)
   ]);
 
   const inProgressProjects = projects.filter((project) => project.status === "in_progress");
@@ -82,7 +79,6 @@ export async function getDashboardData() {
     recentResumeItems,
     resumeVersionStats,
     recentResumeVersions,
-    weeklyReview,
     activityLogs
   };
 }

@@ -26,6 +26,8 @@
 - v1.2.19 起 Workstation Career API / CLI 与全局 `personal-career-center` Skill 可操作现有私密求职闭环：Resume Items、Resume Versions、quality、preview、DOCX export、AI JD history 和 application status。所有 create 继续强制 private；不通过 Career API 修改 visibility，不自动公开、投递、联系雇主或编造经历。删除必须有 `delete_career` capability、API `confirm=true`、CLI `--confirm-delete` 和当前对话中的用户明确授权。
 - v1.3.0 起 Dashboard、`GET /api/workstation/review?period=week` 与 CLI `review --period week` 共用 metadata-only 周报聚合；Project 阶段结论复用关联 Knowledge，三类模板只预填、默认 private、不自动保存。周报不得读取 Knowledge / Resume / JD 正文、Documents 内容、Storage object、Storage path 或 signed URL。
 
+2026-09-09 产品调整：工作台首页不再展示“资产健康与本周复盘”，也不再为该面板加载周报聚合。此前 v1.3.0 关于 Dashboard 复用周报的描述为历史状态；独立周报 API / CLI 与安全边界继续保留，未经用户要求不要恢复首页面板。
+
 ## Tech Stack
 
 - Next.js App Router

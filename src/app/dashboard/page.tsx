@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, Archive, BookOpen, BriefcaseBusiness, CalendarCheck, CheckCircle2, FileText, FolderKanban, Sparkles } from "lucide-react";
+import { Archive, BookOpen, BriefcaseBusiness, CalendarCheck, FileText, FolderKanban, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { AdminPageSurface, AdminSection } from "@/components/admin-ui";
@@ -10,7 +10,6 @@ import { formatDateInputValue, formatDateTime, formatRelative } from "@/lib/form
 import { profile, quickActions } from "@/lib/mock-data";
 import { getDashboardData } from "@/lib/queries/dashboard";
 import { getResumeItemDisplay } from "@/lib/resume-display";
-import type { WeeklyReviewAttentionItem } from "@/lib/workstation/weekly-review";
 
 function activityTitle(metadata: Record<string, unknown>, fallback: string) {
   const title = metadata.title ?? metadata.name ?? metadata.slug;
@@ -47,88 +46,6 @@ export default async function DashboardPage() {
         <StatCard label="私密文件" value={String(data.documentCount)} helper="Documents 私密资产" icon={Archive} />
         <StatCard label="求职闭环" value={String(data.resumeVersionStats.total)} helper={`素材 ${data.resumeStats.total} · 启用 ${data.resumeVersionStats.active}`} icon={BriefcaseBusiness} />
       </div>
-
-      <AdminSection
-        title="资产健康与本周复盘"
-        description="只读取资产元数据，汇总最近 7 天的推进情况，并把需要处理的项目、文档包、Skill 与求职记录集中到一起。"
-        action={
-          <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${weeklyReviewStatusClass(data.weeklyReview.health.status)}`}>
-            {data.weeklyReview.health.status === "healthy" ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
-            {weeklyReviewStatusLabel(data.weeklyReview.health.status)}
-          </span>
-        }
-      >
-        <div className="grid gap-3 md:grid-cols-3">
-          <HealthMetric
-            label="活跃项目知识沉淀"
-            value={`${data.weeklyReview.health.activeProjectsWithKnowledge}/${data.weeklyReview.health.activeProjectsTotal}`}
-            helper="已有至少一条关联知识笔记"
-            href="/dashboard/projects"
-          />
-          <HealthMetric
-            label="非空文档包"
-            value={`${data.weeklyReview.health.populatedCollections}/${data.weeklyReview.health.collectionsTotal}`}
-            helper="至少包含一个文件"
-            href="/dashboard/documents"
-          />
-          <HealthMetric
-            label="可用 Skill"
-            value={`${data.weeklyReview.health.availableSkills}/${data.weeklyReview.health.skillsTotal}`}
-            helper="其余处于构思、开发或测试"
-            href="/dashboard/skills"
-          />
-        </div>
-
-        <div className="mt-5 grid gap-5 xl:grid-cols-[0.82fr_1.18fr]">
-          <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-            <div className="flex items-center gap-2 text-blue-800">
-              <Activity size={17} />
-              <p className="text-sm font-semibold">最近 7 天</p>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5 xl:grid-cols-2">
-              {[
-                { label: "项目更新", value: data.weeklyReview.thisWeek.projectsUpdated },
-                { label: "知识更新", value: data.weeklyReview.thisWeek.knowledgeUpdated },
-                { label: "Skill 更新", value: data.weeklyReview.thisWeek.skillsUpdated },
-                { label: "文档包更新", value: data.weeklyReview.thisWeek.collectionsUpdated },
-                { label: "求职更新", value: data.weeklyReview.thisWeek.applicationsUpdated }
-              ].map((item) => (
-                <div key={item.label} className="rounded-2xl bg-white p-3 shadow-sm">
-                  <p className="text-xl font-semibold text-slate-950">{item.value}</p>
-                  <p className="mt-1 text-xs text-slate-500">{item.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-slate-950">待处理事项</p>
-              <span className="text-xs font-medium text-slate-400">共 {data.weeklyReview.attention.length} 项</span>
-            </div>
-            {data.weeklyReview.attention.length > 0 ? (
-              <div className="space-y-2">
-                {data.weeklyReview.attention.slice(0, 6).map((item) => (
-                  <Link key={`${item.kind}-${item.entityId}`} href={item.href} className="group flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50">
-                    <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${weeklyReviewSeverityClass(item.severity)}`} />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-slate-950 group-hover:text-blue-800">{item.title}</span>
-                      <span className="mt-1 block text-xs leading-5 text-slate-500">{item.description}</span>
-                    </span>
-                  </Link>
-                ))}
-                {data.weeklyReview.attention.length > 6 ? (
-                  <p className="text-xs text-slate-500">还有 {data.weeklyReview.attention.length - 6} 项，可通过 <code>workstation-cli review --period week</code> 查看完整列表。</p>
-                ) : null}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
-                当前没有达到提醒阈值的事项，可以继续按现有节奏推进。
-              </div>
-            )}
-          </div>
-        </div>
-      </AdminSection>
 
       <AdminSection title="公开内容质量提示" description="公开内容越完整，公开研究工作站越适合分享给外部访客。">
         <div className="grid gap-3 text-sm md:grid-cols-4">
@@ -320,32 +237,4 @@ function isToday(value: string | null | undefined) {
   }
 
   return formatDateInputValue(value) === formatDateInputValue();
-}
-
-function HealthMetric({ label, value, helper, href }: { label: string; value: string; helper: string; href: string }) {
-  return (
-    <Link href={href} className="admin-card-motion rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:border-blue-200 hover:bg-blue-50">
-      <p className="text-2xl font-semibold text-slate-950">{value}</p>
-      <p className="mt-1 text-sm font-semibold text-slate-700">{label}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{helper}</p>
-    </Link>
-  );
-}
-
-function weeklyReviewStatusLabel(status: "healthy" | "watch" | "action_required") {
-  if (status === "healthy") return "状态健康";
-  if (status === "action_required") return "需要处理";
-  return "建议关注";
-}
-
-function weeklyReviewStatusClass(status: "healthy" | "watch" | "action_required") {
-  if (status === "healthy") return "bg-emerald-50 text-emerald-700";
-  if (status === "action_required") return "bg-rose-50 text-rose-700";
-  return "bg-amber-50 text-amber-700";
-}
-
-function weeklyReviewSeverityClass(severity: WeeklyReviewAttentionItem["severity"]) {
-  if (severity === "high") return "bg-rose-500";
-  if (severity === "medium") return "bg-amber-500";
-  return "bg-blue-500";
 }
