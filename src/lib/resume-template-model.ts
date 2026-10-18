@@ -10,6 +10,7 @@ export type ResumeTemplateProfile = ReturnType<typeof getResumeProfileData> & {
 export type ResumeTemplateEntry = {
   id: string;
   date: string;
+  location: string;
   title: string;
   subtitle: string;
   summary: string;
@@ -32,15 +33,14 @@ export type ResumeTemplateModel = {
 };
 
 export const defaultResumeSectionOrder: ResumeTemplateSectionKey[] = ["education", "experience", "projects", "campus", "skills", "research", "certifications", "awards", "other"];
-const fixedResumeSectionOrder: ResumeTemplateSectionKey[] = ["education", "experience", "projects", "campus", "skills"];
 
 export const resumeSectionMeta: Record<ResumeTemplateSectionKey, { label: string; icon: string }> = {
-  education: { label: "教育经历", icon: "▣" },
-  experience: { label: "实习经历", icon: "▥" },
+  education: { label: "教育背景", icon: "▣" },
+  experience: { label: "实习/工作经历", icon: "▥" },
   campus: { label: "在校经历", icon: "✦" },
   projects: { label: "项目经历", icon: "▧" },
   research: { label: "研究经历", icon: "◆" },
-  skills: { label: "相关技能", icon: "▤" },
+  skills: { label: "技能&兴趣爱好", icon: "▤" },
   certifications: { label: "证书", icon: "◇" },
   awards: { label: "荣誉奖项", icon: "◇" },
   other: { label: "其他经历", icon: "▨" }
@@ -124,13 +124,13 @@ function buildEducationEntry(versionItem: ResumeVersionItemRecord, item: ResumeI
   return {
     id: versionItem.id,
     date: visible.show_date ? formatResumeDateRange(item) : "",
+    location: visible.show_location ? item.location || stringDetail(details, "location") : "",
     title: visible.show_school ? stringDetail(details, "school") || item.organization || item.title : "",
-    subtitle: [
+    subtitle: stringDetail(details, "resume_subtitle") || [
       visible.show_major ? stringDetail(details, "major") : null,
       visible.show_degree ? stringDetail(details, "degree") || item.role_title : null,
       visible.show_college ? stringDetail(details, "college") : null,
-      visible.show_gpa ? stringDetail(details, "gpa") : null,
-      visible.show_location ? item.location : null
+      visible.show_gpa ? stringDetail(details, "gpa") : null
     ].filter(Boolean).join(" | "),
     summary: visible.show_summary ? item.summary ?? "" : "",
     detailLines: [
@@ -147,13 +147,14 @@ function buildExperienceEntry(versionItem: ResumeVersionItemRecord, item: Resume
   const details = detailRecord(item);
   const visible = visibleRecord(versionItem);
   const role = getEntryRole(item, details, visible, sectionKey);
-  const tokens = visible.show_skills || visible.show_tools ? buildTokenLine(item, details) : "";
+  const tokens = buildTokenLine(item, details, visible);
 
   return {
     id: versionItem.id,
     date: visible.show_date ? formatResumeDateRange(item) : "",
+    location: visible.show_location ? item.location || stringDetail(details, "location") : "",
     title: getEntryOrganization(item, details, visible, sectionKey),
-    subtitle: [role, visible.show_location ? item.location : null].filter(Boolean).join(" | "),
+    subtitle: role,
     summary: visible.show_summary ? item.summary ?? "" : "",
     detailLines: getEntryDetailLines(details, visible, sectionKey),
     bullets: visible.show_bullets ? normalizeResumeBullets(item.bullets) : [],
@@ -179,6 +180,7 @@ function buildSkillEntry(versionItem: ResumeVersionItemRecord, item: ResumeItemR
   return {
     id: versionItem.id,
     date: "",
+    location: "",
     title: visible.show_skill_category ? stringDetail(details, "skill_category") || item.title : "",
     subtitle: detail,
     summary: "",
@@ -200,14 +202,15 @@ function buildCredentialEntry(versionItem: ResumeVersionItemRecord, item: Resume
   return {
     id: versionItem.id,
     date: visible.show_date ? stringDetail(details, "date") || stringDetail(details, "issued_at") || formatResumeDateRange(item) : "",
+    location: "",
     title,
     subtitle: [
       visible.show_issuer ? stringDetail(details, "issuer") || item.organization : null,
-      isAward && visible.show_level ? stringDetail(details, "level") : null,
-      !isAward && visible.show_valid_until ? stringDetail(details, "valid_until") : null
+      visible.show_level ? stringDetail(details, "level") : null,
+      visible.show_valid_until ? stringDetail(details, "valid_until") : null
     ].filter(Boolean).join(" | "),
-    summary: visible.show_summary ? stringDetail(details, "description") || item.summary || "" : "",
-    detailLines: [],
+    summary: visible.show_summary ? item.summary || "" : "",
+    detailLines: visible.show_summary && stringDetail(details, "description") !== item.summary ? [stringDetail(details, "description")].filter(Boolean) : [],
     bullets: visible.show_bullets ? normalizeResumeBullets(item.bullets) : [],
     tokens: "",
     kind: "credential"
@@ -228,6 +231,8 @@ function getEntryOrganization(item: ResumeItemRecord, details: Record<string, un
 }
 
 function getEntryRole(item: ResumeItemRecord, details: Record<string, unknown>, visible: ReturnType<typeof visibleRecord>, sectionKey: ResumeTemplateSectionKey) {
+  const sourceSubtitle = stringDetail(details, "resume_subtitle");
+  if (sourceSubtitle) return (sectionKey === "projects" ? visible.show_project_role : visible.show_position) ? sourceSubtitle : "";
   const roleParts =
     sectionKey === "experience"
       ? [
@@ -246,6 +251,7 @@ function getEntryRole(item: ResumeItemRecord, details: Record<string, unknown>, 
 function getEntryDetailLines(details: Record<string, unknown>, visible: ReturnType<typeof visibleRecord>, sectionKey: ResumeTemplateSectionKey) {
   if (sectionKey === "experience" || sectionKey === "campus" || sectionKey === "other") {
     return [
+      visible.show_business_area && stringDetail(details, "business_area") ? `业务方向：${stringDetail(details, "business_area")}` : "",
       visible.show_achievements ? stringDetail(details, "achievements") || stringDetail(details, "results") : ""
     ].filter(Boolean);
   }
@@ -253,12 +259,15 @@ function getEntryDetailLines(details: Record<string, unknown>, visible: ReturnTy
   if (sectionKey === "projects") {
     return [
       visible.show_background ? stringDetail(details, "background") : "",
-      visible.show_results ? stringDetail(details, "results") || stringDetail(details, "achievements") : ""
+      visible.show_conclusion ? stringDetail(details, "conclusion") : "",
+      visible.show_results ? stringDetail(details, "results") || stringDetail(details, "achievements") : "",
+      visible.show_related_outputs ? stringDetail(details, "related_outputs") || stringDetail(details, "outputs") : ""
     ].filter(Boolean);
   }
 
   if (sectionKey === "research") {
     return [
+      visible.show_background ? stringDetail(details, "background") : "",
       visible.show_conclusion ? stringDetail(details, "conclusion") : "",
       visible.show_results ? stringDetail(details, "results") : "",
       visible.show_related_outputs ? stringDetail(details, "related_outputs") || stringDetail(details, "outputs") : ""
@@ -268,8 +277,11 @@ function getEntryDetailLines(details: Record<string, unknown>, visible: ReturnTy
   return [];
 }
 
-function buildTokenLine(item: ResumeItemRecord, details: Record<string, unknown>) {
-  return [...item.skills, ...arrayDetail(details, "tools")].filter(Boolean).slice(0, 8).join("、");
+function buildTokenLine(item: ResumeItemRecord, details: Record<string, unknown>, visible: ReturnType<typeof visibleRecord>) {
+  return Array.from(new Set([
+    ...(visible.show_skills ? item.skills : []),
+    ...(visible.show_tools ? arrayDetail(details, "tools") : [])
+  ].filter(Boolean))).join("、");
 }
 
 function groupVersionItems(items: ResumeVersionItemRecord[]) {
@@ -309,8 +321,7 @@ function normalizeSectionOrder(value: unknown): ResumeTemplateSectionKey[] {
   const cleaned = source.filter((item): item is ResumeTemplateSectionKey => typeof item === "string" && defaultResumeSectionOrder.includes(item as ResumeTemplateSectionKey));
   const baseOrder = cleaned.length > 0 ? cleaned : defaultResumeSectionOrder;
   const ordered = [
-    ...fixedResumeSectionOrder.filter((item) => baseOrder.includes(item)),
-    ...baseOrder.filter((item) => !fixedResumeSectionOrder.includes(item)),
+    ...baseOrder,
     ...defaultResumeSectionOrder.filter((item) => !baseOrder.includes(item))
   ];
 
@@ -328,6 +339,7 @@ function visibleRecord(versionItem: ResumeVersionItemRecord) {
     show_research_topic: raw.show_research_topic ?? raw.show_organization ?? true,
     show_position: raw.show_position ?? raw.show_role_title ?? true,
     show_department: raw.show_department ?? true,
+    show_business_area: raw.show_business_area ?? true,
     show_project_role: raw.show_project_role ?? raw.show_role_title ?? true,
     show_research_role: raw.show_research_role ?? raw.show_role_title ?? true,
     show_location: raw.show_location ?? true,
@@ -335,7 +347,7 @@ function visibleRecord(versionItem: ResumeVersionItemRecord) {
     show_bullets: raw.show_bullets ?? true,
     show_results: raw.show_results ?? true,
     show_achievements: raw.show_achievements ?? raw.show_results ?? true,
-    show_skills: raw.show_skills ?? true,
+    show_skills: raw.show_skills ?? raw.show_tools ?? true,
     show_tools: raw.show_tools ?? raw.show_skills ?? true,
     show_core_courses: raw.show_core_courses ?? true,
     show_skill_category: raw.show_skill_category ?? true,

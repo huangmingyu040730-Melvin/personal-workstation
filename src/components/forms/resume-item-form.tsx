@@ -160,6 +160,20 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
     );
   }
 
+  const source = item?.details?._resume_source;
+  if (source && typeof source === "object") {
+    const titleKey = itemType === "education" ? "school" : itemType === "experience" ? "company" : itemType === "project" ? "project_name" : "skill_category";
+    return (
+      <AdminFormSection title="原版简历内容" description="文字样式按导入的 Word 原版保留。可直接修改下列内容，以及下方正文和日期；保存时保留原始文字格式信息。">
+        <div className="grid gap-5 md:grid-cols-2">
+          <DetailInput label={itemType === "skill" ? "技能分类" : "机构或项目标题"} name={titleKey} details={details} fallback={item?.organization || item?.title} />
+          {itemType !== "skill" ? <DetailInput label="学历或岗位完整行" name="resume_subtitle" details={details} fallback={item?.role_title} /> : null}
+          {itemType !== "skill" ? <Field label="地点"><TextInput name="location" defaultValue={item?.location || ""} /></Field> : null}
+        </div>
+      </AdminFormSection>
+    );
+  }
+
   if (itemType === "education") {
     return (
       <AdminFormSection title="教育经历字段" description="贴近中文简历：时间、学校、专业/学位、核心课程和荣誉。">
@@ -263,6 +277,15 @@ function TypeSpecificFields({ itemType, item, details }: { itemType: ResumeItemT
 }
 
 function DetailInput({ label, name, details, fallback, placeholder, hint }: { label: string; name: string; details: Record<string, string | string[]>; fallback?: string | null; placeholder?: string; hint?: string }) {
+  const storedValue = stringDetail(details, name) || fallback || "";
+  if (name === "photo_url" && storedValue.startsWith("data:image/")) {
+    return (
+      <Field label="原版简历照片" hint="已保存 Word 中的原始照片。留空保留；填写新 HTTPS 图片地址可替换。">
+        <input type="hidden" name="preserve_embedded_photo" value="1" />
+        <TextInput name="detail_photo_url" placeholder="保留已保存的原版照片" />
+      </Field>
+    );
+  }
   return (
     <Field label={label} hint={hint}>
       <TextInput name={`detail_${name}`} defaultValue={stringDetail(details, name) || fallback || ""} placeholder={placeholder} />

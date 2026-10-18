@@ -6,6 +6,7 @@ import { getAdminClient, writeActivityLog } from "@/lib/auth/admin";
 import { encodeFormError, getArrayFromText, getBoolean, getOptionalString, getString } from "@/lib/forms";
 import { resumeItemSchema, resumeVersionSchema } from "@/lib/validations/resume";
 import { normalizeResumeBullets } from "@/lib/resume-display";
+import { referenceResumeRevision } from "@/lib/resume-reference";
 
 const detailTextKeys = [
   "photo_url",
@@ -50,7 +51,8 @@ const detailTextKeys = [
   "outputs",
   "achievements",
   "related_outputs",
-  "description"
+  "description",
+  "resume_subtitle"
 ];
 
 const detailArrayKeys = ["core_courses", "honors", "tools", "skill_items"];
@@ -84,6 +86,7 @@ const visibleFieldKeys = [
   "show_honors",
   "show_company",
   "show_department",
+  "show_business_area",
   "show_position",
   "show_results",
   "show_achievements",
@@ -176,7 +179,7 @@ function getResumeTextArray(formData: FormData, key: string) {
 }
 
 function getVisibleFields(formData: FormData, itemId: string) {
-  return Object.fromEntries(visibleFieldKeys.map((key) => [key, getBoolean(formData, `${key}_${itemId}`)]));
+  return Object.fromEntries(visibleFieldKeys.filter((key) => formData.has(`visible_present_${key}_${itemId}`)).map((key) => [key, getBoolean(formData, `${key}_${itemId}`)]));
 }
 
 function resumeVersionPayloadFromForm(formData: FormData) {
@@ -259,6 +262,12 @@ export async function updateResumeItemAction(id: string, formData: FormData) {
     resumeErrorRedirect(editPath, error ?? "当前账号没有管理员权限。");
   }
 
+  const { data: existing, error: existingError } = await supabase.from("resume_items").select("details").eq("id", id).single();
+  if (existingError) resumeErrorRedirect(editPath, getResumeErrorMessage(existingError));
+  // Preserve server-held run metadata and reference evidence across normal edits.
+  if (existing?.details?._resume_source) parsed.data.details._resume_source = existing.details._resume_source;
+  if (formData.has("preserve_embedded_photo") && !parsed.data.details.photo_url && existing?.details?.photo_url) parsed.data.details.photo_url = existing.details.photo_url;
+
   const { data, error: updateError } = await supabase.from("resume_items").update(parsed.data).eq("id", id).select("id,title,item_type").single();
 
   if (updateError) {
@@ -324,6 +333,8 @@ export async function createResumeVersionAction(formData: FormData) {
     resumeVersionErrorRedirect("/dashboard/resume/versions/new", error ?? "当前账号没有管理员权限。");
   }
 
+  versionPayload.template_options.reference_revision = referenceResumeRevision;
+
   const { data, error: insertError } = await supabase.from("resume_versions").insert(versionPayload).select("id,title,target_role").single();
 
   if (insertError) {
@@ -368,6 +379,15 @@ export async function updateResumeVersionAction(id: string, formData: FormData) 
 
   if (!supabase || !isAdmin) {
     resumeVersionErrorRedirect(editPath, error ?? "当前账号没有管理员权限。");
+  }
+
+  const { data: existing, error: existingError } = await supabase.from("resume_versions").select("template_options,section_order,resume_version_items(resume_item_id,visible_fields)").eq("id", id).single();
+  if (existingError) resumeVersionErrorRedirect(editPath, existingError.message || "读取简历版本失败。");
+  versionPayload.template_options = { ...(existing?.template_options ?? {}), ...versionPayload.template_options };
+  versionPayload.section_order = existing?.section_order ?? versionPayload.section_order;
+  for (const item of items) {
+    const previous = existing?.resume_version_items?.find((link: { resume_item_id: string }) => link.resume_item_id === item.resume_item_id);
+    item.visible_fields = { ...(previous?.visible_fields ?? {}), ...item.visible_fields };
   }
 
   const { data, error: updateError } = await supabase.from("resume_versions").update(versionPayload).eq("id", id).select("id,title,target_role").single();

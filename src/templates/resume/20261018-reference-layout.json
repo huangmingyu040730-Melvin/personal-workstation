@@ -1,0 +1,818 @@
+{
+  "revision": "word-20260920-exact-v1",
+  "paragraphs": {
+    "p000": {
+      "slots": []
+    },
+    "p001": {
+      "slots": []
+    },
+    "p002": {
+      "slots": []
+    },
+    "p003": {
+      "slots": [
+        "__RESUME_SLOT_0000__",
+        "__RESUME_SLOT_0001__"
+      ]
+    },
+    "p004": {
+      "slots": []
+    },
+    "p005": {
+      "slots": [
+        "__RESUME_SLOT_0002__",
+        "__RESUME_SLOT_0003__",
+        "__RESUME_SLOT_0004__",
+        "__RESUME_SLOT_0005__",
+        "__RESUME_SLOT_0006__",
+        "__RESUME_SLOT_0007__",
+        "__RESUME_SLOT_0008__"
+      ]
+    },
+    "p006": {
+      "slots": []
+    },
+    "p007": {
+      "slots": [
+        "__RESUME_SLOT_0009__"
+      ]
+    },
+    "p008": {
+      "slots": [
+        "__RESUME_SLOT_0010__",
+        "__RESUME_SLOT_0011__",
+        "__RESUME_SLOT_0012__"
+      ]
+    },
+    "p009": {
+      "slots": [
+        "__RESUME_SLOT_0013__",
+        "__RESUME_SLOT_0014__",
+        "__RESUME_SLOT_0015__",
+        "__RESUME_SLOT_0016__"
+      ]
+    },
+    "p010": {
+      "slots": [
+        "__RESUME_SLOT_0017__"
+      ]
+    },
+    "p011": {
+      "slots": [
+        "__RESUME_SLOT_0018__",
+        "__RESUME_SLOT_0019__"
+      ]
+    },
+    "p012": {
+      "slots": [
+        "__RESUME_SLOT_0020__",
+        "__RESUME_SLOT_0021__",
+        "__RESUME_SLOT_0022__",
+        "__RESUME_SLOT_0023__",
+        "__RESUME_SLOT_0024__"
+      ]
+    },
+    "p013": {
+      "slots": [
+        "__RESUME_SLOT_0025__",
+        "__RESUME_SLOT_0026__",
+        "__RESUME_SLOT_0027__"
+      ]
+    },
+    "p014": {
+      "slots": [
+        "__RESUME_SLOT_0028__",
+        "__RESUME_SLOT_0029__",
+        "__RESUME_SLOT_0030__",
+        "__RESUME_SLOT_0031__",
+        "__RESUME_SLOT_0032__",
+        "__RESUME_SLOT_0033__",
+        "__RESUME_SLOT_0034__",
+        "__RESUME_SLOT_0035__"
+      ]
+    },
+    "p015": {
+      "slots": [
+        "__RESUME_SLOT_0036__",
+        "__RESUME_SLOT_0037__",
+        "__RESUME_SLOT_0038__",
+        "__RESUME_SLOT_0039__"
+      ]
+    },
+    "p016": {
+      "slots": [
+        "__RESUME_SLOT_0040__"
+      ]
+    },
+    "p017": {
+      "slots": [
+        "__RESUME_SLOT_0041__",
+        "__RESUME_SLOT_0042__",
+        "__RESUME_SLOT_0043__",
+        "__RESUME_SLOT_0044__",
+        "__RESUME_SLOT_0045__"
+      ]
+    },
+    "p018": {
+      "slots": [
+        "__RESUME_SLOT_0046__",
+        "__RESUME_SLOT_0047__",
+        "__RESUME_SLOT_0048__"
+      ]
+    },
+    "p019": {
+      "slots": [
+        "__RESUME_SLOT_0049__"
+      ]
+    },
+    "p020": {
+      "slots": [
+        "__RESUME_SLOT_0050__"
+      ]
+    },
+    "p021": {
+      "slots": [
+        "__RESUME_SLOT_0051__",
+        "__RESUME_SLOT_0052__"
+      ]
+    },
+    "p022": {
+      "slots": [
+        "__RESUME_SLOT_0053__",
+        "__RESUME_SLOT_0054__",
+        "__RESUME_SLOT_0055__",
+        "__RESUME_SLOT_0056__",
+        "__RESUME_SLOT_0057__",
+        "__RESUME_SLOT_0058__"
+      ]
+    },
+    "p023": {
+      "slots": [
+        "__RESUME_SLOT_0059__",
+        "__RESUME_SLOT_0060__",
+        "__RESUME_SLOT_0061__",
+        "__RESUME_SLOT_0062__",
+        "__RESUME_SLOT_0063__",
+        "__RESUME_SLOT_0064__",
+        "__RESUME_SLOT_0065__",
+        "__RESUME_SLOT_0066__",
+        "__RESUME_SLOT_0067__",
+        "__RESUME_SLOT_0068__"
+      ]
+    },
+    "p024": {
+      "slots": [
+        "__RESUME_SLOT_0069__",
+        "__RESUME_SLOT_0070__",
+        "__RESUME_SLOT_0071__",
+        "__RESUME_SLOT_0072__"
+      ]
+    },
+    "p025": {
+      "slots": [
+        "__RESUME_SLOT_0073__",
+        "__RESUME_SLOT_0074__",
+        "__RESUME_SLOT_0075__",
+        "__RESUME_SLOT_0076__"
+      ]
+    },
+    "p026": {
+      "slots": [
+        "__RESUME_SLOT_0077__",
+        "__RESUME_SLOT_0078__",
+        "__RESUME_SLOT_0079__",
+        "__RESUME_SLOT_0080__"
+      ]
+    },
+    "p027": {
+      "slots": [
+        "__RESUME_SLOT_0081__",
+        "__RESUME_SLOT_0082__",
+        "__RESUME_SLOT_0083__",
+        "__RESUME_SLOT_0084__"
+      ]
+    },
+    "p028": {
+      "slots": [
+        "__RESUME_SLOT_0085__"
+      ]
+    },
+    "p029": {
+      "slots": [
+        "__RESUME_SLOT_0086__"
+      ]
+    },
+    "p030": {
+      "slots": [
+        "__RESUME_SLOT_0087__",
+        "__RESUME_SLOT_0088__",
+        "__RESUME_SLOT_0089__"
+      ]
+    },
+    "p031": {
+      "slots": [
+        "__RESUME_SLOT_0090__",
+        "__RESUME_SLOT_0091__",
+        "__RESUME_SLOT_0092__",
+        "__RESUME_SLOT_0093__",
+        "__RESUME_SLOT_0094__",
+        "__RESUME_SLOT_0095__",
+        "__RESUME_SLOT_0096__",
+        "__RESUME_SLOT_0097__"
+      ]
+    },
+    "p032": {
+      "slots": [
+        "__RESUME_SLOT_0098__",
+        "__RESUME_SLOT_0099__",
+        "__RESUME_SLOT_0100__",
+        "__RESUME_SLOT_0101__",
+        "__RESUME_SLOT_0102__",
+        "__RESUME_SLOT_0103__",
+        "__RESUME_SLOT_0104__",
+        "__RESUME_SLOT_0105__",
+        "__RESUME_SLOT_0106__",
+        "__RESUME_SLOT_0107__"
+      ]
+    },
+    "p033": {
+      "slots": [
+        "__RESUME_SLOT_0108__",
+        "__RESUME_SLOT_0109__",
+        "__RESUME_SLOT_0110__",
+        "__RESUME_SLOT_0111__"
+      ]
+    },
+    "p034": {
+      "slots": [
+        "__RESUME_SLOT_0112__",
+        "__RESUME_SLOT_0113__",
+        "__RESUME_SLOT_0114__",
+        "__RESUME_SLOT_0115__",
+        "__RESUME_SLOT_0116__",
+        "__RESUME_SLOT_0117__",
+        "__RESUME_SLOT_0118__",
+        "__RESUME_SLOT_0119__",
+        "__RESUME_SLOT_0120__",
+        "__RESUME_SLOT_0121__",
+        "__RESUME_SLOT_0122__"
+      ]
+    },
+    "p035": {
+      "slots": [
+        "__RESUME_SLOT_0123__",
+        "__RESUME_SLOT_0124__",
+        "__RESUME_SLOT_0125__",
+        "__RESUME_SLOT_0126__",
+        "__RESUME_SLOT_0127__",
+        "__RESUME_SLOT_0128__"
+      ]
+    },
+    "p036": {
+      "slots": [
+        "__RESUME_SLOT_0129__"
+      ]
+    },
+    "p037": {
+      "slots": [
+        "__RESUME_SLOT_0130__"
+      ]
+    },
+    "p038": {
+      "slots": [
+        "__RESUME_SLOT_0131__"
+      ]
+    },
+    "p039": {
+      "slots": [
+        "__RESUME_SLOT_0132__",
+        "__RESUME_SLOT_0133__",
+        "__RESUME_SLOT_0134__",
+        "__RESUME_SLOT_0135__",
+        "__RESUME_SLOT_0136__",
+        "__RESUME_SLOT_0137__",
+        "__RESUME_SLOT_0138__",
+        "__RESUME_SLOT_0139__"
+      ]
+    },
+    "p040": {
+      "slots": [
+        "__RESUME_SLOT_0140__",
+        "__RESUME_SLOT_0141__",
+        "__RESUME_SLOT_0142__",
+        "__RESUME_SLOT_0143__",
+        "__RESUME_SLOT_0144__",
+        "__RESUME_SLOT_0145__"
+      ]
+    },
+    "p041": {
+      "slots": [
+        "__RESUME_SLOT_0146__",
+        "__RESUME_SLOT_0147__"
+      ]
+    },
+    "p042": {
+      "slots": [
+        "__RESUME_SLOT_0148__",
+        "__RESUME_SLOT_0149__",
+        "__RESUME_SLOT_0150__",
+        "__RESUME_SLOT_0151__"
+      ]
+    },
+    "p043": {
+      "slots": [
+        "__RESUME_SLOT_0152__"
+      ]
+    },
+    "p044": {
+      "slots": [
+        "__RESUME_SLOT_0153__"
+      ]
+    },
+    "p045": {
+      "slots": [
+        "__RESUME_SLOT_0154__"
+      ]
+    },
+    "p046": {
+      "slots": [
+        "__RESUME_SLOT_0155__",
+        "__RESUME_SLOT_0156__",
+        "__RESUME_SLOT_0157__"
+      ]
+    },
+    "p047": {
+      "slots": [
+        "__RESUME_SLOT_0158__",
+        "__RESUME_SLOT_0159__",
+        "__RESUME_SLOT_0160__",
+        "__RESUME_SLOT_0161__",
+        "__RESUME_SLOT_0162__",
+        "__RESUME_SLOT_0163__",
+        "__RESUME_SLOT_0164__",
+        "__RESUME_SLOT_0165__"
+      ]
+    },
+    "p048": {
+      "slots": [
+        "__RESUME_SLOT_0166__",
+        "__RESUME_SLOT_0167__",
+        "__RESUME_SLOT_0168__",
+        "__RESUME_SLOT_0169__",
+        "__RESUME_SLOT_0170__",
+        "__RESUME_SLOT_0171__"
+      ]
+    },
+    "p049": {
+      "slots": [
+        "__RESUME_SLOT_0172__",
+        "__RESUME_SLOT_0173__",
+        "__RESUME_SLOT_0174__",
+        "__RESUME_SLOT_0175__",
+        "__RESUME_SLOT_0176__",
+        "__RESUME_SLOT_0177__",
+        "__RESUME_SLOT_0178__",
+        "__RESUME_SLOT_0179__",
+        "__RESUME_SLOT_0180__",
+        "__RESUME_SLOT_0181__",
+        "__RESUME_SLOT_0182__",
+        "__RESUME_SLOT_0183__",
+        "__RESUME_SLOT_0184__",
+        "__RESUME_SLOT_0185__",
+        "__RESUME_SLOT_0186__",
+        "__RESUME_SLOT_0187__",
+        "__RESUME_SLOT_0188__",
+        "__RESUME_SLOT_0189__",
+        "__RESUME_SLOT_0190__",
+        "__RESUME_SLOT_0191__",
+        "__RESUME_SLOT_0192__"
+      ]
+    },
+    "p050": {
+      "slots": [
+        "__RESUME_SLOT_0193__",
+        "__RESUME_SLOT_0194__",
+        "__RESUME_SLOT_0195__",
+        "__RESUME_SLOT_0196__",
+        "__RESUME_SLOT_0197__",
+        "__RESUME_SLOT_0198__",
+        "__RESUME_SLOT_0199__",
+        "__RESUME_SLOT_0200__",
+        "__RESUME_SLOT_0201__",
+        "__RESUME_SLOT_0202__",
+        "__RESUME_SLOT_0203__",
+        "__RESUME_SLOT_0204__",
+        "__RESUME_SLOT_0205__",
+        "__RESUME_SLOT_0206__",
+        "__RESUME_SLOT_0207__",
+        "__RESUME_SLOT_0208__",
+        "__RESUME_SLOT_0209__",
+        "__RESUME_SLOT_0210__",
+        "__RESUME_SLOT_0211__"
+      ]
+    },
+    "p051": {
+      "slots": [
+        "__RESUME_SLOT_0212__",
+        "__RESUME_SLOT_0213__",
+        "__RESUME_SLOT_0214__",
+        "__RESUME_SLOT_0215__"
+      ]
+    },
+    "p052": {
+      "slots": [
+        "__RESUME_SLOT_0216__",
+        "__RESUME_SLOT_0217__",
+        "__RESUME_SLOT_0218__",
+        "__RESUME_SLOT_0219__",
+        "__RESUME_SLOT_0220__",
+        "__RESUME_SLOT_0221__",
+        "__RESUME_SLOT_0222__",
+        "__RESUME_SLOT_0223__"
+      ]
+    },
+    "p053": {
+      "slots": [
+        "__RESUME_SLOT_0224__",
+        "__RESUME_SLOT_0225__",
+        "__RESUME_SLOT_0226__"
+      ]
+    },
+    "p054": {
+      "slots": [
+        "__RESUME_SLOT_0227__",
+        "__RESUME_SLOT_0228__",
+        "__RESUME_SLOT_0229__",
+        "__RESUME_SLOT_0230__",
+        "__RESUME_SLOT_0231__",
+        "__RESUME_SLOT_0232__"
+      ]
+    },
+    "p055": {
+      "slots": [
+        "__RESUME_SLOT_0233__",
+        "__RESUME_SLOT_0234__",
+        "__RESUME_SLOT_0235__",
+        "__RESUME_SLOT_0236__",
+        "__RESUME_SLOT_0237__",
+        "__RESUME_SLOT_0238__",
+        "__RESUME_SLOT_0239__",
+        "__RESUME_SLOT_0240__",
+        "__RESUME_SLOT_0241__",
+        "__RESUME_SLOT_0242__",
+        "__RESUME_SLOT_0243__",
+        "__RESUME_SLOT_0244__",
+        "__RESUME_SLOT_0245__",
+        "__RESUME_SLOT_0246__",
+        "__RESUME_SLOT_0247__",
+        "__RESUME_SLOT_0248__",
+        "__RESUME_SLOT_0249__",
+        "__RESUME_SLOT_0250__",
+        "__RESUME_SLOT_0251__"
+      ]
+    },
+    "p056": {
+      "slots": [
+        "__RESUME_SLOT_0252__",
+        "__RESUME_SLOT_0253__",
+        "__RESUME_SLOT_0254__",
+        "__RESUME_SLOT_0255__",
+        "__RESUME_SLOT_0256__",
+        "__RESUME_SLOT_0257__",
+        "__RESUME_SLOT_0258__",
+        "__RESUME_SLOT_0259__",
+        "__RESUME_SLOT_0260__",
+        "__RESUME_SLOT_0261__",
+        "__RESUME_SLOT_0262__",
+        "__RESUME_SLOT_0263__",
+        "__RESUME_SLOT_0264__",
+        "__RESUME_SLOT_0265__",
+        "__RESUME_SLOT_0266__"
+      ]
+    },
+    "p057": {
+      "slots": [
+        "__RESUME_SLOT_0267__",
+        "__RESUME_SLOT_0268__",
+        "__RESUME_SLOT_0269__"
+      ]
+    },
+    "p058": {
+      "slots": []
+    }
+  },
+  "headings": {
+    "education": {
+      "row": 1,
+      "values": {
+        "__RESUME_SLOT_0009__": "教育背景"
+      }
+    },
+    "experience": {
+      "row": 4,
+      "values": {
+        "__RESUME_SLOT_0046__": "实习",
+        "__RESUME_SLOT_0047__": "/",
+        "__RESUME_SLOT_0048__": "工作经历"
+      }
+    },
+    "projects": {
+      "row": 14,
+      "values": {
+        "__RESUME_SLOT_0152__": "项目经历"
+      }
+    },
+    "skills": {
+      "row": 18,
+      "values": {
+        "__RESUME_SLOT_0224__": "技能",
+        "__RESUME_SLOT_0225__": "&",
+        "__RESUME_SLOT_0226__": "兴趣爱好"
+      }
+    }
+  },
+  "patterns": {
+    "header": {
+      "rows": [
+        0
+      ],
+      "paragraphs": [
+        {
+          "key": "p003",
+          "role": "name"
+        },
+        {
+          "key": "p005",
+          "role": "contact"
+        }
+      ]
+    },
+    "education0": {
+      "rows": [
+        2
+      ],
+      "paragraphs": [
+        {
+          "key": "p008",
+          "role": "title"
+        },
+        {
+          "key": "p009",
+          "role": "subtitle"
+        },
+        {
+          "key": "p010",
+          "role": "summary"
+        },
+        {
+          "key": "p011",
+          "role": "location"
+        },
+        {
+          "key": "p012",
+          "role": "date"
+        }
+      ]
+    },
+    "education1": {
+      "rows": [
+        3
+      ],
+      "paragraphs": [
+        {
+          "key": "p013",
+          "role": "title"
+        },
+        {
+          "key": "p014",
+          "role": "subtitle"
+        },
+        {
+          "key": "p015",
+          "role": "summary"
+        },
+        {
+          "key": "p016",
+          "role": "location"
+        },
+        {
+          "key": "p017",
+          "role": "date"
+        }
+      ]
+    },
+    "experience0": {
+      "rows": [
+        5,
+        6,
+        7
+      ],
+      "paragraphs": [
+        {
+          "key": "p019",
+          "role": "title"
+        },
+        {
+          "key": "p020",
+          "role": "location"
+        },
+        {
+          "key": "p021",
+          "role": "subtitle"
+        },
+        {
+          "key": "p022",
+          "role": "date"
+        },
+        {
+          "key": "p023",
+          "role": "bullet:0"
+        },
+        {
+          "key": "p024",
+          "role": "bullet:1"
+        },
+        {
+          "key": "p025",
+          "role": "bullet:2"
+        },
+        {
+          "key": "p026",
+          "role": "bullet:3"
+        },
+        {
+          "key": "p027",
+          "role": "bullet:4"
+        }
+      ]
+    },
+    "experience1": {
+      "rows": [
+        8,
+        9,
+        10
+      ],
+      "paragraphs": [
+        {
+          "key": "p028",
+          "role": "title"
+        },
+        {
+          "key": "p029",
+          "role": "location"
+        },
+        {
+          "key": "p030",
+          "role": "subtitle"
+        },
+        {
+          "key": "p031",
+          "role": "date"
+        },
+        {
+          "key": "p032",
+          "role": "bullet:0"
+        },
+        {
+          "key": "p033",
+          "role": "bullet:1"
+        },
+        {
+          "key": "p034",
+          "role": "bullet:2"
+        },
+        {
+          "key": "p035",
+          "role": "bullet:3"
+        }
+      ]
+    },
+    "experience2": {
+      "rows": [
+        11,
+        12,
+        13
+      ],
+      "paragraphs": [
+        {
+          "key": "p036",
+          "role": "title"
+        },
+        {
+          "key": "p037",
+          "role": "location"
+        },
+        {
+          "key": "p038",
+          "role": "subtitle"
+        },
+        {
+          "key": "p039",
+          "role": "date"
+        },
+        {
+          "key": "p040",
+          "role": "bullet:0"
+        },
+        {
+          "key": "p041",
+          "role": "bullet:1"
+        },
+        {
+          "key": "p042",
+          "role": "bullet:2"
+        }
+      ]
+    },
+    "projects0": {
+      "rows": [
+        15,
+        16,
+        17
+      ],
+      "paragraphs": [
+        {
+          "key": "p044",
+          "role": "title"
+        },
+        {
+          "key": "p045",
+          "role": "location"
+        },
+        {
+          "key": "p046",
+          "role": "subtitle"
+        },
+        {
+          "key": "p047",
+          "role": "date"
+        },
+        {
+          "key": "p048",
+          "role": "bullet:0"
+        },
+        {
+          "key": "p049",
+          "role": "bullet:1"
+        },
+        {
+          "key": "p050",
+          "role": "bullet:2"
+        },
+        {
+          "key": "p051",
+          "role": "bullet:3"
+        },
+        {
+          "key": "p052",
+          "role": "bullet:4"
+        }
+      ]
+    },
+    "skills0": {
+      "rows": [
+        19
+      ],
+      "paragraphs": [
+        {
+          "key": "p054",
+          "role": "skill"
+        }
+      ]
+    },
+    "skills1": {
+      "rows": [
+        19
+      ],
+      "paragraphs": [
+        {
+          "key": "p055",
+          "role": "skill"
+        }
+      ]
+    },
+    "skills2": {
+      "rows": [
+        19
+      ],
+      "paragraphs": [
+        {
+          "key": "p056",
+          "role": "skill"
+        }
+      ]
+    },
+    "skills3": {
+      "rows": [
+        19
+      ],
+      "paragraphs": [
+        {
+          "key": "p057",
+          "role": "skill"
+        }
+      ]
+    }
+  }
+}

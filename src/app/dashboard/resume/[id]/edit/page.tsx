@@ -21,6 +21,17 @@ export default async function EditResumeItemPage({
     notFound();
   }
 
+  // The editor only needs a reference marker. Keep PDF/photo evidence on the
+  // server instead of serializing several megabytes into the client form.
+  const details = { ...item.details };
+  const source = details._resume_source;
+  if (source && typeof source === "object" && !Array.isArray(source)) {
+    const reference = source as Record<string, unknown>;
+    details._resume_source = { revision: reference.revision, pattern: reference.pattern };
+  }
+  if (typeof details.photo_url === "string" && details.photo_url.startsWith("data:image/")) details.photo_url = "data:image/stored";
+  const formItem = { ...item, details };
+
   return (
     <AppShell>
       <AdminPageSurface>
@@ -41,7 +52,7 @@ export default async function EditResumeItemPage({
             </>
           }
         >
-          <ResumeItemForm action={updateResumeItemAction.bind(null, item.id)} item={item} options={options} error={getFormError(query)} />
+          <ResumeItemForm action={updateResumeItemAction.bind(null, item.id)} item={formItem} options={options} error={getFormError(query)} />
         </AdminFormSurface>
       </AdminPageSurface>
     </AppShell>

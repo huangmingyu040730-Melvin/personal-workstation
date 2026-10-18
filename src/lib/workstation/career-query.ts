@@ -228,6 +228,9 @@ export async function updateWorkstationResumeItem(id: string, input: Workstation
   if (!existing.ok) return existing;
 
   const payload = stripUndefined(input as Record<string, unknown>);
+  if (payload.details && typeof payload.details === "object" && existing.data.details && typeof existing.data.details === "object") {
+    payload.details = { ...(existing.data.details as Record<string, unknown>), ...(payload.details as Record<string, unknown>) };
+  }
   if (payload.is_current === true) payload.end_date = null;
   const { data, error } = await supabaseResult.data.from("resume_items").update(payload).eq("id", id).select("*").single();
   if (error) return databaseError(error, "Failed to update resume item.");
@@ -323,6 +326,7 @@ export async function updateWorkstationResumeVersion(id: string, input: Workstat
 
   const { items, ...versionInput } = input;
   const versionPayload = stripUndefined(versionInput as Record<string, unknown>);
+  if (versionPayload.template_options && typeof versionPayload.template_options === "object") versionPayload.template_options = { ...existing.data.template_options, ...(versionPayload.template_options as Record<string, unknown>) };
   if (Object.keys(versionPayload).length > 0) {
     const { error } = await supabase.from("resume_versions").update(versionPayload).eq("id", id);
     if (error) return databaseError(error, "Failed to update resume version.");
