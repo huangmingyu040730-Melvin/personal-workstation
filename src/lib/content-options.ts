@@ -124,9 +124,9 @@ export const resumeVersionLanguages: Array<{ value: ResumeVersionLanguage; label
 ];
 
 export const resumeTemplateKeys: Array<{ value: ResumeTemplateKey; label: string }> = [
-  { value: "classic", label: "Classic" },
-  { value: "compact", label: "Compact" },
-  { value: "research", label: "Research" }
+  { value: "classic", label: "Word 原版中文简历" },
+  { value: "compact", label: "Word 原版中文简历" },
+  { value: "research", label: "Word 原版中文简历" }
 ];
 
 export const resumeSectionKeys: Array<{ value: ResumeSectionKey; label: string }> = [
@@ -182,7 +182,7 @@ export function getResumeVersionLanguageLabel(value: string | null | undefined) 
 }
 
 export function getResumeTemplateLabel(value: string | null | undefined) {
-  return resumeTemplateKeys.find((item) => item.value === value)?.label ?? "Classic";
+  return resumeTemplateKeys.find((item) => item.value === value)?.label ?? "Word 原版中文简历";
 }
 
 export function getResumeSectionLabel(value: string | null | undefined) {

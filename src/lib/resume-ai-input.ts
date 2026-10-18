@@ -75,7 +75,7 @@ export function buildResumeAiInputContext({
         id: entry.id,
         date: entry.date,
         title: entry.title,
-        subtitle: entry.subtitle,
+        subtitle: [entry.subtitle, entry.location].filter(Boolean).join(" | "),
         summary: entry.summary,
         detailLines: entry.detailLines,
         bullets: entry.bullets,

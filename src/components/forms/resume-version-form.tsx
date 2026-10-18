@@ -2,7 +2,6 @@ import Link from "next/link";
 import { AdminFormSection } from "@/components/admin-ui";
 import {
   resumeSectionKeys,
-  resumeTemplateKeys,
   resumeVersionLanguages
 } from "@/lib/content-options";
 import type { ResumeItemRecord, ResumeSectionKey, ResumeVersionItemRecord, ResumeVersionRecord } from "@/lib/content-types";
@@ -64,18 +63,22 @@ const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string
     { key: "show_gpa", label: "GPA" },
     { key: "show_core_courses", label: "核心课程", defaultChecked: true },
     { key: "show_honors", label: "荣誉", defaultChecked: true },
+    { key: "show_summary", label: "摘要", defaultChecked: true },
+    { key: "show_bullets", label: "补充要点", defaultChecked: true },
     { key: "show_location", label: "地点" }
   ],
   experience: [
     { key: "show_date", label: "时间", defaultChecked: true },
     { key: "show_company", label: "公司", defaultChecked: true },
     { key: "show_department", label: "部门", defaultChecked: true },
+    { key: "show_business_area", label: "业务方向", defaultChecked: true },
     { key: "show_position", label: "岗位", defaultChecked: true },
     { key: "show_location", label: "地点" },
     { key: "show_summary", label: "摘要", defaultChecked: true },
     { key: "show_bullets", label: "工作内容", defaultChecked: true },
     { key: "show_achievements", label: "成果", defaultChecked: true },
-    { key: "show_tools", label: "工具 / 技能", defaultChecked: true }
+    { key: "show_tools", label: "工具", defaultChecked: true },
+    { key: "show_skills", label: "技能", defaultChecked: true }
   ],
   other: [
     { key: "show_date", label: "时间", defaultChecked: true },
@@ -91,21 +94,28 @@ const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string
     { key: "show_project_name", label: "项目名称", defaultChecked: true },
     { key: "show_project_role", label: "项目角色", defaultChecked: true },
     { key: "show_background", label: "背景", defaultChecked: true },
+    { key: "show_summary", label: "摘要", defaultChecked: true },
+    { key: "show_conclusion", label: "结论", defaultChecked: true },
     { key: "show_methods", label: "方法 / 工具", defaultChecked: true },
     { key: "show_bullets", label: "项目内容", defaultChecked: true },
     { key: "show_results", label: "成果", defaultChecked: true },
-    { key: "show_skills", label: "技能", defaultChecked: true }
+    { key: "show_related_outputs", label: "关联产出" },
+    { key: "show_skills", label: "技能", defaultChecked: true },
+    { key: "show_tools", label: "工具列表", defaultChecked: true }
   ],
   research: [
     { key: "show_date", label: "时间", defaultChecked: true },
     { key: "show_research_topic", label: "研究主题", defaultChecked: true },
     { key: "show_research_role", label: "研究角色", defaultChecked: true },
+    { key: "show_background", label: "背景", defaultChecked: true },
+    { key: "show_summary", label: "摘要", defaultChecked: true },
     { key: "show_methods", label: "方法", defaultChecked: true },
     { key: "show_conclusion", label: "结论", defaultChecked: true },
     { key: "show_bullets", label: "研究内容", defaultChecked: true },
     { key: "show_results", label: "成果", defaultChecked: true },
     { key: "show_related_outputs", label: "关联产出" },
-    { key: "show_skills", label: "技能", defaultChecked: true }
+    { key: "show_skills", label: "技能", defaultChecked: true },
+    { key: "show_tools", label: "工具列表", defaultChecked: true }
   ],
   skills: [
     { key: "show_skill_category", label: "技能类别", defaultChecked: true },
@@ -120,6 +130,7 @@ const visibleFieldOptionsBySection: Record<ResumeSectionKey, Array<{ key: string
     { key: "show_issuer", label: "颁发机构", defaultChecked: true },
     { key: "show_date", label: "取得时间", defaultChecked: true },
     { key: "show_valid_until", label: "有效期" },
+    { key: "show_level", label: "级别", defaultChecked: true },
     { key: "show_summary", label: "说明", defaultChecked: true }
   ],
   awards: [
@@ -182,7 +193,7 @@ export function ResumeVersionForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="语言、模板与状态" description="本阶段保存组合结构和浏览器打印预览，不生成后端 PDF / Word。">
+      <AdminFormSection title="语言、模板与状态" description="所选素材统一套用你的 Word 原版模板。更新素材后再次导出即可复用，字体、章节线、照片及日期位置沿用原版。">
         <div className="grid gap-5 md:grid-cols-4">
           <Field label="语言">
             <Select name="language" defaultValue={version?.language ?? "zh"}>
@@ -194,13 +205,8 @@ export function ResumeVersionForm({
             </Select>
           </Field>
           <Field label="模板">
-            <Select name="template_key" defaultValue={version?.template_key ?? "classic"}>
-              {resumeTemplateKeys.map((template) => (
-                <option key={template.value} value={template.value}>
-                  {template.label}
-                </option>
-              ))}
-            </Select>
+            <input type="hidden" name="template_key" value={version?.template_key ?? "classic"} />
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">Word 原版中文简历</p>
           </Field>
           <Field label="权限">
             <Select name="visibility" defaultValue={version?.visibility ?? "private"}>
@@ -295,12 +301,14 @@ export function ResumeVersionForm({
                             <p className="mb-2 text-xs font-semibold text-slate-500">当前版本可见字段</p>
                             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
                               {fieldOptions.map((option) => (
-                                <Checkbox
-                                  key={option.key}
-                                  name={`${option.key}_${item.id}`}
-                                  label={option.label}
-                                  defaultChecked={visibleFields[option.key] ?? option.defaultChecked ?? false}
-                                />
+                                <div key={option.key}>
+                                  <input type="hidden" name={`visible_present_${option.key}_${item.id}`} value="1" />
+                                  <Checkbox
+                                    name={`${option.key}_${item.id}`}
+                                    label={option.label}
+                                    defaultChecked={visibleFields[option.key] ?? (currentSectionKey === "experience" && option.key === "show_skills" ? visibleFields.show_tools : undefined) ?? option.defaultChecked ?? false}
+                                  />
+                                </div>
                               ))}
                             </div>
                           </div>

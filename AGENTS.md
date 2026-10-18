@@ -94,6 +94,9 @@ npm run smoke:public
 - Career API / CLI 长文本优先使用临时 JSON / text 文件；operation logs 只记录字段名、数量、长度和 id，不记录简历正文、JD 原文、联系方式、AI key 或临时文件内容。
 - 不要改动无关文件，不要回滚用户或其他工具产生的未说明改动。
 
+- Resume 原版排版由 `src/templates/resume/20261018-reference-template.docx`、原始布局索引与私密素材槽位共同维护；禁止把用户要求的原版一致降为通用样式近似。普通新建素材与历史模板键也默认使用同一原 Word 模板，不得要求私密导入标记才能启用。通用字段必须完整映射、独立遵循可见开关；模板只能提交脱敏占位符，禁止提交原始 CV、肖像、联系方式和私人元数据。更新流程见 `src/templates/resume/README.md`。
+- 简历内容修改继续走素材与版本；导出/预览不得固定一页裁掉正文，必须检查重复条目、字段隐藏、照片与分页。
+
 ## Memory Rules
 
 - 新一轮开发前优先阅读 `AGENTS.md`、`docs/memory.md`、`docs/decisions.md`；涉及阶段交接或路线判断时继续阅读 `docs/current-status.md`、`docs/roadmap.md`、`docs/known-issues.md` 和 `docs/supabase-setup.md`。
